@@ -1174,6 +1174,11 @@ void GenNumLabel(int Label)
   printf("L%d:\n", Label);
 }
 
+void GenPrintNumLabel(int label)
+{
+  printf("L%d", label);
+}
+
 void GenZeroData(int Size)
 {
   printf("    times %d db 0\n", Size);
@@ -1196,296 +1201,573 @@ void GenAddrData(int Size, char* Label)
   GenPrintLabel(Label); printf("\n");
 }
 
-void GenJumpUncond(int Label)
+#define X86InstrMov    0x00
+#define X86InstrMovSx  0x01
+#define X86InstrMovZx  0x02
+#define X86InstrXchg   0x03
+#define X86InstrLea    0x04
+#define X86InstrPush   0x05
+#define X86InstrPop    0x06
+#define X86InstrInc    0x07
+#define X86InstrDec    0x08
+#define X86InstrAdd    0x09
+#define X86InstrSub    0x0A
+#define X86InstrAnd    0x0B
+#define X86InstrXor    0x0C
+#define X86InstrOr     0x0D
+#define X86InstrCmp    0x0E
+#define X86InstrTest   0x0F
+#define X86InstrMul    0x10
+#define X86InstrImul   0x11
+#define X86InstrIdiv   0x12
+#define X86InstrShl    0x13
+#define X86InstrSar    0x14
+#define X86InstrNeg    0x15
+#define X86InstrNot    0x16
+#define X86InstrCbw    0x17
+#define X86InstrCwd    0x18
+#define X86InstrSetCc  0x19
+#define X86InstrJcc    0x1A
+#define X86InstrJNotCc 0x1B
+#define X86InstrLeave  0x1C
+#define X86InstrCall   0x1D
+#define X86InstrRet    0x1E
+#define X86InstrJmp    0x1F
+
+void GenPrintInstr(int instr, int val)
 {
-  printf("    jmp     L%d\n", Label);
+  char* p = "";
+
+  switch (instr)
+  {
+  case X86InstrMov: p = "mov"; break;
+  case X86InstrMovSx: p = "movsx"; break;
+  case X86InstrMovZx: p = "movzx"; break;
+  case X86InstrXchg: p = "xchg"; break;
+  case X86InstrLea: p = "lea"; break;
+  case X86InstrPush: p = "push"; break;
+  case X86InstrPop: p = "pop"; break;
+  case X86InstrInc: p = "inc"; break;
+  case X86InstrDec: p = "dec"; break;
+  case X86InstrAdd: p = "add"; break;
+  case X86InstrSub: p = "sub"; break;
+  case X86InstrAnd: p = "and"; break;
+  case X86InstrXor: p = "xor"; break;
+  case X86InstrOr: p = "or"; break;
+  case X86InstrCmp: p = "cmp"; break;
+  case X86InstrTest: p = "test"; break;
+  case X86InstrMul: p = "mul"; break;
+  case X86InstrImul: p = "imul"; break;
+  case X86InstrIdiv: p = "idiv"; break;
+  case X86InstrShl: p = "shl"; break;
+  case X86InstrSar: p = "sar"; break;
+  case X86InstrNeg: p = "neg"; break;
+  case X86InstrNot: p = "not"; break;
+  case X86InstrCbw: p = "cbw"; break;
+  case X86InstrCwd: p = "cwd"; break;
+  case X86InstrLeave: p = "leave"; break;
+  case X86InstrCall: p = "call"; break;
+  case X86InstrRet: p = "ret"; break;
+  case X86InstrJmp: p = "jmp"; break;
+
+  case X86InstrJcc:
+    switch (val)
+    {
+    case '<':         p = "jl"; break;
+    case tokULess:    p = "jb"; break;
+    case '>':         p = "jg"; break;
+    case tokUGreater: p = "ja"; break;
+    case tokLEQ:      p = "jle"; break;
+    case tokULEQ:     p = "jbe"; break;
+    case tokGEQ:      p = "jge"; break;
+    case tokUGEQ:     p = "jae"; break;
+    case tokEQ:       p = "je"; break;
+    case tokNEQ:      p = "jne"; break;
+    }
+    break;
+  case X86InstrJNotCc:
+    switch (val)
+    {
+    case '<':         p = "jge"; break;
+    case tokULess:    p = "jae"; break;
+    case '>':         p = "jle"; break;
+    case tokUGreater: p = "jbe"; break;
+    case tokLEQ:      p = "jg"; break;
+    case tokULEQ:     p = "ja"; break;
+    case tokGEQ:      p = "jl"; break;
+    case tokUGEQ:     p = "jb"; break;
+    case tokEQ:       p = "jne"; break;
+    case tokNEQ:      p = "je"; break;
+    }
+    break;
+
+  case X86InstrSetCc:
+    switch (val)
+    {
+    case '<':         p = "setl"; break;
+    case tokULess:    p = "setb"; break;
+    case '>':         p = "setg"; break;
+    case tokUGreater: p = "seta"; break;
+    case tokLEQ:      p = "setle"; break;
+    case tokULEQ:     p = "setbe"; break;
+    case tokGEQ:      p = "setge"; break;
+    case tokUGEQ:     p = "setae"; break;
+    case tokEQ:       p = "sete"; break;
+    case tokNEQ:      p = "setne"; break;
+    }
+    break;
+  }
+
+  switch (instr)
+  {
+  case X86InstrCbw:
+  case X86InstrCwd:
+  case X86InstrLeave:
+  case X86InstrRet:
+    printf("    %s", p);
+    break;
+  default:
+    printf("    %-7s ", p);
+    break;
+  }
 }
 
-void GenJumpIfNotEqual(int val, int Label)
+#define X86OpRegAByte                   0x00
+#define X86OpRegAByteHigh               0x01
+#define X86OpRegCByte                   0x02
+#define X86OpRegAWord                   0x03
+#define X86OpRegBWord                   0x04
+#define X86OpRegCWord                   0x05
+#define X86OpRegDWord                   0x06
+#define X86OpRegBpWord                  0x07
+#define X86OpRegSpWord                  0x08
+#define X86OpRegAByteOrWord             0x09
+#define X86OpRegCByteOrWord             0x0A
+#define X86OpConst                      0x0B
+#define X86OpLabel                      0x0C
+#define X86OpNumLabel                   0x0D
+#define X86OpIndLabel                   0x0E
+#define X86OpIndLabelExplicitByte       0x0F
+#define X86OpIndLabelExplicitWord       0x10
+#define X86OpIndLabelExplicitByteOrWord 0x11
+#define X86OpIndLocal                   0x12
+#define X86OpIndLocalExplicitByte       0x13
+#define X86OpIndLocalExplicitWord       0x14
+#define X86OpIndLocalExplicitByteOrWord 0x15
+#define X86OpIndRegB                    0x16
+#define X86OpIndRegBExplicitByte        0x17
+#define X86OpIndRegBExplicitWord        0x18
+#define X86OpIndRegBExplicitByteOrWord  0x19
+
+int GenSelectByteOrWord(int op, int opSz)
 {
-  printf("    cmp     ax, %d\n"
-         "    jne     L%d\n", val, Label);
+  switch (op)
+  {
+  case X86OpRegAByteOrWord:
+    op = X86OpRegAByte;
+    if (opSz != 1)
+      op = X86OpRegAWord;
+    break;
+  case X86OpRegCByteOrWord:
+    op = X86OpRegCByte;
+    if (opSz != 1)
+      op = X86OpRegCWord;
+    break;
+  case X86OpIndLabelExplicitByteOrWord:
+    op = X86OpIndLabelExplicitByte;
+    if (opSz != 1)
+      op = X86OpIndLabelExplicitWord;
+    break;
+  case X86OpIndLocalExplicitByteOrWord:
+    op = X86OpIndLocalExplicitByte;
+    if (opSz != 1)
+      op = X86OpIndLocalExplicitWord;
+    break;
+  case X86OpIndRegBExplicitByteOrWord:
+    op = X86OpIndRegBExplicitByte;
+    if (opSz != 1)
+      op = X86OpIndRegBExplicitWord;
+    break;
+  }
+  return op;
 }
 
-void GenJumpIfZero(int Label)
+void GenPrintOperand(int op, int val)
+{
+  switch (op)
+  {
+  case X86OpRegAByte: printf("al"); break;
+  case X86OpRegAByteHigh: printf("ah"); break;
+  case X86OpRegCByte: printf("cl"); break;
+  case X86OpRegAWord: printf("ax"); break;
+  case X86OpRegBWord: printf("bx"); break;
+  case X86OpRegCWord: printf("cx"); break;
+  case X86OpRegDWord: printf("dx"); break;
+  case X86OpRegBpWord: printf("bp"); break;
+  case X86OpRegSpWord: printf("sp"); break;
+  case X86OpConst: printf("%d", val); break;
+  case X86OpLabel: GenPrintLabel(IdentTable + val); break;
+  case X86OpNumLabel: GenPrintNumLabel(val); break;
+  case X86OpIndLabel: printf("["); GenPrintLabel(IdentTable + val); printf("]"); break;
+  case X86OpIndLabelExplicitByte: printf("byte ["); GenPrintLabel(IdentTable + val); printf("]"); break;
+  case X86OpIndLabelExplicitWord: printf("word ["); GenPrintLabel(IdentTable + val); printf("]"); break;
+  case X86OpIndLocal: printf("[bp%+d]", val); break;
+  case X86OpIndLocalExplicitByte: printf("byte [bp%+d]", val); break;
+  case X86OpIndLocalExplicitWord: printf("word [bp%+d]", val); break;
+  case X86OpIndRegB: printf("[bx]"); break;
+  case X86OpIndRegBExplicitByte: printf("byte [bx]"); break;
+  case X86OpIndRegBExplicitWord: printf("word [bx]"); break;
+  }
+}
+
+void GenPrintOperandSeparator(void)
+{
+  printf(", ");
+}
+
+void GenPrintNewLine(void)
+{
+  printf("\n");
+}
+
+void GenPrintInstrNoOperand(int instr)
+{
+  GenPrintInstr(instr, 0);
+  GenPrintNewLine();
+}
+
+void GenPrintInstr1Operand(int instr, int instrval, int operand, int operandval)
+{
+  GenPrintInstr(instr, instrval);
+  GenPrintOperand(operand, operandval);
+  GenPrintNewLine();
+}
+
+void GenPrintInstr2Operands(int instr, int instrval, int operand1, int operand1val, int operand2, int operand2val)
+{
+  GenPrintInstr(instr, instrval);
+  GenPrintOperand(operand1, operand1val);
+  GenPrintOperandSeparator();
+  GenPrintOperand(operand2, operand2val);
+  GenPrintNewLine();
+}
+
+void GenPrintInstr3Operands(int instr, int instrval,
+                            int operand1, int operand1val,
+                            int operand2, int operand2val,
+                            int operand3, int operand3val)
+{
+  GenPrintInstr(instr, instrval);
+  GenPrintOperand(operand1, operand1val);
+  GenPrintOperandSeparator();
+  GenPrintOperand(operand2, operand2val);
+  GenPrintOperandSeparator();
+  GenPrintOperand(operand3, operand3val);
+  GenPrintNewLine();
+}
+
+void GenExtendRegAIfNeeded(int opSz)
+{
+  if (opSz == 1)
+  {
+    if (CharIsSigned)
+      GenPrintInstrNoOperand(X86InstrCbw);
+    else
+      GenPrintInstr2Operands(X86InstrMov, 0,
+                             X86OpRegAByteHigh, 0,
+                             X86OpConst, 0);
+  }
+}
+
+void GenJumpUncond(int label)
+{
+  GenPrintInstr1Operand(X86InstrJmp, 0,
+                        X86OpNumLabel, label);
+}
+
+void GenJumpIfNotEqual(int val, int label)
+{
+  GenPrintInstr2Operands(X86InstrCmp, 0,
+                         X86OpRegAWord, 0,
+                         X86OpConst, val);
+  GenPrintInstr1Operand(X86InstrJcc, tokNEQ,
+                        X86OpNumLabel, label);
+}
+
+void GenJumpIfZero(int label)
 {
   printf("; JumpIfZero\n");
-  printf("    test    ax, ax\n"
-         "    jz      L%d\n", Label);
+  GenPrintInstr2Operands(X86InstrTest, 0,
+                         X86OpRegAWord, 0,
+                         X86OpRegAWord, 0);
+  GenPrintInstr1Operand(X86InstrJcc, tokEQ,
+                        X86OpNumLabel, label);
 }
 
-void GenJumpIfNotZero(int Label)
+void GenJumpIfNotZero(int label)
 {
   printf("; JumpIfNotZero\n");
-  printf("    test    ax, ax\n"
-         "    jnz     L%d\n", Label);
+  GenPrintInstr2Operands(X86InstrTest, 0,
+                         X86OpRegAWord, 0,
+                         X86OpRegAWord, 0);
+  GenPrintInstr1Operand(X86InstrJcc, tokNEQ,
+                        X86OpNumLabel, label);
 }
 
 void GenFxnProlog(void)
 {
-  printf("    push    bp\n"
-         "    mov     bp, sp\n");
+  GenPrintInstr1Operand(X86InstrPush, 0,
+                        X86OpRegBpWord, 0);
+  GenPrintInstr2Operands(X86InstrMov, 0,
+                         X86OpRegBpWord, 0,
+                         X86OpRegSpWord, 0);
+}
+
+void GenLocalAlloc(int size)
+{
+  GenPrintInstr2Operands(X86InstrSub, 0,
+                         X86OpRegSpWord, 0,
+                         X86OpConst, size);
 }
 
 void GenFxnEpilog(void)
 {
-  printf("    leave\n"
-         "    ret\n");
+  GenPrintInstrNoOperand(X86InstrLeave);
+  GenPrintInstrNoOperand(X86InstrRet);
 }
 
-void GenLocalAlloc(int Size)
+void GenReadIdent(int opSz, int label)
 {
-  printf("    sub     sp, %d\n", Size);
+  GenPrintInstr2Operands(X86InstrMov, 0,
+                         GenSelectByteOrWord(X86OpRegAByteOrWord, opSz), 0,
+                         X86OpIndLabel, label);
+  GenExtendRegAIfNeeded(opSz);
 }
 
-void GenExtendAlAx(void)
+void GenReadLocal(int opSz, int ofs)
 {
-  if (CharIsSigned)
-    printf("    cbw\n");
+  GenPrintInstr2Operands(X86InstrMov, 0,
+                         GenSelectByteOrWord(X86OpRegAByteOrWord, opSz), 0,
+                         X86OpIndLocal, ofs);
+  GenExtendRegAIfNeeded(opSz);
+}
+
+void GenReadIndirect(int opSz)
+{
+  GenPrintInstr2Operands(X86InstrMov, 0,
+                         X86OpRegBWord, 0,
+                         X86OpRegAWord, 0);
+  GenPrintInstr2Operands(X86InstrMov, 0,
+                         GenSelectByteOrWord(X86OpRegAByteOrWord, opSz), 0,
+                         X86OpIndRegB, 0);
+  GenExtendRegAIfNeeded(opSz);
+}
+
+void GenReadCRegIdent(int opSz, int label)
+{
+  if (opSz == 1)
+  {
+    if (CharIsSigned)
+      GenPrintInstr2Operands(X86InstrMovSx, 0,
+                             X86OpRegCWord, 0,
+                             X86OpIndLabelExplicitByte, label);
+    else
+      GenPrintInstr2Operands(X86InstrMovZx, 0,
+                             X86OpRegCWord, 0,
+                             X86OpIndLabelExplicitByte, label);
+  }
   else
-    printf("    mov     ah, 0\n");
+    GenPrintInstr2Operands(X86InstrMov, 0,
+                           X86OpRegCWord, 0,
+                           X86OpIndLabel, label);
 }
 
-void GenReadIdent(int OpSz, char* Label)
+void GenReadCRegLocal(int opSz, int ofs)
 {
-  if (OpSz == 1)
+  if (opSz == 1)
   {
-    printf("    mov     al, [");
-    GenPrintLabel(Label); printf("]\n");
-    GenExtendAlAx();
+    if (CharIsSigned)
+      GenPrintInstr2Operands(X86InstrMovSx, 0,
+                             X86OpRegCWord, 0,
+                             X86OpIndLocalExplicitByte, ofs);
+    else
+      GenPrintInstr2Operands(X86InstrMovZx, 0,
+                             X86OpRegCWord, 0,
+                             X86OpIndLocalExplicitByte, ofs);
   }
-  else if (OpSz == 2)
-  {
-    printf("    mov     ax, [");
-    GenPrintLabel(Label); printf("]\n");
-  }
+  else
+    GenPrintInstr2Operands(X86InstrMov, 0,
+                           X86OpRegCWord, 0,
+                           X86OpIndLocal, ofs);
 }
 
-void GenReadLocal(int OpSz, int Ofs)
+void GenReadCRegIndirect(int opSz)
 {
-  if (OpSz == 1)
+  GenPrintInstr2Operands(X86InstrMov, 0,
+                         X86OpRegBWord, 0,
+                         X86OpRegAWord, 0);
+  if (opSz == 1)
   {
-    printf("    mov     al, [bp%+d]\n", Ofs);
-    GenExtendAlAx();
+    if (CharIsSigned)
+      GenPrintInstr2Operands(X86InstrMovSx, 0,
+                             X86OpRegCWord, 0,
+                             X86OpIndRegBExplicitByte, 0);
+    else
+      GenPrintInstr2Operands(X86InstrMovZx, 0,
+                             X86OpRegCWord, 0,
+                             X86OpIndRegBExplicitByte, 0);
   }
-  else if (OpSz == 2)
-    printf("    mov     ax, [bp%+d]\n", Ofs);
+  else
+    GenPrintInstr2Operands(X86InstrMov, 0,
+                           X86OpRegCWord, 0,
+                           X86OpIndRegB, 0);
 }
 
-void GenReadIndirect(int OpSz)
+void GenIncDecIdent(int opSz, int label, int tok)
 {
-  printf("    mov     bx, ax\n");
-  if (OpSz == 1)
-  {
-    printf("    mov     al, [bx]\n");
-    GenExtendAlAx();
-  }
-  else if (OpSz == 2)
-    printf("    mov     ax, [bx]\n");
+  int instr = X86InstrInc;
+
+  if (tok != tokInc)
+    instr = X86InstrDec;
+
+  GenPrintInstr1Operand(instr, 0,
+                        GenSelectByteOrWord(X86OpIndLabelExplicitByteOrWord, opSz), label);
+  GenPrintInstr2Operands(X86InstrMov, 0,
+                         GenSelectByteOrWord(X86OpRegAByteOrWord, opSz), 0,
+                         X86OpIndLabel, label);
+  GenExtendRegAIfNeeded(opSz);
 }
 
-void GenIncDecIdent(int OpSz, char* Label, int tok)
+void GenIncDecLocal(int opSz, int ofs, int tok)
 {
-  if (OpSz == 1)
-  {
-    if (tok == tokInc)
-      printf("    inc     byte [");
-    else
-      printf("    dec     byte [");
-    GenPrintLabel(Label); printf("]\n");
-    printf("    mov     al, [");
-    GenPrintLabel(Label); printf("]\n");
-    GenExtendAlAx();
-  }
-  else if (OpSz == 2)
-  {
-    if (tok == tokInc)
-      printf("    inc     word [");
-    else
-      printf("    dec     word [");
-    GenPrintLabel(Label); printf("]\n");
-    printf("    mov     ax, [");
-    GenPrintLabel(Label); printf("]\n");
-  }
+  int instr = X86InstrInc;
+
+  if (tok != tokInc)
+    instr = X86InstrDec;
+
+  GenPrintInstr1Operand(instr, 0,
+                        GenSelectByteOrWord(X86OpIndLocalExplicitByteOrWord, opSz), ofs);
+  GenPrintInstr2Operands(X86InstrMov, 0,
+                         GenSelectByteOrWord(X86OpRegAByteOrWord, opSz), 0,
+                         X86OpIndLocal, ofs);
+  GenExtendRegAIfNeeded(opSz);
 }
 
-void GenIncDecLocal(int OpSz, int Ofs, int tok)
+void GenIncDecIndirect(int opSz, int tok)
 {
-  if (OpSz == 1)
-  {
-    if (tok == tokInc)
-      printf("    inc     byte [bp%+d]\n", Ofs);
-    else
-      printf("    dec     byte [bp%+d]\n", Ofs);
-    printf("    mov     al, [bp%+d]\n", Ofs);
-    GenExtendAlAx();
-  }
-  else if (OpSz == 2)
-  {
-    if (tok == tokInc)
-      printf("    inc     word [bp%+d]\n", Ofs);
-    else
-      printf("    dec     word [bp%+d]\n", Ofs);
-    printf("    mov     ax, [bp%+d]\n", Ofs);
-  }
+  int instr = X86InstrInc;
+
+  if (tok != tokInc)
+    instr = X86InstrDec;
+
+  GenPrintInstr2Operands(X86InstrMov, 0,
+                         X86OpRegBWord, 0,
+                         X86OpRegAWord, 0);
+  GenPrintInstr1Operand(instr, 0,
+                        GenSelectByteOrWord(X86OpIndRegBExplicitByteOrWord, opSz), 0);
+  GenPrintInstr2Operands(X86InstrMov, 0,
+                         GenSelectByteOrWord(X86OpRegAByteOrWord, opSz), 0,
+                         X86OpIndRegB, 0);
+  GenExtendRegAIfNeeded(opSz);
 }
 
-void GenIncDecIndirect(int OpSz, int tok)
+void GenPostIncDecIdent(int opSz, int label, int tok)
 {
-  printf("    mov     bx, ax\n");
-  if (OpSz == 1)
-  {
-    if (tok == tokInc)
-      printf("    inc     byte [bx]\n");
-    else
-      printf("    dec     byte [bx]\n");
-    printf("    mov     al, [bx]\n");
-    GenExtendAlAx();
-  }
-  else if (OpSz == 2)
-  {
-    if (tok == tokInc)
-      printf("    inc     word [bx]\n");
-    else
-      printf("    dec     word [bx]\n");
-    printf("    mov     ax, [bx]\n");
-  }
+  int instr = X86InstrInc;
+
+  if (tok != tokPostInc)
+    instr = X86InstrDec;
+
+  GenPrintInstr2Operands(X86InstrMov, 0,
+                         GenSelectByteOrWord(X86OpRegAByteOrWord, opSz), 0,
+                         X86OpIndLabel, label);
+  GenExtendRegAIfNeeded(opSz);
+  GenPrintInstr1Operand(instr, 0,
+                        GenSelectByteOrWord(X86OpIndLabelExplicitByteOrWord, opSz), label);
 }
 
-void GenPostIncDecIdent(int OpSz, char* Label, int tok)
+void GenPostIncDecLocal(int opSz, int ofs, int tok)
 {
-  if (OpSz == 1)
-  {
-    printf("    mov     al, [");
-    GenPrintLabel(Label); printf("]\n");
-    GenExtendAlAx();
-    if (tok == tokPostInc)
-      printf("    inc     byte [");
-    else
-      printf("    dec     byte [");
-    GenPrintLabel(Label); printf("]\n");
-  }
-  else if (OpSz == 2)
-  {
-    printf("    mov     ax, [");
-    GenPrintLabel(Label); printf("]\n");
-    if (tok == tokPostInc)
-      printf("    inc     word [");
-    else
-      printf("    dec     word [");
-    GenPrintLabel(Label); printf("]\n");
-  }
+  int instr = X86InstrInc;
+
+  if (tok != tokPostInc)
+    instr = X86InstrDec;
+
+  GenPrintInstr2Operands(X86InstrMov, 0,
+                         GenSelectByteOrWord(X86OpRegAByteOrWord, opSz), 0,
+                         X86OpIndLocal, ofs);
+  GenExtendRegAIfNeeded(opSz);
+  GenPrintInstr1Operand(instr, 0,
+                        GenSelectByteOrWord(X86OpIndLocalExplicitByteOrWord, opSz), ofs);
 }
 
-void GenPostIncDecLocal(int OpSz, int Ofs, int tok)
+void GenPostIncDecIndirect(int opSz, int tok)
 {
-  if (OpSz == 1)
-  {
-    printf("    mov     al, [bp%+d]\n", Ofs);
-    GenExtendAlAx();
-    if (tok == tokPostInc)
-      printf("    inc     byte [bp%+d]\n", Ofs);
-    else
-      printf("    dec     byte [bp%+d]\n", Ofs);
-  }
-  else if (OpSz == 2)
-  {
-    printf("    mov     ax, [bp%+d]\n", Ofs);
-    if (tok == tokPostInc)
-      printf("    inc     word [bp%+d]\n", Ofs);
-    else
-      printf("    dec     word [bp%+d]\n", Ofs);
-  }
+  int instr = X86InstrInc;
+
+  if (tok != tokPostInc)
+    instr = X86InstrDec;
+
+  GenPrintInstr2Operands(X86InstrMov, 0,
+                         X86OpRegBWord, 0,
+                         X86OpRegAWord, 0);
+  GenPrintInstr2Operands(X86InstrMov, 0,
+                         GenSelectByteOrWord(X86OpRegAByteOrWord, opSz), 0,
+                         X86OpIndRegB, 0);
+  GenExtendRegAIfNeeded(opSz);
+  GenPrintInstr1Operand(instr, 0,
+                        GenSelectByteOrWord(X86OpIndRegBExplicitByteOrWord, opSz), 0);
 }
 
-void GenPostIncDecIndirect(int OpSz, int tok)
+void GenPostAddSubIdent(int opSz, int val, int label, int tok)
 {
-  printf("    mov     bx, ax\n");
-  if (OpSz == 1)
-  {
-    printf("    mov     al, [bx]\n");
-    GenExtendAlAx();
-    if (tok == tokPostInc)
-      printf("    inc     byte [bx]\n");
-    else
-      printf("    dec     byte [bx]\n");
-  }
-  else if (OpSz == 2)
-  {
-    printf("    mov     ax, [bx]\n");
-    if (tok == tokPostInc)
-      printf("    inc     word [bx]\n");
-    else
-      printf("    dec     word [bx]\n");
-  }
+  int instr = X86InstrAdd;
+
+  if (tok != tokPostAdd)
+    instr = X86InstrSub;
+
+  GenPrintInstr2Operands(X86InstrMov, 0,
+                         GenSelectByteOrWord(X86OpRegAByteOrWord, opSz), 0,
+                         X86OpIndLabel, label);
+  GenExtendRegAIfNeeded(opSz);
+  GenPrintInstr2Operands(instr, 0,
+                         GenSelectByteOrWord(X86OpIndLabelExplicitByteOrWord, opSz), label,
+                         X86OpConst, val);
 }
 
-void GenPostAddSubIdent(int OpSz, int val, char* Label, int tok)
+void GenPostAddSubLocal(int opSz, int val, int ofs, int tok)
 {
-  if (OpSz == 1)
-  {
-    printf("    mov     al, [");
-    GenPrintLabel(Label); printf("]\n");
-    GenExtendAlAx();
-    if (tok == tokPostAdd)
-      printf("    add     byte [");
-    else
-      printf("    sub     byte [");
-    GenPrintLabel(Label); printf("], %d\n", val);
-  }
-  else if (OpSz == 2)
-  {
-    printf("    mov     ax, [");
-    GenPrintLabel(Label); printf("]\n");
-    if (tok == tokPostAdd)
-      printf("    add     word [");
-    else
-      printf("    sub     word [");
-    GenPrintLabel(Label); printf("], %d\n", val);
-  }
+  int instr = X86InstrAdd;
+
+  if (tok != tokPostAdd)
+    instr = X86InstrSub;
+
+  GenPrintInstr2Operands(X86InstrMov, 0,
+                         GenSelectByteOrWord(X86OpRegAByteOrWord, opSz), 0,
+                         X86OpIndLocal, ofs);
+  GenExtendRegAIfNeeded(opSz);
+  GenPrintInstr2Operands(instr, 0,
+                         GenSelectByteOrWord(X86OpIndLocalExplicitByteOrWord, opSz), ofs,
+                         X86OpConst, val);
 }
 
-void GenPostAddSubLocal(int OpSz, int val, int Ofs, int tok)
+void GenPostAddSubIndirect(int opSz, int val, int tok)
 {
-  if (OpSz == 1)
-  {
-    printf("    mov     al, [bp%+d]\n", Ofs);
-    GenExtendAlAx();
-    if (tok == tokPostAdd)
-      printf("    add     byte [bp%+d], %d\n", Ofs, val);
-    else
-      printf("    sub     byte [bp%+d], %d\n", Ofs, val);
-  }
-  else if (OpSz == 2)
-  {
-    printf("    mov     ax, [bp%+d]\n", Ofs);
-    if (tok == tokPostAdd)
-      printf("    add     word [bp%+d], %d\n", Ofs, val);
-    else
-      printf("    sub     word [bp%+d], %d\n", Ofs, val);
-  }
-}
+  int instr = X86InstrAdd;
 
-void GenPostAddSubIndirect(int OpSz, int val, int tok)
-{
-  printf("    mov     bx, ax\n");
-  if (OpSz == 1)
-  {
-    printf("    mov     al, [bx]\n");
-    GenExtendAlAx();
-    if (tok == tokPostAdd)
-      printf("    add     byte [bx], %d\n", val);
-    else
-      printf("    sub     byte [bx], %d\n", val);
-  }
-  else if (OpSz == 2)
-  {
-    printf("    mov     ax, [bx]\n");
-    if (tok == tokPostAdd)
-      printf("    add     word [bx], %d\n", val);
-    else
-      printf("    sub     word [bx], %d\n", val);
-  }
+  if (tok != tokPostAdd)
+    instr = X86InstrSub;
+
+  GenPrintInstr2Operands(X86InstrMov, 0,
+                         X86OpRegBWord, 0,
+                         X86OpRegAWord, 0);
+  GenPrintInstr2Operands(X86InstrMov, 0,
+                         GenSelectByteOrWord(X86OpRegAByteOrWord, opSz), 0,
+                         X86OpIndRegB, 0);
+  GenExtendRegAIfNeeded(opSz);
+  GenPrintInstr2Operands(instr, 0,
+                         GenSelectByteOrWord(X86OpIndRegBExplicitByteOrWord, opSz), 0,
+                         X86OpConst, val);
 }
 
 #define tokOpNum         0x100
@@ -1899,25 +2181,27 @@ void GenFuse(int* idx)
   }
 }
 
-char* GenGetBinaryOperatorInstr(int tok)
+int GenGetBinaryOperatorInstr(int tok)
 {
   switch (tok)
   {
+  case tokPostAdd:
   case tokAssignAdd:
   case '+':
-    return "add";
+    return X86InstrAdd;
+  case tokPostSub:
   case tokAssignSub:
   case '-':
-    return "sub";
+    return X86InstrSub;
   case '&':
   case tokAssignAnd:
-    return "and";
+    return X86InstrAnd;
   case '^':
   case tokAssignXor:
-    return "xor";
+    return X86InstrXor;
   case '|':
   case tokAssignOr:
-    return "or";
+    return X86InstrOr;
   case '<':
   case '>':
   case tokLEQ:
@@ -1928,24 +2212,25 @@ char* GenGetBinaryOperatorInstr(int tok)
   case tokUGreater:
   case tokULEQ:
   case tokUGEQ:
-    return "cmp";
+    return X86InstrCmp;
   case '*':
   case tokAssignMul:
-    return "mul";
+    return X86InstrMul;
   case '/':
   case '%':
   case tokAssignDiv:
   case tokAssignMod:
-    return "idiv";
+    return X86InstrIdiv;
   case tokLShift:
   case tokAssignLSh:
-    return "shl";
+    return X86InstrShl;
   case tokRShift:
   case tokAssignRSh:
-    return "sar";
+    return X86InstrSar;
 
   default:
-    return "";
+    error("Error: Invalid operator\n");
+    return 0;
   }
 }
 
@@ -2053,7 +2338,7 @@ void GenExpr1(void)
   {
     int tok = stack[i][0];
     int v = stack[i][1];
-    char* instr;
+    int instr;
 
     switch (tok)
     {
@@ -2061,30 +2346,38 @@ void GenExpr1(void)
     case tokLitChar:
       // Don't load operand into ax when ax is going to be pushed next, push it directly
       if (!(i + 1 < sp && stack[i + 1][0] == ','))
-        printf("    mov     ax, %d\n", v);
+        GenPrintInstr2Operands(X86InstrMov, 0,
+                               X86OpRegAWord, 0,
+                               X86OpConst, v);
       break;
     case tokIdent:
       // Don't load operand into ax when ax is going to be pushed next, push it directly
       if (!(i + 1 < sp && (stack[i + 1][0] == ',' || stack[i + 1][0] == ')')))
-      {
-        printf("    mov     ax, ");
-        GenPrintLabel(IdentTable + v); printf("\n");
-      }
+        GenPrintInstr2Operands(X86InstrMov, 0,
+                               X86OpRegAWord, 0,
+                               X86OpLabel, v);
       break;
     case tokLocalOfs:
-      printf("    lea     ax, [bp%+d]\n", v);
+      GenPrintInstr2Operands(X86InstrLea, 0,
+                             X86OpRegAWord, 0,
+                             X86OpIndLocal, v);
       break;
 
     case '~':
-      printf("    not     ax\n");
+      GenPrintInstr1Operand(X86InstrNot, 0,
+                            X86OpRegAWord, 0);
       break;
     case tokUnaryMinus:
-      printf("    neg     ax\n");
+      GenPrintInstr1Operand(X86InstrNeg, 0,
+                            X86OpRegAWord, 0);
       break;
     case tok_Bool:
-      printf("    test    ax, ax\n"
-             "    setnz   al\n"
-             "    cbw\n");
+      GenPrintInstr2Operands(X86InstrTest, 0,
+                             X86OpRegAWord, 0,
+                             X86OpRegAWord, 0);
+      GenPrintInstr1Operand(X86InstrSetCc, tokNEQ,
+                            X86OpRegAByte, 0);
+      GenPrintInstrNoOperand(X86InstrCbw);
       break;
 
     case tokShortCirc:
@@ -2102,25 +2395,30 @@ void GenExpr1(void)
 
     case tokPushAcc:
       // TBD??? handle similarly to ','???
-      printf("    push    ax\n");
+      GenPrintInstr1Operand(X86InstrPush, 0,
+                            X86OpRegAWord, 0);
       break;
 
     case ',':
       // push operand directly if it hasn't been loaded into ax
-      if (stack[i - 2][0] == tokUnaryStar && stack[i - 2][1] == 2)
+      if (stack[i - 2][0] == tokUnaryStar && stack[i - 2][1] != 1)
       {
         switch (stack[i - 1][0])
         {
         case tokOpIdent:
-          printf("    push    word [");
-          GenPrintLabel(IdentTable + stack[i - 1][1]); printf("]\n");
+          GenPrintInstr1Operand(X86InstrPush, 0,
+                                X86OpIndLabelExplicitWord, stack[i - 1][1]);
           break;
         case tokOpLocalOfs:
-          printf("    push    word [bp%+d]\n", stack[i - 1][1]);
+          GenPrintInstr1Operand(X86InstrPush, 0,
+                                X86OpIndLocalExplicitWord, stack[i - 1][1]);
           break;
         case tokOpAcc:
-          printf("    mov     bx, ax\n"
-                 "    push    word [bx]\n");
+          GenPrintInstr2Operands(X86InstrMov, 0,
+                                 X86OpRegBWord, 0,
+                                 X86OpRegAWord, 0);
+          GenPrintInstr1Operand(X86InstrPush, 0,
+                                X86OpIndRegBExplicitWord, 0);
           break;
         }
       }
@@ -2130,14 +2428,16 @@ void GenExpr1(void)
         {
         case tokNum:
         case tokLitChar:
-          printf("    push    %d\n", stack[i - 1][1]);
+          GenPrintInstr1Operand(X86InstrPush, 0,
+                                X86OpConst, stack[i - 1][1]);
           break;
         case tokIdent:
-          printf("    push    ");
-          GenPrintLabel(IdentTable + stack[i - 1][1]); printf("\n");
+          GenPrintInstr1Operand(X86InstrPush, 0,
+                                X86OpLabel, stack[i - 1][1]);
           break;
         default:
-          printf("    push    ax\n");
+          GenPrintInstr1Operand(X86InstrPush, 0,
+                                X86OpRegAWord, 0);
           break;
         }
       }
@@ -2145,12 +2445,12 @@ void GenExpr1(void)
 
     case tokUnaryStar:
       // Don't load operand into ax when ax is going to be pushed next, push it directly
-      if (!(v == 2 && i + 2 < sp && stack[i + 2][0] == ','))
+      if (!(v != 1 && i + 2 < sp && stack[i + 2][0] == ','))
       {
         switch (stack[i + 1][0])
         {
         case tokOpIdent:
-          GenReadIdent(v, IdentTable + stack[i + 1][1]);
+          GenReadIdent(v, stack[i + 1][1]);
           break;
         case tokOpLocalOfs:
           GenReadLocal(v, stack[i + 1][1]);
@@ -2168,7 +2468,7 @@ void GenExpr1(void)
       switch (stack[i + 1][0])
       {
       case tokOpIndIdent:
-        GenIncDecIdent(v, IdentTable + stack[i + 1][1], tok);
+        GenIncDecIdent(v, stack[i + 1][1], tok);
         break;
       case tokOpIndLocalOfs:
         GenIncDecLocal(v, stack[i + 1][1], tok);
@@ -2185,7 +2485,7 @@ void GenExpr1(void)
       switch (stack[i + 1][0])
       {
       case tokOpIndIdent:
-        GenPostIncDecIdent(v, IdentTable + stack[i + 1][1], tok);
+        GenPostIncDecIdent(v, stack[i + 1][1], tok);
         break;
       case tokOpIndLocalOfs:
         GenPostIncDecLocal(v, stack[i + 1][1], tok);
@@ -2202,7 +2502,7 @@ void GenExpr1(void)
       switch (stack[i + 1][0])
       {
       case tokOpIndIdent:
-        GenPostAddSubIdent(v, stack[i + 2][1], IdentTable + stack[i + 1][1], tok);
+        GenPostAddSubIdent(v, stack[i + 2][1], stack[i + 1][1], tok);
         break;
       case tokOpIndLocalOfs:
         GenPostAddSubLocal(v, stack[i + 2][1], stack[i + 1][1], tok);
@@ -2251,20 +2551,13 @@ void GenExpr1(void)
       {
         if (stack[i + 2][0] == tokOpAcc)
         {
-          printf("    mov     cx, ax\n");
+          GenPrintInstr2Operands(X86InstrMov, 0,
+                                 X86OpRegCWord, 0,
+                                 X86OpRegAWord, 0);
         }
         else if (stack[i + 2][0] == tokOpIndAcc)
         {
-          printf("    mov     bx, ax\n");
-          if (v % 16 == 1)
-          {
-            if (CharIsSigned)
-              printf("    movsx   cx, byte [bx]\n");
-            else
-              printf("    movzx   cx, byte [bx]\n");
-          }
-          else if (v % 16 == 2)
-            printf("    mov     cx, [bx]\n");
+          GenReadCRegIndirect(v % 16);
         }
       }
 
@@ -2273,7 +2566,10 @@ void GenExpr1(void)
       if (tok == '=')
       {
         if (stack[i + 1][0] == tokOpIndAcc)
-          printf("    mov     bx, ax\n");
+          GenPrintInstr2Operands(X86InstrMov, 0,
+                                 X86OpRegBWord, 0,
+                                 X86OpRegAWord, 0);
+        // "swap" left and right operands
         i++;
         v = v / 16 + v % 16 * 16;
       }
@@ -2281,71 +2577,54 @@ void GenExpr1(void)
       switch (stack[i + 1][0])
       {
       case tokOpNum:
-        printf("    mov     ax, %d\n", stack[i + 1][1]);
+        GenPrintInstr2Operands(X86InstrMov, 0,
+                               X86OpRegAWord, 0,
+                               X86OpConst, stack[i + 1][1]);
         break;
       case tokOpIdent:
-        printf("    mov     ax, ");
-        GenPrintLabel(IdentTable + stack[i + 1][1]); printf("\n");
+        GenPrintInstr2Operands(X86InstrMov, 0,
+                               X86OpRegAWord, 0,
+                               X86OpLabel, stack[i + 1][1]);
         break;
       case tokOpLocalOfs:
-        printf("    lea     ax, [bp%+d]\n", stack[i + 1][1]);
+        GenPrintInstr2Operands(X86InstrLea, 0,
+                               X86OpRegAWord, 0,
+                               X86OpIndLocal, stack[i + 1][1]);
         break;
       case tokOpAcc:
         break;
       case tokOpIndIdent:
-        if (v / 16 == 1)
-        {
-          printf("    mov     al, [");
-          GenPrintLabel(IdentTable + stack[i + 1][1]); printf("]\n");
-          GenExtendAlAx();
-        }
-        else if (v / 16 == 2)
-        {
-          printf("    mov     ax, [");
-          GenPrintLabel(IdentTable + stack[i + 1][1]); printf("]\n");
-        }
+        GenReadIdent(v / 16, stack[i + 1][1]);
         break;
       case tokOpIndLocalOfs:
-        if (v / 16 == 1)
-        {
-          printf("    mov     al, [bp%+d]\n", stack[i + 1][1]);
-          GenExtendAlAx();
-        }
-        else if (v / 16 == 2)
-          printf("    mov     ax, [bp%+d]\n", stack[i + 1][1]);
+        GenReadLocal(v / 16, stack[i + 1][1]);
         break;
       case tokOpIndAcc:
-        printf("    mov     bx, ax\n");
-        if (v / 16 == 1)
-        {
-          printf("    mov     al, [bx]\n");
-          GenExtendAlAx();
-        }
-        else if (v / 16 == 2)
-          printf("    mov     ax, [bx]\n");
+        GenReadIndirect(v / 16);
         break;
       case tokOpStack:
-        printf("    pop     ax\n");
+        GenPrintInstr1Operand(X86InstrPop, 0,
+                              X86OpRegAWord, 0);
         break;
       case tokOpIndStack:
-        printf("    pop     bx\n");
-        if (v / 16 == 1)
-        {
-          printf("    mov     al, [bx]\n");
-          GenExtendAlAx();
-        }
-        else if (v / 16 == 2)
-          printf("    mov     ax, [bx]\n");
+        GenPrintInstr1Operand(X86InstrPop, 0,
+                              X86OpRegBWord, 0);
+        GenPrintInstr2Operands(X86InstrMov, 0,
+                               GenSelectByteOrWord(X86OpRegAByteOrWord, v / 16), 0,
+                               X86OpIndRegB, 0);
+        GenExtendRegAIfNeeded(v / 16);
         break;
       }
 
       if (tok == '=')
       {
+        // "unswap" left and right operands
         i--;
         v = v / 16 + v % 16 * 16;
 
         if (stack[i + 1][0] == tokOpIndStack)
-          printf("    pop     bx\n");
+          GenPrintInstr1Operand(X86InstrPop, 0,
+                                X86OpRegBWord, 0);
       }
 
       // operator
@@ -2376,101 +2655,103 @@ void GenExpr1(void)
         switch (stack[i + 2][0])
         {
         case tokOpNum:
-          printf("    %-4s    ax, %d\n", instr, stack[i + 2][1]);
+          GenPrintInstr2Operands(instr, 0,
+                                 X86OpRegAWord, 0,
+                                 X86OpConst, stack[i + 2][1]);
           break;
         case tokOpIdent:
-          printf("    %-4s    ax, ", instr);
-          GenPrintLabel(IdentTable + stack[i + 2][1]); printf("\n");
+          GenPrintInstr2Operands(instr, 0,
+                                 X86OpRegAWord, 0,
+                                 X86OpLabel, stack[i + 2][1]);
           break;
         case tokOpLocalOfs:
-          printf("    lea     cx, [bp%+d]\n"
-                 "    %-4s    ax, cx\n", stack[i + 2][1], instr);
+          GenPrintInstr2Operands(X86InstrLea, 0,
+                                 X86OpRegCWord, 0,
+                                 X86OpIndLocal, stack[i + 2][1]);
+          GenPrintInstr2Operands(instr, 0,
+                                 X86OpRegAWord, 0,
+                                 X86OpRegCWord, 0);
           break;
         case tokOpAcc:
         case tokOpIndAcc:
           // right operand in cx already
-          printf("    %-4s    ax, cx\n", instr);
+          GenPrintInstr2Operands(instr, 0,
+                                 X86OpRegAWord, 0,
+                                 X86OpRegCWord, 0);
           break;
         case tokOpIndIdent:
           if (v % 16 == 1)
           {
-            if (CharIsSigned)
-              printf("    movsx   cx, byte [");
-            else
-              printf("    movzx   cx, byte [");
-            GenPrintLabel(IdentTable + stack[i + 2][1]); printf("]\n");
-            printf("    %-4s    ax, cx\n", instr);
+            GenReadCRegIdent(v % 16, stack[i + 2][1]);
+            GenPrintInstr2Operands(instr, 0,
+                                   X86OpRegAWord, 0,
+                                   X86OpRegCWord, 0);
           }
-          else if (v % 16 == 2)
+          else
           {
-            printf("    %-4s    ax, [", instr);
-            GenPrintLabel(IdentTable + stack[i + 2][1]); printf("]\n");
+            GenPrintInstr2Operands(instr, 0,
+                                   X86OpRegAWord, 0,
+                                   X86OpIndLabel, stack[i + 2][1]);
           }
           break;
         case tokOpIndLocalOfs:
           if (v % 16 == 1)
           {
-            if (CharIsSigned)
-              printf("    movsx   cx, byte [bp%+d]\n", stack[i + 2][1]);
-            else
-              printf("    movzx   cx, byte [bp%+d]\n", stack[i + 2][1]);
-            printf("    %-4s    ax, cx\n", instr);
+            GenReadCRegLocal(v % 16, stack[i + 2][1]);
+            GenPrintInstr2Operands(instr, 0,
+                                   X86OpRegAWord, 0,
+                                   X86OpRegCWord, 0);
           }
-          else if (v % 16 == 2)
-            printf("    %-4s    ax, [bp%+d]\n", instr, stack[i + 2][1]);
+          else
+          {
+            GenPrintInstr2Operands(instr, 0,
+                                   X86OpRegAWord, 0,
+                                   X86OpIndLocal, stack[i + 2][1]);
+          }
           break;
         }
 
         if (i + 3 < sp && (stack[i + 3][0] == tokIf || stack[i + 3][0] == tokIfNot))
         {
-          if (stack[i + 3][0] == tokIf)
+          switch (tok)
           {
-            switch (tok)
-            {
-            case '<':         printf("    jl      "); break;
-            case tokULess:    printf("    jb      "); break;
-            case '>':         printf("    jg      "); break;
-            case tokUGreater: printf("    ja      "); break;
-            case tokLEQ:      printf("    jle     "); break;
-            case tokULEQ:     printf("    jbe     "); break;
-            case tokGEQ:      printf("    jge     "); break;
-            case tokUGEQ:     printf("    jae     "); break;
-            case tokEQ:       printf("    je      "); break;
-            case tokNEQ:      printf("    jne     "); break;
-            }
+          case '<':
+          case tokULess:
+          case '>':
+          case tokUGreater:
+          case tokLEQ:
+          case tokULEQ:
+          case tokGEQ:
+          case tokUGEQ:
+          case tokEQ:
+          case tokNEQ:
+            if (stack[i + 3][0] == tokIf)
+              GenPrintInstr1Operand(X86InstrJcc, tok,
+                                    X86OpNumLabel, stack[i + 3][1]);
+            else
+              GenPrintInstr1Operand(X86InstrJNotCc, tok,
+                                    X86OpNumLabel, stack[i + 3][1]);
+            break;
           }
-          else
-          {
-            switch (tok)
-            {
-            case '<':         printf("    jge     "); break;
-            case tokULess:    printf("    jae     "); break;
-            case '>':         printf("    jle     "); break;
-            case tokUGreater: printf("    jbe     "); break;
-            case tokLEQ:      printf("    jg      "); break;
-            case tokULEQ:     printf("    ja      "); break;
-            case tokGEQ:      printf("    jl      "); break;
-            case tokUGEQ:     printf("    jb      "); break;
-            case tokEQ:       printf("    jne     "); break;
-            case tokNEQ:      printf("    je      "); break;
-            }
-          }
-          printf("L%d\n", stack[i + 3][1]);
         }
         else
         {
           switch (tok)
           {
-          case '<':         printf("    setl    al\n    cbw\n"); break;
-          case tokULess:    printf("    setb    al\n    cbw\n"); break;
-          case '>':         printf("    setg    al\n    cbw\n"); break;
-          case tokUGreater: printf("    seta    al\n    cbw\n"); break;
-          case tokLEQ:      printf("    setle   al\n    cbw\n"); break;
-          case tokULEQ:     printf("    setbe   al\n    cbw\n"); break;
-          case tokGEQ:      printf("    setge   al\n    cbw\n"); break;
-          case tokUGEQ:     printf("    setae   al\n    cbw\n"); break;
-          case tokEQ:       printf("    sete    al\n    cbw\n"); break;
-          case tokNEQ:      printf("    setne   al\n    cbw\n"); break;
+          case '<':
+          case tokULess:
+          case '>':
+          case tokUGreater:
+          case tokLEQ:
+          case tokULEQ:
+          case tokGEQ:
+          case tokUGEQ:
+          case tokEQ:
+          case tokNEQ:
+            GenPrintInstr1Operand(X86InstrSetCc, tok,
+                                  X86OpRegAByte, 0);
+            GenPrintInstrNoOperand(X86InstrCbw);
+            break;
           }
         }
         break;
@@ -2482,48 +2763,55 @@ void GenExpr1(void)
         switch (stack[i + 2][0])
         {
         case tokOpNum:
-          printf("    imul    ax, ax, %d\n", stack[i + 2][1]);
+          GenPrintInstr3Operands(X86InstrImul, 0,
+                                 X86OpRegAWord, 0,
+                                 X86OpRegAWord, 0,
+                                 X86OpConst, stack[i + 2][1]);
           break;
         case tokOpIdent:
-          printf("    imul    ax, ax, ");
-          GenPrintLabel(IdentTable + stack[i + 2][1]); printf("\n");
+          GenPrintInstr3Operands(X86InstrImul, 0,
+                                 X86OpRegAWord, 0,
+                                 X86OpRegAWord, 0,
+                                 X86OpLabel, stack[i + 2][1]);
           break;
         case tokOpLocalOfs:
-          printf("    lea     cx, [bp%+d]\n"
-                 "    %-4s    cx\n", stack[i + 2][1], instr);
+          GenPrintInstr2Operands(X86InstrLea, 0,
+                                 X86OpRegCWord, 0,
+                                 X86OpIndLocal, stack[i + 2][1]);
+          GenPrintInstr1Operand(instr, 0,
+                                X86OpRegCWord, 0);
           break;
         case tokOpAcc:
         case tokOpIndAcc:
           // right operand in cx already
-          printf("    %-4s    cx\n", instr);
+          GenPrintInstr1Operand(instr, 0,
+                                X86OpRegCWord, 0);
           break;
         case tokOpIndIdent:
           if (v % 16 == 1)
           {
-            if (CharIsSigned)
-              printf("    movsx   cx, byte [");
-            else
-              printf("    movzx   cx, byte [");
-            GenPrintLabel(IdentTable + stack[i + 2][1]); printf("]\n");
-            printf("    %-4s    cx\n", instr);
+            GenReadCRegIdent(v % 16, stack[i + 2][1]);
+            GenPrintInstr1Operand(instr, 0,
+                                  X86OpRegCWord, 0);
           }
-          else if (v % 16 == 2)
+          else
           {
-            printf("    %-4s    word [", instr);
-            GenPrintLabel(IdentTable + stack[i + 2][1]); printf("]\n");
+            GenPrintInstr1Operand(instr, 0,
+                                  X86OpIndLabelExplicitWord, stack[i + 2][1]);
           }
           break;
         case tokOpIndLocalOfs:
           if (v % 16 == 1)
           {
-            if (CharIsSigned)
-              printf("    movsx   cx, byte [bp%+d]\n", stack[i + 2][1]);
-            else
-              printf("    movzx   cx, byte [bp%+d]\n", stack[i + 2][1]);
-            printf("    %-4s    cx\n", instr);
+            GenReadCRegLocal(v % 16, stack[i + 2][1]);
+            GenPrintInstr1Operand(instr, 0,
+                                  X86OpRegCWord, 0);
           }
-          else if (v % 16 == 2)
-            printf("    %-4s    word [bp%+d]\n", instr, stack[i + 2][1]);
+          else
+          {
+            GenPrintInstr1Operand(instr, 0,
+                                  X86OpIndLocalExplicitWord, stack[i + 2][1]);
+          }
           break;
         }
         break;
@@ -2534,60 +2822,68 @@ void GenExpr1(void)
       case tokAssignMod:
         instr = GenGetBinaryOperatorInstr(tok);
 
-        printf("    cwd\n");
+        GenPrintInstrNoOperand(X86InstrCwd);
 
         switch (stack[i + 2][0])
         {
         case tokOpNum:
-          printf("    mov     cx, %d\n"
-                 "    %-4s    cx\n", stack[i + 2][1], instr);
+          GenPrintInstr2Operands(X86InstrMov, 0,
+                                 X86OpRegCWord, 0,
+                                 X86OpConst, stack[i + 2][1]);
+          GenPrintInstr1Operand(instr, 0,
+                                X86OpRegCWord, 0);
           break;
         case tokOpIdent:
-          printf("    mov     cx, ");
-          GenPrintLabel(IdentTable + stack[i + 2][1]); printf("\n");
-          printf("    %-4s    cx\n", instr);
+          GenPrintInstr2Operands(X86InstrMov, 0,
+                                 X86OpRegCWord, 0,
+                                 X86OpLabel, stack[i + 2][1]);
+          GenPrintInstr1Operand(instr, 0,
+                                X86OpRegCWord, 0);
           break;
         case tokOpLocalOfs:
-          printf("    lea     cx, [bp%+d]\n"
-                 "    %-4s    cx\n", stack[i + 2][1], instr);
+          GenPrintInstr2Operands(X86InstrLea, 0,
+                                 X86OpRegCWord, 0,
+                                 X86OpIndLocal, stack[i + 2][1]);
+          GenPrintInstr1Operand(instr, 0,
+                                X86OpRegCWord, 0);
           break;
         case tokOpAcc:
         case tokOpIndAcc:
           // right operand in cx already
-          printf("    %-4s    cx\n", instr);
+          GenPrintInstr1Operand(instr, 0,
+                                X86OpRegCWord, 0);
           break;
         case tokOpIndIdent:
           if (v % 16 == 1)
           {
-            if (CharIsSigned)
-              printf("    movsx   cx, byte [");
-            else
-              printf("    movzx   cx, byte [");
-            GenPrintLabel(IdentTable + stack[i + 2][1]); printf("]\n");
-            printf("    %-4s    cx\n", instr);
+            GenReadCRegIdent(v % 16, stack[i + 2][1]);
+            GenPrintInstr1Operand(instr, 0,
+                                  X86OpRegCWord, 0);
           }
-          else if (v % 16 == 2)
+          else
           {
-            printf("    %-4s    word [", instr);
-            GenPrintLabel(IdentTable + stack[i + 2][1]); printf("]\n");
+            GenPrintInstr1Operand(instr, 0,
+                                  X86OpIndLabelExplicitWord, stack[i + 2][1]);
           }
           break;
         case tokOpIndLocalOfs:
           if (v % 16 == 1)
           {
-            if (CharIsSigned)
-              printf("    movsx   cx, byte [bp%+d]\n", stack[i + 2][1]);
-            else
-              printf("    movzx   cx, byte [bp%+d]\n", stack[i + 2][1]);
-            printf("    %-4s    cx\n", instr);
+            GenReadCRegLocal(v % 16, stack[i + 2][1]);
+            GenPrintInstr1Operand(instr, 0,
+                                  X86OpRegCWord, 0);
           }
-          else if (v % 16 == 2)
-            printf("    %-4s    word [bp%+d]\n", instr, stack[i + 2][1]);
-          break;
+          else
+          {
+            GenPrintInstr1Operand(instr, 0,
+                                  X86OpIndLocalExplicitWord, stack[i + 2][1]);
+          }
         }
 
         if (tok == '%' || tok == tokAssignMod)
-          printf("    mov     ax, dx\n");
+          GenPrintInstr2Operands(X86InstrMov, 0,
+                                 X86OpRegAWord, 0,
+                                 X86OpRegDWord, 0);
         break;
 
       case tokLShift:
@@ -2599,29 +2895,45 @@ void GenExpr1(void)
         switch (stack[i + 2][0])
         {
         case tokOpNum:
-          printf("    %-4s    ax, %d\n", instr, stack[i + 2][1]);
+          GenPrintInstr2Operands(instr, 0,
+                                 X86OpRegAWord, 0,
+                                 X86OpConst, stack[i + 2][1]);
           break;
         case tokOpIdent:
-          printf("    %-4s    ax, ", instr);
-          GenPrintLabel(IdentTable + stack[i + 2][1]); printf("\n");
+          GenPrintInstr2Operands(instr, 0,
+                                 X86OpRegAWord, 0,
+                                 X86OpLabel, stack[i + 2][1]);
           break;
         case tokOpLocalOfs:
-          printf("    lea     cx, [bp%+d]\n"
-                 "    %-4s    ax, cl\n", stack[i + 2][1], instr);
+          GenPrintInstr2Operands(X86InstrLea, 0,
+                                 X86OpRegCWord, 0,
+                                 X86OpIndLocal, stack[i + 2][1]);
+          GenPrintInstr2Operands(instr, 0,
+                                 X86OpRegAWord, 0,
+                                 X86OpRegCByte, 0);
           break;
         case tokOpAcc:
         case tokOpIndAcc:
           // right operand in cx already
-          printf("    %-4s    ax, cl\n", instr);
+          GenPrintInstr2Operands(instr, 0,
+                                 X86OpRegAWord, 0,
+                                 X86OpRegCByte, 0);
           break;
         case tokOpIndIdent:
-          printf("    mov     cl, [");
-          GenPrintLabel(IdentTable + stack[i + 2][1]); printf("]\n");
-          printf("    %-4s    ax, cl\n", instr);
+          GenPrintInstr2Operands(X86InstrMov, 0,
+                                 X86OpRegCByte, 0,
+                                 X86OpIndLabel, stack[i + 2][1]);
+          GenPrintInstr2Operands(instr, 0,
+                                 X86OpRegAWord, 0,
+                                 X86OpRegCByte, 0);
           break;
         case tokOpIndLocalOfs:
-          printf("    mov     cl, [bp%+d]\n"
-                 "    %-4s    ax, cl\n", stack[i + 2][1], instr);
+          GenPrintInstr2Operands(X86InstrMov, 0,
+                                 X86OpRegCByte, 0,
+                                 X86OpIndLocal, stack[i + 2][1]);
+          GenPrintInstr2Operands(instr, 0,
+                                 X86OpRegAWord, 0,
+                                 X86OpRegCByte, 0);
           break;
         }
         break;
@@ -2651,31 +2963,25 @@ void GenExpr1(void)
         switch (stack[i + 1][0])
         {
         case tokOpIndIdent:
-          printf("    mov     [");
-          GenPrintLabel(IdentTable + stack[i + 1][1]); printf("]");
-          if (v / 16 == 1)
-            printf(", al\n");
-          else if (v / 16 == 2)
-            printf(", ax\n");
+          GenPrintInstr2Operands(X86InstrMov, 0,
+                                 X86OpIndLabel, stack[i + 1][1],
+                                 GenSelectByteOrWord(X86OpRegAByteOrWord, v / 16), 0);
           break;
         case tokOpIndLocalOfs:
-          if (v / 16 == 1)
-            printf("    mov     [bp%+d], al\n", stack[i + 1][1]);
-          else if (v / 16 == 2)
-            printf("    mov     [bp%+d], ax\n", stack[i + 1][1]);
+          GenPrintInstr2Operands(X86InstrMov, 0,
+                                 X86OpIndLocal, stack[i + 1][1],
+                                 GenSelectByteOrWord(X86OpRegAByteOrWord, v / 16), 0);
           break;
         case tokOpIndAcc:
         case tokOpIndStack:
-          if (v / 16 == 1)
-            printf("    mov     [bx], al\n");
-          else if (v / 16 == 2)
-            printf("    mov     [bx], ax\n");
+          GenPrintInstr2Operands(X86InstrMov, 0,
+                                 X86OpIndRegB, 0,
+                                 GenSelectByteOrWord(X86OpRegAByteOrWord, v / 16), 0);
           break;
         }
         // the result of the expression is of type of the
         // left lvalue operand, so, "truncate" it if needed
-        if (v / 16 == 1)
-          GenExtendAlAx();
+        GenExtendRegAIfNeeded(v / 16);
       }
       i += 2;
       break;
@@ -2684,12 +2990,13 @@ void GenExpr1(void)
       // DONE: "call ident"
       if (stack[i - 1][0] == tokIdent)
       {
-        printf("    call    ");
-        GenPrintLabel(IdentTable + stack[i - 1][1]); printf("\n");
+        GenPrintInstr1Operand(X86InstrCall, 0,
+                              X86OpLabel, stack[i - 1][1]);
       }
       else
       {
-        printf("    call    ax\n");
+        GenPrintInstr1Operand(X86InstrCall, 0,
+                              X86OpRegAWord, 0);
       }
       if (v)
         GenLocalAlloc(-v);
@@ -2721,367 +3028,242 @@ void GenExpr0(void)
 
     switch (tok)
     {
+    case tokNum: case tokLitChar: printf("; %d\n", v); break;
+    case tokIdent: printf("; %s\n", IdentTable + v); break;
+    case tokLocalOfs: printf("; local ofs\n"); break;
+    case ')': printf("; ) fxn call\n"); break;
+    case tokUnaryStar: printf("; * (read dereference)\n"); break;
+    case '=': printf("; = (write dereference)\n"); break;
+    case tokShortCirc: printf("; short-circuit "); break;
+    case tokLogAnd: printf("; short-circuit && target\n"); break;
+    case tokLogOr: printf("; short-circuit || target\n"); break;
+    case tokIf: case tokIfNot: break;
+    default: printf("; %s\n", GetTokenName(tok)); break;
+    }
+
+    switch (tok)
+    {
     case tokNum:
     case tokLitChar:
-      printf("; %d\n", v);
       if (gotUnary)
-        printf("    push    ax\n");
-      printf("    mov     ax, %d\n", v);
+        GenPrintInstr1Operand(X86InstrPush, 0,
+                              X86OpRegAWord, 0);
+      GenPrintInstr2Operands(X86InstrMov, 0,
+                             X86OpRegAWord, 0,
+                             X86OpConst, v);
       gotUnary = 1;
       break;
 
     case tokIdent:
-      printf("; %s\n", IdentTable + v);
       if (gotUnary)
-        printf("    push    ax\n");
-      printf("    mov     ax, ");
-      GenPrintLabel(IdentTable + v); printf("\n");
+        GenPrintInstr1Operand(X86InstrPush, 0,
+                              X86OpRegAWord, 0);
+      GenPrintInstr2Operands(X86InstrMov, 0,
+                             X86OpRegAWord, 0,
+                             X86OpLabel, v);
       gotUnary = 1;
       break;
 
     case tokLocalOfs:
-      printf("; local ofs\n");
       if (gotUnary)
-        printf("    push    ax\n");
-      printf("    lea     ax, [bp%+d]\n", v);
+        GenPrintInstr1Operand(X86InstrPush, 0,
+                              X86OpRegAWord, 0);
+      GenPrintInstr2Operands(X86InstrLea, 0,
+                             X86OpRegAWord, 0,
+                             X86OpIndLocal, v);
       gotUnary = 1;
       break;
 
     case ')':
-      printf("; ) fxn call\n");
-      printf("    call    ax\n");
+      GenPrintInstr1Operand(X86InstrCall, 0,
+                            X86OpRegAWord, 0);
       if (v)
         GenLocalAlloc(-v);
       break;
 
     case tokUnaryStar:
-      if (v)
-      {
-        printf("; * (read dereference)\n");
-        printf("    mov     bx, ax\n");
-        if (v == 1)
-        {
-          printf("    mov     al, [bx]\n");
-          GenExtendAlAx();
-        }
-        else if (v == 2)
-          printf("    mov     ax, [bx]\n");
-      }
+      GenReadIndirect(v);
       break;
 
     case tokUnaryPlus:
       break;
     case '~':
-      printf("; ~\n");
-      printf("    not     ax\n");
+      GenPrintInstr1Operand(X86InstrNot, 0,
+                            X86OpRegAWord, 0);
       break;
     case tokUnaryMinus:
-      printf("; -u\n");
-      printf("    neg     ax\n");
+      GenPrintInstr1Operand(X86InstrNeg, 0,
+                            X86OpRegAWord, 0);
       break;
 
     case '+':
-      printf("; +\n");
-      printf("    pop     bx\n"
-             "    add     ax, bx\n");
-      break;
     case '-':
-      printf("; -\n");
-      printf("    pop     bx\n"
-             "    xchg    ax, bx\n"
-             "    sub     ax, bx\n");
-      break;
     case '*':
-      printf("; *\n");
-      printf("    pop     bx\n"
-             "    mul     bx\n");
-      break;
     case '&':
-      printf("; &\n");
-      printf("    pop     bx\n"
-             "    and     ax, bx\n");
-      break;
     case '^':
-      printf("; ^\n");
-      printf("    pop     bx\n"
-             "    xor     ax, bx\n");
-      break;
     case '|':
-      printf("; |\n");
-      printf("    pop     bx\n"
-             "    or      ax, bx\n");
+      {
+        int instr = GenGetBinaryOperatorInstr(tok);
+        GenPrintInstr1Operand(X86InstrPop, 0,
+                              X86OpRegBWord, 0);
+        if (tok == '-')
+          GenPrintInstr2Operands(X86InstrXchg, 0,
+                                 X86OpRegAWord, 0,
+                                 X86OpRegBWord, 0);
+        if (tok != '*')
+          GenPrintInstr2Operands(instr, 0,
+                                 X86OpRegAWord, 0,
+                                 X86OpRegBWord, 0);
+        else
+          GenPrintInstr1Operand(instr, 0,
+                                X86OpRegBWord, 0);
+      }
       break;
 
     case '/':
-      printf("; /\n");
-      printf("    pop     bx\n"
-             "    xchg    ax, bx\n"
-             "    cwd\n"
-             "    idiv    bx\n");
-      break;
     case '%':
-      printf("; %\n");
-      printf("    pop     bx\n"
-             "    xchg    ax, bx\n"
-             "    cwd\n"
-             "    idiv    bx\n"
-             "    mov     ax, dx\n");
+      GenPrintInstr1Operand(X86InstrPop, 0,
+                            X86OpRegBWord, 0);
+      GenPrintInstr2Operands(X86InstrXchg, 0,
+                             X86OpRegAWord, 0,
+                             X86OpRegBWord, 0);
+      GenPrintInstrNoOperand(X86InstrCwd);
+      GenPrintInstr1Operand(X86InstrIdiv, 0,
+                            X86OpRegBWord, 0);
+      if (tok == '%')
+        GenPrintInstr2Operands(X86InstrMov, 0,
+                               X86OpRegAWord, 0,
+                               X86OpRegDWord, 0);
       break;
 
     case tokLShift:
-      printf("; <<\n");
-      printf("    pop     cx\n"
-             "    xchg    ax, cx\n"
-             "    shl     ax, cl\n");
-      break;
     case tokRShift:
-      printf("; >>\n");
-      printf("    pop     cx\n"
-             "    xchg    ax, cx\n"
-             "    sar     ax, cl\n");
+      {
+        int instr = GenGetBinaryOperatorInstr(tok);
+        GenPrintInstr1Operand(X86InstrPop, 0,
+                              X86OpRegCWord, 0);
+        GenPrintInstr2Operands(X86InstrXchg, 0,
+                               X86OpRegAWord, 0,
+                               X86OpRegCWord, 0);
+        GenPrintInstr2Operands(instr, 0,
+                               X86OpRegAWord, 0,
+                               X86OpRegCByte, 0);
+      }
       break;
 
     case tokInc:
-      printf("; ++\n");
-      printf("    mov     bx, ax\n");
-      if (v == 1)
-      {
-        printf("    inc     byte [bx]\n"
-               "    mov     al, [bx]\n");
-        GenExtendAlAx();
-      }
-      else if (v == 2)
-        printf("    inc     word [bx]\n"
-               "    mov     ax, [bx]\n");
+      GenIncDecIndirect(v, tok);
       break;
     case tokDec:
-      printf("; --\n");
-      printf("    mov     bx, ax\n");
-      if (v == 1)
-      {
-        printf("    dec     byte [bx]\n"
-               "    mov     al, [bx]\n");
-        GenExtendAlAx();
-      }
-      else if (v == 2)
-        printf("    dec     word [bx]\n"
-               "    mov     ax, [bx]\n");
+      GenIncDecIndirect(v, tok);
       break;
     case tokPostInc:
-      printf("; ++p\n");
-      printf("    mov     bx, ax\n");
-      if (v == 1)
-      {
-        printf("    mov     al, [bx]\n");
-        GenExtendAlAx();
-        printf("    inc     byte [bx]\n");
-      }
-      else if (v == 2)
-        printf("    mov     ax, [bx]\n"
-               "    inc     word [bx]\n");
+      GenPostIncDecIndirect(v, tok);
       break;
     case tokPostDec:
-      printf("; --p\n");
-      printf("    mov     bx, ax\n");
-      if (v == 1)
+      GenPostIncDecIndirect(v, tok);
+      break;
+
+    case tokPostAdd:
+    case tokPostSub:
       {
-        printf("    mov     al, [bx]\n");
-        GenExtendAlAx();
-        printf("    dec     byte [bx]\n");
+        int instr = GenGetBinaryOperatorInstr(tok);
+        GenPrintInstr1Operand(X86InstrPop, 0,
+                              X86OpRegBWord, 0);
+        GenPrintInstr2Operands(X86InstrMov, 0,
+                               X86OpRegCWord, 0,
+                               X86OpRegAWord, 0);
+        GenPrintInstr2Operands(X86InstrMov, 0,
+                               GenSelectByteOrWord(X86OpRegAByteOrWord, v), 0,
+                               X86OpIndRegB, 0);
+        GenPrintInstr2Operands(instr, 0,
+                               X86OpIndRegB, 0,
+                               GenSelectByteOrWord(X86OpRegCByteOrWord, v), 0);
+        GenExtendRegAIfNeeded(v);
       }
-      else if (v == 2)
-        printf("    mov     ax, [bx]\n"
-               "    dec     word [bx]\n");
       break;
 
     case tokAssignAdd:
-      printf("; +=\n");
-      printf("    pop     bx\n");
-      if (v == 1)
-      {
-        printf("    add     [bx], al\n"
-               "    mov     al, [bx]\n");
-        GenExtendAlAx();
-      }
-      else if (v == 2)
-        printf("    add     [bx], ax\n"
-               "    mov     ax, [bx]\n");
-      break;
     case tokAssignSub:
-      printf("; -=\n");
-      printf("    pop     bx\n");
-      if (v == 1)
-      {
-        printf("    sub     [bx], al\n"
-               "    mov     al, [bx]\n");
-        GenExtendAlAx();
-      }
-      else if (v == 2)
-        printf("    sub     [bx], ax\n"
-               "    mov     ax, [bx]\n");
-      break;
-    case tokPostAdd:
-      printf("; +=p\n");
-      printf("    pop     bx\n"
-             "    mov     cx, ax\n");
-      if (v == 1)
-      {
-        printf("    mov     al, [bx]\n"
-               "    add     [bx], cl\n");
-        GenExtendAlAx();
-      }
-      else if (v == 2)
-        printf("    mov     ax, [bx]\n"
-               "    add     [bx], cx\n");
-      break;
-    case tokPostSub:
-      printf("; -=p\n");
-      printf("    pop     bx\n"
-             "    mov     cx, ax\n");
-      if (v == 1)
-      {
-        printf("    mov     al, [bx]\n"
-               "    sub     [bx], cl\n");
-        GenExtendAlAx();
-      }
-      else if (v == 2)
-        printf("    mov     ax, [bx]\n"
-               "    sub     [bx], cx\n");
-      break;
-
-    case tokAssignAnd:
-      printf("; &=\n");
-      printf("    pop     bx\n");
-      if (v == 1)
-      {
-        printf("    and     [bx], al\n"
-               "    mov     al, [bx]\n");
-        GenExtendAlAx();
-      }
-      else if (v == 2)
-        printf("    and     [bx], ax\n"
-               "    mov     ax, [bx]\n");
-      break;
-    case tokAssignXor:
-      printf("; ^=\n");
-      printf("    pop     bx\n");
-      if (v == 1)
-      {
-        printf("    xor     [bx], al\n"
-               "    mov     al, [bx]\n");
-        GenExtendAlAx();
-      }
-      else if (v == 2)
-        printf("    xor     [bx], ax\n"
-               "    mov     ax, [bx]\n");
-      break;
-    case tokAssignOr:
-      printf("; |=\n");
-      printf("    pop     bx\n");
-      if (v == 1)
-      {
-        printf("    or      [bx], al\n"
-               "    mov     al, [bx]\n");
-        GenExtendAlAx();
-      }
-      else if (v == 2)
-        printf("    or      [bx], ax\n"
-               "    mov     ax, [bx]\n");
-      break;
-
     case tokAssignMul:
-      printf("; *=\n");
-      printf("    pop     bx\n");
-      if (v == 1)
+    case tokAssignAnd:
+    case tokAssignXor:
+    case tokAssignOr:
       {
-        printf("    mul     byte [bx]\n"
-               "    mov     [bx], al\n");
-        GenExtendAlAx();
+        int instr = GenGetBinaryOperatorInstr(tok);
+        GenPrintInstr1Operand(X86InstrPop, 0,
+                              X86OpRegBWord, 0);
+        if (tok != tokAssignMul)
+        {
+          GenPrintInstr2Operands(instr, 0,
+                                 X86OpIndRegB, 0,
+                                 GenSelectByteOrWord(X86OpRegAByteOrWord, v), 0);
+          GenPrintInstr2Operands(X86InstrMov, 0,
+                                 GenSelectByteOrWord(X86OpRegAByteOrWord, v), 0,
+                                 X86OpIndRegB, 0);
+        }
+        else
+        {
+          GenPrintInstr1Operand(instr, 0,
+                                GenSelectByteOrWord(X86OpIndRegBExplicitByteOrWord, v), 0);
+          GenPrintInstr2Operands(X86InstrMov, 0,
+                                 X86OpIndRegB, 0,
+                                 GenSelectByteOrWord(X86OpRegAByteOrWord, v), 0);
+        }
+        GenExtendRegAIfNeeded(v);
       }
-      else if (v == 2)
-        printf("    mul     word [bx]\n"
-               "    mov     [bx], ax\n");
       break;
 
     case tokAssignDiv:
-      printf("; /=\n");
-      printf("    pop     bx\n"
-             "    mov     cx, ax\n");
-      if (v == 1)
-      {
-        printf("    mov     al, [bx]\n");
-        GenExtendAlAx();
-        printf("    cwd\n"
-               "    idiv    cx\n"
-               "    mov     [bx], al\n");
-        GenExtendAlAx();
-      }
-      else if (v == 2)
-        printf("    mov     ax, [bx]\n"
-               "    cwd\n"
-               "    idiv    cx\n"
-               "    mov     [bx], ax\n");
-      break;
     case tokAssignMod:
-      printf("; %=\n");
-      printf("    pop     bx\n"
-             "    mov     cx, ax\n");
-      if (v == 1)
-      {
-        printf("    mov     al, [bx]\n");
-        GenExtendAlAx();
-        printf("    cwd\n"
-               "    idiv    cx\n"
-               "    mov     [bx], al\n");
-        GenExtendAlAx();
-      }
-      else if (v == 2)
-        printf("    mov     ax, [bx]\n"
-               "    cwd\n"
-               "    idiv    cx\n"
-               "    mov     [bx], ax\n");
-      printf("    mov     ax, dx\n");
+      GenPrintInstr1Operand(X86InstrPop, 0,
+                            X86OpRegBWord, 0);
+      GenPrintInstr2Operands(X86InstrMov, 0,
+                             X86OpRegCWord, 0,
+                             X86OpRegAWord, 0);
+      GenPrintInstr2Operands(X86InstrMov, 0,
+                             GenSelectByteOrWord(X86OpRegAByteOrWord, v), 0,
+                             X86OpIndRegB, 0);
+      GenExtendRegAIfNeeded(v);
+      GenPrintInstrNoOperand(X86InstrCwd);
+      GenPrintInstr1Operand(X86InstrIdiv, 0,
+                            X86OpRegCWord, 0);
+      if (tok == tokAssignMod)
+        GenPrintInstr2Operands(X86InstrMov, 0,
+                               X86OpRegAWord, 0,
+                               X86OpRegDWord, 0);
+      GenPrintInstr2Operands(X86InstrMov, 0,
+                             X86OpIndRegB, 0,
+                             GenSelectByteOrWord(X86OpRegAByteOrWord, v), 0);
+      GenExtendRegAIfNeeded(v);
       break;
 
     case tokAssignLSh:
-      printf("; <<=\n");
-      printf("    pop     bx\n"
-             "    mov     cx, ax\n");
-      if (v == 1)
-      {
-        printf("    shl     byte [bx], cl\n"
-               "    mov     al, [bx]\n");
-        GenExtendAlAx();
-      }
-      else if (v == 2)
-        printf("    shl     word [bx], cl\n"
-               "    mov     ax, [bx]\n");
-      break;
     case tokAssignRSh:
-      printf("; >>=\n");
-      printf("    pop     bx\n"
-             "    mov     cx, ax\n");
-      if (v == 1)
       {
-        printf("    sar     byte [bx], cl\n"
-               "    mov     al, [bx]\n");
-        GenExtendAlAx();
+        int instr = GenGetBinaryOperatorInstr(tok);
+        GenPrintInstr1Operand(X86InstrPop, 0,
+                              X86OpRegBWord, 0);
+        GenPrintInstr2Operands(X86InstrMov, 0,
+                               X86OpRegCWord, 0,
+                               X86OpRegAWord, 0);
+        GenPrintInstr2Operands(instr, 0,
+                               GenSelectByteOrWord(X86OpIndRegBExplicitByteOrWord, v), 0,
+                               X86OpRegCByte, 0);
+        GenPrintInstr2Operands(X86InstrMov, 0,
+                               GenSelectByteOrWord(X86OpRegAByteOrWord, v), 0,
+                               X86OpIndRegB, 0);
+        GenExtendRegAIfNeeded(v);
       }
-      else if (v == 2)
-        printf("    sar     word [bx], cl\n"
-               "    mov     ax, [bx]\n");
       break;
 
     case '=':
-      printf("; = (write dereference)\n");
-      printf("    pop     bx\n");
-      if (v == 1)
-      {
-        printf("    mov     [bx], al\n");
-        GenExtendAlAx();
-      }
-      else if (v == 2)
-        printf("    mov     [bx], ax\n");
+      GenPrintInstr1Operand(X86InstrPop, 0,
+                            X86OpRegBWord, 0);
+      GenPrintInstr2Operands(X86InstrMov, 0,
+                             X86OpIndRegB, 0,
+                             GenSelectByteOrWord(X86OpRegAByteOrWord, v), 0);
+      GenExtendRegAIfNeeded(v);
       break;
 
     case '<':
@@ -3094,34 +3276,26 @@ void GenExpr0(void)
     case tokUGEQ:
     case tokEQ:
     case tokNEQ:
-      printf("; %s\n", GetTokenName(tok));
-      printf("    pop     bx\n"
-             "    cmp     bx, ax\n");
-      switch (tok)
-      {
-      case '<':         printf("    setl    al\n"); break;
-      case tokULess:    printf("    setb    al\n"); break;
-      case '>':         printf("    setg    al\n"); break;
-      case tokUGreater: printf("    seta    al\n"); break;
-      case tokLEQ:      printf("    setle   al\n"); break;
-      case tokULEQ:     printf("    setbe   al\n"); break;
-      case tokGEQ:      printf("    setge   al\n"); break;
-      case tokUGEQ:     printf("    setae   al\n"); break;
-      case tokEQ:       printf("    sete    al\n"); break;
-      case tokNEQ:      printf("    setne   al\n"); break;
-      }
-      printf("    cbw\n");
+      GenPrintInstr1Operand(X86InstrPop, 0,
+                            X86OpRegBWord, 0);
+      GenPrintInstr2Operands(X86InstrCmp, 0,
+                             X86OpRegBWord, 0,
+                             X86OpRegAWord, 0);
+      GenPrintInstr1Operand(X86InstrSetCc, tok,
+                            X86OpRegAByte, 0);
+      GenPrintInstrNoOperand(X86InstrCbw);
       break;
 
     case tok_Bool:
-      printf("; _Bool\n");
-      printf("    test    ax, ax\n"
-             "    setnz   al\n"
-             "    cbw\n");
+      GenPrintInstr2Operands(X86InstrTest, 0,
+                             X86OpRegAWord, 0,
+                             X86OpRegAWord, 0);
+      GenPrintInstr1Operand(X86InstrSetCc, tokNEQ,
+                            X86OpRegAByte, 0);
+      GenPrintInstrNoOperand(X86InstrCbw);
       break;
 
     case tokShortCirc:
-      printf("; short-circuit ");
       if (v >= 0)
         printf("&&\n");
       else
@@ -3134,19 +3308,21 @@ void GenExpr0(void)
       break;
 
     case tokLogAnd:
-      printf("; short-circuit && target\n");
       GenNumLabel(v);
       break;
     case tokLogOr:
-      printf("; short-circuit || target\n");
       GenNumLabel(v);
       break;
 
     case ',':
-      printf("; ,\n");
-      break;
     case '(':
-      printf("; (\n");
+      break;
+
+    case tokIf:
+      GenJumpIfNotZero(stack[i][1]);
+      break;
+    case tokIfNot:
+      GenJumpIfZero(stack[i][1]);
       break;
 
     default:

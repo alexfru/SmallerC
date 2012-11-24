@@ -885,11 +885,11 @@ SEGMENT _TEXT
     mov     al, [bx]
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L34
+    je      L34
     mov     ax, _MacroTable
     add     ax, [_MacroTableLen]
     mov     bx, ax
@@ -907,12 +907,12 @@ SEGMENT _TEXT
     call    _strchr
     sub     sp, -4
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 L34:
 ; JumpIfZero
     test    ax, ax
-    jz      L31
+    je      L31
 ; RPN'ized expression: "MacroTable MacroTableLen + *u --p "
 ; Expanded expression: "MacroTable MacroTableLen *(2) + --p(1) "
 ; Fused expression:    "+ MacroTable *MacroTableLen --p(1) *ax "
@@ -1128,7 +1128,7 @@ L54:
     dec     word [bp-4]
 ; JumpIfZero
     test    ax, ax
-    jz      L55
+    je      L55
 ; RPN'ized expression: "( MacroTable i ++p + *u , L56 printf ) "
 ; Expanded expression: " MacroTable (@-2) ++p(2) + *(1)  L56  printf ()4 "
 ; SEGMENT _TEXT
@@ -5015,7 +5015,7 @@ _ShiftChar:
     mov     ax, [_CharQueueLen]
 ; JumpIfZero
     test    ax, ax
-    jz      L693
+    je      L693
 ; {
 ; RPN'ized expression: "( CharQueueLen -- , CharQueue 1 + , CharQueue memmove ) "
 ; Expanded expression: " CharQueueLen --(2)  CharQueue 1 +  CharQueue  memmove ()6 "
@@ -5095,7 +5095,7 @@ L697:
     mov     ax, [bp-2]
 ; JumpIfZero
     test    ax, ax
-    jz      L699
+    je      L699
 ; RPN'ized expression: "CharQueue CharQueueLen + *u 0 = "
 ; Expanded expression: "CharQueue CharQueueLen *(2) + 0 =(1) "
 ; Fused expression:    "+ CharQueue *CharQueueLen =(18) *ax 0 "
@@ -5233,7 +5233,7 @@ SEGMENT _TEXT
     sub     sp, -4
 ; JumpIfZero
     test    ax, ax
-    jz      L711
+    je      L711
 ; {
 ; if
 ; RPN'ized expression: "SkipNewLines 0 == "
@@ -5257,11 +5257,11 @@ L715:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L719
+    je      L719
     mov     ax, [bp-2]
     add     ax, 1
     mov     bx, ax
@@ -5271,12 +5271,12 @@ L715:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 L719:
 ; JumpIfZero
     test    ax, ax
-    jz      L717
+    je      L717
 ; RPN'ized expression: "( ShiftChar ) "
 ; Expanded expression: " ShiftChar ()0 "
 ; Fused expression:    "( ShiftChar )0 "
@@ -5395,11 +5395,11 @@ L730:
     setne   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L732
+    je      L732
     mov     ax, [bp-2]
     mov     bx, ax
     mov     al, [bx]
@@ -5408,11 +5408,11 @@ L730:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L733
+    je      L733
     mov     ax, [bp-2]
     add     ax, 1
     mov     bx, ax
@@ -5422,19 +5422,19 @@ L730:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 L733:
     cmp     ax, 0
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 L732:
 ; JumpIfZero
     test    ax, ax
-    jz      L731
+    je      L731
 ; {
 ; if
 ; RPN'ized expression: "( p *u , L736 strchr ) "
@@ -5456,7 +5456,7 @@ SEGMENT _TEXT
     sub     sp, -4
 ; JumpIfZero
     test    ax, ax
-    jz      L734
+    je      L734
 ; {
 ; if
 ; RPN'ized expression: "SkipNewLines 0 == "
@@ -5490,11 +5490,11 @@ L738:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L744
+    je      L744
     mov     ax, [bp-2]
     add     ax, 1
     mov     bx, ax
@@ -5504,12 +5504,12 @@ L738:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 L744:
 ; JumpIfZero
     test    ax, ax
-    jz      L742
+    je      L742
 ; RPN'ized expression: "( ShiftChar ) "
 ; Expanded expression: " ShiftChar ()0 "
 ; Fused expression:    "( ShiftChar )0 "
@@ -5616,11 +5616,11 @@ _GetIdent:
     setne   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L752
+    je      L752
     mov     ax, [bp-2]
     mov     bx, ax
     mov     al, [bx]
@@ -5632,12 +5632,12 @@ _GetIdent:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 L752:
 ; JumpIfZero
     test    ax, ax
-    jz      L750
+    je      L750
 ; RPN'ized expression: "( L753 error ) "
 ; Expanded expression: " L753  error ()2 "
 ; SEGMENT _TEXT
@@ -5663,11 +5663,11 @@ L750:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L759
+    jne     L759
     mov     ax, [bp-2]
     mov     bx, ax
     mov     al, [bx]
@@ -5676,15 +5676,15 @@ L750:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 L759:
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L757
+    je      L757
     mov     ax, [bp-2]
     add     ax, 1
     mov     bx, ax
@@ -5694,11 +5694,11 @@ L759:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L758
+    jne     L758
     mov     ax, [bp-2]
     add     ax, 1
     mov     bx, ax
@@ -5708,16 +5708,16 @@ L759:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 L758:
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 L757:
 ; JumpIfZero
     test    ax, ax
-    jz      L755
+    je      L755
 ; RPN'ized expression: "( L760 error ) "
 ; Expanded expression: " L760  error ()2 "
 ; SEGMENT _TEXT
@@ -5780,11 +5780,11 @@ L762:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L764
+    jne     L764
     mov     ax, [bp-2]
     mov     bx, ax
     mov     al, [bx]
@@ -5793,12 +5793,12 @@ L762:
     call    _isalnum
     sub     sp, -2
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 L764:
 ; JumpIfZero
     test    ax, ax
-    jz      L763
+    je      L763
 ; {
 ; if
 ; RPN'ized expression: "TokenIdentNameLen 31 == "
@@ -6639,11 +6639,11 @@ L833:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L840
+    je      L840
     mov     ax, [bp-2]
     add     ax, 2
     mov     bx, ax
@@ -6653,12 +6653,12 @@ L833:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 L840:
 ; JumpIfZero
     test    ax, ax
-    jz      L838
+    je      L838
 ; {
 ; RPN'ized expression: "( 3 ShiftCharN ) "
 ; Expanded expression: " 3  ShiftCharN ()2 "
@@ -6832,11 +6832,11 @@ L851:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L855
+    jne     L855
     mov     ax, [bp-2]
     add     ax, 1
     mov     bx, ax
@@ -6846,12 +6846,12 @@ L851:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 L855:
 ; JumpIfZero
     test    ax, ax
-    jz      L853
+    je      L853
 ; {
 ; RPN'ized expression: "( 1 SkipSpace ) "
 ; Expanded expression: " 1  SkipSpace ()2 "
@@ -6892,7 +6892,7 @@ L778:
     sub     sp, -2
 ; JumpIfZero
     test    ax, ax
-    jz      L856
+    je      L856
 ; {
 ; RPN'ized expression: "TokenValueInt 0 = "
 ; Expanded expression: "TokenValueInt 0 =(2) "
@@ -6928,11 +6928,11 @@ L778:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L862
+    jne     L862
     mov     ax, [bp-2]
     mov     bx, ax
     mov     al, [bx]
@@ -6941,12 +6941,12 @@ L778:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 L862:
 ; JumpIfZero
     test    ax, ax
-    jz      L860
+    je      L860
 ; {
 ; loc                     ch : (@-6): int
     sub     sp, 2
@@ -6985,35 +6985,35 @@ SEGMENT _TEXT
     setne   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L867
+    je      L867
     push    word [bp-6]
     call    _isdigit
     sub     sp, -2
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L868
+    jne     L868
     push    word [bp-6]
     push    L865
     call    _strchr
     sub     sp, -4
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 L868:
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 L867:
 ; JumpIfZero
     test    ax, ax
-    jz      L864
+    je      L864
 ; {
 ; if
 ; RPN'ized expression: "ch 97 >= "
@@ -7119,11 +7119,11 @@ L877:
     setge   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L879
+    je      L879
     mov     ax, [bp-2]
     mov     bx, ax
     mov     al, [bx]
@@ -7132,12 +7132,12 @@ L877:
     setle   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 L879:
 ; JumpIfZero
     test    ax, ax
-    jz      L878
+    je      L878
 ; {
 ; RPN'ized expression: "TokenValueInt 8 *= "
 ; Expanded expression: "TokenValueInt 8 *=(2) "
@@ -7184,11 +7184,11 @@ L880:
     setge   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L882
+    je      L882
     mov     ax, [bp-2]
     mov     bx, ax
     mov     al, [bx]
@@ -7197,12 +7197,12 @@ L880:
     setle   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 L882:
 ; JumpIfZero
     test    ax, ax
-    jz      L881
+    je      L881
 ; {
 ; RPN'ized expression: "TokenValueInt 10 *= "
 ; Expanded expression: "TokenValueInt 10 *=(2) "
@@ -7253,11 +7253,11 @@ L856:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L885
+    jne     L885
     mov     ax, [bp-2]
     mov     bx, ax
     mov     al, [bx]
@@ -7266,12 +7266,12 @@ L856:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 L885:
 ; JumpIfZero
     test    ax, ax
-    jz      L883
+    je      L883
 ; {
 ; loc             terminator : (@-6): char
     sub     sp, 2
@@ -7332,11 +7332,11 @@ SEGMENT _TEXT
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L895
+    jne     L895
     mov     ax, [bp-2]
     mov     bx, ax
     mov     al, [bx]
@@ -7346,15 +7346,15 @@ SEGMENT _TEXT
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 L895:
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L894
+    jne     L894
     mov     ax, [bp-2]
     mov     bx, ax
     mov     al, [bx]
@@ -7364,7 +7364,7 @@ L895:
     call    _strchr
     sub     sp, -4
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 L894:
     cmp     ax, 0
@@ -7419,11 +7419,11 @@ SEGMENT _TEXT
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L902
+    jne     L902
     mov     al, [bp-8]
     cbw
     push    ax
@@ -7431,12 +7431,12 @@ SEGMENT _TEXT
     call    _strchr
     sub     sp, -4
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 L902:
 ; JumpIfZero
     test    ax, ax
-    jz      L898
+    je      L898
 ; break
     jmp     L891
 L898:
@@ -7659,11 +7659,11 @@ SEGMENT _TEXT
     setne   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L927
+    je      L927
     mov     ax, [bp-2]
     mov     bx, ax
     mov     al, [bx]
@@ -7672,11 +7672,11 @@ SEGMENT _TEXT
     call    _isdigit
     sub     sp, -2
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L928
+    jne     L928
     mov     ax, [bp-2]
     mov     bx, ax
     mov     al, [bx]
@@ -7686,16 +7686,16 @@ SEGMENT _TEXT
     call    _strchr
     sub     sp, -4
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 L928:
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 L927:
 ; JumpIfZero
     test    ax, ax
-    jz      L924
+    je      L924
 ; {
 ; RPN'ized expression: "ch 16 *= "
 ; Expanded expression: "(@-8) 16 *=(1) "
@@ -7829,11 +7829,11 @@ L904:
     setge   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L939
+    je      L939
     mov     ax, [bp-2]
     mov     bx, ax
     mov     al, [bx]
@@ -7842,12 +7842,12 @@ L904:
     setle   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 L939:
 ; JumpIfZero
     test    ax, ax
-    jz      L937
+    je      L937
 ; {
 ; loc                                 cnt : (@-10): int
     sub     sp, 2
@@ -7877,11 +7877,11 @@ L940:
     setge   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L942
+    je      L942
     mov     ax, [bp-2]
     mov     bx, ax
     mov     al, [bx]
@@ -7890,12 +7890,12 @@ L940:
     setle   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 L942:
 ; JumpIfZero
     test    ax, ax
-    jz      L941
+    je      L941
 ; {
 ; RPN'ized expression: "ch ch 8 * p *u + 48 - = "
 ; Expanded expression: "(@-8) (@-8) *(1) 8 * (@-2) *(2) *(1) + 48 - =(1) "
@@ -8191,11 +8191,11 @@ L883:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L973
+    jne     L973
     mov     ax, [bp-2]
     mov     bx, ax
     mov     al, [bx]
@@ -8204,12 +8204,12 @@ L883:
     call    _isalpha
     sub     sp, -2
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 L973:
 ; JumpIfZero
     test    ax, ax
-    jz      L971
+    je      L971
 ; {
 ; loc             tok : (@-6): int
     sub     sp, 2
@@ -8374,7 +8374,7 @@ SEGMENT _TEXT
     sub     sp, -4
 ; JumpIfZero
     test    ax, ax
-    jz      L982
+    je      L982
 ; RPN'ized expression: "( L986 error ) "
 ; Expanded expression: " L986  error ()2 "
 ; SEGMENT _TEXT
@@ -8513,11 +8513,11 @@ SEGMENT _TEXT
     setne   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L1004
+    je      L1004
     mov     ax, [bp-2]
     mov     bx, ax
     mov     al, [bx]
@@ -8527,11 +8527,11 @@ SEGMENT _TEXT
     call    _strchr
     sub     sp, -4
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L1005
+    jne     L1005
     mov     ax, [bp-2]
     mov     bx, ax
     mov     al, [bx]
@@ -8540,11 +8540,11 @@ SEGMENT _TEXT
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L1006
+    je      L1006
     mov     ax, [bp-2]
     add     ax, 1
     mov     bx, ax
@@ -8554,11 +8554,11 @@ SEGMENT _TEXT
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L1007
+    jne     L1007
     mov     ax, [bp-2]
     add     ax, 1
     mov     bx, ax
@@ -8568,24 +8568,24 @@ SEGMENT _TEXT
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 L1007:
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 L1006:
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 L1005:
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 L1004:
 ; JumpIfZero
     test    ax, ax
-    jz      L1000
+    je      L1000
 ; {
 ; RPN'ized expression: "( 0 SkipSpace ) "
 ; Expanded expression: " 0  SkipSpace ()2 "
@@ -8748,7 +8748,7 @@ _GenPrintLabel:
     sub     sp, -2
 ; JumpIfZero
     test    ax, ax
-    jz      L1023
+    je      L1023
 ; RPN'ized expression: "( Label , L1025 printf ) "
 ; Expanded expression: " (@4) *(2)  L1025  printf ()4 "
 ; SEGMENT _TEXT
@@ -8809,6 +8809,32 @@ L1029:
     leave
     ret
 ; SEGMENT _TEXT
+; glb GenPrintNumLabel : (
+; prm     label : int
+;     ) void
+SEGMENT _TEXT
+    global  _GenPrintNumLabel
+_GenPrintNumLabel:
+    push    bp
+    mov     bp, sp
+; loc     label : (@4): int
+; RPN'ized expression: "( label , L1033 printf ) "
+; Expanded expression: " (@4) *(2)  L1033  printf ()4 "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1033:
+    db  "L%d",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "( *(2) (@4) , L1033 , printf )4 "
+    push    word [bp+4]
+    push    L1033
+    call    _printf
+    sub     sp, -4
+L1032:
+    leave
+    ret
+; SEGMENT _TEXT
 ; glb GenZeroData : (
 ; prm     Size : int
 ;     ) void
@@ -8818,20 +8844,20 @@ _GenZeroData:
     push    bp
     mov     bp, sp
 ; loc     Size : (@4): int
-; RPN'ized expression: "( Size , L1033 printf ) "
-; Expanded expression: " (@4) *(2)  L1033  printf ()4 "
+; RPN'ized expression: "( Size , L1036 printf ) "
+; Expanded expression: " (@4) *(2)  L1036  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L1033:
+L1036:
     db  "    times %d db 0",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( *(2) (@4) , L1033 , printf )4 "
+; Fused expression:    "( *(2) (@4) , L1036 , printf )4 "
     push    word [bp+4]
-    push    L1033
+    push    L1036
     call    _printf
     sub     sp, -4
-L1032:
+L1035:
     leave
     ret
 ; SEGMENT _TEXT
@@ -8852,22 +8878,22 @@ _GenIntData:
 ; Fused expression:    "== *(@4) 1 IF! "
     mov     ax, [bp+4]
     cmp     ax, 1
-    jne     L1036
-; RPN'ized expression: "( Val , L1038 printf ) "
-; Expanded expression: " (@6) *(2)  L1038  printf ()4 "
+    jne     L1039
+; RPN'ized expression: "( Val , L1041 printf ) "
+; Expanded expression: " (@6) *(2)  L1041  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L1038:
+L1041:
     db  "    db  %d",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( *(2) (@6) , L1038 , printf )4 "
+; Fused expression:    "( *(2) (@6) , L1041 , printf )4 "
     push    word [bp+6]
-    push    L1038
+    push    L1041
     call    _printf
     sub     sp, -4
-    jmp     L1037
-L1036:
+    jmp     L1040
+L1039:
 ; else
 ; if
 ; RPN'ized expression: "Size 2 == "
@@ -8875,23 +8901,23 @@ L1036:
 ; Fused expression:    "== *(@4) 2 IF! "
     mov     ax, [bp+4]
     cmp     ax, 2
-    jne     L1040
-; RPN'ized expression: "( Val , L1042 printf ) "
-; Expanded expression: " (@6) *(2)  L1042  printf ()4 "
+    jne     L1043
+; RPN'ized expression: "( Val , L1045 printf ) "
+; Expanded expression: " (@6) *(2)  L1045  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L1042:
+L1045:
     db  "    dw  %d",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( *(2) (@6) , L1042 , printf )4 "
+; Fused expression:    "( *(2) (@6) , L1045 , printf )4 "
     push    word [bp+6]
-    push    L1042
+    push    L1045
     call    _printf
     sub     sp, -4
+L1043:
 L1040:
-L1037:
-L1035:
+L1038:
     leave
     ret
 ; SEGMENT _TEXT
@@ -8912,21 +8938,21 @@ _GenAddrData:
 ; Fused expression:    "== *(@4) 1 IF! "
     mov     ax, [bp+4]
     cmp     ax, 1
-    jne     L1045
-; RPN'ized expression: "( L1047 printf ) "
-; Expanded expression: " L1047  printf ()2 "
+    jne     L1048
+; RPN'ized expression: "( L1050 printf ) "
+; Expanded expression: " L1050  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L1047:
+L1050:
     db  "    db  ",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L1047 , printf )2 "
-    push    L1047
+; Fused expression:    "( L1050 , printf )2 "
+    push    L1050
     call    _printf
     sub     sp, -2
-    jmp     L1046
-L1045:
+    jmp     L1049
+L1048:
 ; else
 ; if
 ; RPN'ized expression: "Size 2 == "
@@ -8934,72 +8960,2568 @@ L1045:
 ; Fused expression:    "== *(@4) 2 IF! "
     mov     ax, [bp+4]
     cmp     ax, 2
-    jne     L1049
-; RPN'ized expression: "( L1051 printf ) "
-; Expanded expression: " L1051  printf ()2 "
+    jne     L1052
+; RPN'ized expression: "( L1054 printf ) "
+; Expanded expression: " L1054  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L1051:
+L1054:
     db  "    dw  ",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L1051 , printf )2 "
-    push    L1051
+; Fused expression:    "( L1054 , printf )2 "
+    push    L1054
     call    _printf
     sub     sp, -2
+L1052:
 L1049:
-L1046:
 ; RPN'ized expression: "( Label GenPrintLabel ) "
 ; Expanded expression: " (@6) *(2)  GenPrintLabel ()2 "
 ; Fused expression:    "( *(2) (@6) , GenPrintLabel )2 "
     push    word [bp+6]
     call    _GenPrintLabel
     sub     sp, -2
-; RPN'ized expression: "( L1053 printf ) "
-; Expanded expression: " L1053  printf ()2 "
+; RPN'ized expression: "( L1056 printf ) "
+; Expanded expression: " L1056  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L1053:
+L1056:
     db  10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L1053 , printf )2 "
-    push    L1053
+; Fused expression:    "( L1056 , printf )2 "
+    push    L1056
     call    _printf
     sub     sp, -2
-L1044:
+L1047:
+    leave
+    ret
+; SEGMENT _TEXT
+; glb GenPrintInstr : (
+; prm     instr : int
+; prm     val : int
+;     ) void
+SEGMENT _TEXT
+    global  _GenPrintInstr
+_GenPrintInstr:
+    push    bp
+    mov     bp, sp
+; loc     instr : (@4): int
+; loc     val : (@6): int
+; loc     p : (@-2): * char
+    sub     sp, 2
+; =
+; RPN'ized expression: "L1059 "
+; Expanded expression: "L1059 "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1059:
+    db  0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1059 "
+    mov     ax, L1059
+    mov     [bp-2], ax
+; switch
+; RPN'ized expression: "instr "
+; Expanded expression: "(@4) *(2) "
+; Fused expression:    "*(2) (@4) "
+    mov     ax, [bp+4]
+    jmp     L1063
+; {
+; case
+; RPN'ized expression: "0 "
+; Expanded expression: "0 "
+; Expression value: 0
+    jmp     L1064
+L1063:
+    cmp     ax, 0
+    jne     L1065
+L1064:
+; RPN'ized expression: "p L1067 = "
+; Expanded expression: "(@-2) L1067 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1067:
+    db  "mov",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1067 "
+    mov     ax, L1067
+    mov     [bp-2], ax
+; break
+    jmp     L1061
+; case
+; RPN'ized expression: "1 "
+; Expanded expression: "1 "
+; Expression value: 1
+    jmp     L1066
+L1065:
+    cmp     ax, 1
+    jne     L1069
+L1066:
+; RPN'ized expression: "p L1071 = "
+; Expanded expression: "(@-2) L1071 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1071:
+    db  "movsx",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1071 "
+    mov     ax, L1071
+    mov     [bp-2], ax
+; break
+    jmp     L1061
+; case
+; RPN'ized expression: "2 "
+; Expanded expression: "2 "
+; Expression value: 2
+    jmp     L1070
+L1069:
+    cmp     ax, 2
+    jne     L1073
+L1070:
+; RPN'ized expression: "p L1075 = "
+; Expanded expression: "(@-2) L1075 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1075:
+    db  "movzx",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1075 "
+    mov     ax, L1075
+    mov     [bp-2], ax
+; break
+    jmp     L1061
+; case
+; RPN'ized expression: "3 "
+; Expanded expression: "3 "
+; Expression value: 3
+    jmp     L1074
+L1073:
+    cmp     ax, 3
+    jne     L1077
+L1074:
+; RPN'ized expression: "p L1079 = "
+; Expanded expression: "(@-2) L1079 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1079:
+    db  "xchg",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1079 "
+    mov     ax, L1079
+    mov     [bp-2], ax
+; break
+    jmp     L1061
+; case
+; RPN'ized expression: "4 "
+; Expanded expression: "4 "
+; Expression value: 4
+    jmp     L1078
+L1077:
+    cmp     ax, 4
+    jne     L1081
+L1078:
+; RPN'ized expression: "p L1083 = "
+; Expanded expression: "(@-2) L1083 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1083:
+    db  "lea",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1083 "
+    mov     ax, L1083
+    mov     [bp-2], ax
+; break
+    jmp     L1061
+; case
+; RPN'ized expression: "5 "
+; Expanded expression: "5 "
+; Expression value: 5
+    jmp     L1082
+L1081:
+    cmp     ax, 5
+    jne     L1085
+L1082:
+; RPN'ized expression: "p L1087 = "
+; Expanded expression: "(@-2) L1087 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1087:
+    db  "push",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1087 "
+    mov     ax, L1087
+    mov     [bp-2], ax
+; break
+    jmp     L1061
+; case
+; RPN'ized expression: "6 "
+; Expanded expression: "6 "
+; Expression value: 6
+    jmp     L1086
+L1085:
+    cmp     ax, 6
+    jne     L1089
+L1086:
+; RPN'ized expression: "p L1091 = "
+; Expanded expression: "(@-2) L1091 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1091:
+    db  "pop",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1091 "
+    mov     ax, L1091
+    mov     [bp-2], ax
+; break
+    jmp     L1061
+; case
+; RPN'ized expression: "7 "
+; Expanded expression: "7 "
+; Expression value: 7
+    jmp     L1090
+L1089:
+    cmp     ax, 7
+    jne     L1093
+L1090:
+; RPN'ized expression: "p L1095 = "
+; Expanded expression: "(@-2) L1095 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1095:
+    db  "inc",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1095 "
+    mov     ax, L1095
+    mov     [bp-2], ax
+; break
+    jmp     L1061
+; case
+; RPN'ized expression: "8 "
+; Expanded expression: "8 "
+; Expression value: 8
+    jmp     L1094
+L1093:
+    cmp     ax, 8
+    jne     L1097
+L1094:
+; RPN'ized expression: "p L1099 = "
+; Expanded expression: "(@-2) L1099 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1099:
+    db  "dec",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1099 "
+    mov     ax, L1099
+    mov     [bp-2], ax
+; break
+    jmp     L1061
+; case
+; RPN'ized expression: "9 "
+; Expanded expression: "9 "
+; Expression value: 9
+    jmp     L1098
+L1097:
+    cmp     ax, 9
+    jne     L1101
+L1098:
+; RPN'ized expression: "p L1103 = "
+; Expanded expression: "(@-2) L1103 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1103:
+    db  "add",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1103 "
+    mov     ax, L1103
+    mov     [bp-2], ax
+; break
+    jmp     L1061
+; case
+; RPN'ized expression: "10 "
+; Expanded expression: "10 "
+; Expression value: 10
+    jmp     L1102
+L1101:
+    cmp     ax, 10
+    jne     L1105
+L1102:
+; RPN'ized expression: "p L1107 = "
+; Expanded expression: "(@-2) L1107 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1107:
+    db  "sub",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1107 "
+    mov     ax, L1107
+    mov     [bp-2], ax
+; break
+    jmp     L1061
+; case
+; RPN'ized expression: "11 "
+; Expanded expression: "11 "
+; Expression value: 11
+    jmp     L1106
+L1105:
+    cmp     ax, 11
+    jne     L1109
+L1106:
+; RPN'ized expression: "p L1111 = "
+; Expanded expression: "(@-2) L1111 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1111:
+    db  "and",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1111 "
+    mov     ax, L1111
+    mov     [bp-2], ax
+; break
+    jmp     L1061
+; case
+; RPN'ized expression: "12 "
+; Expanded expression: "12 "
+; Expression value: 12
+    jmp     L1110
+L1109:
+    cmp     ax, 12
+    jne     L1113
+L1110:
+; RPN'ized expression: "p L1115 = "
+; Expanded expression: "(@-2) L1115 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1115:
+    db  "xor",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1115 "
+    mov     ax, L1115
+    mov     [bp-2], ax
+; break
+    jmp     L1061
+; case
+; RPN'ized expression: "13 "
+; Expanded expression: "13 "
+; Expression value: 13
+    jmp     L1114
+L1113:
+    cmp     ax, 13
+    jne     L1117
+L1114:
+; RPN'ized expression: "p L1119 = "
+; Expanded expression: "(@-2) L1119 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1119:
+    db  "or",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1119 "
+    mov     ax, L1119
+    mov     [bp-2], ax
+; break
+    jmp     L1061
+; case
+; RPN'ized expression: "14 "
+; Expanded expression: "14 "
+; Expression value: 14
+    jmp     L1118
+L1117:
+    cmp     ax, 14
+    jne     L1121
+L1118:
+; RPN'ized expression: "p L1123 = "
+; Expanded expression: "(@-2) L1123 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1123:
+    db  "cmp",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1123 "
+    mov     ax, L1123
+    mov     [bp-2], ax
+; break
+    jmp     L1061
+; case
+; RPN'ized expression: "15 "
+; Expanded expression: "15 "
+; Expression value: 15
+    jmp     L1122
+L1121:
+    cmp     ax, 15
+    jne     L1125
+L1122:
+; RPN'ized expression: "p L1127 = "
+; Expanded expression: "(@-2) L1127 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1127:
+    db  "test",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1127 "
+    mov     ax, L1127
+    mov     [bp-2], ax
+; break
+    jmp     L1061
+; case
+; RPN'ized expression: "16 "
+; Expanded expression: "16 "
+; Expression value: 16
+    jmp     L1126
+L1125:
+    cmp     ax, 16
+    jne     L1129
+L1126:
+; RPN'ized expression: "p L1131 = "
+; Expanded expression: "(@-2) L1131 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1131:
+    db  "mul",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1131 "
+    mov     ax, L1131
+    mov     [bp-2], ax
+; break
+    jmp     L1061
+; case
+; RPN'ized expression: "17 "
+; Expanded expression: "17 "
+; Expression value: 17
+    jmp     L1130
+L1129:
+    cmp     ax, 17
+    jne     L1133
+L1130:
+; RPN'ized expression: "p L1135 = "
+; Expanded expression: "(@-2) L1135 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1135:
+    db  "imul",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1135 "
+    mov     ax, L1135
+    mov     [bp-2], ax
+; break
+    jmp     L1061
+; case
+; RPN'ized expression: "18 "
+; Expanded expression: "18 "
+; Expression value: 18
+    jmp     L1134
+L1133:
+    cmp     ax, 18
+    jne     L1137
+L1134:
+; RPN'ized expression: "p L1139 = "
+; Expanded expression: "(@-2) L1139 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1139:
+    db  "idiv",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1139 "
+    mov     ax, L1139
+    mov     [bp-2], ax
+; break
+    jmp     L1061
+; case
+; RPN'ized expression: "19 "
+; Expanded expression: "19 "
+; Expression value: 19
+    jmp     L1138
+L1137:
+    cmp     ax, 19
+    jne     L1141
+L1138:
+; RPN'ized expression: "p L1143 = "
+; Expanded expression: "(@-2) L1143 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1143:
+    db  "shl",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1143 "
+    mov     ax, L1143
+    mov     [bp-2], ax
+; break
+    jmp     L1061
+; case
+; RPN'ized expression: "20 "
+; Expanded expression: "20 "
+; Expression value: 20
+    jmp     L1142
+L1141:
+    cmp     ax, 20
+    jne     L1145
+L1142:
+; RPN'ized expression: "p L1147 = "
+; Expanded expression: "(@-2) L1147 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1147:
+    db  "sar",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1147 "
+    mov     ax, L1147
+    mov     [bp-2], ax
+; break
+    jmp     L1061
+; case
+; RPN'ized expression: "21 "
+; Expanded expression: "21 "
+; Expression value: 21
+    jmp     L1146
+L1145:
+    cmp     ax, 21
+    jne     L1149
+L1146:
+; RPN'ized expression: "p L1151 = "
+; Expanded expression: "(@-2) L1151 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1151:
+    db  "neg",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1151 "
+    mov     ax, L1151
+    mov     [bp-2], ax
+; break
+    jmp     L1061
+; case
+; RPN'ized expression: "22 "
+; Expanded expression: "22 "
+; Expression value: 22
+    jmp     L1150
+L1149:
+    cmp     ax, 22
+    jne     L1153
+L1150:
+; RPN'ized expression: "p L1155 = "
+; Expanded expression: "(@-2) L1155 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1155:
+    db  "not",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1155 "
+    mov     ax, L1155
+    mov     [bp-2], ax
+; break
+    jmp     L1061
+; case
+; RPN'ized expression: "23 "
+; Expanded expression: "23 "
+; Expression value: 23
+    jmp     L1154
+L1153:
+    cmp     ax, 23
+    jne     L1157
+L1154:
+; RPN'ized expression: "p L1159 = "
+; Expanded expression: "(@-2) L1159 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1159:
+    db  "cbw",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1159 "
+    mov     ax, L1159
+    mov     [bp-2], ax
+; break
+    jmp     L1061
+; case
+; RPN'ized expression: "24 "
+; Expanded expression: "24 "
+; Expression value: 24
+    jmp     L1158
+L1157:
+    cmp     ax, 24
+    jne     L1161
+L1158:
+; RPN'ized expression: "p L1163 = "
+; Expanded expression: "(@-2) L1163 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1163:
+    db  "cwd",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1163 "
+    mov     ax, L1163
+    mov     [bp-2], ax
+; break
+    jmp     L1061
+; case
+; RPN'ized expression: "28 "
+; Expanded expression: "28 "
+; Expression value: 28
+    jmp     L1162
+L1161:
+    cmp     ax, 28
+    jne     L1165
+L1162:
+; RPN'ized expression: "p L1167 = "
+; Expanded expression: "(@-2) L1167 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1167:
+    db  "leave",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1167 "
+    mov     ax, L1167
+    mov     [bp-2], ax
+; break
+    jmp     L1061
+; case
+; RPN'ized expression: "29 "
+; Expanded expression: "29 "
+; Expression value: 29
+    jmp     L1166
+L1165:
+    cmp     ax, 29
+    jne     L1169
+L1166:
+; RPN'ized expression: "p L1171 = "
+; Expanded expression: "(@-2) L1171 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1171:
+    db  "call",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1171 "
+    mov     ax, L1171
+    mov     [bp-2], ax
+; break
+    jmp     L1061
+; case
+; RPN'ized expression: "30 "
+; Expanded expression: "30 "
+; Expression value: 30
+    jmp     L1170
+L1169:
+    cmp     ax, 30
+    jne     L1173
+L1170:
+; RPN'ized expression: "p L1175 = "
+; Expanded expression: "(@-2) L1175 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1175:
+    db  "ret",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1175 "
+    mov     ax, L1175
+    mov     [bp-2], ax
+; break
+    jmp     L1061
+; case
+; RPN'ized expression: "31 "
+; Expanded expression: "31 "
+; Expression value: 31
+    jmp     L1174
+L1173:
+    cmp     ax, 31
+    jne     L1177
+L1174:
+; RPN'ized expression: "p L1179 = "
+; Expanded expression: "(@-2) L1179 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1179:
+    db  "jmp",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1179 "
+    mov     ax, L1179
+    mov     [bp-2], ax
+; break
+    jmp     L1061
+; case
+; RPN'ized expression: "26 "
+; Expanded expression: "26 "
+; Expression value: 26
+    jmp     L1178
+L1177:
+    cmp     ax, 26
+    jne     L1181
+L1178:
+; switch
+; RPN'ized expression: "val "
+; Expanded expression: "(@6) *(2) "
+; Fused expression:    "*(2) (@6) "
+    mov     ax, [bp+6]
+    jmp     L1185
+; {
+; case
+; RPN'ized expression: "60 "
+; Expanded expression: "60 "
+; Expression value: 60
+    jmp     L1186
+L1185:
+    cmp     ax, 60
+    jne     L1187
+L1186:
+; RPN'ized expression: "p L1189 = "
+; Expanded expression: "(@-2) L1189 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1189:
+    db  "jl",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1189 "
+    mov     ax, L1189
+    mov     [bp-2], ax
+; break
+    jmp     L1183
+; case
+; RPN'ized expression: "85 "
+; Expanded expression: "85 "
+; Expression value: 85
+    jmp     L1188
+L1187:
+    cmp     ax, 85
+    jne     L1191
+L1188:
+; RPN'ized expression: "p L1193 = "
+; Expanded expression: "(@-2) L1193 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1193:
+    db  "jb",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1193 "
+    mov     ax, L1193
+    mov     [bp-2], ax
+; break
+    jmp     L1183
+; case
+; RPN'ized expression: "62 "
+; Expanded expression: "62 "
+; Expression value: 62
+    jmp     L1192
+L1191:
+    cmp     ax, 62
+    jne     L1195
+L1192:
+; RPN'ized expression: "p L1197 = "
+; Expanded expression: "(@-2) L1197 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1197:
+    db  "jg",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1197 "
+    mov     ax, L1197
+    mov     [bp-2], ax
+; break
+    jmp     L1183
+; case
+; RPN'ized expression: "86 "
+; Expanded expression: "86 "
+; Expression value: 86
+    jmp     L1196
+L1195:
+    cmp     ax, 86
+    jne     L1199
+L1196:
+; RPN'ized expression: "p L1201 = "
+; Expanded expression: "(@-2) L1201 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1201:
+    db  "ja",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1201 "
+    mov     ax, L1201
+    mov     [bp-2], ax
+; break
+    jmp     L1183
+; case
+; RPN'ized expression: "10 "
+; Expanded expression: "10 "
+; Expression value: 10
+    jmp     L1200
+L1199:
+    cmp     ax, 10
+    jne     L1203
+L1200:
+; RPN'ized expression: "p L1205 = "
+; Expanded expression: "(@-2) L1205 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1205:
+    db  "jle",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1205 "
+    mov     ax, L1205
+    mov     [bp-2], ax
+; break
+    jmp     L1183
+; case
+; RPN'ized expression: "87 "
+; Expanded expression: "87 "
+; Expression value: 87
+    jmp     L1204
+L1203:
+    cmp     ax, 87
+    jne     L1207
+L1204:
+; RPN'ized expression: "p L1209 = "
+; Expanded expression: "(@-2) L1209 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1209:
+    db  "jbe",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1209 "
+    mov     ax, L1209
+    mov     [bp-2], ax
+; break
+    jmp     L1183
+; case
+; RPN'ized expression: "11 "
+; Expanded expression: "11 "
+; Expression value: 11
+    jmp     L1208
+L1207:
+    cmp     ax, 11
+    jne     L1211
+L1208:
+; RPN'ized expression: "p L1213 = "
+; Expanded expression: "(@-2) L1213 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1213:
+    db  "jge",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1213 "
+    mov     ax, L1213
+    mov     [bp-2], ax
+; break
+    jmp     L1183
+; case
+; RPN'ized expression: "88 "
+; Expanded expression: "88 "
+; Expression value: 88
+    jmp     L1212
+L1211:
+    cmp     ax, 88
+    jne     L1215
+L1212:
+; RPN'ized expression: "p L1217 = "
+; Expanded expression: "(@-2) L1217 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1217:
+    db  "jae",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1217 "
+    mov     ax, L1217
+    mov     [bp-2], ax
+; break
+    jmp     L1183
+; case
+; RPN'ized expression: "8 "
+; Expanded expression: "8 "
+; Expression value: 8
+    jmp     L1216
+L1215:
+    cmp     ax, 8
+    jne     L1219
+L1216:
+; RPN'ized expression: "p L1221 = "
+; Expanded expression: "(@-2) L1221 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1221:
+    db  "je",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1221 "
+    mov     ax, L1221
+    mov     [bp-2], ax
+; break
+    jmp     L1183
+; case
+; RPN'ized expression: "9 "
+; Expanded expression: "9 "
+; Expression value: 9
+    jmp     L1220
+L1219:
+    cmp     ax, 9
+    jne     L1223
+L1220:
+; RPN'ized expression: "p L1225 = "
+; Expanded expression: "(@-2) L1225 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1225:
+    db  "jne",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1225 "
+    mov     ax, L1225
+    mov     [bp-2], ax
+; break
+    jmp     L1183
+; }
+    jmp     L1183
+L1223:
+L1183:
+; break
+    jmp     L1061
+; case
+; RPN'ized expression: "27 "
+; Expanded expression: "27 "
+; Expression value: 27
+    jmp     L1182
+L1181:
+    cmp     ax, 27
+    jne     L1227
+L1182:
+; switch
+; RPN'ized expression: "val "
+; Expanded expression: "(@6) *(2) "
+; Fused expression:    "*(2) (@6) "
+    mov     ax, [bp+6]
+    jmp     L1231
+; {
+; case
+; RPN'ized expression: "60 "
+; Expanded expression: "60 "
+; Expression value: 60
+    jmp     L1232
+L1231:
+    cmp     ax, 60
+    jne     L1233
+L1232:
+; RPN'ized expression: "p L1235 = "
+; Expanded expression: "(@-2) L1235 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1235:
+    db  "jge",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1235 "
+    mov     ax, L1235
+    mov     [bp-2], ax
+; break
+    jmp     L1229
+; case
+; RPN'ized expression: "85 "
+; Expanded expression: "85 "
+; Expression value: 85
+    jmp     L1234
+L1233:
+    cmp     ax, 85
+    jne     L1237
+L1234:
+; RPN'ized expression: "p L1239 = "
+; Expanded expression: "(@-2) L1239 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1239:
+    db  "jae",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1239 "
+    mov     ax, L1239
+    mov     [bp-2], ax
+; break
+    jmp     L1229
+; case
+; RPN'ized expression: "62 "
+; Expanded expression: "62 "
+; Expression value: 62
+    jmp     L1238
+L1237:
+    cmp     ax, 62
+    jne     L1241
+L1238:
+; RPN'ized expression: "p L1243 = "
+; Expanded expression: "(@-2) L1243 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1243:
+    db  "jle",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1243 "
+    mov     ax, L1243
+    mov     [bp-2], ax
+; break
+    jmp     L1229
+; case
+; RPN'ized expression: "86 "
+; Expanded expression: "86 "
+; Expression value: 86
+    jmp     L1242
+L1241:
+    cmp     ax, 86
+    jne     L1245
+L1242:
+; RPN'ized expression: "p L1247 = "
+; Expanded expression: "(@-2) L1247 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1247:
+    db  "jbe",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1247 "
+    mov     ax, L1247
+    mov     [bp-2], ax
+; break
+    jmp     L1229
+; case
+; RPN'ized expression: "10 "
+; Expanded expression: "10 "
+; Expression value: 10
+    jmp     L1246
+L1245:
+    cmp     ax, 10
+    jne     L1249
+L1246:
+; RPN'ized expression: "p L1251 = "
+; Expanded expression: "(@-2) L1251 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1251:
+    db  "jg",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1251 "
+    mov     ax, L1251
+    mov     [bp-2], ax
+; break
+    jmp     L1229
+; case
+; RPN'ized expression: "87 "
+; Expanded expression: "87 "
+; Expression value: 87
+    jmp     L1250
+L1249:
+    cmp     ax, 87
+    jne     L1253
+L1250:
+; RPN'ized expression: "p L1255 = "
+; Expanded expression: "(@-2) L1255 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1255:
+    db  "ja",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1255 "
+    mov     ax, L1255
+    mov     [bp-2], ax
+; break
+    jmp     L1229
+; case
+; RPN'ized expression: "11 "
+; Expanded expression: "11 "
+; Expression value: 11
+    jmp     L1254
+L1253:
+    cmp     ax, 11
+    jne     L1257
+L1254:
+; RPN'ized expression: "p L1259 = "
+; Expanded expression: "(@-2) L1259 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1259:
+    db  "jl",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1259 "
+    mov     ax, L1259
+    mov     [bp-2], ax
+; break
+    jmp     L1229
+; case
+; RPN'ized expression: "88 "
+; Expanded expression: "88 "
+; Expression value: 88
+    jmp     L1258
+L1257:
+    cmp     ax, 88
+    jne     L1261
+L1258:
+; RPN'ized expression: "p L1263 = "
+; Expanded expression: "(@-2) L1263 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1263:
+    db  "jb",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1263 "
+    mov     ax, L1263
+    mov     [bp-2], ax
+; break
+    jmp     L1229
+; case
+; RPN'ized expression: "8 "
+; Expanded expression: "8 "
+; Expression value: 8
+    jmp     L1262
+L1261:
+    cmp     ax, 8
+    jne     L1265
+L1262:
+; RPN'ized expression: "p L1267 = "
+; Expanded expression: "(@-2) L1267 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1267:
+    db  "jne",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1267 "
+    mov     ax, L1267
+    mov     [bp-2], ax
+; break
+    jmp     L1229
+; case
+; RPN'ized expression: "9 "
+; Expanded expression: "9 "
+; Expression value: 9
+    jmp     L1266
+L1265:
+    cmp     ax, 9
+    jne     L1269
+L1266:
+; RPN'ized expression: "p L1271 = "
+; Expanded expression: "(@-2) L1271 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1271:
+    db  "je",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1271 "
+    mov     ax, L1271
+    mov     [bp-2], ax
+; break
+    jmp     L1229
+; }
+    jmp     L1229
+L1269:
+L1229:
+; break
+    jmp     L1061
+; case
+; RPN'ized expression: "25 "
+; Expanded expression: "25 "
+; Expression value: 25
+    jmp     L1228
+L1227:
+    cmp     ax, 25
+    jne     L1273
+L1228:
+; switch
+; RPN'ized expression: "val "
+; Expanded expression: "(@6) *(2) "
+; Fused expression:    "*(2) (@6) "
+    mov     ax, [bp+6]
+    jmp     L1277
+; {
+; case
+; RPN'ized expression: "60 "
+; Expanded expression: "60 "
+; Expression value: 60
+    jmp     L1278
+L1277:
+    cmp     ax, 60
+    jne     L1279
+L1278:
+; RPN'ized expression: "p L1281 = "
+; Expanded expression: "(@-2) L1281 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1281:
+    db  "setl",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1281 "
+    mov     ax, L1281
+    mov     [bp-2], ax
+; break
+    jmp     L1275
+; case
+; RPN'ized expression: "85 "
+; Expanded expression: "85 "
+; Expression value: 85
+    jmp     L1280
+L1279:
+    cmp     ax, 85
+    jne     L1283
+L1280:
+; RPN'ized expression: "p L1285 = "
+; Expanded expression: "(@-2) L1285 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1285:
+    db  "setb",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1285 "
+    mov     ax, L1285
+    mov     [bp-2], ax
+; break
+    jmp     L1275
+; case
+; RPN'ized expression: "62 "
+; Expanded expression: "62 "
+; Expression value: 62
+    jmp     L1284
+L1283:
+    cmp     ax, 62
+    jne     L1287
+L1284:
+; RPN'ized expression: "p L1289 = "
+; Expanded expression: "(@-2) L1289 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1289:
+    db  "setg",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1289 "
+    mov     ax, L1289
+    mov     [bp-2], ax
+; break
+    jmp     L1275
+; case
+; RPN'ized expression: "86 "
+; Expanded expression: "86 "
+; Expression value: 86
+    jmp     L1288
+L1287:
+    cmp     ax, 86
+    jne     L1291
+L1288:
+; RPN'ized expression: "p L1293 = "
+; Expanded expression: "(@-2) L1293 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1293:
+    db  "seta",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1293 "
+    mov     ax, L1293
+    mov     [bp-2], ax
+; break
+    jmp     L1275
+; case
+; RPN'ized expression: "10 "
+; Expanded expression: "10 "
+; Expression value: 10
+    jmp     L1292
+L1291:
+    cmp     ax, 10
+    jne     L1295
+L1292:
+; RPN'ized expression: "p L1297 = "
+; Expanded expression: "(@-2) L1297 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1297:
+    db  "setle",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1297 "
+    mov     ax, L1297
+    mov     [bp-2], ax
+; break
+    jmp     L1275
+; case
+; RPN'ized expression: "87 "
+; Expanded expression: "87 "
+; Expression value: 87
+    jmp     L1296
+L1295:
+    cmp     ax, 87
+    jne     L1299
+L1296:
+; RPN'ized expression: "p L1301 = "
+; Expanded expression: "(@-2) L1301 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1301:
+    db  "setbe",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1301 "
+    mov     ax, L1301
+    mov     [bp-2], ax
+; break
+    jmp     L1275
+; case
+; RPN'ized expression: "11 "
+; Expanded expression: "11 "
+; Expression value: 11
+    jmp     L1300
+L1299:
+    cmp     ax, 11
+    jne     L1303
+L1300:
+; RPN'ized expression: "p L1305 = "
+; Expanded expression: "(@-2) L1305 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1305:
+    db  "setge",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1305 "
+    mov     ax, L1305
+    mov     [bp-2], ax
+; break
+    jmp     L1275
+; case
+; RPN'ized expression: "88 "
+; Expanded expression: "88 "
+; Expression value: 88
+    jmp     L1304
+L1303:
+    cmp     ax, 88
+    jne     L1307
+L1304:
+; RPN'ized expression: "p L1309 = "
+; Expanded expression: "(@-2) L1309 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1309:
+    db  "setae",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1309 "
+    mov     ax, L1309
+    mov     [bp-2], ax
+; break
+    jmp     L1275
+; case
+; RPN'ized expression: "8 "
+; Expanded expression: "8 "
+; Expression value: 8
+    jmp     L1308
+L1307:
+    cmp     ax, 8
+    jne     L1311
+L1308:
+; RPN'ized expression: "p L1313 = "
+; Expanded expression: "(@-2) L1313 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1313:
+    db  "sete",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1313 "
+    mov     ax, L1313
+    mov     [bp-2], ax
+; break
+    jmp     L1275
+; case
+; RPN'ized expression: "9 "
+; Expanded expression: "9 "
+; Expression value: 9
+    jmp     L1312
+L1311:
+    cmp     ax, 9
+    jne     L1315
+L1312:
+; RPN'ized expression: "p L1317 = "
+; Expanded expression: "(@-2) L1317 =(2) "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1317:
+    db  "setne",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "=(34) *(@-2) L1317 "
+    mov     ax, L1317
+    mov     [bp-2], ax
+; break
+    jmp     L1275
+; }
+    jmp     L1275
+L1315:
+L1275:
+; break
+    jmp     L1061
+; }
+    jmp     L1061
+L1273:
+L1061:
+; switch
+; RPN'ized expression: "instr "
+; Expanded expression: "(@4) *(2) "
+; Fused expression:    "*(2) (@4) "
+    mov     ax, [bp+4]
+    jmp     L1321
+; {
+; case
+; RPN'ized expression: "23 "
+; Expanded expression: "23 "
+; Expression value: 23
+    jmp     L1322
+L1321:
+    cmp     ax, 23
+    jne     L1323
+L1322:
+; case
+; RPN'ized expression: "24 "
+; Expanded expression: "24 "
+; Expression value: 24
+    jmp     L1324
+L1323:
+    cmp     ax, 24
+    jne     L1325
+L1324:
+; case
+; RPN'ized expression: "28 "
+; Expanded expression: "28 "
+; Expression value: 28
+    jmp     L1326
+L1325:
+    cmp     ax, 28
+    jne     L1327
+L1326:
+; case
+; RPN'ized expression: "30 "
+; Expanded expression: "30 "
+; Expression value: 30
+    jmp     L1328
+L1327:
+    cmp     ax, 30
+    jne     L1329
+L1328:
+; RPN'ized expression: "( p , L1331 printf ) "
+; Expanded expression: " (@-2) *(2)  L1331  printf ()4 "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1331:
+    db  "    %s",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "( *(2) (@-2) , L1331 , printf )4 "
+    push    word [bp-2]
+    push    L1331
+    call    _printf
+    sub     sp, -4
+; break
+    jmp     L1319
+; default
+L1320:
+; RPN'ized expression: "( p , L1333 printf ) "
+; Expanded expression: " (@-2) *(2)  L1333  printf ()4 "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1333:
+    db  "    %-7s ",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "( *(2) (@-2) , L1333 , printf )4 "
+    push    word [bp-2]
+    push    L1333
+    call    _printf
+    sub     sp, -4
+; break
+    jmp     L1319
+; }
+    jmp     L1319
+L1329:
+    jmp     L1320
+L1319:
+L1058:
+    leave
+    ret
+; SEGMENT _TEXT
+; glb GenSelectByteOrWord : (
+; prm     op : int
+; prm     opSz : int
+;     ) int
+SEGMENT _TEXT
+    global  _GenSelectByteOrWord
+_GenSelectByteOrWord:
+    push    bp
+    mov     bp, sp
+; loc     op : (@4): int
+; loc     opSz : (@6): int
+; switch
+; RPN'ized expression: "op "
+; Expanded expression: "(@4) *(2) "
+; Fused expression:    "*(2) (@4) "
+    mov     ax, [bp+4]
+    jmp     L1338
+; {
+; case
+; RPN'ized expression: "9 "
+; Expanded expression: "9 "
+; Expression value: 9
+    jmp     L1339
+L1338:
+    cmp     ax, 9
+    jne     L1340
+L1339:
+; RPN'ized expression: "op 0 = "
+; Expanded expression: "(@4) 0 =(2) "
+; Fused expression:    "=(34) *(@4) 0 "
+    mov     ax, 0
+    mov     [bp+4], ax
+; if
+; RPN'ized expression: "opSz 1 != "
+; Expanded expression: "(@6) *(2) 1 != "
+; Fused expression:    "!= *(@6) 1 IF! "
+    mov     ax, [bp+6]
+    cmp     ax, 1
+    je      L1342
+; RPN'ized expression: "op 3 = "
+; Expanded expression: "(@4) 3 =(2) "
+; Fused expression:    "=(34) *(@4) 3 "
+    mov     ax, 3
+    mov     [bp+4], ax
+L1342:
+; break
+    jmp     L1336
+; case
+; RPN'ized expression: "10 "
+; Expanded expression: "10 "
+; Expression value: 10
+    jmp     L1341
+L1340:
+    cmp     ax, 10
+    jne     L1344
+L1341:
+; RPN'ized expression: "op 2 = "
+; Expanded expression: "(@4) 2 =(2) "
+; Fused expression:    "=(34) *(@4) 2 "
+    mov     ax, 2
+    mov     [bp+4], ax
+; if
+; RPN'ized expression: "opSz 1 != "
+; Expanded expression: "(@6) *(2) 1 != "
+; Fused expression:    "!= *(@6) 1 IF! "
+    mov     ax, [bp+6]
+    cmp     ax, 1
+    je      L1346
+; RPN'ized expression: "op 5 = "
+; Expanded expression: "(@4) 5 =(2) "
+; Fused expression:    "=(34) *(@4) 5 "
+    mov     ax, 5
+    mov     [bp+4], ax
+L1346:
+; break
+    jmp     L1336
+; case
+; RPN'ized expression: "17 "
+; Expanded expression: "17 "
+; Expression value: 17
+    jmp     L1345
+L1344:
+    cmp     ax, 17
+    jne     L1348
+L1345:
+; RPN'ized expression: "op 15 = "
+; Expanded expression: "(@4) 15 =(2) "
+; Fused expression:    "=(34) *(@4) 15 "
+    mov     ax, 15
+    mov     [bp+4], ax
+; if
+; RPN'ized expression: "opSz 1 != "
+; Expanded expression: "(@6) *(2) 1 != "
+; Fused expression:    "!= *(@6) 1 IF! "
+    mov     ax, [bp+6]
+    cmp     ax, 1
+    je      L1350
+; RPN'ized expression: "op 16 = "
+; Expanded expression: "(@4) 16 =(2) "
+; Fused expression:    "=(34) *(@4) 16 "
+    mov     ax, 16
+    mov     [bp+4], ax
+L1350:
+; break
+    jmp     L1336
+; case
+; RPN'ized expression: "21 "
+; Expanded expression: "21 "
+; Expression value: 21
+    jmp     L1349
+L1348:
+    cmp     ax, 21
+    jne     L1352
+L1349:
+; RPN'ized expression: "op 19 = "
+; Expanded expression: "(@4) 19 =(2) "
+; Fused expression:    "=(34) *(@4) 19 "
+    mov     ax, 19
+    mov     [bp+4], ax
+; if
+; RPN'ized expression: "opSz 1 != "
+; Expanded expression: "(@6) *(2) 1 != "
+; Fused expression:    "!= *(@6) 1 IF! "
+    mov     ax, [bp+6]
+    cmp     ax, 1
+    je      L1354
+; RPN'ized expression: "op 20 = "
+; Expanded expression: "(@4) 20 =(2) "
+; Fused expression:    "=(34) *(@4) 20 "
+    mov     ax, 20
+    mov     [bp+4], ax
+L1354:
+; break
+    jmp     L1336
+; case
+; RPN'ized expression: "25 "
+; Expanded expression: "25 "
+; Expression value: 25
+    jmp     L1353
+L1352:
+    cmp     ax, 25
+    jne     L1356
+L1353:
+; RPN'ized expression: "op 23 = "
+; Expanded expression: "(@4) 23 =(2) "
+; Fused expression:    "=(34) *(@4) 23 "
+    mov     ax, 23
+    mov     [bp+4], ax
+; if
+; RPN'ized expression: "opSz 1 != "
+; Expanded expression: "(@6) *(2) 1 != "
+; Fused expression:    "!= *(@6) 1 IF! "
+    mov     ax, [bp+6]
+    cmp     ax, 1
+    je      L1358
+; RPN'ized expression: "op 24 = "
+; Expanded expression: "(@4) 24 =(2) "
+; Fused expression:    "=(34) *(@4) 24 "
+    mov     ax, 24
+    mov     [bp+4], ax
+L1358:
+; break
+    jmp     L1336
+; }
+    jmp     L1336
+L1356:
+L1336:
+; return
+; RPN'ized expression: "op "
+; Expanded expression: "(@4) *(2) "
+; Fused expression:    "*(2) (@4) "
+    mov     ax, [bp+4]
+    jmp     L1335
+L1335:
+    leave
+    ret
+; SEGMENT _TEXT
+; glb GenPrintOperand : (
+; prm     op : int
+; prm     val : int
+;     ) void
+SEGMENT _TEXT
+    global  _GenPrintOperand
+_GenPrintOperand:
+    push    bp
+    mov     bp, sp
+; loc     op : (@4): int
+; loc     val : (@6): int
+; switch
+; RPN'ized expression: "op "
+; Expanded expression: "(@4) *(2) "
+; Fused expression:    "*(2) (@4) "
+    mov     ax, [bp+4]
+    jmp     L1363
+; {
+; case
+; RPN'ized expression: "0 "
+; Expanded expression: "0 "
+; Expression value: 0
+    jmp     L1364
+L1363:
+    cmp     ax, 0
+    jne     L1365
+L1364:
+; RPN'ized expression: "( L1367 printf ) "
+; Expanded expression: " L1367  printf ()2 "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1367:
+    db  "al",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "( L1367 , printf )2 "
+    push    L1367
+    call    _printf
+    sub     sp, -2
+; break
+    jmp     L1361
+; case
+; RPN'ized expression: "1 "
+; Expanded expression: "1 "
+; Expression value: 1
+    jmp     L1366
+L1365:
+    cmp     ax, 1
+    jne     L1369
+L1366:
+; RPN'ized expression: "( L1371 printf ) "
+; Expanded expression: " L1371  printf ()2 "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1371:
+    db  "ah",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "( L1371 , printf )2 "
+    push    L1371
+    call    _printf
+    sub     sp, -2
+; break
+    jmp     L1361
+; case
+; RPN'ized expression: "2 "
+; Expanded expression: "2 "
+; Expression value: 2
+    jmp     L1370
+L1369:
+    cmp     ax, 2
+    jne     L1373
+L1370:
+; RPN'ized expression: "( L1375 printf ) "
+; Expanded expression: " L1375  printf ()2 "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1375:
+    db  "cl",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "( L1375 , printf )2 "
+    push    L1375
+    call    _printf
+    sub     sp, -2
+; break
+    jmp     L1361
+; case
+; RPN'ized expression: "3 "
+; Expanded expression: "3 "
+; Expression value: 3
+    jmp     L1374
+L1373:
+    cmp     ax, 3
+    jne     L1377
+L1374:
+; RPN'ized expression: "( L1379 printf ) "
+; Expanded expression: " L1379  printf ()2 "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1379:
+    db  "ax",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "( L1379 , printf )2 "
+    push    L1379
+    call    _printf
+    sub     sp, -2
+; break
+    jmp     L1361
+; case
+; RPN'ized expression: "4 "
+; Expanded expression: "4 "
+; Expression value: 4
+    jmp     L1378
+L1377:
+    cmp     ax, 4
+    jne     L1381
+L1378:
+; RPN'ized expression: "( L1383 printf ) "
+; Expanded expression: " L1383  printf ()2 "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1383:
+    db  "bx",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "( L1383 , printf )2 "
+    push    L1383
+    call    _printf
+    sub     sp, -2
+; break
+    jmp     L1361
+; case
+; RPN'ized expression: "5 "
+; Expanded expression: "5 "
+; Expression value: 5
+    jmp     L1382
+L1381:
+    cmp     ax, 5
+    jne     L1385
+L1382:
+; RPN'ized expression: "( L1387 printf ) "
+; Expanded expression: " L1387  printf ()2 "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1387:
+    db  "cx",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "( L1387 , printf )2 "
+    push    L1387
+    call    _printf
+    sub     sp, -2
+; break
+    jmp     L1361
+; case
+; RPN'ized expression: "6 "
+; Expanded expression: "6 "
+; Expression value: 6
+    jmp     L1386
+L1385:
+    cmp     ax, 6
+    jne     L1389
+L1386:
+; RPN'ized expression: "( L1391 printf ) "
+; Expanded expression: " L1391  printf ()2 "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1391:
+    db  "dx",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "( L1391 , printf )2 "
+    push    L1391
+    call    _printf
+    sub     sp, -2
+; break
+    jmp     L1361
+; case
+; RPN'ized expression: "7 "
+; Expanded expression: "7 "
+; Expression value: 7
+    jmp     L1390
+L1389:
+    cmp     ax, 7
+    jne     L1393
+L1390:
+; RPN'ized expression: "( L1395 printf ) "
+; Expanded expression: " L1395  printf ()2 "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1395:
+    db  "bp",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "( L1395 , printf )2 "
+    push    L1395
+    call    _printf
+    sub     sp, -2
+; break
+    jmp     L1361
+; case
+; RPN'ized expression: "8 "
+; Expanded expression: "8 "
+; Expression value: 8
+    jmp     L1394
+L1393:
+    cmp     ax, 8
+    jne     L1397
+L1394:
+; RPN'ized expression: "( L1399 printf ) "
+; Expanded expression: " L1399  printf ()2 "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1399:
+    db  "sp",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "( L1399 , printf )2 "
+    push    L1399
+    call    _printf
+    sub     sp, -2
+; break
+    jmp     L1361
+; case
+; RPN'ized expression: "11 "
+; Expanded expression: "11 "
+; Expression value: 11
+    jmp     L1398
+L1397:
+    cmp     ax, 11
+    jne     L1401
+L1398:
+; RPN'ized expression: "( val , L1403 printf ) "
+; Expanded expression: " (@6) *(2)  L1403  printf ()4 "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1403:
+    db  "%d",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "( *(2) (@6) , L1403 , printf )4 "
+    push    word [bp+6]
+    push    L1403
+    call    _printf
+    sub     sp, -4
+; break
+    jmp     L1361
+; case
+; RPN'ized expression: "12 "
+; Expanded expression: "12 "
+; Expression value: 12
+    jmp     L1402
+L1401:
+    cmp     ax, 12
+    jne     L1405
+L1402:
+; RPN'ized expression: "( IdentTable val + GenPrintLabel ) "
+; Expanded expression: " IdentTable (@6) *(2) +  GenPrintLabel ()2 "
+; Fused expression:    "( + IdentTable *(@6) , GenPrintLabel )2 "
+    mov     ax, _IdentTable
+    add     ax, [bp+6]
+    push    ax
+    call    _GenPrintLabel
+    sub     sp, -2
+; break
+    jmp     L1361
+; case
+; RPN'ized expression: "13 "
+; Expanded expression: "13 "
+; Expression value: 13
+    jmp     L1406
+L1405:
+    cmp     ax, 13
+    jne     L1407
+L1406:
+; RPN'ized expression: "( val GenPrintNumLabel ) "
+; Expanded expression: " (@6) *(2)  GenPrintNumLabel ()2 "
+; Fused expression:    "( *(2) (@6) , GenPrintNumLabel )2 "
+    push    word [bp+6]
+    call    _GenPrintNumLabel
+    sub     sp, -2
+; break
+    jmp     L1361
+; case
+; RPN'ized expression: "14 "
+; Expanded expression: "14 "
+; Expression value: 14
+    jmp     L1408
+L1407:
+    cmp     ax, 14
+    jne     L1409
+L1408:
+; RPN'ized expression: "( L1411 printf ) "
+; Expanded expression: " L1411  printf ()2 "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1411:
+    db  "[",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "( L1411 , printf )2 "
+    push    L1411
+    call    _printf
+    sub     sp, -2
+; RPN'ized expression: "( IdentTable val + GenPrintLabel ) "
+; Expanded expression: " IdentTable (@6) *(2) +  GenPrintLabel ()2 "
+; Fused expression:    "( + IdentTable *(@6) , GenPrintLabel )2 "
+    mov     ax, _IdentTable
+    add     ax, [bp+6]
+    push    ax
+    call    _GenPrintLabel
+    sub     sp, -2
+; RPN'ized expression: "( L1413 printf ) "
+; Expanded expression: " L1413  printf ()2 "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1413:
+    db  "]",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "( L1413 , printf )2 "
+    push    L1413
+    call    _printf
+    sub     sp, -2
+; break
+    jmp     L1361
+; case
+; RPN'ized expression: "15 "
+; Expanded expression: "15 "
+; Expression value: 15
+    jmp     L1410
+L1409:
+    cmp     ax, 15
+    jne     L1415
+L1410:
+; RPN'ized expression: "( L1417 printf ) "
+; Expanded expression: " L1417  printf ()2 "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1417:
+    db  "byte [",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "( L1417 , printf )2 "
+    push    L1417
+    call    _printf
+    sub     sp, -2
+; RPN'ized expression: "( IdentTable val + GenPrintLabel ) "
+; Expanded expression: " IdentTable (@6) *(2) +  GenPrintLabel ()2 "
+; Fused expression:    "( + IdentTable *(@6) , GenPrintLabel )2 "
+    mov     ax, _IdentTable
+    add     ax, [bp+6]
+    push    ax
+    call    _GenPrintLabel
+    sub     sp, -2
+; RPN'ized expression: "( L1419 printf ) "
+; Expanded expression: " L1419  printf ()2 "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1419:
+    db  "]",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "( L1419 , printf )2 "
+    push    L1419
+    call    _printf
+    sub     sp, -2
+; break
+    jmp     L1361
+; case
+; RPN'ized expression: "16 "
+; Expanded expression: "16 "
+; Expression value: 16
+    jmp     L1416
+L1415:
+    cmp     ax, 16
+    jne     L1421
+L1416:
+; RPN'ized expression: "( L1423 printf ) "
+; Expanded expression: " L1423  printf ()2 "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1423:
+    db  "word [",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "( L1423 , printf )2 "
+    push    L1423
+    call    _printf
+    sub     sp, -2
+; RPN'ized expression: "( IdentTable val + GenPrintLabel ) "
+; Expanded expression: " IdentTable (@6) *(2) +  GenPrintLabel ()2 "
+; Fused expression:    "( + IdentTable *(@6) , GenPrintLabel )2 "
+    mov     ax, _IdentTable
+    add     ax, [bp+6]
+    push    ax
+    call    _GenPrintLabel
+    sub     sp, -2
+; RPN'ized expression: "( L1425 printf ) "
+; Expanded expression: " L1425  printf ()2 "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1425:
+    db  "]",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "( L1425 , printf )2 "
+    push    L1425
+    call    _printf
+    sub     sp, -2
+; break
+    jmp     L1361
+; case
+; RPN'ized expression: "18 "
+; Expanded expression: "18 "
+; Expression value: 18
+    jmp     L1422
+L1421:
+    cmp     ax, 18
+    jne     L1427
+L1422:
+; RPN'ized expression: "( val , L1429 printf ) "
+; Expanded expression: " (@6) *(2)  L1429  printf ()4 "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1429:
+    db  "[bp%+d]",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "( *(2) (@6) , L1429 , printf )4 "
+    push    word [bp+6]
+    push    L1429
+    call    _printf
+    sub     sp, -4
+; break
+    jmp     L1361
+; case
+; RPN'ized expression: "19 "
+; Expanded expression: "19 "
+; Expression value: 19
+    jmp     L1428
+L1427:
+    cmp     ax, 19
+    jne     L1431
+L1428:
+; RPN'ized expression: "( val , L1433 printf ) "
+; Expanded expression: " (@6) *(2)  L1433  printf ()4 "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1433:
+    db  "byte [bp%+d]",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "( *(2) (@6) , L1433 , printf )4 "
+    push    word [bp+6]
+    push    L1433
+    call    _printf
+    sub     sp, -4
+; break
+    jmp     L1361
+; case
+; RPN'ized expression: "20 "
+; Expanded expression: "20 "
+; Expression value: 20
+    jmp     L1432
+L1431:
+    cmp     ax, 20
+    jne     L1435
+L1432:
+; RPN'ized expression: "( val , L1437 printf ) "
+; Expanded expression: " (@6) *(2)  L1437  printf ()4 "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1437:
+    db  "word [bp%+d]",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "( *(2) (@6) , L1437 , printf )4 "
+    push    word [bp+6]
+    push    L1437
+    call    _printf
+    sub     sp, -4
+; break
+    jmp     L1361
+; case
+; RPN'ized expression: "22 "
+; Expanded expression: "22 "
+; Expression value: 22
+    jmp     L1436
+L1435:
+    cmp     ax, 22
+    jne     L1439
+L1436:
+; RPN'ized expression: "( L1441 printf ) "
+; Expanded expression: " L1441  printf ()2 "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1441:
+    db  "[bx]",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "( L1441 , printf )2 "
+    push    L1441
+    call    _printf
+    sub     sp, -2
+; break
+    jmp     L1361
+; case
+; RPN'ized expression: "23 "
+; Expanded expression: "23 "
+; Expression value: 23
+    jmp     L1440
+L1439:
+    cmp     ax, 23
+    jne     L1443
+L1440:
+; RPN'ized expression: "( L1445 printf ) "
+; Expanded expression: " L1445  printf ()2 "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1445:
+    db  "byte [bx]",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "( L1445 , printf )2 "
+    push    L1445
+    call    _printf
+    sub     sp, -2
+; break
+    jmp     L1361
+; case
+; RPN'ized expression: "24 "
+; Expanded expression: "24 "
+; Expression value: 24
+    jmp     L1444
+L1443:
+    cmp     ax, 24
+    jne     L1447
+L1444:
+; RPN'ized expression: "( L1449 printf ) "
+; Expanded expression: " L1449  printf ()2 "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1449:
+    db  "word [bx]",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "( L1449 , printf )2 "
+    push    L1449
+    call    _printf
+    sub     sp, -2
+; break
+    jmp     L1361
+; }
+    jmp     L1361
+L1447:
+L1361:
+L1360:
+    leave
+    ret
+; SEGMENT _TEXT
+; glb GenPrintOperandSeparator : (void) void
+SEGMENT _TEXT
+    global  _GenPrintOperandSeparator
+_GenPrintOperandSeparator:
+    push    bp
+    mov     bp, sp
+; RPN'ized expression: "( L1452 printf ) "
+; Expanded expression: " L1452  printf ()2 "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1452:
+    db  ", ",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "( L1452 , printf )2 "
+    push    L1452
+    call    _printf
+    sub     sp, -2
+L1451:
+    leave
+    ret
+; SEGMENT _TEXT
+; glb GenPrintNewLine : (void) void
+SEGMENT _TEXT
+    global  _GenPrintNewLine
+_GenPrintNewLine:
+    push    bp
+    mov     bp, sp
+; RPN'ized expression: "( L1455 printf ) "
+; Expanded expression: " L1455  printf ()2 "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L1455:
+    db  10,0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "( L1455 , printf )2 "
+    push    L1455
+    call    _printf
+    sub     sp, -2
+L1454:
+    leave
+    ret
+; SEGMENT _TEXT
+; glb GenPrintInstrNoOperand : (
+; prm     instr : int
+;     ) void
+SEGMENT _TEXT
+    global  _GenPrintInstrNoOperand
+_GenPrintInstrNoOperand:
+    push    bp
+    mov     bp, sp
+; loc     instr : (@4): int
+; RPN'ized expression: "( 0 , instr GenPrintInstr ) "
+; Expanded expression: " 0  (@4) *(2)  GenPrintInstr ()4 "
+; Fused expression:    "( 0 , *(2) (@4) , GenPrintInstr )4 "
+    push    0
+    push    word [bp+4]
+    call    _GenPrintInstr
+    sub     sp, -4
+; RPN'ized expression: "( GenPrintNewLine ) "
+; Expanded expression: " GenPrintNewLine ()0 "
+; Fused expression:    "( GenPrintNewLine )0 "
+    call    _GenPrintNewLine
+L1457:
+    leave
+    ret
+; SEGMENT _TEXT
+; glb GenPrintInstr1Operand : (
+; prm     instr : int
+; prm     instrval : int
+; prm     operand : int
+; prm     operandval : int
+;     ) void
+SEGMENT _TEXT
+    global  _GenPrintInstr1Operand
+_GenPrintInstr1Operand:
+    push    bp
+    mov     bp, sp
+; loc     instr : (@4): int
+; loc     instrval : (@6): int
+; loc     operand : (@8): int
+; loc     operandval : (@10): int
+; RPN'ized expression: "( instrval , instr GenPrintInstr ) "
+; Expanded expression: " (@6) *(2)  (@4) *(2)  GenPrintInstr ()4 "
+; Fused expression:    "( *(2) (@6) , *(2) (@4) , GenPrintInstr )4 "
+    push    word [bp+6]
+    push    word [bp+4]
+    call    _GenPrintInstr
+    sub     sp, -4
+; RPN'ized expression: "( operandval , operand GenPrintOperand ) "
+; Expanded expression: " (@10) *(2)  (@8) *(2)  GenPrintOperand ()4 "
+; Fused expression:    "( *(2) (@10) , *(2) (@8) , GenPrintOperand )4 "
+    push    word [bp+10]
+    push    word [bp+8]
+    call    _GenPrintOperand
+    sub     sp, -4
+; RPN'ized expression: "( GenPrintNewLine ) "
+; Expanded expression: " GenPrintNewLine ()0 "
+; Fused expression:    "( GenPrintNewLine )0 "
+    call    _GenPrintNewLine
+L1458:
+    leave
+    ret
+; SEGMENT _TEXT
+; glb GenPrintInstr2Operands : (
+; prm     instr : int
+; prm     instrval : int
+; prm     operand1 : int
+; prm     operand1val : int
+; prm     operand2 : int
+; prm     operand2val : int
+;     ) void
+SEGMENT _TEXT
+    global  _GenPrintInstr2Operands
+_GenPrintInstr2Operands:
+    push    bp
+    mov     bp, sp
+; loc     instr : (@4): int
+; loc     instrval : (@6): int
+; loc     operand1 : (@8): int
+; loc     operand1val : (@10): int
+; loc     operand2 : (@12): int
+; loc     operand2val : (@14): int
+; RPN'ized expression: "( instrval , instr GenPrintInstr ) "
+; Expanded expression: " (@6) *(2)  (@4) *(2)  GenPrintInstr ()4 "
+; Fused expression:    "( *(2) (@6) , *(2) (@4) , GenPrintInstr )4 "
+    push    word [bp+6]
+    push    word [bp+4]
+    call    _GenPrintInstr
+    sub     sp, -4
+; RPN'ized expression: "( operand1val , operand1 GenPrintOperand ) "
+; Expanded expression: " (@10) *(2)  (@8) *(2)  GenPrintOperand ()4 "
+; Fused expression:    "( *(2) (@10) , *(2) (@8) , GenPrintOperand )4 "
+    push    word [bp+10]
+    push    word [bp+8]
+    call    _GenPrintOperand
+    sub     sp, -4
+; RPN'ized expression: "( GenPrintOperandSeparator ) "
+; Expanded expression: " GenPrintOperandSeparator ()0 "
+; Fused expression:    "( GenPrintOperandSeparator )0 "
+    call    _GenPrintOperandSeparator
+; RPN'ized expression: "( operand2val , operand2 GenPrintOperand ) "
+; Expanded expression: " (@14) *(2)  (@12) *(2)  GenPrintOperand ()4 "
+; Fused expression:    "( *(2) (@14) , *(2) (@12) , GenPrintOperand )4 "
+    push    word [bp+14]
+    push    word [bp+12]
+    call    _GenPrintOperand
+    sub     sp, -4
+; RPN'ized expression: "( GenPrintNewLine ) "
+; Expanded expression: " GenPrintNewLine ()0 "
+; Fused expression:    "( GenPrintNewLine )0 "
+    call    _GenPrintNewLine
+L1459:
+    leave
+    ret
+; SEGMENT _TEXT
+; glb GenPrintInstr3Operands : (
+; prm     instr : int
+; prm     instrval : int
+; prm     operand1 : int
+; prm     operand1val : int
+; prm     operand2 : int
+; prm     operand2val : int
+; prm     operand3 : int
+; prm     operand3val : int
+;     ) void
+SEGMENT _TEXT
+    global  _GenPrintInstr3Operands
+_GenPrintInstr3Operands:
+    push    bp
+    mov     bp, sp
+; loc     instr : (@4): int
+; loc     instrval : (@6): int
+; loc     operand1 : (@8): int
+; loc     operand1val : (@10): int
+; loc     operand2 : (@12): int
+; loc     operand2val : (@14): int
+; loc     operand3 : (@16): int
+; loc     operand3val : (@18): int
+; RPN'ized expression: "( instrval , instr GenPrintInstr ) "
+; Expanded expression: " (@6) *(2)  (@4) *(2)  GenPrintInstr ()4 "
+; Fused expression:    "( *(2) (@6) , *(2) (@4) , GenPrintInstr )4 "
+    push    word [bp+6]
+    push    word [bp+4]
+    call    _GenPrintInstr
+    sub     sp, -4
+; RPN'ized expression: "( operand1val , operand1 GenPrintOperand ) "
+; Expanded expression: " (@10) *(2)  (@8) *(2)  GenPrintOperand ()4 "
+; Fused expression:    "( *(2) (@10) , *(2) (@8) , GenPrintOperand )4 "
+    push    word [bp+10]
+    push    word [bp+8]
+    call    _GenPrintOperand
+    sub     sp, -4
+; RPN'ized expression: "( GenPrintOperandSeparator ) "
+; Expanded expression: " GenPrintOperandSeparator ()0 "
+; Fused expression:    "( GenPrintOperandSeparator )0 "
+    call    _GenPrintOperandSeparator
+; RPN'ized expression: "( operand2val , operand2 GenPrintOperand ) "
+; Expanded expression: " (@14) *(2)  (@12) *(2)  GenPrintOperand ()4 "
+; Fused expression:    "( *(2) (@14) , *(2) (@12) , GenPrintOperand )4 "
+    push    word [bp+14]
+    push    word [bp+12]
+    call    _GenPrintOperand
+    sub     sp, -4
+; RPN'ized expression: "( GenPrintOperandSeparator ) "
+; Expanded expression: " GenPrintOperandSeparator ()0 "
+; Fused expression:    "( GenPrintOperandSeparator )0 "
+    call    _GenPrintOperandSeparator
+; RPN'ized expression: "( operand3val , operand3 GenPrintOperand ) "
+; Expanded expression: " (@18) *(2)  (@16) *(2)  GenPrintOperand ()4 "
+; Fused expression:    "( *(2) (@18) , *(2) (@16) , GenPrintOperand )4 "
+    push    word [bp+18]
+    push    word [bp+16]
+    call    _GenPrintOperand
+    sub     sp, -4
+; RPN'ized expression: "( GenPrintNewLine ) "
+; Expanded expression: " GenPrintNewLine ()0 "
+; Fused expression:    "( GenPrintNewLine )0 "
+    call    _GenPrintNewLine
+L1460:
+    leave
+    ret
+; SEGMENT _TEXT
+; glb GenExtendRegAIfNeeded : (
+; prm     opSz : int
+;     ) void
+SEGMENT _TEXT
+    global  _GenExtendRegAIfNeeded
+_GenExtendRegAIfNeeded:
+    push    bp
+    mov     bp, sp
+; loc     opSz : (@4): int
+; if
+; RPN'ized expression: "opSz 1 == "
+; Expanded expression: "(@4) *(2) 1 == "
+; Fused expression:    "== *(@4) 1 IF! "
+    mov     ax, [bp+4]
+    cmp     ax, 1
+    jne     L1462
+; {
+; if
+; RPN'ized expression: "CharIsSigned "
+; Expanded expression: "CharIsSigned *(2) "
+; Fused expression:    "*(2) CharIsSigned "
+    mov     ax, [_CharIsSigned]
+; JumpIfZero
+    test    ax, ax
+    je      L1464
+; RPN'ized expression: "( 23 GenPrintInstrNoOperand ) "
+; Expanded expression: " 23  GenPrintInstrNoOperand ()2 "
+; Fused expression:    "( 23 , GenPrintInstrNoOperand )2 "
+    push    23
+    call    _GenPrintInstrNoOperand
+    sub     sp, -2
+    jmp     L1465
+L1464:
+; else
+; RPN'ized expression: "( 0 , 11 , 0 , 1 , 0 , 0 GenPrintInstr2Operands ) "
+; Expanded expression: " 0  11  0  1  0  0  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( 0 , 11 , 0 , 1 , 0 , 0 , GenPrintInstr2Operands )12 "
+    push    0
+    push    11
+    push    0
+    push    1
+    push    0
+    push    0
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+L1465:
+; }
+L1462:
+L1461:
     leave
     ret
 ; SEGMENT _TEXT
 ; glb GenJumpUncond : (
-; prm     Label : int
+; prm     label : int
 ;     ) void
 SEGMENT _TEXT
     global  _GenJumpUncond
 _GenJumpUncond:
     push    bp
     mov     bp, sp
-; loc     Label : (@4): int
-; RPN'ized expression: "( Label , L1056 printf ) "
-; Expanded expression: " (@4) *(2)  L1056  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1056:
-    db  "    jmp     L%d",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@4) , L1056 , printf )4 "
+; loc     label : (@4): int
+; RPN'ized expression: "( label , 13 , 0 , 31 GenPrintInstr1Operand ) "
+; Expanded expression: " (@4) *(2)  13  0  31  GenPrintInstr1Operand ()8 "
+; Fused expression:    "( *(2) (@4) , 13 , 0 , 31 , GenPrintInstr1Operand )8 "
     push    word [bp+4]
-    push    L1056
-    call    _printf
-    sub     sp, -4
-L1055:
+    push    13
+    push    0
+    push    31
+    call    _GenPrintInstr1Operand
+    sub     sp, -8
+L1466:
     leave
     ret
 ; SEGMENT _TEXT
 ; glb GenJumpIfNotEqual : (
 ; prm     val : int
-; prm     Label : int
+; prm     label : int
 ;     ) void
 SEGMENT _TEXT
     global  _GenJumpIfNotEqual
@@ -9007,98 +11529,118 @@ _GenJumpIfNotEqual:
     push    bp
     mov     bp, sp
 ; loc     val : (@4): int
-; loc     Label : (@6): int
-; RPN'ized expression: "( Label , val , L1059 printf ) "
-; Expanded expression: " (@6) *(2)  (@4) *(2)  L1059  printf ()6 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1059:
-    db  "    cmp     ax, %d",10,"    jne     L%d",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@6) , *(2) (@4) , L1059 , printf )6 "
-    push    word [bp+6]
+; loc     label : (@6): int
+; RPN'ized expression: "( val , 11 , 0 , 3 , 0 , 14 GenPrintInstr2Operands ) "
+; Expanded expression: " (@4) *(2)  11  0  3  0  14  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( *(2) (@4) , 11 , 0 , 3 , 0 , 14 , GenPrintInstr2Operands )12 "
     push    word [bp+4]
-    push    L1059
-    call    _printf
-    sub     sp, -6
-L1058:
+    push    11
+    push    0
+    push    3
+    push    0
+    push    14
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+; RPN'ized expression: "( label , 13 , 9 , 26 GenPrintInstr1Operand ) "
+; Expanded expression: " (@6) *(2)  13  9  26  GenPrintInstr1Operand ()8 "
+; Fused expression:    "( *(2) (@6) , 13 , 9 , 26 , GenPrintInstr1Operand )8 "
+    push    word [bp+6]
+    push    13
+    push    9
+    push    26
+    call    _GenPrintInstr1Operand
+    sub     sp, -8
+L1467:
     leave
     ret
 ; SEGMENT _TEXT
 ; glb GenJumpIfZero : (
-; prm     Label : int
+; prm     label : int
 ;     ) void
 SEGMENT _TEXT
     global  _GenJumpIfZero
 _GenJumpIfZero:
     push    bp
     mov     bp, sp
-; loc     Label : (@4): int
-; RPN'ized expression: "( L1062 printf ) "
-; Expanded expression: " L1062  printf ()2 "
+; loc     label : (@4): int
+; RPN'ized expression: "( L1469 printf ) "
+; Expanded expression: " L1469  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L1062:
+L1469:
     db  "; JumpIfZero",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L1062 , printf )2 "
-    push    L1062
+; Fused expression:    "( L1469 , printf )2 "
+    push    L1469
     call    _printf
     sub     sp, -2
-; RPN'ized expression: "( Label , L1064 printf ) "
-; Expanded expression: " (@4) *(2)  L1064  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1064:
-    db  "    test    ax, ax",10,"    jz      L%d",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@4) , L1064 , printf )4 "
+; RPN'ized expression: "( 0 , 3 , 0 , 3 , 0 , 15 GenPrintInstr2Operands ) "
+; Expanded expression: " 0  3  0  3  0  15  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( 0 , 3 , 0 , 3 , 0 , 15 , GenPrintInstr2Operands )12 "
+    push    0
+    push    3
+    push    0
+    push    3
+    push    0
+    push    15
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+; RPN'ized expression: "( label , 13 , 8 , 26 GenPrintInstr1Operand ) "
+; Expanded expression: " (@4) *(2)  13  8  26  GenPrintInstr1Operand ()8 "
+; Fused expression:    "( *(2) (@4) , 13 , 8 , 26 , GenPrintInstr1Operand )8 "
     push    word [bp+4]
-    push    L1064
-    call    _printf
-    sub     sp, -4
-L1061:
+    push    13
+    push    8
+    push    26
+    call    _GenPrintInstr1Operand
+    sub     sp, -8
+L1468:
     leave
     ret
 ; SEGMENT _TEXT
 ; glb GenJumpIfNotZero : (
-; prm     Label : int
+; prm     label : int
 ;     ) void
 SEGMENT _TEXT
     global  _GenJumpIfNotZero
 _GenJumpIfNotZero:
     push    bp
     mov     bp, sp
-; loc     Label : (@4): int
-; RPN'ized expression: "( L1067 printf ) "
-; Expanded expression: " L1067  printf ()2 "
+; loc     label : (@4): int
+; RPN'ized expression: "( L1472 printf ) "
+; Expanded expression: " L1472  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L1067:
+L1472:
     db  "; JumpIfNotZero",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L1067 , printf )2 "
-    push    L1067
+; Fused expression:    "( L1472 , printf )2 "
+    push    L1472
     call    _printf
     sub     sp, -2
-; RPN'ized expression: "( Label , L1069 printf ) "
-; Expanded expression: " (@4) *(2)  L1069  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1069:
-    db  "    test    ax, ax",10,"    jnz     L%d",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@4) , L1069 , printf )4 "
+; RPN'ized expression: "( 0 , 3 , 0 , 3 , 0 , 15 GenPrintInstr2Operands ) "
+; Expanded expression: " 0  3  0  3  0  15  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( 0 , 3 , 0 , 3 , 0 , 15 , GenPrintInstr2Operands )12 "
+    push    0
+    push    3
+    push    0
+    push    3
+    push    0
+    push    15
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+; RPN'ized expression: "( label , 13 , 9 , 26 GenPrintInstr1Operand ) "
+; Expanded expression: " (@4) *(2)  13  9  26  GenPrintInstr1Operand ()8 "
+; Fused expression:    "( *(2) (@4) , 13 , 9 , 26 , GenPrintInstr1Operand )8 "
     push    word [bp+4]
-    push    L1069
-    call    _printf
-    sub     sp, -4
-L1066:
+    push    13
+    push    9
+    push    26
+    call    _GenPrintInstr1Operand
+    sub     sp, -8
+L1471:
     leave
     ret
 ; SEGMENT _TEXT
@@ -9108,19 +11650,51 @@ SEGMENT _TEXT
 _GenFxnProlog:
     push    bp
     mov     bp, sp
-; RPN'ized expression: "( L1072 printf ) "
-; Expanded expression: " L1072  printf ()2 "
+; RPN'ized expression: "( 0 , 7 , 0 , 5 GenPrintInstr1Operand ) "
+; Expanded expression: " 0  7  0  5  GenPrintInstr1Operand ()8 "
+; Fused expression:    "( 0 , 7 , 0 , 5 , GenPrintInstr1Operand )8 "
+    push    0
+    push    7
+    push    0
+    push    5
+    call    _GenPrintInstr1Operand
+    sub     sp, -8
+; RPN'ized expression: "( 0 , 8 , 0 , 7 , 0 , 0 GenPrintInstr2Operands ) "
+; Expanded expression: " 0  8  0  7  0  0  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( 0 , 8 , 0 , 7 , 0 , 0 , GenPrintInstr2Operands )12 "
+    push    0
+    push    8
+    push    0
+    push    7
+    push    0
+    push    0
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+L1474:
+    leave
+    ret
 ; SEGMENT _TEXT
-SEGMENT _DATA
-L1072:
-    db  "    push    bp",10,"    mov     bp, sp",10,0
-; SEGMENT _DATA
+; glb GenLocalAlloc : (
+; prm     size : int
+;     ) void
 SEGMENT _TEXT
-; Fused expression:    "( L1072 , printf )2 "
-    push    L1072
-    call    _printf
-    sub     sp, -2
-L1071:
+    global  _GenLocalAlloc
+_GenLocalAlloc:
+    push    bp
+    mov     bp, sp
+; loc     size : (@4): int
+; RPN'ized expression: "( size , 11 , 0 , 8 , 0 , 10 GenPrintInstr2Operands ) "
+; Expanded expression: " (@4) *(2)  11  0  8  0  10  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( *(2) (@4) , 11 , 0 , 8 , 0 , 10 , GenPrintInstr2Operands )12 "
+    push    word [bp+4]
+    push    11
+    push    0
+    push    8
+    push    0
+    push    10
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+L1475:
     leave
     ret
 ; SEGMENT _TEXT
@@ -9130,54 +11704,158 @@ SEGMENT _TEXT
 _GenFxnEpilog:
     push    bp
     mov     bp, sp
-; RPN'ized expression: "( L1075 printf ) "
-; Expanded expression: " L1075  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1075:
-    db  "    leave",10,"    ret",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1075 , printf )2 "
-    push    L1075
-    call    _printf
+; RPN'ized expression: "( 28 GenPrintInstrNoOperand ) "
+; Expanded expression: " 28  GenPrintInstrNoOperand ()2 "
+; Fused expression:    "( 28 , GenPrintInstrNoOperand )2 "
+    push    28
+    call    _GenPrintInstrNoOperand
     sub     sp, -2
-L1074:
+; RPN'ized expression: "( 30 GenPrintInstrNoOperand ) "
+; Expanded expression: " 30  GenPrintInstrNoOperand ()2 "
+; Fused expression:    "( 30 , GenPrintInstrNoOperand )2 "
+    push    30
+    call    _GenPrintInstrNoOperand
+    sub     sp, -2
+L1476:
     leave
     ret
 ; SEGMENT _TEXT
-; glb GenLocalAlloc : (
-; prm     Size : int
+; glb GenReadIdent : (
+; prm     opSz : int
+; prm     label : int
 ;     ) void
 SEGMENT _TEXT
-    global  _GenLocalAlloc
-_GenLocalAlloc:
+    global  _GenReadIdent
+_GenReadIdent:
     push    bp
     mov     bp, sp
-; loc     Size : (@4): int
-; RPN'ized expression: "( Size , L1078 printf ) "
-; Expanded expression: " (@4) *(2)  L1078  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1078:
-    db  "    sub     sp, %d",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@4) , L1078 , printf )4 "
+; loc     opSz : (@4): int
+; loc     label : (@6): int
+; RPN'ized expression: "( label , 14 , 0 , ( opSz , 9 GenSelectByteOrWord ) , 0 , 0 GenPrintInstr2Operands ) "
+; Expanded expression: " (@6) *(2)  14  0   (@4) *(2)  9  GenSelectByteOrWord ()4  0  0  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( *(2) (@6) , 14 , 0 , ( *(2) (@4) , 9 , GenSelectByteOrWord )4 , 0 , 0 , GenPrintInstr2Operands )12 "
+    push    word [bp+6]
+    push    14
+    push    0
     push    word [bp+4]
-    push    L1078
-    call    _printf
+    push    9
+    call    _GenSelectByteOrWord
     sub     sp, -4
-L1077:
+    push    ax
+    push    0
+    push    0
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+; RPN'ized expression: "( opSz GenExtendRegAIfNeeded ) "
+; Expanded expression: " (@4) *(2)  GenExtendRegAIfNeeded ()2 "
+; Fused expression:    "( *(2) (@4) , GenExtendRegAIfNeeded )2 "
+    push    word [bp+4]
+    call    _GenExtendRegAIfNeeded
+    sub     sp, -2
+L1477:
     leave
     ret
 ; SEGMENT _TEXT
-; glb GenExtendAlAx : (void) void
+; glb GenReadLocal : (
+; prm     opSz : int
+; prm     ofs : int
+;     ) void
 SEGMENT _TEXT
-    global  _GenExtendAlAx
-_GenExtendAlAx:
+    global  _GenReadLocal
+_GenReadLocal:
     push    bp
     mov     bp, sp
+; loc     opSz : (@4): int
+; loc     ofs : (@6): int
+; RPN'ized expression: "( ofs , 18 , 0 , ( opSz , 9 GenSelectByteOrWord ) , 0 , 0 GenPrintInstr2Operands ) "
+; Expanded expression: " (@6) *(2)  18  0   (@4) *(2)  9  GenSelectByteOrWord ()4  0  0  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( *(2) (@6) , 18 , 0 , ( *(2) (@4) , 9 , GenSelectByteOrWord )4 , 0 , 0 , GenPrintInstr2Operands )12 "
+    push    word [bp+6]
+    push    18
+    push    0
+    push    word [bp+4]
+    push    9
+    call    _GenSelectByteOrWord
+    sub     sp, -4
+    push    ax
+    push    0
+    push    0
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+; RPN'ized expression: "( opSz GenExtendRegAIfNeeded ) "
+; Expanded expression: " (@4) *(2)  GenExtendRegAIfNeeded ()2 "
+; Fused expression:    "( *(2) (@4) , GenExtendRegAIfNeeded )2 "
+    push    word [bp+4]
+    call    _GenExtendRegAIfNeeded
+    sub     sp, -2
+L1478:
+    leave
+    ret
+; SEGMENT _TEXT
+; glb GenReadIndirect : (
+; prm     opSz : int
+;     ) void
+SEGMENT _TEXT
+    global  _GenReadIndirect
+_GenReadIndirect:
+    push    bp
+    mov     bp, sp
+; loc     opSz : (@4): int
+; RPN'ized expression: "( 0 , 3 , 0 , 4 , 0 , 0 GenPrintInstr2Operands ) "
+; Expanded expression: " 0  3  0  4  0  0  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( 0 , 3 , 0 , 4 , 0 , 0 , GenPrintInstr2Operands )12 "
+    push    0
+    push    3
+    push    0
+    push    4
+    push    0
+    push    0
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+; RPN'ized expression: "( 0 , 22 , 0 , ( opSz , 9 GenSelectByteOrWord ) , 0 , 0 GenPrintInstr2Operands ) "
+; Expanded expression: " 0  22  0   (@4) *(2)  9  GenSelectByteOrWord ()4  0  0  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( 0 , 22 , 0 , ( *(2) (@4) , 9 , GenSelectByteOrWord )4 , 0 , 0 , GenPrintInstr2Operands )12 "
+    push    0
+    push    22
+    push    0
+    push    word [bp+4]
+    push    9
+    call    _GenSelectByteOrWord
+    sub     sp, -4
+    push    ax
+    push    0
+    push    0
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+; RPN'ized expression: "( opSz GenExtendRegAIfNeeded ) "
+; Expanded expression: " (@4) *(2)  GenExtendRegAIfNeeded ()2 "
+; Fused expression:    "( *(2) (@4) , GenExtendRegAIfNeeded )2 "
+    push    word [bp+4]
+    call    _GenExtendRegAIfNeeded
+    sub     sp, -2
+L1479:
+    leave
+    ret
+; SEGMENT _TEXT
+; glb GenReadCRegIdent : (
+; prm     opSz : int
+; prm     label : int
+;     ) void
+SEGMENT _TEXT
+    global  _GenReadCRegIdent
+_GenReadCRegIdent:
+    push    bp
+    mov     bp, sp
+; loc     opSz : (@4): int
+; loc     label : (@6): int
+; if
+; RPN'ized expression: "opSz 1 == "
+; Expanded expression: "(@4) *(2) 1 == "
+; Fused expression:    "== *(@4) 1 IF! "
+    mov     ax, [bp+4]
+    cmp     ax, 1
+    jne     L1481
+; {
 ; if
 ; RPN'ized expression: "CharIsSigned "
 ; Expanded expression: "CharIsSigned *(2) "
@@ -9185,284 +11863,211 @@ _GenExtendAlAx:
     mov     ax, [_CharIsSigned]
 ; JumpIfZero
     test    ax, ax
-    jz      L1081
-; RPN'ized expression: "( L1083 printf ) "
-; Expanded expression: " L1083  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1083:
-    db  "    cbw",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1083 , printf )2 "
-    push    L1083
-    call    _printf
-    sub     sp, -2
-    jmp     L1082
-L1081:
+    je      L1483
+; RPN'ized expression: "( label , 15 , 0 , 5 , 0 , 1 GenPrintInstr2Operands ) "
+; Expanded expression: " (@6) *(2)  15  0  5  0  1  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( *(2) (@6) , 15 , 0 , 5 , 0 , 1 , GenPrintInstr2Operands )12 "
+    push    word [bp+6]
+    push    15
+    push    0
+    push    5
+    push    0
+    push    1
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+    jmp     L1484
+L1483:
 ; else
-; RPN'ized expression: "( L1085 printf ) "
-; Expanded expression: " L1085  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1085:
-    db  "    mov     ah, 0",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1085 , printf )2 "
-    push    L1085
-    call    _printf
-    sub     sp, -2
-L1082:
-L1080:
+; RPN'ized expression: "( label , 15 , 0 , 5 , 0 , 2 GenPrintInstr2Operands ) "
+; Expanded expression: " (@6) *(2)  15  0  5  0  2  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( *(2) (@6) , 15 , 0 , 5 , 0 , 2 , GenPrintInstr2Operands )12 "
+    push    word [bp+6]
+    push    15
+    push    0
+    push    5
+    push    0
+    push    2
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+L1484:
+; }
+    jmp     L1482
+L1481:
+; else
+; RPN'ized expression: "( label , 14 , 0 , 5 , 0 , 0 GenPrintInstr2Operands ) "
+; Expanded expression: " (@6) *(2)  14  0  5  0  0  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( *(2) (@6) , 14 , 0 , 5 , 0 , 0 , GenPrintInstr2Operands )12 "
+    push    word [bp+6]
+    push    14
+    push    0
+    push    5
+    push    0
+    push    0
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+L1482:
+L1480:
     leave
     ret
 ; SEGMENT _TEXT
-; glb GenReadIdent : (
-; prm     OpSz : int
-; prm     Label : * char
+; glb GenReadCRegLocal : (
+; prm     opSz : int
+; prm     ofs : int
 ;     ) void
 SEGMENT _TEXT
-    global  _GenReadIdent
-_GenReadIdent:
+    global  _GenReadCRegLocal
+_GenReadCRegLocal:
     push    bp
     mov     bp, sp
-; loc     OpSz : (@4): int
-; loc     Label : (@6): * char
+; loc     opSz : (@4): int
+; loc     ofs : (@6): int
 ; if
-; RPN'ized expression: "OpSz 1 == "
+; RPN'ized expression: "opSz 1 == "
 ; Expanded expression: "(@4) *(2) 1 == "
 ; Fused expression:    "== *(@4) 1 IF! "
     mov     ax, [bp+4]
     cmp     ax, 1
-    jne     L1088
+    jne     L1486
 ; {
-; RPN'ized expression: "( L1090 printf ) "
-; Expanded expression: " L1090  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1090:
-    db  "    mov     al, [",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1090 , printf )2 "
-    push    L1090
-    call    _printf
-    sub     sp, -2
-; RPN'ized expression: "( Label GenPrintLabel ) "
-; Expanded expression: " (@6) *(2)  GenPrintLabel ()2 "
-; Fused expression:    "( *(2) (@6) , GenPrintLabel )2 "
-    push    word [bp+6]
-    call    _GenPrintLabel
-    sub     sp, -2
-; RPN'ized expression: "( L1092 printf ) "
-; Expanded expression: " L1092  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1092:
-    db  "]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1092 , printf )2 "
-    push    L1092
-    call    _printf
-    sub     sp, -2
-; RPN'ized expression: "( GenExtendAlAx ) "
-; Expanded expression: " GenExtendAlAx ()0 "
-; Fused expression:    "( GenExtendAlAx )0 "
-    call    _GenExtendAlAx
-; }
-    jmp     L1089
-L1088:
-; else
 ; if
-; RPN'ized expression: "OpSz 2 == "
-; Expanded expression: "(@4) *(2) 2 == "
-; Fused expression:    "== *(@4) 2 IF! "
-    mov     ax, [bp+4]
-    cmp     ax, 2
-    jne     L1094
-; {
-; RPN'ized expression: "( L1096 printf ) "
-; Expanded expression: " L1096  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1096:
-    db  "    mov     ax, [",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1096 , printf )2 "
-    push    L1096
-    call    _printf
-    sub     sp, -2
-; RPN'ized expression: "( Label GenPrintLabel ) "
-; Expanded expression: " (@6) *(2)  GenPrintLabel ()2 "
-; Fused expression:    "( *(2) (@6) , GenPrintLabel )2 "
+; RPN'ized expression: "CharIsSigned "
+; Expanded expression: "CharIsSigned *(2) "
+; Fused expression:    "*(2) CharIsSigned "
+    mov     ax, [_CharIsSigned]
+; JumpIfZero
+    test    ax, ax
+    je      L1488
+; RPN'ized expression: "( ofs , 19 , 0 , 5 , 0 , 1 GenPrintInstr2Operands ) "
+; Expanded expression: " (@6) *(2)  19  0  5  0  1  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( *(2) (@6) , 19 , 0 , 5 , 0 , 1 , GenPrintInstr2Operands )12 "
     push    word [bp+6]
-    call    _GenPrintLabel
-    sub     sp, -2
-; RPN'ized expression: "( L1098 printf ) "
-; Expanded expression: " L1098  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1098:
-    db  "]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1098 , printf )2 "
-    push    L1098
-    call    _printf
-    sub     sp, -2
+    push    19
+    push    0
+    push    5
+    push    0
+    push    1
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+    jmp     L1489
+L1488:
+; else
+; RPN'ized expression: "( ofs , 19 , 0 , 5 , 0 , 2 GenPrintInstr2Operands ) "
+; Expanded expression: " (@6) *(2)  19  0  5  0  2  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( *(2) (@6) , 19 , 0 , 5 , 0 , 2 , GenPrintInstr2Operands )12 "
+    push    word [bp+6]
+    push    19
+    push    0
+    push    5
+    push    0
+    push    2
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+L1489:
 ; }
-L1094:
-L1089:
-L1087:
+    jmp     L1487
+L1486:
+; else
+; RPN'ized expression: "( ofs , 18 , 0 , 5 , 0 , 0 GenPrintInstr2Operands ) "
+; Expanded expression: " (@6) *(2)  18  0  5  0  0  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( *(2) (@6) , 18 , 0 , 5 , 0 , 0 , GenPrintInstr2Operands )12 "
+    push    word [bp+6]
+    push    18
+    push    0
+    push    5
+    push    0
+    push    0
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+L1487:
+L1485:
     leave
     ret
 ; SEGMENT _TEXT
-; glb GenReadLocal : (
-; prm     OpSz : int
-; prm     Ofs : int
+; glb GenReadCRegIndirect : (
+; prm     opSz : int
 ;     ) void
 SEGMENT _TEXT
-    global  _GenReadLocal
-_GenReadLocal:
+    global  _GenReadCRegIndirect
+_GenReadCRegIndirect:
     push    bp
     mov     bp, sp
-; loc     OpSz : (@4): int
-; loc     Ofs : (@6): int
+; loc     opSz : (@4): int
+; RPN'ized expression: "( 0 , 3 , 0 , 4 , 0 , 0 GenPrintInstr2Operands ) "
+; Expanded expression: " 0  3  0  4  0  0  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( 0 , 3 , 0 , 4 , 0 , 0 , GenPrintInstr2Operands )12 "
+    push    0
+    push    3
+    push    0
+    push    4
+    push    0
+    push    0
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
 ; if
-; RPN'ized expression: "OpSz 1 == "
+; RPN'ized expression: "opSz 1 == "
 ; Expanded expression: "(@4) *(2) 1 == "
 ; Fused expression:    "== *(@4) 1 IF! "
     mov     ax, [bp+4]
     cmp     ax, 1
-    jne     L1101
+    jne     L1491
 ; {
-; RPN'ized expression: "( Ofs , L1103 printf ) "
-; Expanded expression: " (@6) *(2)  L1103  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1103:
-    db  "    mov     al, [bp%+d]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@6) , L1103 , printf )4 "
-    push    word [bp+6]
-    push    L1103
-    call    _printf
-    sub     sp, -4
-; RPN'ized expression: "( GenExtendAlAx ) "
-; Expanded expression: " GenExtendAlAx ()0 "
-; Fused expression:    "( GenExtendAlAx )0 "
-    call    _GenExtendAlAx
-; }
-    jmp     L1102
-L1101:
+; if
+; RPN'ized expression: "CharIsSigned "
+; Expanded expression: "CharIsSigned *(2) "
+; Fused expression:    "*(2) CharIsSigned "
+    mov     ax, [_CharIsSigned]
+; JumpIfZero
+    test    ax, ax
+    je      L1493
+; RPN'ized expression: "( 0 , 23 , 0 , 5 , 0 , 1 GenPrintInstr2Operands ) "
+; Expanded expression: " 0  23  0  5  0  1  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( 0 , 23 , 0 , 5 , 0 , 1 , GenPrintInstr2Operands )12 "
+    push    0
+    push    23
+    push    0
+    push    5
+    push    0
+    push    1
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+    jmp     L1494
+L1493:
 ; else
-; if
-; RPN'ized expression: "OpSz 2 == "
-; Expanded expression: "(@4) *(2) 2 == "
-; Fused expression:    "== *(@4) 2 IF! "
-    mov     ax, [bp+4]
-    cmp     ax, 2
-    jne     L1105
-; RPN'ized expression: "( Ofs , L1107 printf ) "
-; Expanded expression: " (@6) *(2)  L1107  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1107:
-    db  "    mov     ax, [bp%+d]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@6) , L1107 , printf )4 "
-    push    word [bp+6]
-    push    L1107
-    call    _printf
-    sub     sp, -4
-L1105:
-L1102:
-L1100:
-    leave
-    ret
-; SEGMENT _TEXT
-; glb GenReadIndirect : (
-; prm     OpSz : int
-;     ) void
-SEGMENT _TEXT
-    global  _GenReadIndirect
-_GenReadIndirect:
-    push    bp
-    mov     bp, sp
-; loc     OpSz : (@4): int
-; RPN'ized expression: "( L1110 printf ) "
-; Expanded expression: " L1110  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1110:
-    db  "    mov     bx, ax",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1110 , printf )2 "
-    push    L1110
-    call    _printf
-    sub     sp, -2
-; if
-; RPN'ized expression: "OpSz 1 == "
-; Expanded expression: "(@4) *(2) 1 == "
-; Fused expression:    "== *(@4) 1 IF! "
-    mov     ax, [bp+4]
-    cmp     ax, 1
-    jne     L1112
-; {
-; RPN'ized expression: "( L1114 printf ) "
-; Expanded expression: " L1114  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1114:
-    db  "    mov     al, [bx]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1114 , printf )2 "
-    push    L1114
-    call    _printf
-    sub     sp, -2
-; RPN'ized expression: "( GenExtendAlAx ) "
-; Expanded expression: " GenExtendAlAx ()0 "
-; Fused expression:    "( GenExtendAlAx )0 "
-    call    _GenExtendAlAx
+; RPN'ized expression: "( 0 , 23 , 0 , 5 , 0 , 2 GenPrintInstr2Operands ) "
+; Expanded expression: " 0  23  0  5  0  2  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( 0 , 23 , 0 , 5 , 0 , 2 , GenPrintInstr2Operands )12 "
+    push    0
+    push    23
+    push    0
+    push    5
+    push    0
+    push    2
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+L1494:
 ; }
-    jmp     L1113
-L1112:
+    jmp     L1492
+L1491:
 ; else
-; if
-; RPN'ized expression: "OpSz 2 == "
-; Expanded expression: "(@4) *(2) 2 == "
-; Fused expression:    "== *(@4) 2 IF! "
-    mov     ax, [bp+4]
-    cmp     ax, 2
-    jne     L1116
-; RPN'ized expression: "( L1118 printf ) "
-; Expanded expression: " L1118  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1118:
-    db  "    mov     ax, [bx]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1118 , printf )2 "
-    push    L1118
-    call    _printf
-    sub     sp, -2
-L1116:
-L1113:
-L1109:
+; RPN'ized expression: "( 0 , 22 , 0 , 5 , 0 , 0 GenPrintInstr2Operands ) "
+; Expanded expression: " 0  22  0  5  0  0  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( 0 , 22 , 0 , 5 , 0 , 0 , GenPrintInstr2Operands )12 "
+    push    0
+    push    22
+    push    0
+    push    5
+    push    0
+    push    0
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+L1492:
+L1490:
     leave
     ret
 ; SEGMENT _TEXT
 ; glb GenIncDecIdent : (
-; prm     OpSz : int
-; prm     Label : * char
+; prm     opSz : int
+; prm     label : int
 ; prm     tok : int
 ;     ) void
 SEGMENT _TEXT
@@ -9470,209 +12075,72 @@ SEGMENT _TEXT
 _GenIncDecIdent:
     push    bp
     mov     bp, sp
-; loc     OpSz : (@4): int
-; loc     Label : (@6): * char
+; loc     opSz : (@4): int
+; loc     label : (@6): int
 ; loc     tok : (@8): int
+; loc     instr : (@-2): int
+    sub     sp, 2
+; =
+; RPN'ized expression: "7 "
+; Expanded expression: "7 "
+; Expression value: 7
+; Fused expression:    "=(34) *(@-2) 7 "
+    mov     ax, 7
+    mov     [bp-2], ax
 ; if
-; RPN'ized expression: "OpSz 1 == "
-; Expanded expression: "(@4) *(2) 1 == "
-; Fused expression:    "== *(@4) 1 IF! "
-    mov     ax, [bp+4]
-    cmp     ax, 1
-    jne     L1121
-; {
-; if
-; RPN'ized expression: "tok 12 == "
-; Expanded expression: "(@8) *(2) 12 == "
-; Fused expression:    "== *(@8) 12 IF! "
+; RPN'ized expression: "tok 12 != "
+; Expanded expression: "(@8) *(2) 12 != "
+; Fused expression:    "!= *(@8) 12 IF! "
     mov     ax, [bp+8]
     cmp     ax, 12
-    jne     L1123
-; RPN'ized expression: "( L1125 printf ) "
-; Expanded expression: " L1125  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1125:
-    db  "    inc     byte [",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1125 , printf )2 "
-    push    L1125
-    call    _printf
-    sub     sp, -2
-    jmp     L1124
-L1123:
-; else
-; RPN'ized expression: "( L1127 printf ) "
-; Expanded expression: " L1127  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1127:
-    db  "    dec     byte [",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1127 , printf )2 "
-    push    L1127
-    call    _printf
-    sub     sp, -2
-L1124:
-; RPN'ized expression: "( Label GenPrintLabel ) "
-; Expanded expression: " (@6) *(2)  GenPrintLabel ()2 "
-; Fused expression:    "( *(2) (@6) , GenPrintLabel )2 "
+    je      L1496
+; RPN'ized expression: "instr 8 = "
+; Expanded expression: "(@-2) 8 =(2) "
+; Fused expression:    "=(34) *(@-2) 8 "
+    mov     ax, 8
+    mov     [bp-2], ax
+L1496:
+; RPN'ized expression: "( label , ( opSz , 17 GenSelectByteOrWord ) , 0 , instr GenPrintInstr1Operand ) "
+; Expanded expression: " (@6) *(2)   (@4) *(2)  17  GenSelectByteOrWord ()4  0  (@-2) *(2)  GenPrintInstr1Operand ()8 "
+; Fused expression:    "( *(2) (@6) , ( *(2) (@4) , 17 , GenSelectByteOrWord )4 , 0 , *(2) (@-2) , GenPrintInstr1Operand )8 "
     push    word [bp+6]
-    call    _GenPrintLabel
-    sub     sp, -2
-; RPN'ized expression: "( L1129 printf ) "
-; Expanded expression: " L1129  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1129:
-    db  "]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1129 , printf )2 "
-    push    L1129
-    call    _printf
-    sub     sp, -2
-; RPN'ized expression: "( L1131 printf ) "
-; Expanded expression: " L1131  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1131:
-    db  "    mov     al, [",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1131 , printf )2 "
-    push    L1131
-    call    _printf
-    sub     sp, -2
-; RPN'ized expression: "( Label GenPrintLabel ) "
-; Expanded expression: " (@6) *(2)  GenPrintLabel ()2 "
-; Fused expression:    "( *(2) (@6) , GenPrintLabel )2 "
+    push    word [bp+4]
+    push    17
+    call    _GenSelectByteOrWord
+    sub     sp, -4
+    push    ax
+    push    0
+    push    word [bp-2]
+    call    _GenPrintInstr1Operand
+    sub     sp, -8
+; RPN'ized expression: "( label , 14 , 0 , ( opSz , 9 GenSelectByteOrWord ) , 0 , 0 GenPrintInstr2Operands ) "
+; Expanded expression: " (@6) *(2)  14  0   (@4) *(2)  9  GenSelectByteOrWord ()4  0  0  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( *(2) (@6) , 14 , 0 , ( *(2) (@4) , 9 , GenSelectByteOrWord )4 , 0 , 0 , GenPrintInstr2Operands )12 "
     push    word [bp+6]
-    call    _GenPrintLabel
+    push    14
+    push    0
+    push    word [bp+4]
+    push    9
+    call    _GenSelectByteOrWord
+    sub     sp, -4
+    push    ax
+    push    0
+    push    0
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+; RPN'ized expression: "( opSz GenExtendRegAIfNeeded ) "
+; Expanded expression: " (@4) *(2)  GenExtendRegAIfNeeded ()2 "
+; Fused expression:    "( *(2) (@4) , GenExtendRegAIfNeeded )2 "
+    push    word [bp+4]
+    call    _GenExtendRegAIfNeeded
     sub     sp, -2
-; RPN'ized expression: "( L1133 printf ) "
-; Expanded expression: " L1133  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1133:
-    db  "]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1133 , printf )2 "
-    push    L1133
-    call    _printf
-    sub     sp, -2
-; RPN'ized expression: "( GenExtendAlAx ) "
-; Expanded expression: " GenExtendAlAx ()0 "
-; Fused expression:    "( GenExtendAlAx )0 "
-    call    _GenExtendAlAx
-; }
-    jmp     L1122
-L1121:
-; else
-; if
-; RPN'ized expression: "OpSz 2 == "
-; Expanded expression: "(@4) *(2) 2 == "
-; Fused expression:    "== *(@4) 2 IF! "
-    mov     ax, [bp+4]
-    cmp     ax, 2
-    jne     L1135
-; {
-; if
-; RPN'ized expression: "tok 12 == "
-; Expanded expression: "(@8) *(2) 12 == "
-; Fused expression:    "== *(@8) 12 IF! "
-    mov     ax, [bp+8]
-    cmp     ax, 12
-    jne     L1137
-; RPN'ized expression: "( L1139 printf ) "
-; Expanded expression: " L1139  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1139:
-    db  "    inc     word [",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1139 , printf )2 "
-    push    L1139
-    call    _printf
-    sub     sp, -2
-    jmp     L1138
-L1137:
-; else
-; RPN'ized expression: "( L1141 printf ) "
-; Expanded expression: " L1141  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1141:
-    db  "    dec     word [",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1141 , printf )2 "
-    push    L1141
-    call    _printf
-    sub     sp, -2
-L1138:
-; RPN'ized expression: "( Label GenPrintLabel ) "
-; Expanded expression: " (@6) *(2)  GenPrintLabel ()2 "
-; Fused expression:    "( *(2) (@6) , GenPrintLabel )2 "
-    push    word [bp+6]
-    call    _GenPrintLabel
-    sub     sp, -2
-; RPN'ized expression: "( L1143 printf ) "
-; Expanded expression: " L1143  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1143:
-    db  "]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1143 , printf )2 "
-    push    L1143
-    call    _printf
-    sub     sp, -2
-; RPN'ized expression: "( L1145 printf ) "
-; Expanded expression: " L1145  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1145:
-    db  "    mov     ax, [",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1145 , printf )2 "
-    push    L1145
-    call    _printf
-    sub     sp, -2
-; RPN'ized expression: "( Label GenPrintLabel ) "
-; Expanded expression: " (@6) *(2)  GenPrintLabel ()2 "
-; Fused expression:    "( *(2) (@6) , GenPrintLabel )2 "
-    push    word [bp+6]
-    call    _GenPrintLabel
-    sub     sp, -2
-; RPN'ized expression: "( L1147 printf ) "
-; Expanded expression: " L1147  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1147:
-    db  "]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1147 , printf )2 "
-    push    L1147
-    call    _printf
-    sub     sp, -2
-; }
-L1135:
-L1122:
-L1120:
+L1495:
     leave
     ret
 ; SEGMENT _TEXT
 ; glb GenIncDecLocal : (
-; prm     OpSz : int
-; prm     Ofs : int
+; prm     opSz : int
+; prm     ofs : int
 ; prm     tok : int
 ;     ) void
 SEGMENT _TEXT
@@ -9680,142 +12148,71 @@ SEGMENT _TEXT
 _GenIncDecLocal:
     push    bp
     mov     bp, sp
-; loc     OpSz : (@4): int
-; loc     Ofs : (@6): int
+; loc     opSz : (@4): int
+; loc     ofs : (@6): int
 ; loc     tok : (@8): int
+; loc     instr : (@-2): int
+    sub     sp, 2
+; =
+; RPN'ized expression: "7 "
+; Expanded expression: "7 "
+; Expression value: 7
+; Fused expression:    "=(34) *(@-2) 7 "
+    mov     ax, 7
+    mov     [bp-2], ax
 ; if
-; RPN'ized expression: "OpSz 1 == "
-; Expanded expression: "(@4) *(2) 1 == "
-; Fused expression:    "== *(@4) 1 IF! "
-    mov     ax, [bp+4]
-    cmp     ax, 1
-    jne     L1150
-; {
-; if
-; RPN'ized expression: "tok 12 == "
-; Expanded expression: "(@8) *(2) 12 == "
-; Fused expression:    "== *(@8) 12 IF! "
+; RPN'ized expression: "tok 12 != "
+; Expanded expression: "(@8) *(2) 12 != "
+; Fused expression:    "!= *(@8) 12 IF! "
     mov     ax, [bp+8]
     cmp     ax, 12
-    jne     L1152
-; RPN'ized expression: "( Ofs , L1154 printf ) "
-; Expanded expression: " (@6) *(2)  L1154  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1154:
-    db  "    inc     byte [bp%+d]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@6) , L1154 , printf )4 "
+    je      L1499
+; RPN'ized expression: "instr 8 = "
+; Expanded expression: "(@-2) 8 =(2) "
+; Fused expression:    "=(34) *(@-2) 8 "
+    mov     ax, 8
+    mov     [bp-2], ax
+L1499:
+; RPN'ized expression: "( ofs , ( opSz , 21 GenSelectByteOrWord ) , 0 , instr GenPrintInstr1Operand ) "
+; Expanded expression: " (@6) *(2)   (@4) *(2)  21  GenSelectByteOrWord ()4  0  (@-2) *(2)  GenPrintInstr1Operand ()8 "
+; Fused expression:    "( *(2) (@6) , ( *(2) (@4) , 21 , GenSelectByteOrWord )4 , 0 , *(2) (@-2) , GenPrintInstr1Operand )8 "
     push    word [bp+6]
-    push    L1154
-    call    _printf
+    push    word [bp+4]
+    push    21
+    call    _GenSelectByteOrWord
     sub     sp, -4
-    jmp     L1153
-L1152:
-; else
-; RPN'ized expression: "( Ofs , L1156 printf ) "
-; Expanded expression: " (@6) *(2)  L1156  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1156:
-    db  "    dec     byte [bp%+d]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@6) , L1156 , printf )4 "
+    push    ax
+    push    0
+    push    word [bp-2]
+    call    _GenPrintInstr1Operand
+    sub     sp, -8
+; RPN'ized expression: "( ofs , 18 , 0 , ( opSz , 9 GenSelectByteOrWord ) , 0 , 0 GenPrintInstr2Operands ) "
+; Expanded expression: " (@6) *(2)  18  0   (@4) *(2)  9  GenSelectByteOrWord ()4  0  0  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( *(2) (@6) , 18 , 0 , ( *(2) (@4) , 9 , GenSelectByteOrWord )4 , 0 , 0 , GenPrintInstr2Operands )12 "
     push    word [bp+6]
-    push    L1156
-    call    _printf
+    push    18
+    push    0
+    push    word [bp+4]
+    push    9
+    call    _GenSelectByteOrWord
     sub     sp, -4
-L1153:
-; RPN'ized expression: "( Ofs , L1158 printf ) "
-; Expanded expression: " (@6) *(2)  L1158  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1158:
-    db  "    mov     al, [bp%+d]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@6) , L1158 , printf )4 "
-    push    word [bp+6]
-    push    L1158
-    call    _printf
-    sub     sp, -4
-; RPN'ized expression: "( GenExtendAlAx ) "
-; Expanded expression: " GenExtendAlAx ()0 "
-; Fused expression:    "( GenExtendAlAx )0 "
-    call    _GenExtendAlAx
-; }
-    jmp     L1151
-L1150:
-; else
-; if
-; RPN'ized expression: "OpSz 2 == "
-; Expanded expression: "(@4) *(2) 2 == "
-; Fused expression:    "== *(@4) 2 IF! "
-    mov     ax, [bp+4]
-    cmp     ax, 2
-    jne     L1160
-; {
-; if
-; RPN'ized expression: "tok 12 == "
-; Expanded expression: "(@8) *(2) 12 == "
-; Fused expression:    "== *(@8) 12 IF! "
-    mov     ax, [bp+8]
-    cmp     ax, 12
-    jne     L1162
-; RPN'ized expression: "( Ofs , L1164 printf ) "
-; Expanded expression: " (@6) *(2)  L1164  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1164:
-    db  "    inc     word [bp%+d]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@6) , L1164 , printf )4 "
-    push    word [bp+6]
-    push    L1164
-    call    _printf
-    sub     sp, -4
-    jmp     L1163
-L1162:
-; else
-; RPN'ized expression: "( Ofs , L1166 printf ) "
-; Expanded expression: " (@6) *(2)  L1166  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1166:
-    db  "    dec     word [bp%+d]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@6) , L1166 , printf )4 "
-    push    word [bp+6]
-    push    L1166
-    call    _printf
-    sub     sp, -4
-L1163:
-; RPN'ized expression: "( Ofs , L1168 printf ) "
-; Expanded expression: " (@6) *(2)  L1168  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1168:
-    db  "    mov     ax, [bp%+d]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@6) , L1168 , printf )4 "
-    push    word [bp+6]
-    push    L1168
-    call    _printf
-    sub     sp, -4
-; }
-L1160:
-L1151:
-L1149:
+    push    ax
+    push    0
+    push    0
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+; RPN'ized expression: "( opSz GenExtendRegAIfNeeded ) "
+; Expanded expression: " (@4) *(2)  GenExtendRegAIfNeeded ()2 "
+; Fused expression:    "( *(2) (@4) , GenExtendRegAIfNeeded )2 "
+    push    word [bp+4]
+    call    _GenExtendRegAIfNeeded
+    sub     sp, -2
+L1498:
     leave
     ret
 ; SEGMENT _TEXT
 ; glb GenIncDecIndirect : (
-; prm     OpSz : int
+; prm     opSz : int
 ; prm     tok : int
 ;     ) void
 SEGMENT _TEXT
@@ -9823,148 +12220,82 @@ SEGMENT _TEXT
 _GenIncDecIndirect:
     push    bp
     mov     bp, sp
-; loc     OpSz : (@4): int
+; loc     opSz : (@4): int
 ; loc     tok : (@6): int
-; RPN'ized expression: "( L1171 printf ) "
-; Expanded expression: " L1171  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1171:
-    db  "    mov     bx, ax",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1171 , printf )2 "
-    push    L1171
-    call    _printf
-    sub     sp, -2
+; loc     instr : (@-2): int
+    sub     sp, 2
+; =
+; RPN'ized expression: "7 "
+; Expanded expression: "7 "
+; Expression value: 7
+; Fused expression:    "=(34) *(@-2) 7 "
+    mov     ax, 7
+    mov     [bp-2], ax
 ; if
-; RPN'ized expression: "OpSz 1 == "
-; Expanded expression: "(@4) *(2) 1 == "
-; Fused expression:    "== *(@4) 1 IF! "
-    mov     ax, [bp+4]
-    cmp     ax, 1
-    jne     L1173
-; {
-; if
-; RPN'ized expression: "tok 12 == "
-; Expanded expression: "(@6) *(2) 12 == "
-; Fused expression:    "== *(@6) 12 IF! "
+; RPN'ized expression: "tok 12 != "
+; Expanded expression: "(@6) *(2) 12 != "
+; Fused expression:    "!= *(@6) 12 IF! "
     mov     ax, [bp+6]
     cmp     ax, 12
-    jne     L1175
-; RPN'ized expression: "( L1177 printf ) "
-; Expanded expression: " L1177  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1177:
-    db  "    inc     byte [bx]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1177 , printf )2 "
-    push    L1177
-    call    _printf
+    je      L1502
+; RPN'ized expression: "instr 8 = "
+; Expanded expression: "(@-2) 8 =(2) "
+; Fused expression:    "=(34) *(@-2) 8 "
+    mov     ax, 8
+    mov     [bp-2], ax
+L1502:
+; RPN'ized expression: "( 0 , 3 , 0 , 4 , 0 , 0 GenPrintInstr2Operands ) "
+; Expanded expression: " 0  3  0  4  0  0  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( 0 , 3 , 0 , 4 , 0 , 0 , GenPrintInstr2Operands )12 "
+    push    0
+    push    3
+    push    0
+    push    4
+    push    0
+    push    0
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+; RPN'ized expression: "( 0 , ( opSz , 25 GenSelectByteOrWord ) , 0 , instr GenPrintInstr1Operand ) "
+; Expanded expression: " 0   (@4) *(2)  25  GenSelectByteOrWord ()4  0  (@-2) *(2)  GenPrintInstr1Operand ()8 "
+; Fused expression:    "( 0 , ( *(2) (@4) , 25 , GenSelectByteOrWord )4 , 0 , *(2) (@-2) , GenPrintInstr1Operand )8 "
+    push    0
+    push    word [bp+4]
+    push    25
+    call    _GenSelectByteOrWord
+    sub     sp, -4
+    push    ax
+    push    0
+    push    word [bp-2]
+    call    _GenPrintInstr1Operand
+    sub     sp, -8
+; RPN'ized expression: "( 0 , 22 , 0 , ( opSz , 9 GenSelectByteOrWord ) , 0 , 0 GenPrintInstr2Operands ) "
+; Expanded expression: " 0  22  0   (@4) *(2)  9  GenSelectByteOrWord ()4  0  0  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( 0 , 22 , 0 , ( *(2) (@4) , 9 , GenSelectByteOrWord )4 , 0 , 0 , GenPrintInstr2Operands )12 "
+    push    0
+    push    22
+    push    0
+    push    word [bp+4]
+    push    9
+    call    _GenSelectByteOrWord
+    sub     sp, -4
+    push    ax
+    push    0
+    push    0
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+; RPN'ized expression: "( opSz GenExtendRegAIfNeeded ) "
+; Expanded expression: " (@4) *(2)  GenExtendRegAIfNeeded ()2 "
+; Fused expression:    "( *(2) (@4) , GenExtendRegAIfNeeded )2 "
+    push    word [bp+4]
+    call    _GenExtendRegAIfNeeded
     sub     sp, -2
-    jmp     L1176
-L1175:
-; else
-; RPN'ized expression: "( L1179 printf ) "
-; Expanded expression: " L1179  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1179:
-    db  "    dec     byte [bx]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1179 , printf )2 "
-    push    L1179
-    call    _printf
-    sub     sp, -2
-L1176:
-; RPN'ized expression: "( L1181 printf ) "
-; Expanded expression: " L1181  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1181:
-    db  "    mov     al, [bx]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1181 , printf )2 "
-    push    L1181
-    call    _printf
-    sub     sp, -2
-; RPN'ized expression: "( GenExtendAlAx ) "
-; Expanded expression: " GenExtendAlAx ()0 "
-; Fused expression:    "( GenExtendAlAx )0 "
-    call    _GenExtendAlAx
-; }
-    jmp     L1174
-L1173:
-; else
-; if
-; RPN'ized expression: "OpSz 2 == "
-; Expanded expression: "(@4) *(2) 2 == "
-; Fused expression:    "== *(@4) 2 IF! "
-    mov     ax, [bp+4]
-    cmp     ax, 2
-    jne     L1183
-; {
-; if
-; RPN'ized expression: "tok 12 == "
-; Expanded expression: "(@6) *(2) 12 == "
-; Fused expression:    "== *(@6) 12 IF! "
-    mov     ax, [bp+6]
-    cmp     ax, 12
-    jne     L1185
-; RPN'ized expression: "( L1187 printf ) "
-; Expanded expression: " L1187  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1187:
-    db  "    inc     word [bx]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1187 , printf )2 "
-    push    L1187
-    call    _printf
-    sub     sp, -2
-    jmp     L1186
-L1185:
-; else
-; RPN'ized expression: "( L1189 printf ) "
-; Expanded expression: " L1189  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1189:
-    db  "    dec     word [bx]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1189 , printf )2 "
-    push    L1189
-    call    _printf
-    sub     sp, -2
-L1186:
-; RPN'ized expression: "( L1191 printf ) "
-; Expanded expression: " L1191  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1191:
-    db  "    mov     ax, [bx]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1191 , printf )2 "
-    push    L1191
-    call    _printf
-    sub     sp, -2
-; }
-L1183:
-L1174:
-L1170:
+L1501:
     leave
     ret
 ; SEGMENT _TEXT
 ; glb GenPostIncDecIdent : (
-; prm     OpSz : int
-; prm     Label : * char
+; prm     opSz : int
+; prm     label : int
 ; prm     tok : int
 ;     ) void
 SEGMENT _TEXT
@@ -9972,209 +12303,72 @@ SEGMENT _TEXT
 _GenPostIncDecIdent:
     push    bp
     mov     bp, sp
-; loc     OpSz : (@4): int
-; loc     Label : (@6): * char
+; loc     opSz : (@4): int
+; loc     label : (@6): int
 ; loc     tok : (@8): int
+; loc     instr : (@-2): int
+    sub     sp, 2
+; =
+; RPN'ized expression: "7 "
+; Expanded expression: "7 "
+; Expression value: 7
+; Fused expression:    "=(34) *(@-2) 7 "
+    mov     ax, 7
+    mov     [bp-2], ax
 ; if
-; RPN'ized expression: "OpSz 1 == "
-; Expanded expression: "(@4) *(2) 1 == "
-; Fused expression:    "== *(@4) 1 IF! "
-    mov     ax, [bp+4]
-    cmp     ax, 1
-    jne     L1194
-; {
-; RPN'ized expression: "( L1196 printf ) "
-; Expanded expression: " L1196  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1196:
-    db  "    mov     al, [",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1196 , printf )2 "
-    push    L1196
-    call    _printf
-    sub     sp, -2
-; RPN'ized expression: "( Label GenPrintLabel ) "
-; Expanded expression: " (@6) *(2)  GenPrintLabel ()2 "
-; Fused expression:    "( *(2) (@6) , GenPrintLabel )2 "
-    push    word [bp+6]
-    call    _GenPrintLabel
-    sub     sp, -2
-; RPN'ized expression: "( L1198 printf ) "
-; Expanded expression: " L1198  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1198:
-    db  "]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1198 , printf )2 "
-    push    L1198
-    call    _printf
-    sub     sp, -2
-; RPN'ized expression: "( GenExtendAlAx ) "
-; Expanded expression: " GenExtendAlAx ()0 "
-; Fused expression:    "( GenExtendAlAx )0 "
-    call    _GenExtendAlAx
-; if
-; RPN'ized expression: "tok 81 == "
-; Expanded expression: "(@8) *(2) 81 == "
-; Fused expression:    "== *(@8) 81 IF! "
+; RPN'ized expression: "tok 81 != "
+; Expanded expression: "(@8) *(2) 81 != "
+; Fused expression:    "!= *(@8) 81 IF! "
     mov     ax, [bp+8]
     cmp     ax, 81
-    jne     L1200
-; RPN'ized expression: "( L1202 printf ) "
-; Expanded expression: " L1202  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1202:
-    db  "    inc     byte [",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1202 , printf )2 "
-    push    L1202
-    call    _printf
-    sub     sp, -2
-    jmp     L1201
-L1200:
-; else
-; RPN'ized expression: "( L1204 printf ) "
-; Expanded expression: " L1204  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1204:
-    db  "    dec     byte [",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1204 , printf )2 "
-    push    L1204
-    call    _printf
-    sub     sp, -2
-L1201:
-; RPN'ized expression: "( Label GenPrintLabel ) "
-; Expanded expression: " (@6) *(2)  GenPrintLabel ()2 "
-; Fused expression:    "( *(2) (@6) , GenPrintLabel )2 "
+    je      L1505
+; RPN'ized expression: "instr 8 = "
+; Expanded expression: "(@-2) 8 =(2) "
+; Fused expression:    "=(34) *(@-2) 8 "
+    mov     ax, 8
+    mov     [bp-2], ax
+L1505:
+; RPN'ized expression: "( label , 14 , 0 , ( opSz , 9 GenSelectByteOrWord ) , 0 , 0 GenPrintInstr2Operands ) "
+; Expanded expression: " (@6) *(2)  14  0   (@4) *(2)  9  GenSelectByteOrWord ()4  0  0  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( *(2) (@6) , 14 , 0 , ( *(2) (@4) , 9 , GenSelectByteOrWord )4 , 0 , 0 , GenPrintInstr2Operands )12 "
     push    word [bp+6]
-    call    _GenPrintLabel
+    push    14
+    push    0
+    push    word [bp+4]
+    push    9
+    call    _GenSelectByteOrWord
+    sub     sp, -4
+    push    ax
+    push    0
+    push    0
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+; RPN'ized expression: "( opSz GenExtendRegAIfNeeded ) "
+; Expanded expression: " (@4) *(2)  GenExtendRegAIfNeeded ()2 "
+; Fused expression:    "( *(2) (@4) , GenExtendRegAIfNeeded )2 "
+    push    word [bp+4]
+    call    _GenExtendRegAIfNeeded
     sub     sp, -2
-; RPN'ized expression: "( L1206 printf ) "
-; Expanded expression: " L1206  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1206:
-    db  "]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1206 , printf )2 "
-    push    L1206
-    call    _printf
-    sub     sp, -2
-; }
-    jmp     L1195
-L1194:
-; else
-; if
-; RPN'ized expression: "OpSz 2 == "
-; Expanded expression: "(@4) *(2) 2 == "
-; Fused expression:    "== *(@4) 2 IF! "
-    mov     ax, [bp+4]
-    cmp     ax, 2
-    jne     L1208
-; {
-; RPN'ized expression: "( L1210 printf ) "
-; Expanded expression: " L1210  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1210:
-    db  "    mov     ax, [",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1210 , printf )2 "
-    push    L1210
-    call    _printf
-    sub     sp, -2
-; RPN'ized expression: "( Label GenPrintLabel ) "
-; Expanded expression: " (@6) *(2)  GenPrintLabel ()2 "
-; Fused expression:    "( *(2) (@6) , GenPrintLabel )2 "
+; RPN'ized expression: "( label , ( opSz , 17 GenSelectByteOrWord ) , 0 , instr GenPrintInstr1Operand ) "
+; Expanded expression: " (@6) *(2)   (@4) *(2)  17  GenSelectByteOrWord ()4  0  (@-2) *(2)  GenPrintInstr1Operand ()8 "
+; Fused expression:    "( *(2) (@6) , ( *(2) (@4) , 17 , GenSelectByteOrWord )4 , 0 , *(2) (@-2) , GenPrintInstr1Operand )8 "
     push    word [bp+6]
-    call    _GenPrintLabel
-    sub     sp, -2
-; RPN'ized expression: "( L1212 printf ) "
-; Expanded expression: " L1212  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1212:
-    db  "]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1212 , printf )2 "
-    push    L1212
-    call    _printf
-    sub     sp, -2
-; if
-; RPN'ized expression: "tok 81 == "
-; Expanded expression: "(@8) *(2) 81 == "
-; Fused expression:    "== *(@8) 81 IF! "
-    mov     ax, [bp+8]
-    cmp     ax, 81
-    jne     L1214
-; RPN'ized expression: "( L1216 printf ) "
-; Expanded expression: " L1216  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1216:
-    db  "    inc     word [",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1216 , printf )2 "
-    push    L1216
-    call    _printf
-    sub     sp, -2
-    jmp     L1215
-L1214:
-; else
-; RPN'ized expression: "( L1218 printf ) "
-; Expanded expression: " L1218  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1218:
-    db  "    dec     word [",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1218 , printf )2 "
-    push    L1218
-    call    _printf
-    sub     sp, -2
-L1215:
-; RPN'ized expression: "( Label GenPrintLabel ) "
-; Expanded expression: " (@6) *(2)  GenPrintLabel ()2 "
-; Fused expression:    "( *(2) (@6) , GenPrintLabel )2 "
-    push    word [bp+6]
-    call    _GenPrintLabel
-    sub     sp, -2
-; RPN'ized expression: "( L1220 printf ) "
-; Expanded expression: " L1220  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1220:
-    db  "]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1220 , printf )2 "
-    push    L1220
-    call    _printf
-    sub     sp, -2
-; }
-L1208:
-L1195:
-L1193:
+    push    word [bp+4]
+    push    17
+    call    _GenSelectByteOrWord
+    sub     sp, -4
+    push    ax
+    push    0
+    push    word [bp-2]
+    call    _GenPrintInstr1Operand
+    sub     sp, -8
+L1504:
     leave
     ret
 ; SEGMENT _TEXT
 ; glb GenPostIncDecLocal : (
-; prm     OpSz : int
-; prm     Ofs : int
+; prm     opSz : int
+; prm     ofs : int
 ; prm     tok : int
 ;     ) void
 SEGMENT _TEXT
@@ -10182,142 +12376,71 @@ SEGMENT _TEXT
 _GenPostIncDecLocal:
     push    bp
     mov     bp, sp
-; loc     OpSz : (@4): int
-; loc     Ofs : (@6): int
+; loc     opSz : (@4): int
+; loc     ofs : (@6): int
 ; loc     tok : (@8): int
+; loc     instr : (@-2): int
+    sub     sp, 2
+; =
+; RPN'ized expression: "7 "
+; Expanded expression: "7 "
+; Expression value: 7
+; Fused expression:    "=(34) *(@-2) 7 "
+    mov     ax, 7
+    mov     [bp-2], ax
 ; if
-; RPN'ized expression: "OpSz 1 == "
-; Expanded expression: "(@4) *(2) 1 == "
-; Fused expression:    "== *(@4) 1 IF! "
-    mov     ax, [bp+4]
-    cmp     ax, 1
-    jne     L1223
-; {
-; RPN'ized expression: "( Ofs , L1225 printf ) "
-; Expanded expression: " (@6) *(2)  L1225  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1225:
-    db  "    mov     al, [bp%+d]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@6) , L1225 , printf )4 "
-    push    word [bp+6]
-    push    L1225
-    call    _printf
-    sub     sp, -4
-; RPN'ized expression: "( GenExtendAlAx ) "
-; Expanded expression: " GenExtendAlAx ()0 "
-; Fused expression:    "( GenExtendAlAx )0 "
-    call    _GenExtendAlAx
-; if
-; RPN'ized expression: "tok 81 == "
-; Expanded expression: "(@8) *(2) 81 == "
-; Fused expression:    "== *(@8) 81 IF! "
+; RPN'ized expression: "tok 81 != "
+; Expanded expression: "(@8) *(2) 81 != "
+; Fused expression:    "!= *(@8) 81 IF! "
     mov     ax, [bp+8]
     cmp     ax, 81
-    jne     L1227
-; RPN'ized expression: "( Ofs , L1229 printf ) "
-; Expanded expression: " (@6) *(2)  L1229  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1229:
-    db  "    inc     byte [bp%+d]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@6) , L1229 , printf )4 "
+    je      L1508
+; RPN'ized expression: "instr 8 = "
+; Expanded expression: "(@-2) 8 =(2) "
+; Fused expression:    "=(34) *(@-2) 8 "
+    mov     ax, 8
+    mov     [bp-2], ax
+L1508:
+; RPN'ized expression: "( ofs , 18 , 0 , ( opSz , 9 GenSelectByteOrWord ) , 0 , 0 GenPrintInstr2Operands ) "
+; Expanded expression: " (@6) *(2)  18  0   (@4) *(2)  9  GenSelectByteOrWord ()4  0  0  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( *(2) (@6) , 18 , 0 , ( *(2) (@4) , 9 , GenSelectByteOrWord )4 , 0 , 0 , GenPrintInstr2Operands )12 "
     push    word [bp+6]
-    push    L1229
-    call    _printf
+    push    18
+    push    0
+    push    word [bp+4]
+    push    9
+    call    _GenSelectByteOrWord
     sub     sp, -4
-    jmp     L1228
-L1227:
-; else
-; RPN'ized expression: "( Ofs , L1231 printf ) "
-; Expanded expression: " (@6) *(2)  L1231  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1231:
-    db  "    dec     byte [bp%+d]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@6) , L1231 , printf )4 "
+    push    ax
+    push    0
+    push    0
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+; RPN'ized expression: "( opSz GenExtendRegAIfNeeded ) "
+; Expanded expression: " (@4) *(2)  GenExtendRegAIfNeeded ()2 "
+; Fused expression:    "( *(2) (@4) , GenExtendRegAIfNeeded )2 "
+    push    word [bp+4]
+    call    _GenExtendRegAIfNeeded
+    sub     sp, -2
+; RPN'ized expression: "( ofs , ( opSz , 21 GenSelectByteOrWord ) , 0 , instr GenPrintInstr1Operand ) "
+; Expanded expression: " (@6) *(2)   (@4) *(2)  21  GenSelectByteOrWord ()4  0  (@-2) *(2)  GenPrintInstr1Operand ()8 "
+; Fused expression:    "( *(2) (@6) , ( *(2) (@4) , 21 , GenSelectByteOrWord )4 , 0 , *(2) (@-2) , GenPrintInstr1Operand )8 "
     push    word [bp+6]
-    push    L1231
-    call    _printf
+    push    word [bp+4]
+    push    21
+    call    _GenSelectByteOrWord
     sub     sp, -4
-L1228:
-; }
-    jmp     L1224
-L1223:
-; else
-; if
-; RPN'ized expression: "OpSz 2 == "
-; Expanded expression: "(@4) *(2) 2 == "
-; Fused expression:    "== *(@4) 2 IF! "
-    mov     ax, [bp+4]
-    cmp     ax, 2
-    jne     L1233
-; {
-; RPN'ized expression: "( Ofs , L1235 printf ) "
-; Expanded expression: " (@6) *(2)  L1235  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1235:
-    db  "    mov     ax, [bp%+d]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@6) , L1235 , printf )4 "
-    push    word [bp+6]
-    push    L1235
-    call    _printf
-    sub     sp, -4
-; if
-; RPN'ized expression: "tok 81 == "
-; Expanded expression: "(@8) *(2) 81 == "
-; Fused expression:    "== *(@8) 81 IF! "
-    mov     ax, [bp+8]
-    cmp     ax, 81
-    jne     L1237
-; RPN'ized expression: "( Ofs , L1239 printf ) "
-; Expanded expression: " (@6) *(2)  L1239  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1239:
-    db  "    inc     word [bp%+d]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@6) , L1239 , printf )4 "
-    push    word [bp+6]
-    push    L1239
-    call    _printf
-    sub     sp, -4
-    jmp     L1238
-L1237:
-; else
-; RPN'ized expression: "( Ofs , L1241 printf ) "
-; Expanded expression: " (@6) *(2)  L1241  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1241:
-    db  "    dec     word [bp%+d]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@6) , L1241 , printf )4 "
-    push    word [bp+6]
-    push    L1241
-    call    _printf
-    sub     sp, -4
-L1238:
-; }
-L1233:
-L1224:
-L1222:
+    push    ax
+    push    0
+    push    word [bp-2]
+    call    _GenPrintInstr1Operand
+    sub     sp, -8
+L1507:
     leave
     ret
 ; SEGMENT _TEXT
 ; glb GenPostIncDecIndirect : (
-; prm     OpSz : int
+; prm     opSz : int
 ; prm     tok : int
 ;     ) void
 SEGMENT _TEXT
@@ -10325,149 +12448,83 @@ SEGMENT _TEXT
 _GenPostIncDecIndirect:
     push    bp
     mov     bp, sp
-; loc     OpSz : (@4): int
+; loc     opSz : (@4): int
 ; loc     tok : (@6): int
-; RPN'ized expression: "( L1244 printf ) "
-; Expanded expression: " L1244  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1244:
-    db  "    mov     bx, ax",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1244 , printf )2 "
-    push    L1244
-    call    _printf
-    sub     sp, -2
+; loc     instr : (@-2): int
+    sub     sp, 2
+; =
+; RPN'ized expression: "7 "
+; Expanded expression: "7 "
+; Expression value: 7
+; Fused expression:    "=(34) *(@-2) 7 "
+    mov     ax, 7
+    mov     [bp-2], ax
 ; if
-; RPN'ized expression: "OpSz 1 == "
-; Expanded expression: "(@4) *(2) 1 == "
-; Fused expression:    "== *(@4) 1 IF! "
-    mov     ax, [bp+4]
-    cmp     ax, 1
-    jne     L1246
-; {
-; RPN'ized expression: "( L1248 printf ) "
-; Expanded expression: " L1248  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1248:
-    db  "    mov     al, [bx]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1248 , printf )2 "
-    push    L1248
-    call    _printf
-    sub     sp, -2
-; RPN'ized expression: "( GenExtendAlAx ) "
-; Expanded expression: " GenExtendAlAx ()0 "
-; Fused expression:    "( GenExtendAlAx )0 "
-    call    _GenExtendAlAx
-; if
-; RPN'ized expression: "tok 81 == "
-; Expanded expression: "(@6) *(2) 81 == "
-; Fused expression:    "== *(@6) 81 IF! "
+; RPN'ized expression: "tok 81 != "
+; Expanded expression: "(@6) *(2) 81 != "
+; Fused expression:    "!= *(@6) 81 IF! "
     mov     ax, [bp+6]
     cmp     ax, 81
-    jne     L1250
-; RPN'ized expression: "( L1252 printf ) "
-; Expanded expression: " L1252  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1252:
-    db  "    inc     byte [bx]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1252 , printf )2 "
-    push    L1252
-    call    _printf
+    je      L1511
+; RPN'ized expression: "instr 8 = "
+; Expanded expression: "(@-2) 8 =(2) "
+; Fused expression:    "=(34) *(@-2) 8 "
+    mov     ax, 8
+    mov     [bp-2], ax
+L1511:
+; RPN'ized expression: "( 0 , 3 , 0 , 4 , 0 , 0 GenPrintInstr2Operands ) "
+; Expanded expression: " 0  3  0  4  0  0  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( 0 , 3 , 0 , 4 , 0 , 0 , GenPrintInstr2Operands )12 "
+    push    0
+    push    3
+    push    0
+    push    4
+    push    0
+    push    0
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+; RPN'ized expression: "( 0 , 22 , 0 , ( opSz , 9 GenSelectByteOrWord ) , 0 , 0 GenPrintInstr2Operands ) "
+; Expanded expression: " 0  22  0   (@4) *(2)  9  GenSelectByteOrWord ()4  0  0  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( 0 , 22 , 0 , ( *(2) (@4) , 9 , GenSelectByteOrWord )4 , 0 , 0 , GenPrintInstr2Operands )12 "
+    push    0
+    push    22
+    push    0
+    push    word [bp+4]
+    push    9
+    call    _GenSelectByteOrWord
+    sub     sp, -4
+    push    ax
+    push    0
+    push    0
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+; RPN'ized expression: "( opSz GenExtendRegAIfNeeded ) "
+; Expanded expression: " (@4) *(2)  GenExtendRegAIfNeeded ()2 "
+; Fused expression:    "( *(2) (@4) , GenExtendRegAIfNeeded )2 "
+    push    word [bp+4]
+    call    _GenExtendRegAIfNeeded
     sub     sp, -2
-    jmp     L1251
-L1250:
-; else
-; RPN'ized expression: "( L1254 printf ) "
-; Expanded expression: " L1254  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1254:
-    db  "    dec     byte [bx]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1254 , printf )2 "
-    push    L1254
-    call    _printf
-    sub     sp, -2
-L1251:
-; }
-    jmp     L1247
-L1246:
-; else
-; if
-; RPN'ized expression: "OpSz 2 == "
-; Expanded expression: "(@4) *(2) 2 == "
-; Fused expression:    "== *(@4) 2 IF! "
-    mov     ax, [bp+4]
-    cmp     ax, 2
-    jne     L1256
-; {
-; RPN'ized expression: "( L1258 printf ) "
-; Expanded expression: " L1258  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1258:
-    db  "    mov     ax, [bx]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1258 , printf )2 "
-    push    L1258
-    call    _printf
-    sub     sp, -2
-; if
-; RPN'ized expression: "tok 81 == "
-; Expanded expression: "(@6) *(2) 81 == "
-; Fused expression:    "== *(@6) 81 IF! "
-    mov     ax, [bp+6]
-    cmp     ax, 81
-    jne     L1260
-; RPN'ized expression: "( L1262 printf ) "
-; Expanded expression: " L1262  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1262:
-    db  "    inc     word [bx]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1262 , printf )2 "
-    push    L1262
-    call    _printf
-    sub     sp, -2
-    jmp     L1261
-L1260:
-; else
-; RPN'ized expression: "( L1264 printf ) "
-; Expanded expression: " L1264  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1264:
-    db  "    dec     word [bx]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1264 , printf )2 "
-    push    L1264
-    call    _printf
-    sub     sp, -2
-L1261:
-; }
-L1256:
-L1247:
-L1243:
+; RPN'ized expression: "( 0 , ( opSz , 25 GenSelectByteOrWord ) , 0 , instr GenPrintInstr1Operand ) "
+; Expanded expression: " 0   (@4) *(2)  25  GenSelectByteOrWord ()4  0  (@-2) *(2)  GenPrintInstr1Operand ()8 "
+; Fused expression:    "( 0 , ( *(2) (@4) , 25 , GenSelectByteOrWord )4 , 0 , *(2) (@-2) , GenPrintInstr1Operand )8 "
+    push    0
+    push    word [bp+4]
+    push    25
+    call    _GenSelectByteOrWord
+    sub     sp, -4
+    push    ax
+    push    0
+    push    word [bp-2]
+    call    _GenPrintInstr1Operand
+    sub     sp, -8
+L1510:
     leave
     ret
 ; SEGMENT _TEXT
 ; glb GenPostAddSubIdent : (
-; prm     OpSz : int
+; prm     opSz : int
 ; prm     val : int
-; prm     Label : * char
+; prm     label : int
 ; prm     tok : int
 ;     ) void
 SEGMENT _TEXT
@@ -10475,213 +12532,76 @@ SEGMENT _TEXT
 _GenPostAddSubIdent:
     push    bp
     mov     bp, sp
-; loc     OpSz : (@4): int
+; loc     opSz : (@4): int
 ; loc     val : (@6): int
-; loc     Label : (@8): * char
+; loc     label : (@8): int
 ; loc     tok : (@10): int
+; loc     instr : (@-2): int
+    sub     sp, 2
+; =
+; RPN'ized expression: "9 "
+; Expanded expression: "9 "
+; Expression value: 9
+; Fused expression:    "=(34) *(@-2) 9 "
+    mov     ax, 9
+    mov     [bp-2], ax
 ; if
-; RPN'ized expression: "OpSz 1 == "
-; Expanded expression: "(@4) *(2) 1 == "
-; Fused expression:    "== *(@4) 1 IF! "
-    mov     ax, [bp+4]
-    cmp     ax, 1
-    jne     L1267
-; {
-; RPN'ized expression: "( L1269 printf ) "
-; Expanded expression: " L1269  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1269:
-    db  "    mov     al, [",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1269 , printf )2 "
-    push    L1269
-    call    _printf
-    sub     sp, -2
-; RPN'ized expression: "( Label GenPrintLabel ) "
-; Expanded expression: " (@8) *(2)  GenPrintLabel ()2 "
-; Fused expression:    "( *(2) (@8) , GenPrintLabel )2 "
-    push    word [bp+8]
-    call    _GenPrintLabel
-    sub     sp, -2
-; RPN'ized expression: "( L1271 printf ) "
-; Expanded expression: " L1271  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1271:
-    db  "]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1271 , printf )2 "
-    push    L1271
-    call    _printf
-    sub     sp, -2
-; RPN'ized expression: "( GenExtendAlAx ) "
-; Expanded expression: " GenExtendAlAx ()0 "
-; Fused expression:    "( GenExtendAlAx )0 "
-    call    _GenExtendAlAx
-; if
-; RPN'ized expression: "tok 83 == "
-; Expanded expression: "(@10) *(2) 83 == "
-; Fused expression:    "== *(@10) 83 IF! "
+; RPN'ized expression: "tok 83 != "
+; Expanded expression: "(@10) *(2) 83 != "
+; Fused expression:    "!= *(@10) 83 IF! "
     mov     ax, [bp+10]
     cmp     ax, 83
-    jne     L1273
-; RPN'ized expression: "( L1275 printf ) "
-; Expanded expression: " L1275  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1275:
-    db  "    add     byte [",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1275 , printf )2 "
-    push    L1275
-    call    _printf
-    sub     sp, -2
-    jmp     L1274
-L1273:
-; else
-; RPN'ized expression: "( L1277 printf ) "
-; Expanded expression: " L1277  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1277:
-    db  "    sub     byte [",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1277 , printf )2 "
-    push    L1277
-    call    _printf
-    sub     sp, -2
-L1274:
-; RPN'ized expression: "( Label GenPrintLabel ) "
-; Expanded expression: " (@8) *(2)  GenPrintLabel ()2 "
-; Fused expression:    "( *(2) (@8) , GenPrintLabel )2 "
+    je      L1514
+; RPN'ized expression: "instr 10 = "
+; Expanded expression: "(@-2) 10 =(2) "
+; Fused expression:    "=(34) *(@-2) 10 "
+    mov     ax, 10
+    mov     [bp-2], ax
+L1514:
+; RPN'ized expression: "( label , 14 , 0 , ( opSz , 9 GenSelectByteOrWord ) , 0 , 0 GenPrintInstr2Operands ) "
+; Expanded expression: " (@8) *(2)  14  0   (@4) *(2)  9  GenSelectByteOrWord ()4  0  0  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( *(2) (@8) , 14 , 0 , ( *(2) (@4) , 9 , GenSelectByteOrWord )4 , 0 , 0 , GenPrintInstr2Operands )12 "
     push    word [bp+8]
-    call    _GenPrintLabel
-    sub     sp, -2
-; RPN'ized expression: "( val , L1279 printf ) "
-; Expanded expression: " (@6) *(2)  L1279  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1279:
-    db  "], %d",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@6) , L1279 , printf )4 "
-    push    word [bp+6]
-    push    L1279
-    call    _printf
+    push    14
+    push    0
+    push    word [bp+4]
+    push    9
+    call    _GenSelectByteOrWord
     sub     sp, -4
-; }
-    jmp     L1268
-L1267:
-; else
-; if
-; RPN'ized expression: "OpSz 2 == "
-; Expanded expression: "(@4) *(2) 2 == "
-; Fused expression:    "== *(@4) 2 IF! "
-    mov     ax, [bp+4]
-    cmp     ax, 2
-    jne     L1281
-; {
-; RPN'ized expression: "( L1283 printf ) "
-; Expanded expression: " L1283  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1283:
-    db  "    mov     ax, [",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1283 , printf )2 "
-    push    L1283
-    call    _printf
+    push    ax
+    push    0
+    push    0
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+; RPN'ized expression: "( opSz GenExtendRegAIfNeeded ) "
+; Expanded expression: " (@4) *(2)  GenExtendRegAIfNeeded ()2 "
+; Fused expression:    "( *(2) (@4) , GenExtendRegAIfNeeded )2 "
+    push    word [bp+4]
+    call    _GenExtendRegAIfNeeded
     sub     sp, -2
-; RPN'ized expression: "( Label GenPrintLabel ) "
-; Expanded expression: " (@8) *(2)  GenPrintLabel ()2 "
-; Fused expression:    "( *(2) (@8) , GenPrintLabel )2 "
-    push    word [bp+8]
-    call    _GenPrintLabel
-    sub     sp, -2
-; RPN'ized expression: "( L1285 printf ) "
-; Expanded expression: " L1285  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1285:
-    db  "]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1285 , printf )2 "
-    push    L1285
-    call    _printf
-    sub     sp, -2
-; if
-; RPN'ized expression: "tok 83 == "
-; Expanded expression: "(@10) *(2) 83 == "
-; Fused expression:    "== *(@10) 83 IF! "
-    mov     ax, [bp+10]
-    cmp     ax, 83
-    jne     L1287
-; RPN'ized expression: "( L1289 printf ) "
-; Expanded expression: " L1289  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1289:
-    db  "    add     word [",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1289 , printf )2 "
-    push    L1289
-    call    _printf
-    sub     sp, -2
-    jmp     L1288
-L1287:
-; else
-; RPN'ized expression: "( L1291 printf ) "
-; Expanded expression: " L1291  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1291:
-    db  "    sub     word [",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1291 , printf )2 "
-    push    L1291
-    call    _printf
-    sub     sp, -2
-L1288:
-; RPN'ized expression: "( Label GenPrintLabel ) "
-; Expanded expression: " (@8) *(2)  GenPrintLabel ()2 "
-; Fused expression:    "( *(2) (@8) , GenPrintLabel )2 "
-    push    word [bp+8]
-    call    _GenPrintLabel
-    sub     sp, -2
-; RPN'ized expression: "( val , L1293 printf ) "
-; Expanded expression: " (@6) *(2)  L1293  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1293:
-    db  "], %d",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@6) , L1293 , printf )4 "
+; RPN'ized expression: "( val , 11 , label , ( opSz , 17 GenSelectByteOrWord ) , 0 , instr GenPrintInstr2Operands ) "
+; Expanded expression: " (@6) *(2)  11  (@8) *(2)   (@4) *(2)  17  GenSelectByteOrWord ()4  0  (@-2) *(2)  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( *(2) (@6) , 11 , *(2) (@8) , ( *(2) (@4) , 17 , GenSelectByteOrWord )4 , 0 , *(2) (@-2) , GenPrintInstr2Operands )12 "
     push    word [bp+6]
-    push    L1293
-    call    _printf
+    push    11
+    push    word [bp+8]
+    push    word [bp+4]
+    push    17
+    call    _GenSelectByteOrWord
     sub     sp, -4
-; }
-L1281:
-L1268:
-L1266:
+    push    ax
+    push    0
+    push    word [bp-2]
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+L1513:
     leave
     ret
 ; SEGMENT _TEXT
 ; glb GenPostAddSubLocal : (
-; prm     OpSz : int
+; prm     opSz : int
 ; prm     val : int
-; prm     Ofs : int
+; prm     ofs : int
 ; prm     tok : int
 ;     ) void
 SEGMENT _TEXT
@@ -10689,147 +12609,74 @@ SEGMENT _TEXT
 _GenPostAddSubLocal:
     push    bp
     mov     bp, sp
-; loc     OpSz : (@4): int
+; loc     opSz : (@4): int
 ; loc     val : (@6): int
-; loc     Ofs : (@8): int
+; loc     ofs : (@8): int
 ; loc     tok : (@10): int
+; loc     instr : (@-2): int
+    sub     sp, 2
+; =
+; RPN'ized expression: "9 "
+; Expanded expression: "9 "
+; Expression value: 9
+; Fused expression:    "=(34) *(@-2) 9 "
+    mov     ax, 9
+    mov     [bp-2], ax
 ; if
-; RPN'ized expression: "OpSz 1 == "
-; Expanded expression: "(@4) *(2) 1 == "
-; Fused expression:    "== *(@4) 1 IF! "
-    mov     ax, [bp+4]
-    cmp     ax, 1
-    jne     L1296
-; {
-; RPN'ized expression: "( Ofs , L1298 printf ) "
-; Expanded expression: " (@8) *(2)  L1298  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1298:
-    db  "    mov     al, [bp%+d]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@8) , L1298 , printf )4 "
-    push    word [bp+8]
-    push    L1298
-    call    _printf
-    sub     sp, -4
-; RPN'ized expression: "( GenExtendAlAx ) "
-; Expanded expression: " GenExtendAlAx ()0 "
-; Fused expression:    "( GenExtendAlAx )0 "
-    call    _GenExtendAlAx
-; if
-; RPN'ized expression: "tok 83 == "
-; Expanded expression: "(@10) *(2) 83 == "
-; Fused expression:    "== *(@10) 83 IF! "
+; RPN'ized expression: "tok 83 != "
+; Expanded expression: "(@10) *(2) 83 != "
+; Fused expression:    "!= *(@10) 83 IF! "
     mov     ax, [bp+10]
     cmp     ax, 83
-    jne     L1300
-; RPN'ized expression: "( val , Ofs , L1302 printf ) "
-; Expanded expression: " (@6) *(2)  (@8) *(2)  L1302  printf ()6 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1302:
-    db  "    add     byte [bp%+d], %d",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@6) , *(2) (@8) , L1302 , printf )6 "
-    push    word [bp+6]
+    je      L1517
+; RPN'ized expression: "instr 10 = "
+; Expanded expression: "(@-2) 10 =(2) "
+; Fused expression:    "=(34) *(@-2) 10 "
+    mov     ax, 10
+    mov     [bp-2], ax
+L1517:
+; RPN'ized expression: "( ofs , 18 , 0 , ( opSz , 9 GenSelectByteOrWord ) , 0 , 0 GenPrintInstr2Operands ) "
+; Expanded expression: " (@8) *(2)  18  0   (@4) *(2)  9  GenSelectByteOrWord ()4  0  0  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( *(2) (@8) , 18 , 0 , ( *(2) (@4) , 9 , GenSelectByteOrWord )4 , 0 , 0 , GenPrintInstr2Operands )12 "
     push    word [bp+8]
-    push    L1302
-    call    _printf
-    sub     sp, -6
-    jmp     L1301
-L1300:
-; else
-; RPN'ized expression: "( val , Ofs , L1304 printf ) "
-; Expanded expression: " (@6) *(2)  (@8) *(2)  L1304  printf ()6 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1304:
-    db  "    sub     byte [bp%+d], %d",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@6) , *(2) (@8) , L1304 , printf )6 "
-    push    word [bp+6]
-    push    word [bp+8]
-    push    L1304
-    call    _printf
-    sub     sp, -6
-L1301:
-; }
-    jmp     L1297
-L1296:
-; else
-; if
-; RPN'ized expression: "OpSz 2 == "
-; Expanded expression: "(@4) *(2) 2 == "
-; Fused expression:    "== *(@4) 2 IF! "
-    mov     ax, [bp+4]
-    cmp     ax, 2
-    jne     L1306
-; {
-; RPN'ized expression: "( Ofs , L1308 printf ) "
-; Expanded expression: " (@8) *(2)  L1308  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1308:
-    db  "    mov     ax, [bp%+d]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@8) , L1308 , printf )4 "
-    push    word [bp+8]
-    push    L1308
-    call    _printf
+    push    18
+    push    0
+    push    word [bp+4]
+    push    9
+    call    _GenSelectByteOrWord
     sub     sp, -4
-; if
-; RPN'ized expression: "tok 83 == "
-; Expanded expression: "(@10) *(2) 83 == "
-; Fused expression:    "== *(@10) 83 IF! "
-    mov     ax, [bp+10]
-    cmp     ax, 83
-    jne     L1310
-; RPN'ized expression: "( val , Ofs , L1312 printf ) "
-; Expanded expression: " (@6) *(2)  (@8) *(2)  L1312  printf ()6 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1312:
-    db  "    add     word [bp%+d], %d",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@6) , *(2) (@8) , L1312 , printf )6 "
+    push    ax
+    push    0
+    push    0
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+; RPN'ized expression: "( opSz GenExtendRegAIfNeeded ) "
+; Expanded expression: " (@4) *(2)  GenExtendRegAIfNeeded ()2 "
+; Fused expression:    "( *(2) (@4) , GenExtendRegAIfNeeded )2 "
+    push    word [bp+4]
+    call    _GenExtendRegAIfNeeded
+    sub     sp, -2
+; RPN'ized expression: "( val , 11 , ofs , ( opSz , 21 GenSelectByteOrWord ) , 0 , instr GenPrintInstr2Operands ) "
+; Expanded expression: " (@6) *(2)  11  (@8) *(2)   (@4) *(2)  21  GenSelectByteOrWord ()4  0  (@-2) *(2)  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( *(2) (@6) , 11 , *(2) (@8) , ( *(2) (@4) , 21 , GenSelectByteOrWord )4 , 0 , *(2) (@-2) , GenPrintInstr2Operands )12 "
     push    word [bp+6]
+    push    11
     push    word [bp+8]
-    push    L1312
-    call    _printf
-    sub     sp, -6
-    jmp     L1311
-L1310:
-; else
-; RPN'ized expression: "( val , Ofs , L1314 printf ) "
-; Expanded expression: " (@6) *(2)  (@8) *(2)  L1314  printf ()6 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1314:
-    db  "    sub     word [bp%+d], %d",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@6) , *(2) (@8) , L1314 , printf )6 "
-    push    word [bp+6]
-    push    word [bp+8]
-    push    L1314
-    call    _printf
-    sub     sp, -6
-L1311:
-; }
-L1306:
-L1297:
-L1295:
+    push    word [bp+4]
+    push    21
+    call    _GenSelectByteOrWord
+    sub     sp, -4
+    push    ax
+    push    0
+    push    word [bp-2]
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+L1516:
     leave
     ret
 ; SEGMENT _TEXT
 ; glb GenPostAddSubIndirect : (
-; prm     OpSz : int
+; prm     opSz : int
 ; prm     val : int
 ; prm     tok : int
 ;     ) void
@@ -10838,147 +12685,79 @@ SEGMENT _TEXT
 _GenPostAddSubIndirect:
     push    bp
     mov     bp, sp
-; loc     OpSz : (@4): int
+; loc     opSz : (@4): int
 ; loc     val : (@6): int
 ; loc     tok : (@8): int
-; RPN'ized expression: "( L1317 printf ) "
-; Expanded expression: " L1317  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1317:
-    db  "    mov     bx, ax",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1317 , printf )2 "
-    push    L1317
-    call    _printf
-    sub     sp, -2
+; loc     instr : (@-2): int
+    sub     sp, 2
+; =
+; RPN'ized expression: "9 "
+; Expanded expression: "9 "
+; Expression value: 9
+; Fused expression:    "=(34) *(@-2) 9 "
+    mov     ax, 9
+    mov     [bp-2], ax
 ; if
-; RPN'ized expression: "OpSz 1 == "
-; Expanded expression: "(@4) *(2) 1 == "
-; Fused expression:    "== *(@4) 1 IF! "
-    mov     ax, [bp+4]
-    cmp     ax, 1
-    jne     L1319
-; {
-; RPN'ized expression: "( L1321 printf ) "
-; Expanded expression: " L1321  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1321:
-    db  "    mov     al, [bx]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1321 , printf )2 "
-    push    L1321
-    call    _printf
-    sub     sp, -2
-; RPN'ized expression: "( GenExtendAlAx ) "
-; Expanded expression: " GenExtendAlAx ()0 "
-; Fused expression:    "( GenExtendAlAx )0 "
-    call    _GenExtendAlAx
-; if
-; RPN'ized expression: "tok 83 == "
-; Expanded expression: "(@8) *(2) 83 == "
-; Fused expression:    "== *(@8) 83 IF! "
+; RPN'ized expression: "tok 83 != "
+; Expanded expression: "(@8) *(2) 83 != "
+; Fused expression:    "!= *(@8) 83 IF! "
     mov     ax, [bp+8]
     cmp     ax, 83
-    jne     L1323
-; RPN'ized expression: "( val , L1325 printf ) "
-; Expanded expression: " (@6) *(2)  L1325  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1325:
-    db  "    add     byte [bx], %d",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@6) , L1325 , printf )4 "
-    push    word [bp+6]
-    push    L1325
-    call    _printf
+    je      L1520
+; RPN'ized expression: "instr 10 = "
+; Expanded expression: "(@-2) 10 =(2) "
+; Fused expression:    "=(34) *(@-2) 10 "
+    mov     ax, 10
+    mov     [bp-2], ax
+L1520:
+; RPN'ized expression: "( 0 , 3 , 0 , 4 , 0 , 0 GenPrintInstr2Operands ) "
+; Expanded expression: " 0  3  0  4  0  0  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( 0 , 3 , 0 , 4 , 0 , 0 , GenPrintInstr2Operands )12 "
+    push    0
+    push    3
+    push    0
+    push    4
+    push    0
+    push    0
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+; RPN'ized expression: "( 0 , 22 , 0 , ( opSz , 9 GenSelectByteOrWord ) , 0 , 0 GenPrintInstr2Operands ) "
+; Expanded expression: " 0  22  0   (@4) *(2)  9  GenSelectByteOrWord ()4  0  0  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( 0 , 22 , 0 , ( *(2) (@4) , 9 , GenSelectByteOrWord )4 , 0 , 0 , GenPrintInstr2Operands )12 "
+    push    0
+    push    22
+    push    0
+    push    word [bp+4]
+    push    9
+    call    _GenSelectByteOrWord
     sub     sp, -4
-    jmp     L1324
-L1323:
-; else
-; RPN'ized expression: "( val , L1327 printf ) "
-; Expanded expression: " (@6) *(2)  L1327  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1327:
-    db  "    sub     byte [bx], %d",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@6) , L1327 , printf )4 "
-    push    word [bp+6]
-    push    L1327
-    call    _printf
-    sub     sp, -4
-L1324:
-; }
-    jmp     L1320
-L1319:
-; else
-; if
-; RPN'ized expression: "OpSz 2 == "
-; Expanded expression: "(@4) *(2) 2 == "
-; Fused expression:    "== *(@4) 2 IF! "
-    mov     ax, [bp+4]
-    cmp     ax, 2
-    jne     L1329
-; {
-; RPN'ized expression: "( L1331 printf ) "
-; Expanded expression: " L1331  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1331:
-    db  "    mov     ax, [bx]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1331 , printf )2 "
-    push    L1331
-    call    _printf
+    push    ax
+    push    0
+    push    0
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+; RPN'ized expression: "( opSz GenExtendRegAIfNeeded ) "
+; Expanded expression: " (@4) *(2)  GenExtendRegAIfNeeded ()2 "
+; Fused expression:    "( *(2) (@4) , GenExtendRegAIfNeeded )2 "
+    push    word [bp+4]
+    call    _GenExtendRegAIfNeeded
     sub     sp, -2
-; if
-; RPN'ized expression: "tok 83 == "
-; Expanded expression: "(@8) *(2) 83 == "
-; Fused expression:    "== *(@8) 83 IF! "
-    mov     ax, [bp+8]
-    cmp     ax, 83
-    jne     L1333
-; RPN'ized expression: "( val , L1335 printf ) "
-; Expanded expression: " (@6) *(2)  L1335  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1335:
-    db  "    add     word [bx], %d",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@6) , L1335 , printf )4 "
+; RPN'ized expression: "( val , 11 , 0 , ( opSz , 25 GenSelectByteOrWord ) , 0 , instr GenPrintInstr2Operands ) "
+; Expanded expression: " (@6) *(2)  11  0   (@4) *(2)  25  GenSelectByteOrWord ()4  0  (@-2) *(2)  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( *(2) (@6) , 11 , 0 , ( *(2) (@4) , 25 , GenSelectByteOrWord )4 , 0 , *(2) (@-2) , GenPrintInstr2Operands )12 "
     push    word [bp+6]
-    push    L1335
-    call    _printf
+    push    11
+    push    0
+    push    word [bp+4]
+    push    25
+    call    _GenSelectByteOrWord
     sub     sp, -4
-    jmp     L1334
-L1333:
-; else
-; RPN'ized expression: "( val , L1337 printf ) "
-; Expanded expression: " (@6) *(2)  L1337  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1337:
-    db  "    sub     word [bx], %d",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@6) , L1337 , printf )4 "
-    push    word [bp+6]
-    push    L1337
-    call    _printf
-    sub     sp, -4
-L1334:
-; }
-L1329:
-L1320:
-L1316:
+    push    ax
+    push    0
+    push    word [bp-2]
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+L1519:
     leave
     ret
 ; SEGMENT _TEXT
@@ -11016,9 +12795,9 @@ _GetOperandInfo:
     mov     [bx], ax
 ; while
 ; RPN'ized expression: "stack idx + *u 0 + *u 256 >= stack idx + *u 0 + *u 262 <= && "
-; Expanded expression: "stack (@4) *(2) 4 * + 0 + *(2) 256 >= _Bool [sh&&->1342] stack (@4) *(2) 4 * + 0 + *(2) 262 <= _Bool &&[1342] "
-L1340:
-; Fused expression:    "* *(@4) 4 + stack ax + ax 0 >= *ax 256 _Bool [sh&&->1342] * *(@4) 4 + stack ax + ax 0 <= *ax 262 _Bool &&[1342] "
+; Expanded expression: "stack (@4) *(2) 4 * + 0 + *(2) 256 >= _Bool [sh&&->1525] stack (@4) *(2) 4 * + 0 + *(2) 262 <= _Bool &&[1525] "
+L1523:
+; Fused expression:    "* *(@4) 4 + stack ax + ax 0 >= *ax 256 _Bool [sh&&->1525] * *(@4) 4 + stack ax + ax 0 <= *ax 262 _Bool &&[1525] "
     mov     ax, [bp+4]
     imul    ax, ax, 4
     mov     cx, ax
@@ -11031,11 +12810,11 @@ L1340:
     setge   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L1342
+    je      L1525
     mov     ax, [bp+4]
     imul    ax, ax, 4
     mov     cx, ax
@@ -11048,19 +12827,19 @@ L1340:
     setle   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L1342:
+L1525:
 ; JumpIfZero
     test    ax, ax
-    jz      L1341
+    je      L1524
 ; RPN'ized expression: "idx --p "
 ; Expanded expression: "(@4) --p(2) "
 ; Fused expression:    "--p(2) *(@4) "
     mov     ax, [bp+4]
     dec     word [bp+4]
-    jmp     L1340
-L1341:
+    jmp     L1523
+L1524:
 ; if
 ; RPN'ized expression: "stack idx + *u 0 + *u 78 == "
 ; Expanded expression: "stack (@4) *(2) 4 * + 0 + *(2) 78 == "
@@ -11074,7 +12853,7 @@ L1341:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 78
-    jne     L1343
+    jne     L1526
 ; {
 ; if
 ; RPN'ized expression: "lvalSize "
@@ -11083,7 +12862,7 @@ L1341:
     mov     ax, [bp+6]
 ; JumpIfZero
     test    ax, ax
-    jz      L1345
+    je      L1528
 ; {
 ; RPN'ized expression: "size *u lvalSize = "
 ; Expanded expression: "(@10) *(2) (@6) *(2) =(2) "
@@ -11105,9 +12884,9 @@ L1341:
 ; Expression value: 262
 ; Fused expression:    "262 "
     mov     ax, 262
-    jmp     L1339
+    jmp     L1522
 ; }
-L1345:
+L1528:
 ; RPN'ized expression: "size *u stack idx + *u 1 + *u = "
 ; Expanded expression: "(@10) *(2) stack (@4) *(2) 4 * + 2 + *(2) =(2) "
 ; Fused expression:    "*(2) (@10) push-ax * *(@4) 4 + stack ax + ax 2 =(34) **sp *ax "
@@ -11161,9 +12940,9 @@ L1345:
     mov     ax, [bx]
     add     ax, 260
     sub     ax, 257
-    jmp     L1339
+    jmp     L1522
 ; }
-L1343:
+L1526:
 ; RPN'ized expression: "idx idx0 = "
 ; Expanded expression: "(@4) (@-2) *(2) =(2) "
 ; Fused expression:    "=(34) *(@4) *(@-2) "
@@ -11176,7 +12955,7 @@ L1343:
     mov     ax, [bp+6]
 ; JumpIfZero
     test    ax, ax
-    jz      L1347
+    je      L1530
 ; {
 ; RPN'ized expression: "size *u lvalSize = "
 ; Expanded expression: "(@10) *(2) (@6) *(2) =(2) "
@@ -11212,42 +12991,42 @@ L1343:
     add     ax, 0
     mov     bx, ax
     mov     ax, [bx]
-    jmp     L1351
+    jmp     L1534
 ; {
 ; case
 ; RPN'ized expression: "16 "
 ; Expanded expression: "16 "
 ; Expression value: 16
-    jmp     L1352
-L1351:
+    jmp     L1535
+L1534:
     cmp     ax, 16
-    jne     L1353
-L1352:
+    jne     L1536
+L1535:
 ; return
 ; RPN'ized expression: "260 "
 ; Expanded expression: "260 "
 ; Expression value: 260
 ; Fused expression:    "260 "
     mov     ax, 260
-    jmp     L1339
+    jmp     L1522
 ; case
 ; RPN'ized expression: "89 "
 ; Expanded expression: "89 "
 ; Expression value: 89
-    jmp     L1354
-L1353:
+    jmp     L1537
+L1536:
     cmp     ax, 89
-    jne     L1355
-L1354:
+    jne     L1538
+L1537:
 ; return
 ; RPN'ized expression: "261 "
 ; Expanded expression: "261 "
 ; Expression value: 261
 ; Fused expression:    "261 "
     mov     ax, 261
-    jmp     L1339
+    jmp     L1522
 ; default
-L1350:
+L1533:
 ; RPN'ized expression: "val *u 0 = "
 ; Expanded expression: "(@8) *(2) 0 =(2) "
 ; Fused expression:    "*(2) (@8) =(34) *ax 0 "
@@ -11261,14 +13040,14 @@ L1350:
 ; Expression value: 262
 ; Fused expression:    "262 "
     mov     ax, 262
-    jmp     L1339
+    jmp     L1522
 ; }
-    jmp     L1349
-L1355:
-    jmp     L1350
-L1349:
+    jmp     L1532
+L1538:
+    jmp     L1533
+L1532:
 ; }
-L1347:
+L1530:
 ; RPN'ized expression: "size *u SizeOfWord = "
 ; Expanded expression: "(@10) *(2) SizeOfWord *(2) =(2) "
 ; Fused expression:    "*(2) (@10) =(34) *ax *SizeOfWord "
@@ -11303,67 +13082,67 @@ L1347:
     add     ax, 0
     mov     bx, ax
     mov     ax, [bx]
-    jmp     L1359
+    jmp     L1542
 ; {
 ; case
 ; RPN'ized expression: "1 "
 ; Expanded expression: "1 "
 ; Expression value: 1
-    jmp     L1360
-L1359:
+    jmp     L1543
+L1542:
     cmp     ax, 1
-    jne     L1361
-L1360:
+    jne     L1544
+L1543:
 ; case
 ; RPN'ized expression: "2 "
 ; Expanded expression: "2 "
 ; Expression value: 2
-    jmp     L1362
-L1361:
+    jmp     L1545
+L1544:
     cmp     ax, 2
-    jne     L1363
-L1362:
+    jne     L1546
+L1545:
 ; return
 ; RPN'ized expression: "256 "
 ; Expanded expression: "256 "
 ; Expression value: 256
 ; Fused expression:    "256 "
     mov     ax, 256
-    jmp     L1339
+    jmp     L1522
 ; case
 ; RPN'ized expression: "16 "
 ; Expanded expression: "16 "
 ; Expression value: 16
-    jmp     L1364
-L1363:
+    jmp     L1547
+L1546:
     cmp     ax, 16
-    jne     L1365
-L1364:
+    jne     L1548
+L1547:
 ; return
 ; RPN'ized expression: "257 "
 ; Expanded expression: "257 "
 ; Expression value: 257
 ; Fused expression:    "257 "
     mov     ax, 257
-    jmp     L1339
+    jmp     L1522
 ; case
 ; RPN'ized expression: "89 "
 ; Expanded expression: "89 "
 ; Expression value: 89
-    jmp     L1366
-L1365:
+    jmp     L1549
+L1548:
     cmp     ax, 89
-    jne     L1367
-L1366:
+    jne     L1550
+L1549:
 ; return
 ; RPN'ized expression: "258 "
 ; Expanded expression: "258 "
 ; Expression value: 258
 ; Fused expression:    "258 "
     mov     ax, 258
-    jmp     L1339
+    jmp     L1522
 ; default
-L1358:
+L1541:
 ; RPN'ized expression: "val *u 0 = "
 ; Expanded expression: "(@8) *(2) 0 =(2) "
 ; Fused expression:    "*(2) (@8) =(34) *ax 0 "
@@ -11377,13 +13156,13 @@ L1358:
 ; Expression value: 259
 ; Fused expression:    "259 "
     mov     ax, 259
-    jmp     L1339
+    jmp     L1522
 ; }
-    jmp     L1357
-L1367:
-    jmp     L1358
-L1357:
-L1339:
+    jmp     L1540
+L1550:
+    jmp     L1541
+L1540:
+L1522:
     leave
     ret
 ; SEGMENT _TEXT
@@ -11434,20 +13213,20 @@ _GenFuse:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 0
-    jge     L1370
-; RPN'ized expression: "( L1372 error ) "
-; Expanded expression: " L1372  error ()2 "
+    jge     L1553
+; RPN'ized expression: "( L1555 error ) "
+; Expanded expression: " L1555  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L1372:
+L1555:
     db  "GenFuse(): idx < 0",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L1372 , error )2 "
-    push    L1372
+; Fused expression:    "( L1555 , error )2 "
+    push    L1555
     call    _error
     sub     sp, -2
-L1370:
+L1553:
 ; RPN'ized expression: "tok stack idx *u + *u 0 + *u = "
 ; Expanded expression: "(@-2) stack (@4) *(2) *(2) 4 * + 0 + *(2) =(2) "
 ; Fused expression:    "*(2) (@4) * *ax 4 + stack ax + ax 0 =(34) *(@-2) *ax "
@@ -11486,55 +13265,55 @@ L1370:
 ; Expanded expression: "(@-2) *(2) "
 ; Fused expression:    "*(2) (@-2) "
     mov     ax, [bp-2]
-    jmp     L1376
+    jmp     L1559
 ; {
 ; case
 ; RPN'ized expression: "2 "
 ; Expanded expression: "2 "
 ; Expression value: 2
-    jmp     L1377
-L1376:
+    jmp     L1560
+L1559:
     cmp     ax, 2
-    jne     L1378
-L1377:
+    jne     L1561
+L1560:
 ; case
 ; RPN'ized expression: "1 "
 ; Expanded expression: "1 "
 ; Expression value: 1
-    jmp     L1379
-L1378:
+    jmp     L1562
+L1561:
     cmp     ax, 1
-    jne     L1380
-L1379:
+    jne     L1563
+L1562:
 ; case
 ; RPN'ized expression: "16 "
 ; Expanded expression: "16 "
 ; Expression value: 16
-    jmp     L1381
-L1380:
+    jmp     L1564
+L1563:
     cmp     ax, 16
-    jne     L1382
-L1381:
+    jne     L1565
+L1564:
 ; case
 ; RPN'ized expression: "89 "
 ; Expanded expression: "89 "
 ; Expression value: 89
-    jmp     L1383
-L1382:
+    jmp     L1566
+L1565:
     cmp     ax, 89
-    jne     L1384
-L1383:
+    jne     L1567
+L1566:
 ; break
-    jmp     L1374
+    jmp     L1557
 ; case
 ; RPN'ized expression: "90 "
 ; Expanded expression: "90 "
 ; Expression value: 90
-    jmp     L1385
-L1384:
+    jmp     L1568
+L1567:
     cmp     ax, 90
-    jne     L1386
-L1385:
+    jne     L1569
+L1568:
 ; RPN'ized expression: "( idx GenFuse ) "
 ; Expanded expression: " (@4) *(2)  GenFuse ()2 "
 ; Fused expression:    "( *(2) (@4) , GenFuse )2 "
@@ -11542,16 +13321,16 @@ L1385:
     call    _GenFuse
     sub     sp, -2
 ; break
-    jmp     L1374
+    jmp     L1557
 ; case
 ; RPN'ized expression: "78 "
 ; Expanded expression: "78 "
 ; Expression value: 78
-    jmp     L1387
-L1386:
+    jmp     L1570
+L1569:
     cmp     ax, 78
-    jne     L1388
-L1387:
+    jne     L1571
+L1570:
 ; RPN'ized expression: "opSzRight stack idx *u 1 + + *u 1 + *u = "
 ; Expanded expression: "(@-12) stack (@4) *(2) *(2) 1 + 4 * + 2 + *(2) =(2) "
 ; Fused expression:    "*(2) (@4) + *ax 1 * ax 4 + stack ax + ax 2 =(34) *(@-12) *ax "
@@ -11594,26 +13373,26 @@ L1387:
     add     ax, 0
     mov     bx, ax
     mov     ax, [bx]
-    jmp     L1392
+    jmp     L1575
 ; {
 ; case
 ; RPN'ized expression: "16 "
 ; Expanded expression: "16 "
 ; Expression value: 16
-    jmp     L1393
-L1392:
+    jmp     L1576
+L1575:
     cmp     ax, 16
-    jne     L1394
-L1393:
+    jne     L1577
+L1576:
 ; case
 ; RPN'ized expression: "89 "
 ; Expanded expression: "89 "
 ; Expression value: 89
-    jmp     L1395
-L1394:
+    jmp     L1578
+L1577:
     cmp     ax, 89
-    jne     L1396
-L1395:
+    jne     L1579
+L1578:
 ; if
 ; RPN'ized expression: "stack oldIdxRight + *u 0 + *u 16 == "
 ; Expanded expression: "stack (@-4) *(2) 4 * + 0 + *(2) 16 == "
@@ -11627,7 +13406,7 @@ L1395:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 16
-    jne     L1398
+    jne     L1581
 ; RPN'ized expression: "stack oldIdxRight 1 + + *u 0 + *u 257 = "
 ; Expanded expression: "stack (@-4) *(2) 1 + 4 * + 0 + 257 =(2) "
 ; Fused expression:    "+ *(@-4) 1 * ax 4 + stack ax + ax 0 =(34) *ax 257 "
@@ -11641,8 +13420,8 @@ L1395:
     mov     bx, ax
     mov     ax, 257
     mov     [bx], ax
-    jmp     L1399
-L1398:
+    jmp     L1582
+L1581:
 ; else
 ; RPN'ized expression: "stack oldIdxRight 1 + + *u 0 + *u 258 = "
 ; Expanded expression: "stack (@-4) *(2) 1 + 4 * + 0 + 258 =(2) "
@@ -11657,7 +13436,7 @@ L1398:
     mov     bx, ax
     mov     ax, 258
     mov     [bx], ax
-L1399:
+L1582:
 ; RPN'ized expression: "stack oldIdxRight 1 + + *u 1 + *u stack oldIdxRight + *u 1 + *u = "
 ; Expanded expression: "stack (@-4) *(2) 1 + 4 * + 2 + stack (@-4) *(2) 4 * + 2 + *(2) =(2) "
 ; Fused expression:    "+ *(@-4) 1 * ax 4 + stack ax + ax 2 push-ax * *(@-4) 4 + stack ax + ax 2 =(34) **sp *ax "
@@ -11704,9 +13483,9 @@ L1399:
     mov     ax, [bp-12]
     mov     [bx], ax
 ; break
-    jmp     L1390
+    jmp     L1573
 ; default
-L1391:
+L1574:
 ; RPN'ized expression: "( 259 , oldIdxRight 2 + ins ) "
 ; Expanded expression: " 259  (@-4) *(2) 2 +  ins ()4 "
 ; Fused expression:    "( 259 , + *(@-4) 2 , ins )4 "
@@ -11717,50 +13496,50 @@ L1391:
     call    _ins
     sub     sp, -4
 ; break
-    jmp     L1390
+    jmp     L1573
 ; }
-    jmp     L1390
-L1396:
-    jmp     L1391
-L1390:
+    jmp     L1573
+L1579:
+    jmp     L1574
+L1573:
 ; break
-    jmp     L1374
+    jmp     L1557
 ; case
 ; RPN'ized expression: "12 "
 ; Expanded expression: "12 "
 ; Expression value: 12
-    jmp     L1389
-L1388:
+    jmp     L1572
+L1571:
     cmp     ax, 12
-    jne     L1400
-L1389:
+    jne     L1583
+L1572:
 ; case
 ; RPN'ized expression: "13 "
 ; Expanded expression: "13 "
 ; Expression value: 13
-    jmp     L1401
-L1400:
+    jmp     L1584
+L1583:
     cmp     ax, 13
-    jne     L1402
-L1401:
+    jne     L1585
+L1584:
 ; case
 ; RPN'ized expression: "81 "
 ; Expanded expression: "81 "
 ; Expression value: 81
-    jmp     L1403
-L1402:
+    jmp     L1586
+L1585:
     cmp     ax, 81
-    jne     L1404
-L1403:
+    jne     L1587
+L1586:
 ; case
 ; RPN'ized expression: "82 "
 ; Expanded expression: "82 "
 ; Expression value: 82
-    jmp     L1405
-L1404:
+    jmp     L1588
+L1587:
     cmp     ax, 82
-    jne     L1406
-L1405:
+    jne     L1589
+L1588:
 ; RPN'ized expression: "opSzRight stack idx *u 1 + + *u 1 + *u = "
 ; Expanded expression: "(@-12) stack (@4) *(2) *(2) 1 + 4 * + 2 + *(2) =(2) "
 ; Fused expression:    "*(2) (@4) + *ax 1 * ax 4 + stack ax + ax 2 =(34) *(@-12) *ax "
@@ -11803,26 +13582,26 @@ L1405:
     add     ax, 0
     mov     bx, ax
     mov     ax, [bx]
-    jmp     L1410
+    jmp     L1593
 ; {
 ; case
 ; RPN'ized expression: "16 "
 ; Expanded expression: "16 "
 ; Expression value: 16
-    jmp     L1411
-L1410:
+    jmp     L1594
+L1593:
     cmp     ax, 16
-    jne     L1412
-L1411:
+    jne     L1595
+L1594:
 ; case
 ; RPN'ized expression: "89 "
 ; Expanded expression: "89 "
 ; Expression value: 89
-    jmp     L1413
-L1412:
+    jmp     L1596
+L1595:
     cmp     ax, 89
-    jne     L1414
-L1413:
+    jne     L1597
+L1596:
 ; if
 ; RPN'ized expression: "stack oldIdxRight + *u 0 + *u 16 == "
 ; Expanded expression: "stack (@-4) *(2) 4 * + 0 + *(2) 16 == "
@@ -11836,7 +13615,7 @@ L1413:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 16
-    jne     L1416
+    jne     L1599
 ; RPN'ized expression: "stack oldIdxRight 1 + + *u 0 + *u 260 = "
 ; Expanded expression: "stack (@-4) *(2) 1 + 4 * + 0 + 260 =(2) "
 ; Fused expression:    "+ *(@-4) 1 * ax 4 + stack ax + ax 0 =(34) *ax 260 "
@@ -11850,8 +13629,8 @@ L1413:
     mov     bx, ax
     mov     ax, 260
     mov     [bx], ax
-    jmp     L1417
-L1416:
+    jmp     L1600
+L1599:
 ; else
 ; RPN'ized expression: "stack oldIdxRight 1 + + *u 0 + *u 261 = "
 ; Expanded expression: "stack (@-4) *(2) 1 + 4 * + 0 + 261 =(2) "
@@ -11866,7 +13645,7 @@ L1416:
     mov     bx, ax
     mov     ax, 261
     mov     [bx], ax
-L1417:
+L1600:
 ; RPN'ized expression: "stack oldIdxRight 1 + + *u 1 + *u stack oldIdxRight + *u 1 + *u = "
 ; Expanded expression: "stack (@-4) *(2) 1 + 4 * + 2 + stack (@-4) *(2) 4 * + 2 + *(2) =(2) "
 ; Fused expression:    "+ *(@-4) 1 * ax 4 + stack ax + ax 2 push-ax * *(@-4) 4 + stack ax + ax 2 =(34) **sp *ax "
@@ -11913,9 +13692,9 @@ L1417:
     mov     ax, [bp-12]
     mov     [bx], ax
 ; break
-    jmp     L1408
+    jmp     L1591
 ; default
-L1409:
+L1592:
 ; RPN'ized expression: "( 262 , oldIdxRight 2 + ins ) "
 ; Expanded expression: " 262  (@-4) *(2) 2 +  ins ()4 "
 ; Fused expression:    "( 262 , + *(@-4) 2 , ins )4 "
@@ -11926,50 +13705,50 @@ L1409:
     call    _ins
     sub     sp, -4
 ; break
-    jmp     L1408
+    jmp     L1591
 ; }
-    jmp     L1408
-L1414:
-    jmp     L1409
-L1408:
+    jmp     L1591
+L1597:
+    jmp     L1592
+L1591:
 ; break
-    jmp     L1374
+    jmp     L1557
 ; case
 ; RPN'ized expression: "126 "
 ; Expanded expression: "126 "
 ; Expression value: 126
-    jmp     L1407
-L1406:
+    jmp     L1590
+L1589:
     cmp     ax, 126
-    jne     L1418
-L1407:
+    jne     L1601
+L1590:
 ; case
 ; RPN'ized expression: "79 "
 ; Expanded expression: "79 "
 ; Expression value: 79
-    jmp     L1419
-L1418:
+    jmp     L1602
+L1601:
     cmp     ax, 79
-    jne     L1420
-L1419:
+    jne     L1603
+L1602:
 ; case
 ; RPN'ized expression: "80 "
 ; Expanded expression: "80 "
 ; Expression value: 80
-    jmp     L1421
-L1420:
+    jmp     L1604
+L1603:
     cmp     ax, 80
-    jne     L1422
-L1421:
+    jne     L1605
+L1604:
 ; case
 ; RPN'ized expression: "120 "
 ; Expanded expression: "120 "
 ; Expression value: 120
-    jmp     L1423
-L1422:
+    jmp     L1606
+L1605:
     cmp     ax, 120
-    jne     L1424
-L1423:
+    jne     L1607
+L1606:
 ; RPN'ized expression: "( idx GenFuse ) "
 ; Expanded expression: " (@4) *(2)  GenFuse ()2 "
 ; Fused expression:    "( *(2) (@4) , GenFuse )2 "
@@ -11991,7 +13770,7 @@ L1423:
 ; Fused expression:    "== *(@-2) 79 IF! "
     mov     ax, [bp-2]
     cmp     ax, 79
-    jne     L1426
+    jne     L1609
 ; RPN'ized expression: "( 1 , oldIdxRight 1 + del ) "
 ; Expanded expression: " 1  (@-4) *(2) 1 +  del ()4 "
 ; Fused expression:    "( 1 , + *(@-4) 1 , del )4 "
@@ -12001,27 +13780,27 @@ L1423:
     push    ax
     call    _del
     sub     sp, -4
-L1426:
+L1609:
 ; break
-    jmp     L1374
+    jmp     L1557
 ; case
 ; RPN'ized expression: "83 "
 ; Expanded expression: "83 "
 ; Expression value: 83
-    jmp     L1425
-L1424:
+    jmp     L1608
+L1607:
     cmp     ax, 83
-    jne     L1428
-L1425:
+    jne     L1611
+L1608:
 ; case
 ; RPN'ized expression: "84 "
 ; Expanded expression: "84 "
 ; Expression value: 84
-    jmp     L1429
-L1428:
+    jmp     L1612
+L1611:
     cmp     ax, 84
-    jne     L1430
-L1429:
+    jne     L1613
+L1612:
 ; RPN'ized expression: "opSzRight stack idx *u 1 + + *u 1 + *u = "
 ; Expanded expression: "(@-12) stack (@4) *(2) *(2) 1 + 4 * + 2 + *(2) =(2) "
 ; Fused expression:    "*(2) (@4) + *ax 1 * ax 4 + stack ax + ax 2 =(34) *(@-12) *ax "
@@ -12086,26 +13865,26 @@ L1429:
     add     ax, 0
     mov     bx, ax
     mov     ax, [bx]
-    jmp     L1434
+    jmp     L1617
 ; {
 ; case
 ; RPN'ized expression: "16 "
 ; Expanded expression: "16 "
 ; Expression value: 16
-    jmp     L1435
-L1434:
+    jmp     L1618
+L1617:
     cmp     ax, 16
-    jne     L1436
-L1435:
+    jne     L1619
+L1618:
 ; case
 ; RPN'ized expression: "89 "
 ; Expanded expression: "89 "
 ; Expression value: 89
-    jmp     L1437
-L1436:
+    jmp     L1620
+L1619:
     cmp     ax, 89
-    jne     L1438
-L1437:
+    jne     L1621
+L1620:
 ; RPN'ized expression: "stack oldIdxRight 2 + + *u 0 + *u 256 = "
 ; Expanded expression: "stack (@-4) *(2) 2 + 4 * + 0 + 256 =(2) "
 ; Fused expression:    "+ *(@-4) 2 * ax 4 + stack ax + ax 0 =(34) *ax 256 "
@@ -12145,7 +13924,7 @@ L1437:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 16
-    jne     L1440
+    jne     L1623
 ; RPN'ized expression: "stack oldIdxRight 1 + + *u 0 + *u 260 = "
 ; Expanded expression: "stack (@-4) *(2) 1 + 4 * + 0 + 260 =(2) "
 ; Fused expression:    "+ *(@-4) 1 * ax 4 + stack ax + ax 0 =(34) *ax 260 "
@@ -12159,8 +13938,8 @@ L1437:
     mov     bx, ax
     mov     ax, 260
     mov     [bx], ax
-    jmp     L1441
-L1440:
+    jmp     L1624
+L1623:
 ; else
 ; RPN'ized expression: "stack oldIdxRight 1 + + *u 0 + *u 261 = "
 ; Expanded expression: "stack (@-4) *(2) 1 + 4 * + 0 + 261 =(2) "
@@ -12175,7 +13954,7 @@ L1440:
     mov     bx, ax
     mov     ax, 261
     mov     [bx], ax
-L1441:
+L1624:
 ; RPN'ized expression: "stack oldIdxRight 1 + + *u 1 + *u stack oldIdxRight + *u 1 + *u = "
 ; Expanded expression: "stack (@-4) *(2) 1 + 4 * + 2 + stack (@-4) *(2) 4 * + 2 + *(2) =(2) "
 ; Fused expression:    "+ *(@-4) 1 * ax 4 + stack ax + ax 2 push-ax * *(@-4) 4 + stack ax + ax 2 =(34) **sp *ax "
@@ -12222,9 +14001,9 @@ L1441:
     mov     ax, [bp-12]
     mov     [bx], ax
 ; break
-    jmp     L1432
+    jmp     L1615
 ; default
-L1433:
+L1616:
 ; RPN'ized expression: "stack oldIdxRight 1 + + *u 0 + *u tok = "
 ; Expanded expression: "stack (@-4) *(2) 1 + 4 * + 0 + (@-2) *(2) =(2) "
 ; Fused expression:    "+ *(@-4) 1 * ax 4 + stack ax + ax 0 =(34) *ax *(@-2) "
@@ -12275,417 +14054,417 @@ L1433:
     call    _ins2
     sub     sp, -6
 ; break
-    jmp     L1432
+    jmp     L1615
 ; }
-    jmp     L1432
-L1438:
-    jmp     L1433
-L1432:
+    jmp     L1615
+L1621:
+    jmp     L1616
+L1615:
 ; break
-    jmp     L1374
+    jmp     L1557
 ; case
 ; RPN'ized expression: "61 "
 ; Expanded expression: "61 "
 ; Expression value: 61
-    jmp     L1431
-L1430:
+    jmp     L1614
+L1613:
     cmp     ax, 61
-    jne     L1442
-L1431:
+    jne     L1625
+L1614:
 ; case
 ; RPN'ized expression: "68 "
 ; Expanded expression: "68 "
 ; Expression value: 68
-    jmp     L1443
-L1442:
+    jmp     L1626
+L1625:
     cmp     ax, 68
-    jne     L1444
-L1443:
+    jne     L1627
+L1626:
 ; case
 ; RPN'ized expression: "69 "
 ; Expanded expression: "69 "
 ; Expression value: 69
-    jmp     L1445
-L1444:
+    jmp     L1628
+L1627:
     cmp     ax, 69
-    jne     L1446
-L1445:
+    jne     L1629
+L1628:
 ; case
 ; RPN'ized expression: "65 "
 ; Expanded expression: "65 "
 ; Expression value: 65
-    jmp     L1447
-L1446:
+    jmp     L1630
+L1629:
     cmp     ax, 65
-    jne     L1448
-L1447:
+    jne     L1631
+L1630:
 ; case
 ; RPN'ized expression: "66 "
 ; Expanded expression: "66 "
 ; Expression value: 66
-    jmp     L1449
-L1448:
+    jmp     L1632
+L1631:
     cmp     ax, 66
-    jne     L1450
-L1449:
+    jne     L1633
+L1632:
 ; case
 ; RPN'ized expression: "67 "
 ; Expanded expression: "67 "
 ; Expression value: 67
-    jmp     L1451
-L1450:
+    jmp     L1634
+L1633:
     cmp     ax, 67
-    jne     L1452
-L1451:
+    jne     L1635
+L1634:
 ; case
 ; RPN'ized expression: "70 "
 ; Expanded expression: "70 "
 ; Expression value: 70
-    jmp     L1453
-L1452:
+    jmp     L1636
+L1635:
     cmp     ax, 70
-    jne     L1454
-L1453:
+    jne     L1637
+L1636:
 ; case
 ; RPN'ized expression: "71 "
 ; Expanded expression: "71 "
 ; Expression value: 71
-    jmp     L1455
-L1454:
+    jmp     L1638
+L1637:
     cmp     ax, 71
-    jne     L1456
-L1455:
+    jne     L1639
+L1638:
 ; case
 ; RPN'ized expression: "72 "
 ; Expanded expression: "72 "
 ; Expression value: 72
-    jmp     L1457
-L1456:
+    jmp     L1640
+L1639:
     cmp     ax, 72
-    jne     L1458
-L1457:
+    jne     L1641
+L1640:
 ; case
 ; RPN'ized expression: "73 "
 ; Expanded expression: "73 "
 ; Expression value: 73
-    jmp     L1459
-L1458:
+    jmp     L1642
+L1641:
     cmp     ax, 73
-    jne     L1460
-L1459:
+    jne     L1643
+L1642:
 ; case
 ; RPN'ized expression: "74 "
 ; Expanded expression: "74 "
 ; Expression value: 74
-    jmp     L1461
-L1460:
+    jmp     L1644
+L1643:
     cmp     ax, 74
-    jne     L1462
-L1461:
+    jne     L1645
+L1644:
 ; case
 ; RPN'ized expression: "43 "
 ; Expanded expression: "43 "
 ; Expression value: 43
-    jmp     L1463
-L1462:
+    jmp     L1646
+L1645:
     cmp     ax, 43
-    jne     L1464
-L1463:
+    jne     L1647
+L1646:
 ; case
 ; RPN'ized expression: "45 "
 ; Expanded expression: "45 "
 ; Expression value: 45
-    jmp     L1465
-L1464:
+    jmp     L1648
+L1647:
     cmp     ax, 45
-    jne     L1466
-L1465:
+    jne     L1649
+L1648:
 ; case
 ; RPN'ized expression: "42 "
 ; Expanded expression: "42 "
 ; Expression value: 42
-    jmp     L1467
-L1466:
+    jmp     L1650
+L1649:
     cmp     ax, 42
-    jne     L1468
-L1467:
+    jne     L1651
+L1650:
 ; case
 ; RPN'ized expression: "47 "
 ; Expanded expression: "47 "
 ; Expression value: 47
-    jmp     L1469
-L1468:
+    jmp     L1652
+L1651:
     cmp     ax, 47
-    jne     L1470
-L1469:
+    jne     L1653
+L1652:
 ; case
 ; RPN'ized expression: "37 "
 ; Expanded expression: "37 "
 ; Expression value: 37
-    jmp     L1471
-L1470:
+    jmp     L1654
+L1653:
     cmp     ax, 37
-    jne     L1472
-L1471:
+    jne     L1655
+L1654:
 ; case
 ; RPN'ized expression: "4 "
 ; Expanded expression: "4 "
 ; Expression value: 4
-    jmp     L1473
-L1472:
+    jmp     L1656
+L1655:
     cmp     ax, 4
-    jne     L1474
-L1473:
+    jne     L1657
+L1656:
 ; case
 ; RPN'ized expression: "5 "
 ; Expanded expression: "5 "
 ; Expression value: 5
-    jmp     L1475
-L1474:
+    jmp     L1658
+L1657:
     cmp     ax, 5
-    jne     L1476
-L1475:
+    jne     L1659
+L1658:
 ; case
 ; RPN'ized expression: "38 "
 ; Expanded expression: "38 "
 ; Expression value: 38
-    jmp     L1477
-L1476:
+    jmp     L1660
+L1659:
     cmp     ax, 38
-    jne     L1478
-L1477:
+    jne     L1661
+L1660:
 ; case
 ; RPN'ized expression: "94 "
 ; Expanded expression: "94 "
 ; Expression value: 94
-    jmp     L1479
-L1478:
+    jmp     L1662
+L1661:
     cmp     ax, 94
-    jne     L1480
-L1479:
+    jne     L1663
+L1662:
 ; case
 ; RPN'ized expression: "124 "
 ; Expanded expression: "124 "
 ; Expression value: 124
-    jmp     L1481
-L1480:
+    jmp     L1664
+L1663:
     cmp     ax, 124
-    jne     L1482
-L1481:
+    jne     L1665
+L1664:
 ; case
 ; RPN'ized expression: "60 "
 ; Expanded expression: "60 "
 ; Expression value: 60
-    jmp     L1483
-L1482:
+    jmp     L1666
+L1665:
     cmp     ax, 60
-    jne     L1484
-L1483:
+    jne     L1667
+L1666:
 ; case
 ; RPN'ized expression: "62 "
 ; Expanded expression: "62 "
 ; Expression value: 62
-    jmp     L1485
-L1484:
+    jmp     L1668
+L1667:
     cmp     ax, 62
-    jne     L1486
-L1485:
+    jne     L1669
+L1668:
 ; case
 ; RPN'ized expression: "10 "
 ; Expanded expression: "10 "
 ; Expression value: 10
-    jmp     L1487
-L1486:
+    jmp     L1670
+L1669:
     cmp     ax, 10
-    jne     L1488
-L1487:
+    jne     L1671
+L1670:
 ; case
 ; RPN'ized expression: "11 "
 ; Expanded expression: "11 "
 ; Expression value: 11
-    jmp     L1489
-L1488:
+    jmp     L1672
+L1671:
     cmp     ax, 11
-    jne     L1490
-L1489:
+    jne     L1673
+L1672:
 ; case
 ; RPN'ized expression: "8 "
 ; Expanded expression: "8 "
 ; Expression value: 8
-    jmp     L1491
-L1490:
+    jmp     L1674
+L1673:
     cmp     ax, 8
-    jne     L1492
-L1491:
+    jne     L1675
+L1674:
 ; case
 ; RPN'ized expression: "9 "
 ; Expanded expression: "9 "
 ; Expression value: 9
-    jmp     L1493
-L1492:
+    jmp     L1676
+L1675:
     cmp     ax, 9
-    jne     L1494
-L1493:
+    jne     L1677
+L1676:
 ; case
 ; RPN'ized expression: "85 "
 ; Expanded expression: "85 "
 ; Expression value: 85
-    jmp     L1495
-L1494:
+    jmp     L1678
+L1677:
     cmp     ax, 85
-    jne     L1496
-L1495:
+    jne     L1679
+L1678:
 ; case
 ; RPN'ized expression: "86 "
 ; Expanded expression: "86 "
 ; Expression value: 86
-    jmp     L1497
-L1496:
+    jmp     L1680
+L1679:
     cmp     ax, 86
-    jne     L1498
-L1497:
+    jne     L1681
+L1680:
 ; case
 ; RPN'ized expression: "87 "
 ; Expanded expression: "87 "
 ; Expression value: 87
-    jmp     L1499
-L1498:
+    jmp     L1682
+L1681:
     cmp     ax, 87
-    jne     L1500
-L1499:
+    jne     L1683
+L1682:
 ; case
 ; RPN'ized expression: "88 "
 ; Expanded expression: "88 "
 ; Expression value: 88
-    jmp     L1501
-L1500:
+    jmp     L1684
+L1683:
     cmp     ax, 88
-    jne     L1502
-L1501:
+    jne     L1685
+L1684:
 ; case
 ; RPN'ized expression: "6 "
 ; Expanded expression: "6 "
 ; Expression value: 6
-    jmp     L1503
-L1502:
+    jmp     L1686
+L1685:
     cmp     ax, 6
-    jne     L1504
-L1503:
+    jne     L1687
+L1686:
 ; case
 ; RPN'ized expression: "7 "
 ; Expanded expression: "7 "
 ; Expression value: 7
-    jmp     L1505
-L1504:
+    jmp     L1688
+L1687:
     cmp     ax, 7
-    jne     L1506
-L1505:
+    jne     L1689
+L1688:
 ; switch
 ; RPN'ized expression: "tok "
 ; Expanded expression: "(@-2) *(2) "
 ; Fused expression:    "*(2) (@-2) "
     mov     ax, [bp-2]
-    jmp     L1510
+    jmp     L1693
 ; {
 ; case
 ; RPN'ized expression: "61 "
 ; Expanded expression: "61 "
 ; Expression value: 61
-    jmp     L1511
-L1510:
+    jmp     L1694
+L1693:
     cmp     ax, 61
-    jne     L1512
-L1511:
+    jne     L1695
+L1694:
 ; case
 ; RPN'ized expression: "68 "
 ; Expanded expression: "68 "
 ; Expression value: 68
-    jmp     L1513
-L1512:
+    jmp     L1696
+L1695:
     cmp     ax, 68
-    jne     L1514
-L1513:
+    jne     L1697
+L1696:
 ; case
 ; RPN'ized expression: "69 "
 ; Expanded expression: "69 "
 ; Expression value: 69
-    jmp     L1515
-L1514:
+    jmp     L1698
+L1697:
     cmp     ax, 69
-    jne     L1516
-L1515:
+    jne     L1699
+L1698:
 ; case
 ; RPN'ized expression: "65 "
 ; Expanded expression: "65 "
 ; Expression value: 65
-    jmp     L1517
-L1516:
+    jmp     L1700
+L1699:
     cmp     ax, 65
-    jne     L1518
-L1517:
+    jne     L1701
+L1700:
 ; case
 ; RPN'ized expression: "66 "
 ; Expanded expression: "66 "
 ; Expression value: 66
-    jmp     L1519
-L1518:
+    jmp     L1702
+L1701:
     cmp     ax, 66
-    jne     L1520
-L1519:
+    jne     L1703
+L1702:
 ; case
 ; RPN'ized expression: "67 "
 ; Expanded expression: "67 "
 ; Expression value: 67
-    jmp     L1521
-L1520:
+    jmp     L1704
+L1703:
     cmp     ax, 67
-    jne     L1522
-L1521:
+    jne     L1705
+L1704:
 ; case
 ; RPN'ized expression: "70 "
 ; Expanded expression: "70 "
 ; Expression value: 70
-    jmp     L1523
-L1522:
+    jmp     L1706
+L1705:
     cmp     ax, 70
-    jne     L1524
-L1523:
+    jne     L1707
+L1706:
 ; case
 ; RPN'ized expression: "71 "
 ; Expanded expression: "71 "
 ; Expression value: 71
-    jmp     L1525
-L1524:
+    jmp     L1708
+L1707:
     cmp     ax, 71
-    jne     L1526
-L1525:
+    jne     L1709
+L1708:
 ; case
 ; RPN'ized expression: "72 "
 ; Expanded expression: "72 "
 ; Expression value: 72
-    jmp     L1527
-L1526:
+    jmp     L1710
+L1709:
     cmp     ax, 72
-    jne     L1528
-L1527:
+    jne     L1711
+L1710:
 ; case
 ; RPN'ized expression: "73 "
 ; Expanded expression: "73 "
 ; Expression value: 73
-    jmp     L1529
-L1528:
+    jmp     L1712
+L1711:
     cmp     ax, 73
-    jne     L1530
-L1529:
+    jne     L1713
+L1712:
 ; case
 ; RPN'ized expression: "74 "
 ; Expanded expression: "74 "
 ; Expression value: 74
-    jmp     L1531
-L1530:
+    jmp     L1714
+L1713:
     cmp     ax, 74
-    jne     L1532
-L1531:
+    jne     L1715
+L1714:
 ; RPN'ized expression: "lvalSize stack idx *u 1 + + *u 1 + *u = "
 ; Expanded expression: "(@-30) stack (@4) *(2) *(2) 1 + 4 * + 2 + *(2) =(2) "
 ; Fused expression:    "*(2) (@4) + *ax 1 * ax 4 + stack ax + ax 2 =(34) *(@-30) *ax "
@@ -12702,21 +14481,21 @@ L1531:
     mov     ax, [bx]
     mov     [bp-30], ax
 ; break
-    jmp     L1508
+    jmp     L1691
 ; default
-L1509:
+L1692:
 ; RPN'ized expression: "lvalSize 0 = "
 ; Expanded expression: "(@-30) 0 =(2) "
 ; Fused expression:    "=(34) *(@-30) 0 "
     mov     ax, 0
     mov     [bp-30], ax
 ; break
-    jmp     L1508
+    jmp     L1691
 ; }
-    jmp     L1508
-L1532:
-    jmp     L1509
-L1508:
+    jmp     L1691
+L1715:
+    jmp     L1692
+L1691:
 ; RPN'ized expression: "( idx GenFuse ) "
 ; Expanded expression: " (@4) *(2)  GenFuse ()2 "
 ; Fused expression:    "( *(2) (@4) , GenFuse )2 "
@@ -12798,57 +14577,57 @@ L1508:
     mov     [bp-18], ax
 ; if
 ; RPN'ized expression: "tok 6 == tok 7 == || "
-; Expanded expression: "(@-2) *(2) 6 == _Bool [sh||->1536] (@-2) *(2) 7 == _Bool ||[1536] "
-; Fused expression:    "== *(@-2) 6 _Bool [sh||->1536] == *(@-2) 7 _Bool ||[1536] "
+; Expanded expression: "(@-2) *(2) 6 == _Bool [sh||->1719] (@-2) *(2) 7 == _Bool ||[1719] "
+; Fused expression:    "== *(@-2) 6 _Bool [sh||->1719] == *(@-2) 7 _Bool ||[1719] "
     mov     ax, [bp-2]
     cmp     ax, 6
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L1536
+    jne     L1719
     mov     ax, [bp-2]
     cmp     ax, 7
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L1536:
+L1719:
 ; JumpIfZero
     test    ax, ax
-    jz      L1534
+    je      L1717
 ; break
-    jmp     L1374
-L1534:
+    jmp     L1557
+L1717:
 ; if
 ; RPN'ized expression: "opTypLeft 259 != opTypLeft 262 != && "
-; Expanded expression: "(@-18) *(2) 259 != _Bool [sh&&->1539] (@-18) *(2) 262 != _Bool &&[1539] "
-; Fused expression:    "!= *(@-18) 259 _Bool [sh&&->1539] != *(@-18) 262 _Bool &&[1539] "
+; Expanded expression: "(@-18) *(2) 259 != _Bool [sh&&->1722] (@-18) *(2) 262 != _Bool &&[1722] "
+; Fused expression:    "!= *(@-18) 259 _Bool [sh&&->1722] != *(@-18) 262 _Bool &&[1722] "
     mov     ax, [bp-18]
     cmp     ax, 259
     setne   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L1539
+    je      L1722
     mov     ax, [bp-18]
     cmp     ax, 262
     setne   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L1539:
+L1722:
 ; JumpIfZero
     test    ax, ax
-    jz      L1537
+    je      L1720
 ; {
 ; loc             cnt : (@-32): int
     sub     sp, 2
@@ -12887,34 +14666,34 @@ L1539:
     mov     [bp-4], ax
     sub     sp, -2
 ; }
-    jmp     L1538
-L1537:
+    jmp     L1721
+L1720:
 ; else
 ; if
 ; RPN'ized expression: "opTypRight 259 == opTypRight 262 == || "
-; Expanded expression: "(@-16) *(2) 259 == _Bool [sh||->1542] (@-16) *(2) 262 == _Bool ||[1542] "
-; Fused expression:    "== *(@-16) 259 _Bool [sh||->1542] == *(@-16) 262 _Bool ||[1542] "
+; Expanded expression: "(@-16) *(2) 259 == _Bool [sh||->1725] (@-16) *(2) 262 == _Bool ||[1725] "
+; Fused expression:    "== *(@-16) 259 _Bool [sh||->1725] == *(@-16) 262 _Bool ||[1725] "
     mov     ax, [bp-16]
     cmp     ax, 259
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L1542
+    jne     L1725
     mov     ax, [bp-16]
     cmp     ax, 262
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L1542:
+L1725:
 ; JumpIfZero
     test    ax, ax
-    jz      L1540
+    je      L1723
 ; {
 ; RPN'ized expression: "( 512 , oldIdxLeft ++ ins ) "
 ; Expanded expression: " 512  (@-8) ++(2)  ins ()4 "
@@ -12936,21 +14715,21 @@ L1542:
 ; Fused expression:    "== *(@-18) 259 IF! "
     mov     ax, [bp-18]
     cmp     ax, 259
-    jne     L1543
+    jne     L1726
 ; RPN'ized expression: "opTypLeft 263 = "
 ; Expanded expression: "(@-18) 263 =(2) "
 ; Fused expression:    "=(34) *(@-18) 263 "
     mov     ax, 263
     mov     [bp-18], ax
-    jmp     L1544
-L1543:
+    jmp     L1727
+L1726:
 ; else
 ; RPN'ized expression: "opTypLeft 264 = "
 ; Expanded expression: "(@-18) 264 =(2) "
 ; Fused expression:    "=(34) *(@-18) 264 "
     mov     ax, 264
     mov     [bp-18], ax
-L1544:
+L1727:
 ; if
 ; RPN'ized expression: "delDerefLeft "
 ; Expanded expression: "(@-26) *(2) "
@@ -12958,7 +14737,7 @@ L1544:
     mov     ax, [bp-26]
 ; JumpIfZero
     test    ax, ax
-    jz      L1545
+    je      L1728
 ; {
 ; RPN'ized expression: "( 2 , oldIdxLeft 2 -= del ) "
 ; Expanded expression: " 2  (@-8) 2 -=(2)  del ()4 "
@@ -12977,10 +14756,10 @@ L1544:
     sub     ax, 2
     mov     [bp-4], ax
 ; }
-L1545:
+L1728:
 ; }
-    jmp     L1541
-L1540:
+    jmp     L1724
+L1723:
 ; else
 ; if
 ; RPN'ized expression: "delDerefLeft "
@@ -12989,7 +14768,7 @@ L1540:
     mov     ax, [bp-26]
 ; JumpIfZero
     test    ax, ax
-    jz      L1547
+    je      L1730
 ; {
 ; RPN'ized expression: "( 2 , oldIdxLeft 1 - del ) "
 ; Expanded expression: " 2  (@-8) *(2) 1 -  del ()4 "
@@ -13013,34 +14792,34 @@ L1540:
     sub     ax, 2
     mov     [bp-4], ax
 ; }
-L1547:
-L1541:
-L1538:
+L1730:
+L1724:
+L1721:
 ; if
 ; RPN'ized expression: "opTypRight 259 != opTypRight 262 != && "
-; Expanded expression: "(@-16) *(2) 259 != _Bool [sh&&->1551] (@-16) *(2) 262 != _Bool &&[1551] "
-; Fused expression:    "!= *(@-16) 259 _Bool [sh&&->1551] != *(@-16) 262 _Bool &&[1551] "
+; Expanded expression: "(@-16) *(2) 259 != _Bool [sh&&->1734] (@-16) *(2) 262 != _Bool &&[1734] "
+; Fused expression:    "!= *(@-16) 259 _Bool [sh&&->1734] != *(@-16) 262 _Bool &&[1734] "
     mov     ax, [bp-16]
     cmp     ax, 259
     setne   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L1551
+    je      L1734
     mov     ax, [bp-16]
     cmp     ax, 262
     setne   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L1551:
+L1734:
 ; JumpIfZero
     test    ax, ax
-    jz      L1549
+    je      L1732
 ; {
 ; loc             cnt : (@-32): int
     sub     sp, 2
@@ -13068,8 +14847,8 @@ L1551:
     mov     [bp-4], ax
     sub     sp, -2
 ; }
-    jmp     L1550
-L1549:
+    jmp     L1733
+L1732:
 ; else
 ; if
 ; RPN'ized expression: "delDerefRight "
@@ -13078,7 +14857,7 @@ L1549:
     mov     ax, [bp-24]
 ; JumpIfZero
     test    ax, ax
-    jz      L1552
+    je      L1735
 ; {
 ; RPN'ized expression: "( 2 , oldIdxRight 1 - del ) "
 ; Expanded expression: " 2  (@-4) *(2) 1 -  del ()4 "
@@ -13096,8 +14875,8 @@ L1549:
     sub     ax, 2
     mov     [bp-4], ax
 ; }
-L1552:
-L1550:
+L1735:
+L1733:
 ; RPN'ized expression: "stack oldIdxRight 1 + + *u 1 + *u opSzLeft 16 * opSzRight + = "
 ; Expanded expression: "stack (@-4) *(2) 1 + 4 * + 2 + (@-14) *(2) 16 * (@-12) *(2) + =(2) "
 ; Fused expression:    "+ *(@-4) 1 * ax 4 + stack ax + ax 2 push-ax * *(@-14) 16 + ax *(@-12) =(34) **sp ax "
@@ -13135,20 +14914,20 @@ L1550:
     call    _ins2
     sub     sp, -6
 ; break
-    jmp     L1374
+    jmp     L1557
 ; case
 ; RPN'ized expression: "41 "
 ; Expanded expression: "41 "
 ; Expression value: 41
-    jmp     L1507
-L1506:
+    jmp     L1690
+L1689:
     cmp     ax, 41
-    jne     L1554
-L1507:
+    jne     L1737
+L1690:
 ; while
 ; RPN'ized expression: "stack idx *u + *u 0 + *u 40 != "
 ; Expanded expression: "stack (@4) *(2) *(2) 4 * + 0 + *(2) 40 != "
-L1556:
+L1739:
 ; Fused expression:    "*(2) (@4) * *ax 4 + stack ax + ax 0 != *ax 40 IF! "
     mov     ax, [bp+4]
     mov     bx, ax
@@ -13161,7 +14940,7 @@ L1556:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 40
-    je      L1557
+    je      L1740
 ; {
 ; RPN'ized expression: "( idx GenFuse ) "
 ; Expanded expression: " (@4) *(2)  GenFuse ()2 "
@@ -13184,7 +14963,7 @@ L1556:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 44
-    jne     L1558
+    jne     L1741
 ; RPN'ized expression: "idx *u -- "
 ; Expanded expression: "(@4) *(2) --(2) "
 ; Fused expression:    "*(2) (@4) --(2) *ax "
@@ -13192,10 +14971,10 @@ L1556:
     mov     bx, ax
     dec     word [bx]
     mov     ax, [bx]
-L1558:
+L1741:
 ; }
-    jmp     L1556
-L1557:
+    jmp     L1739
+L1740:
 ; RPN'ized expression: "idx *u -- "
 ; Expanded expression: "(@4) *(2) --(2) "
 ; Fused expression:    "*(2) (@4) --(2) *ax "
@@ -13204,37 +14983,37 @@ L1557:
     dec     word [bx]
     mov     ax, [bx]
 ; break
-    jmp     L1374
+    jmp     L1557
 ; default
-L1375:
-; RPN'ized expression: "( ( tok GetTokenName ) , L1560 error ) "
-; Expanded expression: "  (@-2) *(2)  GetTokenName ()2  L1560  error ()4 "
+L1558:
+; RPN'ized expression: "( ( tok GetTokenName ) , L1743 error ) "
+; Expanded expression: "  (@-2) *(2)  GetTokenName ()2  L1743  error ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L1560:
+L1743:
     db  "GenFuse: unexpected token %s",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( ( *(2) (@-2) , GetTokenName )2 , L1560 , error )4 "
+; Fused expression:    "( ( *(2) (@-2) , GetTokenName )2 , L1743 , error )4 "
     push    word [bp-2]
     call    _GetTokenName
     sub     sp, -2
     push    ax
-    push    L1560
+    push    L1743
     call    _error
     sub     sp, -4
 ; }
-    jmp     L1374
-L1554:
-    jmp     L1375
-L1374:
-L1369:
+    jmp     L1557
+L1737:
+    jmp     L1558
+L1557:
+L1552:
     leave
     ret
 ; SEGMENT _TEXT
 ; glb GenGetBinaryOperatorInstr : (
 ; prm     tok : int
-;     ) * char
+;     ) int
 SEGMENT _TEXT
     global  _GenGetBinaryOperatorInstr
 _GenGetBinaryOperatorInstr:
@@ -13246,418 +15025,393 @@ _GenGetBinaryOperatorInstr:
 ; Expanded expression: "(@4) *(2) "
 ; Fused expression:    "*(2) (@4) "
     mov     ax, [bp+4]
-    jmp     L1565
+    jmp     L1748
 ; {
+; case
+; RPN'ized expression: "83 "
+; Expanded expression: "83 "
+; Expression value: 83
+    jmp     L1749
+L1748:
+    cmp     ax, 83
+    jne     L1750
+L1749:
 ; case
 ; RPN'ized expression: "68 "
 ; Expanded expression: "68 "
 ; Expression value: 68
-    jmp     L1566
-L1565:
+    jmp     L1751
+L1750:
     cmp     ax, 68
-    jne     L1567
-L1566:
+    jne     L1752
+L1751:
 ; case
 ; RPN'ized expression: "43 "
 ; Expanded expression: "43 "
 ; Expression value: 43
-    jmp     L1568
-L1567:
+    jmp     L1753
+L1752:
     cmp     ax, 43
-    jne     L1569
-L1568:
+    jne     L1754
+L1753:
 ; return
-; RPN'ized expression: "L1571 "
-; Expanded expression: "L1571 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1571:
-    db  "add",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "L1571 "
-    mov     ax, L1571
-    jmp     L1562
+; RPN'ized expression: "9 "
+; Expanded expression: "9 "
+; Expression value: 9
+; Fused expression:    "9 "
+    mov     ax, 9
+    jmp     L1745
+; case
+; RPN'ized expression: "84 "
+; Expanded expression: "84 "
+; Expression value: 84
+    jmp     L1755
+L1754:
+    cmp     ax, 84
+    jne     L1756
+L1755:
 ; case
 ; RPN'ized expression: "69 "
 ; Expanded expression: "69 "
 ; Expression value: 69
-    jmp     L1570
-L1569:
+    jmp     L1757
+L1756:
     cmp     ax, 69
-    jne     L1573
-L1570:
+    jne     L1758
+L1757:
 ; case
 ; RPN'ized expression: "45 "
 ; Expanded expression: "45 "
 ; Expression value: 45
-    jmp     L1574
-L1573:
+    jmp     L1759
+L1758:
     cmp     ax, 45
-    jne     L1575
-L1574:
+    jne     L1760
+L1759:
 ; return
-; RPN'ized expression: "L1577 "
-; Expanded expression: "L1577 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1577:
-    db  "sub",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "L1577 "
-    mov     ax, L1577
-    jmp     L1562
+; RPN'ized expression: "10 "
+; Expanded expression: "10 "
+; Expression value: 10
+; Fused expression:    "10 "
+    mov     ax, 10
+    jmp     L1745
 ; case
 ; RPN'ized expression: "38 "
 ; Expanded expression: "38 "
 ; Expression value: 38
-    jmp     L1576
-L1575:
+    jmp     L1761
+L1760:
     cmp     ax, 38
-    jne     L1579
-L1576:
+    jne     L1762
+L1761:
 ; case
 ; RPN'ized expression: "72 "
 ; Expanded expression: "72 "
 ; Expression value: 72
-    jmp     L1580
-L1579:
+    jmp     L1763
+L1762:
     cmp     ax, 72
-    jne     L1581
-L1580:
+    jne     L1764
+L1763:
 ; return
-; RPN'ized expression: "L1583 "
-; Expanded expression: "L1583 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1583:
-    db  "and",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "L1583 "
-    mov     ax, L1583
-    jmp     L1562
+; RPN'ized expression: "11 "
+; Expanded expression: "11 "
+; Expression value: 11
+; Fused expression:    "11 "
+    mov     ax, 11
+    jmp     L1745
 ; case
 ; RPN'ized expression: "94 "
 ; Expanded expression: "94 "
 ; Expression value: 94
-    jmp     L1582
-L1581:
+    jmp     L1765
+L1764:
     cmp     ax, 94
-    jne     L1585
-L1582:
+    jne     L1766
+L1765:
 ; case
 ; RPN'ized expression: "73 "
 ; Expanded expression: "73 "
 ; Expression value: 73
-    jmp     L1586
-L1585:
+    jmp     L1767
+L1766:
     cmp     ax, 73
-    jne     L1587
-L1586:
+    jne     L1768
+L1767:
 ; return
-; RPN'ized expression: "L1589 "
-; Expanded expression: "L1589 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1589:
-    db  "xor",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "L1589 "
-    mov     ax, L1589
-    jmp     L1562
+; RPN'ized expression: "12 "
+; Expanded expression: "12 "
+; Expression value: 12
+; Fused expression:    "12 "
+    mov     ax, 12
+    jmp     L1745
 ; case
 ; RPN'ized expression: "124 "
 ; Expanded expression: "124 "
 ; Expression value: 124
-    jmp     L1588
-L1587:
+    jmp     L1769
+L1768:
     cmp     ax, 124
-    jne     L1591
-L1588:
+    jne     L1770
+L1769:
 ; case
 ; RPN'ized expression: "74 "
 ; Expanded expression: "74 "
 ; Expression value: 74
-    jmp     L1592
-L1591:
+    jmp     L1771
+L1770:
     cmp     ax, 74
-    jne     L1593
-L1592:
+    jne     L1772
+L1771:
 ; return
-; RPN'ized expression: "L1595 "
-; Expanded expression: "L1595 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1595:
-    db  "or",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "L1595 "
-    mov     ax, L1595
-    jmp     L1562
+; RPN'ized expression: "13 "
+; Expanded expression: "13 "
+; Expression value: 13
+; Fused expression:    "13 "
+    mov     ax, 13
+    jmp     L1745
 ; case
 ; RPN'ized expression: "60 "
 ; Expanded expression: "60 "
 ; Expression value: 60
-    jmp     L1594
-L1593:
+    jmp     L1773
+L1772:
     cmp     ax, 60
-    jne     L1597
-L1594:
+    jne     L1774
+L1773:
 ; case
 ; RPN'ized expression: "62 "
 ; Expanded expression: "62 "
 ; Expression value: 62
-    jmp     L1598
-L1597:
+    jmp     L1775
+L1774:
     cmp     ax, 62
-    jne     L1599
-L1598:
+    jne     L1776
+L1775:
 ; case
 ; RPN'ized expression: "10 "
 ; Expanded expression: "10 "
 ; Expression value: 10
-    jmp     L1600
-L1599:
+    jmp     L1777
+L1776:
     cmp     ax, 10
-    jne     L1601
-L1600:
+    jne     L1778
+L1777:
 ; case
 ; RPN'ized expression: "11 "
 ; Expanded expression: "11 "
 ; Expression value: 11
-    jmp     L1602
-L1601:
+    jmp     L1779
+L1778:
     cmp     ax, 11
-    jne     L1603
-L1602:
+    jne     L1780
+L1779:
 ; case
 ; RPN'ized expression: "8 "
 ; Expanded expression: "8 "
 ; Expression value: 8
-    jmp     L1604
-L1603:
+    jmp     L1781
+L1780:
     cmp     ax, 8
-    jne     L1605
-L1604:
+    jne     L1782
+L1781:
 ; case
 ; RPN'ized expression: "9 "
 ; Expanded expression: "9 "
 ; Expression value: 9
-    jmp     L1606
-L1605:
+    jmp     L1783
+L1782:
     cmp     ax, 9
-    jne     L1607
-L1606:
+    jne     L1784
+L1783:
 ; case
 ; RPN'ized expression: "85 "
 ; Expanded expression: "85 "
 ; Expression value: 85
-    jmp     L1608
-L1607:
+    jmp     L1785
+L1784:
     cmp     ax, 85
-    jne     L1609
-L1608:
+    jne     L1786
+L1785:
 ; case
 ; RPN'ized expression: "86 "
 ; Expanded expression: "86 "
 ; Expression value: 86
-    jmp     L1610
-L1609:
+    jmp     L1787
+L1786:
     cmp     ax, 86
-    jne     L1611
-L1610:
+    jne     L1788
+L1787:
 ; case
 ; RPN'ized expression: "87 "
 ; Expanded expression: "87 "
 ; Expression value: 87
-    jmp     L1612
-L1611:
+    jmp     L1789
+L1788:
     cmp     ax, 87
-    jne     L1613
-L1612:
+    jne     L1790
+L1789:
 ; case
 ; RPN'ized expression: "88 "
 ; Expanded expression: "88 "
 ; Expression value: 88
-    jmp     L1614
-L1613:
+    jmp     L1791
+L1790:
     cmp     ax, 88
-    jne     L1615
-L1614:
+    jne     L1792
+L1791:
 ; return
-; RPN'ized expression: "L1617 "
-; Expanded expression: "L1617 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1617:
-    db  "cmp",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "L1617 "
-    mov     ax, L1617
-    jmp     L1562
+; RPN'ized expression: "14 "
+; Expanded expression: "14 "
+; Expression value: 14
+; Fused expression:    "14 "
+    mov     ax, 14
+    jmp     L1745
 ; case
 ; RPN'ized expression: "42 "
 ; Expanded expression: "42 "
 ; Expression value: 42
-    jmp     L1616
-L1615:
+    jmp     L1793
+L1792:
     cmp     ax, 42
-    jne     L1619
-L1616:
+    jne     L1794
+L1793:
 ; case
 ; RPN'ized expression: "65 "
 ; Expanded expression: "65 "
 ; Expression value: 65
-    jmp     L1620
-L1619:
+    jmp     L1795
+L1794:
     cmp     ax, 65
-    jne     L1621
-L1620:
+    jne     L1796
+L1795:
 ; return
-; RPN'ized expression: "L1623 "
-; Expanded expression: "L1623 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1623:
-    db  "mul",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "L1623 "
-    mov     ax, L1623
-    jmp     L1562
+; RPN'ized expression: "16 "
+; Expanded expression: "16 "
+; Expression value: 16
+; Fused expression:    "16 "
+    mov     ax, 16
+    jmp     L1745
 ; case
 ; RPN'ized expression: "47 "
 ; Expanded expression: "47 "
 ; Expression value: 47
-    jmp     L1622
-L1621:
+    jmp     L1797
+L1796:
     cmp     ax, 47
-    jne     L1625
-L1622:
+    jne     L1798
+L1797:
 ; case
 ; RPN'ized expression: "37 "
 ; Expanded expression: "37 "
 ; Expression value: 37
-    jmp     L1626
-L1625:
+    jmp     L1799
+L1798:
     cmp     ax, 37
-    jne     L1627
-L1626:
+    jne     L1800
+L1799:
 ; case
 ; RPN'ized expression: "66 "
 ; Expanded expression: "66 "
 ; Expression value: 66
-    jmp     L1628
-L1627:
+    jmp     L1801
+L1800:
     cmp     ax, 66
-    jne     L1629
-L1628:
+    jne     L1802
+L1801:
 ; case
 ; RPN'ized expression: "67 "
 ; Expanded expression: "67 "
 ; Expression value: 67
-    jmp     L1630
-L1629:
+    jmp     L1803
+L1802:
     cmp     ax, 67
-    jne     L1631
-L1630:
+    jne     L1804
+L1803:
 ; return
-; RPN'ized expression: "L1633 "
-; Expanded expression: "L1633 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1633:
-    db  "idiv",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "L1633 "
-    mov     ax, L1633
-    jmp     L1562
+; RPN'ized expression: "18 "
+; Expanded expression: "18 "
+; Expression value: 18
+; Fused expression:    "18 "
+    mov     ax, 18
+    jmp     L1745
 ; case
 ; RPN'ized expression: "4 "
 ; Expanded expression: "4 "
 ; Expression value: 4
-    jmp     L1632
-L1631:
+    jmp     L1805
+L1804:
     cmp     ax, 4
-    jne     L1635
-L1632:
+    jne     L1806
+L1805:
 ; case
 ; RPN'ized expression: "70 "
 ; Expanded expression: "70 "
 ; Expression value: 70
-    jmp     L1636
-L1635:
+    jmp     L1807
+L1806:
     cmp     ax, 70
-    jne     L1637
-L1636:
+    jne     L1808
+L1807:
 ; return
-; RPN'ized expression: "L1639 "
-; Expanded expression: "L1639 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1639:
-    db  "shl",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "L1639 "
-    mov     ax, L1639
-    jmp     L1562
+; RPN'ized expression: "19 "
+; Expanded expression: "19 "
+; Expression value: 19
+; Fused expression:    "19 "
+    mov     ax, 19
+    jmp     L1745
 ; case
 ; RPN'ized expression: "5 "
 ; Expanded expression: "5 "
 ; Expression value: 5
-    jmp     L1638
-L1637:
+    jmp     L1809
+L1808:
     cmp     ax, 5
-    jne     L1641
-L1638:
+    jne     L1810
+L1809:
 ; case
 ; RPN'ized expression: "71 "
 ; Expanded expression: "71 "
 ; Expression value: 71
-    jmp     L1642
-L1641:
+    jmp     L1811
+L1810:
     cmp     ax, 71
-    jne     L1643
-L1642:
+    jne     L1812
+L1811:
 ; return
-; RPN'ized expression: "L1645 "
-; Expanded expression: "L1645 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1645:
-    db  "sar",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "L1645 "
-    mov     ax, L1645
-    jmp     L1562
+; RPN'ized expression: "20 "
+; Expanded expression: "20 "
+; Expression value: 20
+; Fused expression:    "20 "
+    mov     ax, 20
+    jmp     L1745
 ; default
-L1564:
-; return
-; RPN'ized expression: "L1647 "
-; Expanded expression: "L1647 "
+L1747:
+; RPN'ized expression: "( L1814 error ) "
+; Expanded expression: " L1814  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L1647:
-    db  0
+L1814:
+    db  "Error: Invalid operator",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "L1647 "
-    mov     ax, L1647
-    jmp     L1562
+; Fused expression:    "( L1814 , error )2 "
+    push    L1814
+    call    _error
+    sub     sp, -2
+; return
+; RPN'ized expression: "0 "
+; Expanded expression: "0 "
+; Expression value: 0
+; Fused expression:    "0 "
+    mov     ax, 0
+    jmp     L1745
 ; }
-    jmp     L1563
-L1643:
-    jmp     L1564
-L1563:
-L1562:
+    jmp     L1746
+L1812:
+    jmp     L1747
+L1746:
+L1745:
     leave
     ret
 ; SEGMENT _TEXT
@@ -13680,8 +15434,8 @@ _GenExpr1:
     sub     sp, 2
 ; if
 ; RPN'ized expression: "stack s + *u 0 + *u 22 == stack s + *u 0 + *u 76 == || "
-; Expanded expression: "stack (@-2) *(2) 4 * + 0 + *(2) 22 == _Bool [sh||->1652] stack (@-2) *(2) 4 * + 0 + *(2) 76 == _Bool ||[1652] "
-; Fused expression:    "* *(@-2) 4 + stack ax + ax 0 == *ax 22 _Bool [sh||->1652] * *(@-2) 4 + stack ax + ax 0 == *ax 76 _Bool ||[1652] "
+; Expanded expression: "stack (@-2) *(2) 4 * + 0 + *(2) 22 == _Bool [sh||->1819] stack (@-2) *(2) 4 * + 0 + *(2) 76 == _Bool ||[1819] "
+; Fused expression:    "* *(@-2) 4 + stack ax + ax 0 == *ax 22 _Bool [sh||->1819] * *(@-2) 4 + stack ax + ax 0 == *ax 76 _Bool ||[1819] "
     mov     ax, [bp-2]
     imul    ax, ax, 4
     mov     cx, ax
@@ -13694,11 +15448,11 @@ _GenExpr1:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L1652
+    jne     L1819
     mov     ax, [bp-2]
     imul    ax, ax, 4
     mov     cx, ax
@@ -13711,18 +15465,18 @@ _GenExpr1:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L1652:
+L1819:
 ; JumpIfZero
     test    ax, ax
-    jz      L1650
+    je      L1817
 ; RPN'ized expression: "s --p "
 ; Expanded expression: "(@-2) --p(2) "
 ; Fused expression:    "--p(2) *(@-2) "
     mov     ax, [bp-2]
     dec     word [bp-2]
-L1650:
+L1817:
 ; RPN'ized expression: "( s &u GenFuse ) "
 ; Expanded expression: " (@-2)  GenFuse ()2 "
 ; Fused expression:    "( (@-2) , GenFuse )2 "
@@ -13730,16 +15484,16 @@ L1650:
     push    ax
     call    _GenFuse
     sub     sp, -2
-; RPN'ized expression: "( L1653 printf ) "
-; Expanded expression: " L1653  printf ()2 "
+; RPN'ized expression: "( L1820 printf ) "
+; Expanded expression: " L1820  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L1653:
+L1820:
     db  "; Fused expression:    ",34,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L1653 , printf )2 "
-    push    L1653
+; Fused expression:    "( L1820 , printf )2 "
+    push    L1820
     call    _printf
     sub     sp, -2
 ; for
@@ -13748,22 +15502,22 @@ SEGMENT _TEXT
 ; Fused expression:    "=(34) *(@-4) 0 "
     mov     ax, 0
     mov     [bp-4], ax
-L1655:
+L1822:
 ; RPN'ized expression: "i sp < "
 ; Expanded expression: "(@-4) *(2) sp *(2) < "
 ; Fused expression:    "< *(@-4) *sp IF! "
     mov     ax, [bp-4]
     cmp     ax, [_sp]
-    jge     L1658
-    jmp     L1657
-L1656:
+    jge     L1825
+    jmp     L1824
+L1823:
 ; RPN'ized expression: "i ++p "
 ; Expanded expression: "(@-4) ++p(2) "
 ; Fused expression:    "++p(2) *(@-4) "
     mov     ax, [bp-4]
     inc     word [bp-4]
-    jmp     L1655
-L1657:
+    jmp     L1822
+L1824:
 ; {
 ; loc         tok : (@-6): int
     sub     sp, 2
@@ -13785,44 +15539,44 @@ L1657:
 ; Expanded expression: "(@-6) *(2) "
 ; Fused expression:    "*(2) (@-6) "
     mov     ax, [bp-6]
-    jmp     L1661
+    jmp     L1828
 ; {
 ; case
 ; RPN'ized expression: "1 "
 ; Expanded expression: "1 "
 ; Expression value: 1
-    jmp     L1662
-L1661:
+    jmp     L1829
+L1828:
     cmp     ax, 1
-    jne     L1663
-L1662:
+    jne     L1830
+L1829:
 ; case
 ; RPN'ized expression: "2 "
 ; Expanded expression: "2 "
 ; Expression value: 2
-    jmp     L1664
-L1663:
+    jmp     L1831
+L1830:
     cmp     ax, 2
-    jne     L1665
-L1664:
+    jne     L1832
+L1831:
 ; case
 ; RPN'ized expression: "256 "
 ; Expanded expression: "256 "
 ; Expression value: 256
-    jmp     L1666
-L1665:
+    jmp     L1833
+L1832:
     cmp     ax, 256
-    jne     L1667
-L1666:
-; RPN'ized expression: "( stack i + *u 1 + *u , L1669 printf ) "
-; Expanded expression: " stack (@-4) *(2) 4 * + 2 + *(2)  L1669  printf ()4 "
+    jne     L1834
+L1833:
+; RPN'ized expression: "( stack i + *u 1 + *u , L1836 printf ) "
+; Expanded expression: " stack (@-4) *(2) 4 * + 2 + *(2)  L1836  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L1669:
+L1836:
     db  "%d",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( * *(@-4) 4 + stack ax + ax 2 *(2) ax , L1669 , printf )4 "
+; Fused expression:    "( * *(@-4) 4 + stack ax + ax 2 *(2) ax , L1836 , printf )4 "
     mov     ax, [bp-4]
     imul    ax, ax, 4
     mov     cx, ax
@@ -13831,29 +15585,29 @@ SEGMENT _TEXT
     add     ax, 2
     mov     bx, ax
     push    word [bx]
-    push    L1669
+    push    L1836
     call    _printf
     sub     sp, -4
 ; break
-    jmp     L1659
+    jmp     L1826
 ; case
 ; RPN'ized expression: "16 "
 ; Expanded expression: "16 "
 ; Expression value: 16
-    jmp     L1668
-L1667:
+    jmp     L1835
+L1834:
     cmp     ax, 16
-    jne     L1671
-L1668:
+    jne     L1838
+L1835:
 ; case
 ; RPN'ized expression: "257 "
 ; Expanded expression: "257 "
 ; Expression value: 257
-    jmp     L1672
-L1671:
+    jmp     L1839
+L1838:
     cmp     ax, 257
-    jne     L1673
-L1672:
+    jne     L1840
+L1839:
 ; {
 ; loc                 p : (@-8): * char
     sub     sp, 2
@@ -13885,55 +15639,55 @@ L1672:
     sub     sp, -2
 ; JumpIfZero
     test    ax, ax
-    jz      L1675
-; RPN'ized expression: "( L1677 printf ) "
-; Expanded expression: " L1677  printf ()2 "
+    je      L1842
+; RPN'ized expression: "( L1844 printf ) "
+; Expanded expression: " L1844  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L1677:
+L1844:
     db  "L",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L1677 , printf )2 "
-    push    L1677
+; Fused expression:    "( L1844 , printf )2 "
+    push    L1844
     call    _printf
     sub     sp, -2
-L1675:
-; RPN'ized expression: "( p , L1679 printf ) "
-; Expanded expression: " (@-8) *(2)  L1679  printf ()4 "
+L1842:
+; RPN'ized expression: "( p , L1846 printf ) "
+; Expanded expression: " (@-8) *(2)  L1846  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L1679:
+L1846:
     db  "%s",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( *(2) (@-8) , L1679 , printf )4 "
+; Fused expression:    "( *(2) (@-8) , L1846 , printf )4 "
     push    word [bp-8]
-    push    L1679
+    push    L1846
     call    _printf
     sub     sp, -4
     sub     sp, -2
 ; }
 ; break
-    jmp     L1659
+    jmp     L1826
 ; case
 ; RPN'ized expression: "260 "
 ; Expanded expression: "260 "
 ; Expression value: 260
-    jmp     L1674
-L1673:
+    jmp     L1841
+L1840:
     cmp     ax, 260
-    jne     L1681
-L1674:
-; RPN'ized expression: "( IdentTable stack i + *u 1 + *u + , L1683 printf ) "
-; Expanded expression: " IdentTable stack (@-4) *(2) 4 * + 2 + *(2) +  L1683  printf ()4 "
+    jne     L1848
+L1841:
+; RPN'ized expression: "( IdentTable stack i + *u 1 + *u + , L1850 printf ) "
+; Expanded expression: " IdentTable stack (@-4) *(2) 4 * + 2 + *(2) +  L1850  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L1683:
+L1850:
     db  "*%s",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( * *(@-4) 4 + stack ax + ax 2 + IdentTable *ax , L1683 , printf )4 "
+; Fused expression:    "( * *(@-4) 4 + stack ax + ax 2 + IdentTable *ax , L1850 , printf )4 "
     mov     ax, [bp-4]
     imul    ax, ax, 4
     mov     cx, ax
@@ -13945,20 +15699,20 @@ SEGMENT _TEXT
     mov     ax, _IdentTable
     add     ax, cx
     push    ax
-    push    L1683
+    push    L1850
     call    _printf
     sub     sp, -4
 ; break
-    jmp     L1659
+    jmp     L1826
 ; case
 ; RPN'ized expression: "90 "
 ; Expanded expression: "90 "
 ; Expression value: 90
-    jmp     L1682
-L1681:
+    jmp     L1849
+L1848:
     cmp     ax, 90
-    jne     L1685
-L1682:
+    jne     L1852
+L1849:
 ; if
 ; RPN'ized expression: "stack i + *u 1 + *u 0 >= "
 ; Expanded expression: "stack (@-4) *(2) 4 * + 2 + *(2) 0 >= "
@@ -13972,16 +15726,16 @@ L1682:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 0
-    jl      L1687
-; RPN'ized expression: "( stack i + *u 1 + *u , L1689 printf ) "
-; Expanded expression: " stack (@-4) *(2) 4 * + 2 + *(2)  L1689  printf ()4 "
+    jl      L1854
+; RPN'ized expression: "( stack i + *u 1 + *u , L1856 printf ) "
+; Expanded expression: " stack (@-4) *(2) 4 * + 2 + *(2)  L1856  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L1689:
+L1856:
     db  "[sh&&->%d]",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( * *(@-4) 4 + stack ax + ax 2 *(2) ax , L1689 , printf )4 "
+; Fused expression:    "( * *(@-4) 4 + stack ax + ax 2 *(2) ax , L1856 , printf )4 "
     mov     ax, [bp-4]
     imul    ax, ax, 4
     mov     cx, ax
@@ -13990,21 +15744,21 @@ SEGMENT _TEXT
     add     ax, 2
     mov     bx, ax
     push    word [bx]
-    push    L1689
+    push    L1856
     call    _printf
     sub     sp, -4
-    jmp     L1688
-L1687:
+    jmp     L1855
+L1854:
 ; else
-; RPN'ized expression: "( stack i + *u 1 + *u -u , L1691 printf ) "
-; Expanded expression: " stack (@-4) *(2) 4 * + 2 + *(2) -u  L1691  printf ()4 "
+; RPN'ized expression: "( stack i + *u 1 + *u -u , L1858 printf ) "
+; Expanded expression: " stack (@-4) *(2) 4 * + 2 + *(2) -u  L1858  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L1691:
+L1858:
     db  "[sh||->%d]",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( * *(@-4) 4 + stack ax + ax 2 *(2) ax -u , L1691 , printf )4 "
+; Fused expression:    "( * *(@-4) 4 + stack ax + ax 2 *(2) ax -u , L1858 , printf )4 "
     mov     ax, [bp-4]
     imul    ax, ax, 4
     mov     cx, ax
@@ -14015,39 +15769,39 @@ SEGMENT _TEXT
     mov     ax, [bx]
     neg     ax
     push    ax
-    push    L1691
+    push    L1858
     call    _printf
     sub     sp, -4
-L1688:
+L1855:
 ; break
-    jmp     L1659
+    jmp     L1826
 ; case
 ; RPN'ized expression: "89 "
 ; Expanded expression: "89 "
 ; Expression value: 89
-    jmp     L1686
-L1685:
+    jmp     L1853
+L1852:
     cmp     ax, 89
-    jne     L1693
-L1686:
+    jne     L1860
+L1853:
 ; case
 ; RPN'ized expression: "258 "
 ; Expanded expression: "258 "
 ; Expression value: 258
-    jmp     L1694
-L1693:
+    jmp     L1861
+L1860:
     cmp     ax, 258
-    jne     L1695
-L1694:
-; RPN'ized expression: "( stack i + *u 1 + *u , L1697 printf ) "
-; Expanded expression: " stack (@-4) *(2) 4 * + 2 + *(2)  L1697  printf ()4 "
+    jne     L1862
+L1861:
+; RPN'ized expression: "( stack i + *u 1 + *u , L1864 printf ) "
+; Expanded expression: " stack (@-4) *(2) 4 * + 2 + *(2)  L1864  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L1697:
+L1864:
     db  "(@%d)",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( * *(@-4) 4 + stack ax + ax 2 *(2) ax , L1697 , printf )4 "
+; Fused expression:    "( * *(@-4) 4 + stack ax + ax 2 *(2) ax , L1864 , printf )4 "
     mov     ax, [bp-4]
     imul    ax, ax, 4
     mov     cx, ax
@@ -14056,29 +15810,29 @@ SEGMENT _TEXT
     add     ax, 2
     mov     bx, ax
     push    word [bx]
-    push    L1697
+    push    L1864
     call    _printf
     sub     sp, -4
 ; break
-    jmp     L1659
+    jmp     L1826
 ; case
 ; RPN'ized expression: "261 "
 ; Expanded expression: "261 "
 ; Expression value: 261
-    jmp     L1696
-L1695:
+    jmp     L1863
+L1862:
     cmp     ax, 261
-    jne     L1699
-L1696:
-; RPN'ized expression: "( stack i + *u 1 + *u , L1701 printf ) "
-; Expanded expression: " stack (@-4) *(2) 4 * + 2 + *(2)  L1701  printf ()4 "
+    jne     L1866
+L1863:
+; RPN'ized expression: "( stack i + *u 1 + *u , L1868 printf ) "
+; Expanded expression: " stack (@-4) *(2) 4 * + 2 + *(2)  L1868  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L1701:
+L1868:
     db  "*(@%d)",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( * *(@-4) 4 + stack ax + ax 2 *(2) ax , L1701 , printf )4 "
+; Fused expression:    "( * *(@-4) 4 + stack ax + ax 2 *(2) ax , L1868 , printf )4 "
     mov     ax, [bp-4]
     imul    ax, ax, 4
     mov     cx, ax
@@ -14087,29 +15841,29 @@ SEGMENT _TEXT
     add     ax, 2
     mov     bx, ax
     push    word [bx]
-    push    L1701
+    push    L1868
     call    _printf
     sub     sp, -4
 ; break
-    jmp     L1659
+    jmp     L1826
 ; case
 ; RPN'ized expression: "78 "
 ; Expanded expression: "78 "
 ; Expression value: 78
-    jmp     L1700
-L1699:
+    jmp     L1867
+L1866:
     cmp     ax, 78
-    jne     L1703
-L1700:
-; RPN'ized expression: "( stack i + *u 1 + *u , L1705 printf ) "
-; Expanded expression: " stack (@-4) *(2) 4 * + 2 + *(2)  L1705  printf ()4 "
+    jne     L1870
+L1867:
+; RPN'ized expression: "( stack i + *u 1 + *u , L1872 printf ) "
+; Expanded expression: " stack (@-4) *(2) 4 * + 2 + *(2)  L1872  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L1705:
+L1872:
     db  "*(%d)",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( * *(@-4) 4 + stack ax + ax 2 *(2) ax , L1705 , printf )4 "
+; Fused expression:    "( * *(@-4) 4 + stack ax + ax 2 *(2) ax , L1872 , printf )4 "
     mov     ax, [bp-4]
     imul    ax, ax, 4
     mov     cx, ax
@@ -14118,62 +15872,62 @@ SEGMENT _TEXT
     add     ax, 2
     mov     bx, ax
     push    word [bx]
-    push    L1705
+    push    L1872
     call    _printf
     sub     sp, -4
 ; break
-    jmp     L1659
+    jmp     L1826
 ; case
 ; RPN'ized expression: "40 "
 ; Expanded expression: "40 "
 ; Expression value: 40
-    jmp     L1704
-L1703:
+    jmp     L1871
+L1870:
     cmp     ax, 40
-    jne     L1707
-L1704:
+    jne     L1874
+L1871:
 ; case
 ; RPN'ized expression: "44 "
 ; Expanded expression: "44 "
 ; Expression value: 44
-    jmp     L1708
-L1707:
+    jmp     L1875
+L1874:
     cmp     ax, 44
-    jne     L1709
-L1708:
-; RPN'ized expression: "( tok , L1711 printf ) "
-; Expanded expression: " (@-6) *(2)  L1711  printf ()4 "
+    jne     L1876
+L1875:
+; RPN'ized expression: "( tok , L1878 printf ) "
+; Expanded expression: " (@-6) *(2)  L1878  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L1711:
+L1878:
     db  "%c",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( *(2) (@-6) , L1711 , printf )4 "
+; Fused expression:    "( *(2) (@-6) , L1878 , printf )4 "
     push    word [bp-6]
-    push    L1711
+    push    L1878
     call    _printf
     sub     sp, -4
 ; break
-    jmp     L1659
+    jmp     L1826
 ; case
 ; RPN'ized expression: "41 "
 ; Expanded expression: "41 "
 ; Expression value: 41
-    jmp     L1710
-L1709:
+    jmp     L1877
+L1876:
     cmp     ax, 41
-    jne     L1713
-L1710:
-; RPN'ized expression: "( stack i + *u 1 + *u , L1715 printf ) "
-; Expanded expression: " stack (@-4) *(2) 4 * + 2 + *(2)  L1715  printf ()4 "
+    jne     L1880
+L1877:
+; RPN'ized expression: "( stack i + *u 1 + *u , L1882 printf ) "
+; Expanded expression: " stack (@-4) *(2) 4 * + 2 + *(2)  L1882  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L1715:
+L1882:
     db  ")%d",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( * *(@-4) 4 + stack ax + ax 2 *(2) ax , L1715 , printf )4 "
+; Fused expression:    "( * *(@-4) 4 + stack ax + ax 2 *(2) ax , L1882 , printf )4 "
     mov     ax, [bp-4]
     imul    ax, ax, 4
     mov     cx, ax
@@ -14182,188 +15936,188 @@ SEGMENT _TEXT
     add     ax, 2
     mov     bx, ax
     push    word [bx]
-    push    L1715
+    push    L1882
     call    _printf
     sub     sp, -4
 ; break
-    jmp     L1659
+    jmp     L1826
 ; case
 ; RPN'ized expression: "259 "
 ; Expanded expression: "259 "
 ; Expression value: 259
-    jmp     L1714
-L1713:
+    jmp     L1881
+L1880:
     cmp     ax, 259
-    jne     L1717
-L1714:
-; RPN'ized expression: "( L1719 printf ) "
-; Expanded expression: " L1719  printf ()2 "
+    jne     L1884
+L1881:
+; RPN'ized expression: "( L1886 printf ) "
+; Expanded expression: " L1886  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L1719:
+L1886:
     db  "ax",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L1719 , printf )2 "
-    push    L1719
+; Fused expression:    "( L1886 , printf )2 "
+    push    L1886
     call    _printf
     sub     sp, -2
 ; break
-    jmp     L1659
+    jmp     L1826
 ; case
 ; RPN'ized expression: "262 "
 ; Expanded expression: "262 "
 ; Expression value: 262
-    jmp     L1718
-L1717:
+    jmp     L1885
+L1884:
     cmp     ax, 262
-    jne     L1721
-L1718:
-; RPN'ized expression: "( L1723 printf ) "
-; Expanded expression: " L1723  printf ()2 "
+    jne     L1888
+L1885:
+; RPN'ized expression: "( L1890 printf ) "
+; Expanded expression: " L1890  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L1723:
+L1890:
     db  "*ax",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L1723 , printf )2 "
-    push    L1723
+; Fused expression:    "( L1890 , printf )2 "
+    push    L1890
     call    _printf
     sub     sp, -2
 ; break
-    jmp     L1659
+    jmp     L1826
 ; case
 ; RPN'ized expression: "263 "
 ; Expanded expression: "263 "
 ; Expression value: 263
-    jmp     L1722
-L1721:
+    jmp     L1889
+L1888:
     cmp     ax, 263
-    jne     L1725
-L1722:
-; RPN'ized expression: "( L1727 printf ) "
-; Expanded expression: " L1727  printf ()2 "
+    jne     L1892
+L1889:
+; RPN'ized expression: "( L1894 printf ) "
+; Expanded expression: " L1894  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L1727:
+L1894:
     db  "*sp",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L1727 , printf )2 "
-    push    L1727
+; Fused expression:    "( L1894 , printf )2 "
+    push    L1894
     call    _printf
     sub     sp, -2
 ; break
-    jmp     L1659
+    jmp     L1826
 ; case
 ; RPN'ized expression: "264 "
 ; Expanded expression: "264 "
 ; Expression value: 264
-    jmp     L1726
-L1725:
+    jmp     L1893
+L1892:
     cmp     ax, 264
-    jne     L1729
-L1726:
-; RPN'ized expression: "( L1731 printf ) "
-; Expanded expression: " L1731  printf ()2 "
+    jne     L1896
+L1893:
+; RPN'ized expression: "( L1898 printf ) "
+; Expanded expression: " L1898  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L1731:
+L1898:
     db  "**sp",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L1731 , printf )2 "
-    push    L1731
+; Fused expression:    "( L1898 , printf )2 "
+    push    L1898
     call    _printf
     sub     sp, -2
 ; break
-    jmp     L1659
+    jmp     L1826
 ; case
 ; RPN'ized expression: "512 "
 ; Expanded expression: "512 "
 ; Expression value: 512
-    jmp     L1730
-L1729:
+    jmp     L1897
+L1896:
     cmp     ax, 512
-    jne     L1733
-L1730:
-; RPN'ized expression: "( L1735 printf ) "
-; Expanded expression: " L1735  printf ()2 "
+    jne     L1900
+L1897:
+; RPN'ized expression: "( L1902 printf ) "
+; Expanded expression: " L1902  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L1735:
+L1902:
     db  "push-ax",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L1735 , printf )2 "
-    push    L1735
+; Fused expression:    "( L1902 , printf )2 "
+    push    L1902
     call    _printf
     sub     sp, -2
 ; break
-    jmp     L1659
+    jmp     L1826
 ; case
 ; RPN'ized expression: "22 "
 ; Expanded expression: "22 "
 ; Expression value: 22
-    jmp     L1734
-L1733:
+    jmp     L1901
+L1900:
     cmp     ax, 22
-    jne     L1737
-L1734:
-; RPN'ized expression: "( L1739 printf ) "
-; Expanded expression: " L1739  printf ()2 "
+    jne     L1904
+L1901:
+; RPN'ized expression: "( L1906 printf ) "
+; Expanded expression: " L1906  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L1739:
+L1906:
     db  "IF",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L1739 , printf )2 "
-    push    L1739
+; Fused expression:    "( L1906 , printf )2 "
+    push    L1906
     call    _printf
     sub     sp, -2
 ; break
-    jmp     L1659
+    jmp     L1826
 ; case
 ; RPN'ized expression: "76 "
 ; Expanded expression: "76 "
 ; Expression value: 76
-    jmp     L1738
-L1737:
+    jmp     L1905
+L1904:
     cmp     ax, 76
-    jne     L1741
-L1738:
-; RPN'ized expression: "( L1743 printf ) "
-; Expanded expression: " L1743  printf ()2 "
+    jne     L1908
+L1905:
+; RPN'ized expression: "( L1910 printf ) "
+; Expanded expression: " L1910  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L1743:
+L1910:
     db  "IF!",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L1743 , printf )2 "
-    push    L1743
+; Fused expression:    "( L1910 , printf )2 "
+    push    L1910
     call    _printf
     sub     sp, -2
 ; break
-    jmp     L1659
+    jmp     L1826
 ; default
-L1660:
-; RPN'ized expression: "( ( tok GetTokenName ) , L1745 printf ) "
-; Expanded expression: "  (@-6) *(2)  GetTokenName ()2  L1745  printf ()4 "
+L1827:
+; RPN'ized expression: "( ( tok GetTokenName ) , L1912 printf ) "
+; Expanded expression: "  (@-6) *(2)  GetTokenName ()2  L1912  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L1745:
+L1912:
     db  "%s",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( ( *(2) (@-6) , GetTokenName )2 , L1745 , printf )4 "
+; Fused expression:    "( ( *(2) (@-6) , GetTokenName )2 , L1912 , printf )4 "
     push    word [bp-6]
     call    _GetTokenName
     sub     sp, -2
     push    ax
-    push    L1745
+    push    L1912
     call    _printf
     sub     sp, -4
 ; switch
@@ -14371,35 +16125,35 @@ SEGMENT _TEXT
 ; Expanded expression: "(@-6) *(2) "
 ; Fused expression:    "*(2) (@-6) "
     mov     ax, [bp-6]
-    jmp     L1749
+    jmp     L1916
 ; {
 ; case
 ; RPN'ized expression: "7 "
 ; Expanded expression: "7 "
 ; Expression value: 7
-    jmp     L1750
-L1749:
+    jmp     L1917
+L1916:
     cmp     ax, 7
-    jne     L1751
-L1750:
+    jne     L1918
+L1917:
 ; case
 ; RPN'ized expression: "6 "
 ; Expanded expression: "6 "
 ; Expression value: 6
-    jmp     L1752
-L1751:
+    jmp     L1919
+L1918:
     cmp     ax, 6
-    jne     L1753
-L1752:
-; RPN'ized expression: "( stack i + *u 1 + *u , L1755 printf ) "
-; Expanded expression: " stack (@-4) *(2) 4 * + 2 + *(2)  L1755  printf ()4 "
+    jne     L1920
+L1919:
+; RPN'ized expression: "( stack i + *u 1 + *u , L1922 printf ) "
+; Expanded expression: " stack (@-4) *(2) 4 * + 2 + *(2)  L1922  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L1755:
+L1922:
     db  "[%d]",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( * *(@-4) 4 + stack ax + ax 2 *(2) ax , L1755 , printf )4 "
+; Fused expression:    "( * *(@-4) 4 + stack ax + ax 2 *(2) ax , L1922 , printf )4 "
     mov     ax, [bp-4]
     imul    ax, ax, 4
     mov     cx, ax
@@ -14408,173 +16162,173 @@ SEGMENT _TEXT
     add     ax, 2
     mov     bx, ax
     push    word [bx]
-    push    L1755
+    push    L1922
     call    _printf
     sub     sp, -4
 ; break
-    jmp     L1747
+    jmp     L1914
 ; case
 ; RPN'ized expression: "61 "
 ; Expanded expression: "61 "
 ; Expression value: 61
-    jmp     L1754
-L1753:
+    jmp     L1921
+L1920:
     cmp     ax, 61
-    jne     L1757
-L1754:
+    jne     L1924
+L1921:
 ; case
 ; RPN'ized expression: "12 "
 ; Expanded expression: "12 "
 ; Expression value: 12
-    jmp     L1758
-L1757:
+    jmp     L1925
+L1924:
     cmp     ax, 12
-    jne     L1759
-L1758:
+    jne     L1926
+L1925:
 ; case
 ; RPN'ized expression: "13 "
 ; Expanded expression: "13 "
 ; Expression value: 13
-    jmp     L1760
-L1759:
+    jmp     L1927
+L1926:
     cmp     ax, 13
-    jne     L1761
-L1760:
+    jne     L1928
+L1927:
 ; case
 ; RPN'ized expression: "81 "
 ; Expanded expression: "81 "
 ; Expression value: 81
-    jmp     L1762
-L1761:
+    jmp     L1929
+L1928:
     cmp     ax, 81
-    jne     L1763
-L1762:
+    jne     L1930
+L1929:
 ; case
 ; RPN'ized expression: "82 "
 ; Expanded expression: "82 "
 ; Expression value: 82
-    jmp     L1764
-L1763:
+    jmp     L1931
+L1930:
     cmp     ax, 82
-    jne     L1765
-L1764:
+    jne     L1932
+L1931:
 ; case
 ; RPN'ized expression: "68 "
 ; Expanded expression: "68 "
 ; Expression value: 68
-    jmp     L1766
-L1765:
+    jmp     L1933
+L1932:
     cmp     ax, 68
-    jne     L1767
-L1766:
+    jne     L1934
+L1933:
 ; case
 ; RPN'ized expression: "69 "
 ; Expanded expression: "69 "
 ; Expression value: 69
-    jmp     L1768
-L1767:
+    jmp     L1935
+L1934:
     cmp     ax, 69
-    jne     L1769
-L1768:
+    jne     L1936
+L1935:
 ; case
 ; RPN'ized expression: "83 "
 ; Expanded expression: "83 "
 ; Expression value: 83
-    jmp     L1770
-L1769:
+    jmp     L1937
+L1936:
     cmp     ax, 83
-    jne     L1771
-L1770:
+    jne     L1938
+L1937:
 ; case
 ; RPN'ized expression: "84 "
 ; Expanded expression: "84 "
 ; Expression value: 84
-    jmp     L1772
-L1771:
+    jmp     L1939
+L1938:
     cmp     ax, 84
-    jne     L1773
-L1772:
+    jne     L1940
+L1939:
 ; case
 ; RPN'ized expression: "65 "
 ; Expanded expression: "65 "
 ; Expression value: 65
-    jmp     L1774
-L1773:
+    jmp     L1941
+L1940:
     cmp     ax, 65
-    jne     L1775
-L1774:
+    jne     L1942
+L1941:
 ; case
 ; RPN'ized expression: "66 "
 ; Expanded expression: "66 "
 ; Expression value: 66
-    jmp     L1776
-L1775:
+    jmp     L1943
+L1942:
     cmp     ax, 66
-    jne     L1777
-L1776:
+    jne     L1944
+L1943:
 ; case
 ; RPN'ized expression: "67 "
 ; Expanded expression: "67 "
 ; Expression value: 67
-    jmp     L1778
-L1777:
+    jmp     L1945
+L1944:
     cmp     ax, 67
-    jne     L1779
-L1778:
+    jne     L1946
+L1945:
 ; case
 ; RPN'ized expression: "70 "
 ; Expanded expression: "70 "
 ; Expression value: 70
-    jmp     L1780
-L1779:
+    jmp     L1947
+L1946:
     cmp     ax, 70
-    jne     L1781
-L1780:
+    jne     L1948
+L1947:
 ; case
 ; RPN'ized expression: "71 "
 ; Expanded expression: "71 "
 ; Expression value: 71
-    jmp     L1782
-L1781:
+    jmp     L1949
+L1948:
     cmp     ax, 71
-    jne     L1783
-L1782:
+    jne     L1950
+L1949:
 ; case
 ; RPN'ized expression: "72 "
 ; Expanded expression: "72 "
 ; Expression value: 72
-    jmp     L1784
-L1783:
+    jmp     L1951
+L1950:
     cmp     ax, 72
-    jne     L1785
-L1784:
+    jne     L1952
+L1951:
 ; case
 ; RPN'ized expression: "73 "
 ; Expanded expression: "73 "
 ; Expression value: 73
-    jmp     L1786
-L1785:
+    jmp     L1953
+L1952:
     cmp     ax, 73
-    jne     L1787
-L1786:
+    jne     L1954
+L1953:
 ; case
 ; RPN'ized expression: "74 "
 ; Expanded expression: "74 "
 ; Expression value: 74
-    jmp     L1788
-L1787:
+    jmp     L1955
+L1954:
     cmp     ax, 74
-    jne     L1789
-L1788:
-; RPN'ized expression: "( stack i + *u 1 + *u , L1791 printf ) "
-; Expanded expression: " stack (@-4) *(2) 4 * + 2 + *(2)  L1791  printf ()4 "
+    jne     L1956
+L1955:
+; RPN'ized expression: "( stack i + *u 1 + *u , L1958 printf ) "
+; Expanded expression: " stack (@-4) *(2) 4 * + 2 + *(2)  L1958  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L1791:
+L1958:
     db  "(%d)",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( * *(@-4) 4 + stack ax + ax 2 *(2) ax , L1791 , printf )4 "
+; Fused expression:    "( * *(@-4) 4 + stack ax + ax 2 *(2) ax , L1958 , printf )4 "
     mov     ax, [bp-4]
     imul    ax, ax, 4
     mov     cx, ax
@@ -14583,48 +16337,48 @@ SEGMENT _TEXT
     add     ax, 2
     mov     bx, ax
     push    word [bx]
-    push    L1791
+    push    L1958
     call    _printf
     sub     sp, -4
 ; break
-    jmp     L1747
+    jmp     L1914
 ; }
-    jmp     L1747
-L1789:
-L1747:
+    jmp     L1914
+L1956:
+L1914:
 ; break
-    jmp     L1659
+    jmp     L1826
 ; }
-    jmp     L1659
-L1741:
-    jmp     L1660
-L1659:
-; RPN'ized expression: "( L1793 printf ) "
-; Expanded expression: " L1793  printf ()2 "
+    jmp     L1826
+L1908:
+    jmp     L1827
+L1826:
+; RPN'ized expression: "( L1960 printf ) "
+; Expanded expression: " L1960  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L1793:
+L1960:
     db  " ",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L1793 , printf )2 "
-    push    L1793
+; Fused expression:    "( L1960 , printf )2 "
+    push    L1960
     call    _printf
     sub     sp, -2
     sub     sp, -2
 ; }
-    jmp     L1656
-L1658:
-; RPN'ized expression: "( L1795 printf ) "
-; Expanded expression: " L1795  printf ()2 "
+    jmp     L1823
+L1825:
+; RPN'ized expression: "( L1962 printf ) "
+; Expanded expression: " L1962  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L1795:
+L1962:
     db  34,10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L1795 , printf )2 "
-    push    L1795
+; Fused expression:    "( L1962 , printf )2 "
+    push    L1962
     call    _printf
     sub     sp, -2
 ; for
@@ -14633,22 +16387,22 @@ SEGMENT _TEXT
 ; Fused expression:    "=(34) *(@-4) 0 "
     mov     ax, 0
     mov     [bp-4], ax
-L1797:
+L1964:
 ; RPN'ized expression: "i sp < "
 ; Expanded expression: "(@-4) *(2) sp *(2) < "
 ; Fused expression:    "< *(@-4) *sp IF! "
     mov     ax, [bp-4]
     cmp     ax, [_sp]
-    jge     L1800
-    jmp     L1799
-L1798:
+    jge     L1967
+    jmp     L1966
+L1965:
 ; RPN'ized expression: "i ++p "
 ; Expanded expression: "(@-4) ++p(2) "
 ; Fused expression:    "++p(2) *(@-4) "
     mov     ax, [bp-4]
     inc     word [bp-4]
-    jmp     L1797
-L1799:
+    jmp     L1964
+L1966:
 ; {
 ; loc         tok : (@-6): int
     sub     sp, 2
@@ -14680,48 +16434,48 @@ L1799:
     mov     bx, ax
     mov     ax, [bx]
     mov     [bp-8], ax
-; loc         instr : (@-10): * char
+; loc         instr : (@-10): int
     sub     sp, 2
 ; switch
 ; RPN'ized expression: "tok "
 ; Expanded expression: "(@-6) *(2) "
 ; Fused expression:    "*(2) (@-6) "
     mov     ax, [bp-6]
-    jmp     L1803
+    jmp     L1970
 ; {
 ; case
 ; RPN'ized expression: "1 "
 ; Expanded expression: "1 "
 ; Expression value: 1
-    jmp     L1804
-L1803:
+    jmp     L1971
+L1970:
     cmp     ax, 1
-    jne     L1805
-L1804:
+    jne     L1972
+L1971:
 ; case
 ; RPN'ized expression: "2 "
 ; Expanded expression: "2 "
 ; Expression value: 2
-    jmp     L1806
-L1805:
+    jmp     L1973
+L1972:
     cmp     ax, 2
-    jne     L1807
-L1806:
+    jne     L1974
+L1973:
 ; if
 ; RPN'ized expression: "i 1 + sp < stack i 1 + + *u 0 + *u 44 == && 0 == "
-; Expanded expression: "(@-4) *(2) 1 + sp *(2) < _Bool [sh&&->1811] stack (@-4) *(2) 1 + 4 * + 0 + *(2) 44 == _Bool &&[1811] 0 == "
-; Fused expression:    "+ *(@-4) 1 < ax *sp _Bool [sh&&->1811] + *(@-4) 1 * ax 4 + stack ax + ax 0 == *ax 44 _Bool &&[1811] == ax 0 IF! "
+; Expanded expression: "(@-4) *(2) 1 + sp *(2) < _Bool [sh&&->1978] stack (@-4) *(2) 1 + 4 * + 0 + *(2) 44 == _Bool &&[1978] 0 == "
+; Fused expression:    "+ *(@-4) 1 < ax *sp _Bool [sh&&->1978] + *(@-4) 1 * ax 4 + stack ax + ax 0 == *ax 44 _Bool &&[1978] == ax 0 IF! "
     mov     ax, [bp-4]
     add     ax, 1
     cmp     ax, [_sp]
     setl    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L1811
+    je      L1978
     mov     ax, [bp-4]
     add     ax, 1
     imul    ax, ax, 4
@@ -14735,51 +16489,49 @@ L1806:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L1811:
+L1978:
     cmp     ax, 0
-    jne     L1809
-; RPN'ized expression: "( v , L1812 printf ) "
-; Expanded expression: " (@-8) *(2)  L1812  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1812:
-    db  "    mov     ax, %d",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@-8) , L1812 , printf )4 "
+    jne     L1976
+; RPN'ized expression: "( v , 11 , 0 , 3 , 0 , 0 GenPrintInstr2Operands ) "
+; Expanded expression: " (@-8) *(2)  11  0  3  0  0  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( *(2) (@-8) , 11 , 0 , 3 , 0 , 0 , GenPrintInstr2Operands )12 "
     push    word [bp-8]
-    push    L1812
-    call    _printf
-    sub     sp, -4
-L1809:
+    push    11
+    push    0
+    push    3
+    push    0
+    push    0
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+L1976:
 ; break
-    jmp     L1801
+    jmp     L1968
 ; case
 ; RPN'ized expression: "16 "
 ; Expanded expression: "16 "
 ; Expression value: 16
-    jmp     L1808
-L1807:
+    jmp     L1975
+L1974:
     cmp     ax, 16
-    jne     L1814
-L1808:
+    jne     L1979
+L1975:
 ; if
 ; RPN'ized expression: "i 1 + sp < stack i 1 + + *u 0 + *u 44 == stack i 1 + + *u 0 + *u 41 == || && 0 == "
-; Expanded expression: "(@-4) *(2) 1 + sp *(2) < _Bool [sh&&->1818] stack (@-4) *(2) 1 + 4 * + 0 + *(2) 44 == _Bool [sh||->1819] stack (@-4) *(2) 1 + 4 * + 0 + *(2) 41 == _Bool ||[1819] _Bool &&[1818] 0 == "
-; Fused expression:    "+ *(@-4) 1 < ax *sp _Bool [sh&&->1818] + *(@-4) 1 * ax 4 + stack ax + ax 0 == *ax 44 _Bool [sh||->1819] + *(@-4) 1 * ax 4 + stack ax + ax 0 == *ax 41 _Bool ||[1819] _Bool &&[1818] == ax 0 IF! "
+; Expanded expression: "(@-4) *(2) 1 + sp *(2) < _Bool [sh&&->1983] stack (@-4) *(2) 1 + 4 * + 0 + *(2) 44 == _Bool [sh||->1984] stack (@-4) *(2) 1 + 4 * + 0 + *(2) 41 == _Bool ||[1984] _Bool &&[1983] 0 == "
+; Fused expression:    "+ *(@-4) 1 < ax *sp _Bool [sh&&->1983] + *(@-4) 1 * ax 4 + stack ax + ax 0 == *ax 44 _Bool [sh||->1984] + *(@-4) 1 * ax 4 + stack ax + ax 0 == *ax 41 _Bool ||[1984] _Bool &&[1983] == ax 0 IF! "
     mov     ax, [bp-4]
     add     ax, 1
     cmp     ax, [_sp]
     setl    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L1818
+    je      L1983
     mov     ax, [bp-4]
     add     ax, 1
     imul    ax, ax, 4
@@ -14793,11 +16545,11 @@ L1808:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L1819
+    jne     L1984
     mov     ax, [bp-4]
     add     ax, 1
     imul    ax, ax, 4
@@ -14811,169 +16563,152 @@ L1808:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L1819:
+L1984:
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L1818:
+L1983:
     cmp     ax, 0
-    jne     L1816
-; {
-; RPN'ized expression: "( L1820 printf ) "
-; Expanded expression: " L1820  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1820:
-    db  "    mov     ax, ",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1820 , printf )2 "
-    push    L1820
-    call    _printf
-    sub     sp, -2
-; RPN'ized expression: "( IdentTable v + GenPrintLabel ) "
-; Expanded expression: " IdentTable (@-8) *(2) +  GenPrintLabel ()2 "
-; Fused expression:    "( + IdentTable *(@-8) , GenPrintLabel )2 "
-    mov     ax, _IdentTable
-    add     ax, [bp-8]
-    push    ax
-    call    _GenPrintLabel
-    sub     sp, -2
-; RPN'ized expression: "( L1822 printf ) "
-; Expanded expression: " L1822  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1822:
-    db  10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1822 , printf )2 "
-    push    L1822
-    call    _printf
-    sub     sp, -2
-; }
-L1816:
+    jne     L1981
+; RPN'ized expression: "( v , 12 , 0 , 3 , 0 , 0 GenPrintInstr2Operands ) "
+; Expanded expression: " (@-8) *(2)  12  0  3  0  0  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( *(2) (@-8) , 12 , 0 , 3 , 0 , 0 , GenPrintInstr2Operands )12 "
+    push    word [bp-8]
+    push    12
+    push    0
+    push    3
+    push    0
+    push    0
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+L1981:
 ; break
-    jmp     L1801
+    jmp     L1968
 ; case
 ; RPN'ized expression: "89 "
 ; Expanded expression: "89 "
 ; Expression value: 89
-    jmp     L1815
-L1814:
+    jmp     L1980
+L1979:
     cmp     ax, 89
-    jne     L1824
-L1815:
-; RPN'ized expression: "( v , L1826 printf ) "
-; Expanded expression: " (@-8) *(2)  L1826  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1826:
-    db  "    lea     ax, [bp%+d]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@-8) , L1826 , printf )4 "
+    jne     L1985
+L1980:
+; RPN'ized expression: "( v , 18 , 0 , 3 , 0 , 4 GenPrintInstr2Operands ) "
+; Expanded expression: " (@-8) *(2)  18  0  3  0  4  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( *(2) (@-8) , 18 , 0 , 3 , 0 , 4 , GenPrintInstr2Operands )12 "
     push    word [bp-8]
-    push    L1826
-    call    _printf
-    sub     sp, -4
+    push    18
+    push    0
+    push    3
+    push    0
+    push    4
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
 ; break
-    jmp     L1801
+    jmp     L1968
 ; case
 ; RPN'ized expression: "126 "
 ; Expanded expression: "126 "
 ; Expression value: 126
-    jmp     L1825
-L1824:
+    jmp     L1986
+L1985:
     cmp     ax, 126
-    jne     L1828
-L1825:
-; RPN'ized expression: "( L1830 printf ) "
-; Expanded expression: " L1830  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1830:
-    db  "    not     ax",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1830 , printf )2 "
-    push    L1830
-    call    _printf
-    sub     sp, -2
+    jne     L1987
+L1986:
+; RPN'ized expression: "( 0 , 3 , 0 , 22 GenPrintInstr1Operand ) "
+; Expanded expression: " 0  3  0  22  GenPrintInstr1Operand ()8 "
+; Fused expression:    "( 0 , 3 , 0 , 22 , GenPrintInstr1Operand )8 "
+    push    0
+    push    3
+    push    0
+    push    22
+    call    _GenPrintInstr1Operand
+    sub     sp, -8
 ; break
-    jmp     L1801
+    jmp     L1968
 ; case
 ; RPN'ized expression: "80 "
 ; Expanded expression: "80 "
 ; Expression value: 80
-    jmp     L1829
-L1828:
+    jmp     L1988
+L1987:
     cmp     ax, 80
-    jne     L1832
-L1829:
-; RPN'ized expression: "( L1834 printf ) "
-; Expanded expression: " L1834  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1834:
-    db  "    neg     ax",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1834 , printf )2 "
-    push    L1834
-    call    _printf
-    sub     sp, -2
+    jne     L1989
+L1988:
+; RPN'ized expression: "( 0 , 3 , 0 , 21 GenPrintInstr1Operand ) "
+; Expanded expression: " 0  3  0  21  GenPrintInstr1Operand ()8 "
+; Fused expression:    "( 0 , 3 , 0 , 21 , GenPrintInstr1Operand )8 "
+    push    0
+    push    3
+    push    0
+    push    21
+    call    _GenPrintInstr1Operand
+    sub     sp, -8
 ; break
-    jmp     L1801
+    jmp     L1968
 ; case
 ; RPN'ized expression: "120 "
 ; Expanded expression: "120 "
 ; Expression value: 120
-    jmp     L1833
-L1832:
+    jmp     L1990
+L1989:
     cmp     ax, 120
-    jne     L1836
-L1833:
-; RPN'ized expression: "( L1838 printf ) "
-; Expanded expression: " L1838  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1838:
-    db  "    test    ax, ax",10,"    setnz   al",10,"    cbw",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1838 , printf )2 "
-    push    L1838
-    call    _printf
+    jne     L1991
+L1990:
+; RPN'ized expression: "( 0 , 3 , 0 , 3 , 0 , 15 GenPrintInstr2Operands ) "
+; Expanded expression: " 0  3  0  3  0  15  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( 0 , 3 , 0 , 3 , 0 , 15 , GenPrintInstr2Operands )12 "
+    push    0
+    push    3
+    push    0
+    push    3
+    push    0
+    push    15
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+; RPN'ized expression: "( 0 , 0 , 9 , 25 GenPrintInstr1Operand ) "
+; Expanded expression: " 0  0  9  25  GenPrintInstr1Operand ()8 "
+; Fused expression:    "( 0 , 0 , 9 , 25 , GenPrintInstr1Operand )8 "
+    push    0
+    push    0
+    push    9
+    push    25
+    call    _GenPrintInstr1Operand
+    sub     sp, -8
+; RPN'ized expression: "( 23 GenPrintInstrNoOperand ) "
+; Expanded expression: " 23  GenPrintInstrNoOperand ()2 "
+; Fused expression:    "( 23 , GenPrintInstrNoOperand )2 "
+    push    23
+    call    _GenPrintInstrNoOperand
     sub     sp, -2
 ; break
-    jmp     L1801
+    jmp     L1968
 ; case
 ; RPN'ized expression: "90 "
 ; Expanded expression: "90 "
 ; Expression value: 90
-    jmp     L1837
-L1836:
+    jmp     L1992
+L1991:
     cmp     ax, 90
-    jne     L1840
-L1837:
+    jne     L1993
+L1992:
 ; if
 ; RPN'ized expression: "v 0 >= "
 ; Expanded expression: "(@-8) *(2) 0 >= "
 ; Fused expression:    ">= *(@-8) 0 IF! "
     mov     ax, [bp-8]
     cmp     ax, 0
-    jl      L1842
+    jl      L1995
 ; RPN'ized expression: "( v GenJumpIfZero ) "
 ; Expanded expression: " (@-8) *(2)  GenJumpIfZero ()2 "
 ; Fused expression:    "( *(2) (@-8) , GenJumpIfZero )2 "
     push    word [bp-8]
     call    _GenJumpIfZero
     sub     sp, -2
-    jmp     L1843
-L1842:
+    jmp     L1996
+L1995:
 ; else
 ; RPN'ized expression: "( v -u GenJumpIfNotZero ) "
 ; Expanded expression: " (@-8) *(2) -u  GenJumpIfNotZero ()2 "
@@ -14983,18 +16718,18 @@ L1842:
     push    ax
     call    _GenJumpIfNotZero
     sub     sp, -2
-L1843:
+L1996:
 ; break
-    jmp     L1801
+    jmp     L1968
 ; case
 ; RPN'ized expression: "6 "
 ; Expanded expression: "6 "
 ; Expression value: 6
-    jmp     L1841
-L1840:
+    jmp     L1994
+L1993:
     cmp     ax, 6
-    jne     L1844
-L1841:
+    jne     L1997
+L1994:
 ; RPN'ized expression: "( v GenNumLabel ) "
 ; Expanded expression: " (@-8) *(2)  GenNumLabel ()2 "
 ; Fused expression:    "( *(2) (@-8) , GenNumLabel )2 "
@@ -15002,16 +16737,16 @@ L1841:
     call    _GenNumLabel
     sub     sp, -2
 ; break
-    jmp     L1801
+    jmp     L1968
 ; case
 ; RPN'ized expression: "7 "
 ; Expanded expression: "7 "
 ; Expression value: 7
-    jmp     L1845
-L1844:
+    jmp     L1998
+L1997:
     cmp     ax, 7
-    jne     L1846
-L1845:
+    jne     L1999
+L1998:
 ; RPN'ized expression: "( v GenNumLabel ) "
 ; Expanded expression: " (@-8) *(2)  GenNumLabel ()2 "
 ; Fused expression:    "( *(2) (@-8) , GenNumLabel )2 "
@@ -15019,43 +16754,40 @@ L1845:
     call    _GenNumLabel
     sub     sp, -2
 ; break
-    jmp     L1801
+    jmp     L1968
 ; case
 ; RPN'ized expression: "512 "
 ; Expanded expression: "512 "
 ; Expression value: 512
-    jmp     L1847
-L1846:
+    jmp     L2000
+L1999:
     cmp     ax, 512
-    jne     L1848
-L1847:
-; RPN'ized expression: "( L1850 printf ) "
-; Expanded expression: " L1850  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1850:
-    db  "    push    ax",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1850 , printf )2 "
-    push    L1850
-    call    _printf
-    sub     sp, -2
+    jne     L2001
+L2000:
+; RPN'ized expression: "( 0 , 3 , 0 , 5 GenPrintInstr1Operand ) "
+; Expanded expression: " 0  3  0  5  GenPrintInstr1Operand ()8 "
+; Fused expression:    "( 0 , 3 , 0 , 5 , GenPrintInstr1Operand )8 "
+    push    0
+    push    3
+    push    0
+    push    5
+    call    _GenPrintInstr1Operand
+    sub     sp, -8
 ; break
-    jmp     L1801
+    jmp     L1968
 ; case
 ; RPN'ized expression: "44 "
 ; Expanded expression: "44 "
 ; Expression value: 44
-    jmp     L1849
-L1848:
+    jmp     L2002
+L2001:
     cmp     ax, 44
-    jne     L1852
-L1849:
+    jne     L2003
+L2002:
 ; if
-; RPN'ized expression: "stack i 2 - + *u 0 + *u 78 == stack i 2 - + *u 1 + *u 2 == && "
-; Expanded expression: "stack (@-4) *(2) 2 - 4 * + 0 + *(2) 78 == _Bool [sh&&->1856] stack (@-4) *(2) 2 - 4 * + 2 + *(2) 2 == _Bool &&[1856] "
-; Fused expression:    "- *(@-4) 2 * ax 4 + stack ax + ax 0 == *ax 78 _Bool [sh&&->1856] - *(@-4) 2 * ax 4 + stack ax + ax 2 == *ax 2 _Bool &&[1856] "
+; RPN'ized expression: "stack i 2 - + *u 0 + *u 78 == stack i 2 - + *u 1 + *u 1 != && "
+; Expanded expression: "stack (@-4) *(2) 2 - 4 * + 0 + *(2) 78 == _Bool [sh&&->2007] stack (@-4) *(2) 2 - 4 * + 2 + *(2) 1 != _Bool &&[2007] "
+; Fused expression:    "- *(@-4) 2 * ax 4 + stack ax + ax 0 == *ax 78 _Bool [sh&&->2007] - *(@-4) 2 * ax 4 + stack ax + ax 2 != *ax 1 _Bool &&[2007] "
     mov     ax, [bp-4]
     sub     ax, 2
     imul    ax, ax, 4
@@ -15069,11 +16801,11 @@ L1849:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L1856
+    je      L2007
     mov     ax, [bp-4]
     sub     ax, 2
     imul    ax, ax, 4
@@ -15083,16 +16815,16 @@ L1849:
     add     ax, 2
     mov     bx, ax
     mov     ax, [bx]
-    cmp     ax, 2
-    sete    al
+    cmp     ax, 1
+    setne   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L1856:
+L2007:
 ; JumpIfZero
     test    ax, ax
-    jz      L1854
+    je      L2005
 ; {
 ; switch
 ; RPN'ized expression: "stack i 1 - + *u 0 + *u "
@@ -15107,78 +16839,20 @@ L1856:
     add     ax, 0
     mov     bx, ax
     mov     ax, [bx]
-    jmp     L1859
+    jmp     L2010
 ; {
 ; case
 ; RPN'ized expression: "257 "
 ; Expanded expression: "257 "
 ; Expression value: 257
-    jmp     L1860
-L1859:
+    jmp     L2011
+L2010:
     cmp     ax, 257
-    jne     L1861
-L1860:
-; RPN'ized expression: "( L1863 printf ) "
-; Expanded expression: " L1863  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1863:
-    db  "    push    word [",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1863 , printf )2 "
-    push    L1863
-    call    _printf
-    sub     sp, -2
-; RPN'ized expression: "( IdentTable stack i 1 - + *u 1 + *u + GenPrintLabel ) "
-; Expanded expression: " IdentTable stack (@-4) *(2) 1 - 4 * + 2 + *(2) +  GenPrintLabel ()2 "
-; Fused expression:    "( - *(@-4) 1 * ax 4 + stack ax + ax 2 + IdentTable *ax , GenPrintLabel )2 "
-    mov     ax, [bp-4]
-    sub     ax, 1
-    imul    ax, ax, 4
-    mov     cx, ax
-    mov     ax, _stack
-    add     ax, cx
-    add     ax, 2
-    mov     bx, ax
-    mov     cx, [bx]
-    mov     ax, _IdentTable
-    add     ax, cx
-    push    ax
-    call    _GenPrintLabel
-    sub     sp, -2
-; RPN'ized expression: "( L1865 printf ) "
-; Expanded expression: " L1865  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1865:
-    db  "]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1865 , printf )2 "
-    push    L1865
-    call    _printf
-    sub     sp, -2
-; break
-    jmp     L1857
-; case
-; RPN'ized expression: "258 "
-; Expanded expression: "258 "
-; Expression value: 258
-    jmp     L1862
-L1861:
-    cmp     ax, 258
-    jne     L1867
-L1862:
-; RPN'ized expression: "( stack i 1 - + *u 1 + *u , L1869 printf ) "
-; Expanded expression: " stack (@-4) *(2) 1 - 4 * + 2 + *(2)  L1869  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1869:
-    db  "    push    word [bp%+d]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( - *(@-4) 1 * ax 4 + stack ax + ax 2 *(2) ax , L1869 , printf )4 "
+    jne     L2012
+L2011:
+; RPN'ized expression: "( stack i 1 - + *u 1 + *u , 16 , 0 , 5 GenPrintInstr1Operand ) "
+; Expanded expression: " stack (@-4) *(2) 1 - 4 * + 2 + *(2)  16  0  5  GenPrintInstr1Operand ()8 "
+; Fused expression:    "( - *(@-4) 1 * ax 4 + stack ax + ax 2 *(2) ax , 16 , 0 , 5 , GenPrintInstr1Operand )8 "
     mov     ax, [bp-4]
     sub     ax, 1
     imul    ax, ax, 4
@@ -15188,41 +16862,79 @@ SEGMENT _TEXT
     add     ax, 2
     mov     bx, ax
     push    word [bx]
-    push    L1869
-    call    _printf
-    sub     sp, -4
+    push    16
+    push    0
+    push    5
+    call    _GenPrintInstr1Operand
+    sub     sp, -8
 ; break
-    jmp     L1857
+    jmp     L2008
+; case
+; RPN'ized expression: "258 "
+; Expanded expression: "258 "
+; Expression value: 258
+    jmp     L2013
+L2012:
+    cmp     ax, 258
+    jne     L2014
+L2013:
+; RPN'ized expression: "( stack i 1 - + *u 1 + *u , 20 , 0 , 5 GenPrintInstr1Operand ) "
+; Expanded expression: " stack (@-4) *(2) 1 - 4 * + 2 + *(2)  20  0  5  GenPrintInstr1Operand ()8 "
+; Fused expression:    "( - *(@-4) 1 * ax 4 + stack ax + ax 2 *(2) ax , 20 , 0 , 5 , GenPrintInstr1Operand )8 "
+    mov     ax, [bp-4]
+    sub     ax, 1
+    imul    ax, ax, 4
+    mov     cx, ax
+    mov     ax, _stack
+    add     ax, cx
+    add     ax, 2
+    mov     bx, ax
+    push    word [bx]
+    push    20
+    push    0
+    push    5
+    call    _GenPrintInstr1Operand
+    sub     sp, -8
+; break
+    jmp     L2008
 ; case
 ; RPN'ized expression: "259 "
 ; Expanded expression: "259 "
 ; Expression value: 259
-    jmp     L1868
-L1867:
+    jmp     L2015
+L2014:
     cmp     ax, 259
-    jne     L1871
-L1868:
-; RPN'ized expression: "( L1873 printf ) "
-; Expanded expression: " L1873  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1873:
-    db  "    mov     bx, ax",10,"    push    word [bx]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1873 , printf )2 "
-    push    L1873
-    call    _printf
-    sub     sp, -2
+    jne     L2016
+L2015:
+; RPN'ized expression: "( 0 , 3 , 0 , 4 , 0 , 0 GenPrintInstr2Operands ) "
+; Expanded expression: " 0  3  0  4  0  0  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( 0 , 3 , 0 , 4 , 0 , 0 , GenPrintInstr2Operands )12 "
+    push    0
+    push    3
+    push    0
+    push    4
+    push    0
+    push    0
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+; RPN'ized expression: "( 0 , 24 , 0 , 5 GenPrintInstr1Operand ) "
+; Expanded expression: " 0  24  0  5  GenPrintInstr1Operand ()8 "
+; Fused expression:    "( 0 , 24 , 0 , 5 , GenPrintInstr1Operand )8 "
+    push    0
+    push    24
+    push    0
+    push    5
+    call    _GenPrintInstr1Operand
+    sub     sp, -8
 ; break
-    jmp     L1857
+    jmp     L2008
 ; }
-    jmp     L1857
-L1871:
-L1857:
+    jmp     L2008
+L2016:
+L2008:
 ; }
-    jmp     L1855
-L1854:
+    jmp     L2006
+L2005:
 ; else
 ; {
 ; switch
@@ -15238,35 +16950,29 @@ L1854:
     add     ax, 0
     mov     bx, ax
     mov     ax, [bx]
-    jmp     L1877
+    jmp     L2020
 ; {
 ; case
 ; RPN'ized expression: "1 "
 ; Expanded expression: "1 "
 ; Expression value: 1
-    jmp     L1878
-L1877:
+    jmp     L2021
+L2020:
     cmp     ax, 1
-    jne     L1879
-L1878:
+    jne     L2022
+L2021:
 ; case
 ; RPN'ized expression: "2 "
 ; Expanded expression: "2 "
 ; Expression value: 2
-    jmp     L1880
-L1879:
+    jmp     L2023
+L2022:
     cmp     ax, 2
-    jne     L1881
-L1880:
-; RPN'ized expression: "( stack i 1 - + *u 1 + *u , L1883 printf ) "
-; Expanded expression: " stack (@-4) *(2) 1 - 4 * + 2 + *(2)  L1883  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1883:
-    db  "    push    %d",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( - *(@-4) 1 * ax 4 + stack ax + ax 2 *(2) ax , L1883 , printf )4 "
+    jne     L2024
+L2023:
+; RPN'ized expression: "( stack i 1 - + *u 1 + *u , 11 , 0 , 5 GenPrintInstr1Operand ) "
+; Expanded expression: " stack (@-4) *(2) 1 - 4 * + 2 + *(2)  11  0  5  GenPrintInstr1Operand ()8 "
+; Fused expression:    "( - *(@-4) 1 * ax 4 + stack ax + ax 2 *(2) ax , 11 , 0 , 5 , GenPrintInstr1Operand )8 "
     mov     ax, [bp-4]
     sub     ax, 1
     imul    ax, ax, 4
@@ -15276,35 +16982,25 @@ SEGMENT _TEXT
     add     ax, 2
     mov     bx, ax
     push    word [bx]
-    push    L1883
-    call    _printf
-    sub     sp, -4
+    push    11
+    push    0
+    push    5
+    call    _GenPrintInstr1Operand
+    sub     sp, -8
 ; break
-    jmp     L1875
+    jmp     L2018
 ; case
 ; RPN'ized expression: "16 "
 ; Expanded expression: "16 "
 ; Expression value: 16
-    jmp     L1882
-L1881:
+    jmp     L2025
+L2024:
     cmp     ax, 16
-    jne     L1885
-L1882:
-; RPN'ized expression: "( L1887 printf ) "
-; Expanded expression: " L1887  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1887:
-    db  "    push    ",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1887 , printf )2 "
-    push    L1887
-    call    _printf
-    sub     sp, -2
-; RPN'ized expression: "( IdentTable stack i 1 - + *u 1 + *u + GenPrintLabel ) "
-; Expanded expression: " IdentTable stack (@-4) *(2) 1 - 4 * + 2 + *(2) +  GenPrintLabel ()2 "
-; Fused expression:    "( - *(@-4) 1 * ax 4 + stack ax + ax 2 + IdentTable *ax , GenPrintLabel )2 "
+    jne     L2026
+L2025:
+; RPN'ized expression: "( stack i 1 - + *u 1 + *u , 12 , 0 , 5 GenPrintInstr1Operand ) "
+; Expanded expression: " stack (@-4) *(2) 1 - 4 * + 2 + *(2)  12  0  5  GenPrintInstr1Operand ()8 "
+; Fused expression:    "( - *(@-4) 1 * ax 4 + stack ax + ax 2 *(2) ax , 12 , 0 , 5 , GenPrintInstr1Operand )8 "
     mov     ax, [bp-4]
     sub     ax, 1
     imul    ax, ax, 4
@@ -15313,89 +17009,74 @@ SEGMENT _TEXT
     add     ax, cx
     add     ax, 2
     mov     bx, ax
-    mov     cx, [bx]
-    mov     ax, _IdentTable
-    add     ax, cx
-    push    ax
-    call    _GenPrintLabel
-    sub     sp, -2
-; RPN'ized expression: "( L1889 printf ) "
-; Expanded expression: " L1889  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1889:
-    db  10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1889 , printf )2 "
-    push    L1889
-    call    _printf
-    sub     sp, -2
+    push    word [bx]
+    push    12
+    push    0
+    push    5
+    call    _GenPrintInstr1Operand
+    sub     sp, -8
 ; break
-    jmp     L1875
+    jmp     L2018
 ; default
-L1876:
-; RPN'ized expression: "( L1891 printf ) "
-; Expanded expression: " L1891  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L1891:
-    db  "    push    ax",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L1891 , printf )2 "
-    push    L1891
-    call    _printf
-    sub     sp, -2
+L2019:
+; RPN'ized expression: "( 0 , 3 , 0 , 5 GenPrintInstr1Operand ) "
+; Expanded expression: " 0  3  0  5  GenPrintInstr1Operand ()8 "
+; Fused expression:    "( 0 , 3 , 0 , 5 , GenPrintInstr1Operand )8 "
+    push    0
+    push    3
+    push    0
+    push    5
+    call    _GenPrintInstr1Operand
+    sub     sp, -8
 ; break
-    jmp     L1875
+    jmp     L2018
 ; }
-    jmp     L1875
-L1885:
-    jmp     L1876
-L1875:
+    jmp     L2018
+L2026:
+    jmp     L2019
+L2018:
 ; }
-L1855:
+L2006:
 ; break
-    jmp     L1801
+    jmp     L1968
 ; case
 ; RPN'ized expression: "78 "
 ; Expanded expression: "78 "
 ; Expression value: 78
-    jmp     L1853
-L1852:
+    jmp     L2004
+L2003:
     cmp     ax, 78
-    jne     L1893
-L1853:
+    jne     L2028
+L2004:
 ; if
-; RPN'ized expression: "v 2 == i 2 + sp < && stack i 2 + + *u 0 + *u 44 == && 0 == "
-; Expanded expression: "(@-8) *(2) 2 == _Bool [sh&&->1898] (@-4) *(2) 2 + sp *(2) < _Bool &&[1898] _Bool [sh&&->1897] stack (@-4) *(2) 2 + 4 * + 0 + *(2) 44 == _Bool &&[1897] 0 == "
-; Fused expression:    "== *(@-8) 2 _Bool [sh&&->1898] + *(@-4) 2 < ax *sp _Bool &&[1898] _Bool [sh&&->1897] + *(@-4) 2 * ax 4 + stack ax + ax 0 == *ax 44 _Bool &&[1897] == ax 0 IF! "
+; RPN'ized expression: "v 1 != i 2 + sp < && stack i 2 + + *u 0 + *u 44 == && 0 == "
+; Expanded expression: "(@-8) *(2) 1 != _Bool [sh&&->2033] (@-4) *(2) 2 + sp *(2) < _Bool &&[2033] _Bool [sh&&->2032] stack (@-4) *(2) 2 + 4 * + 0 + *(2) 44 == _Bool &&[2032] 0 == "
+; Fused expression:    "!= *(@-8) 1 _Bool [sh&&->2033] + *(@-4) 2 < ax *sp _Bool &&[2033] _Bool [sh&&->2032] + *(@-4) 2 * ax 4 + stack ax + ax 0 == *ax 44 _Bool &&[2032] == ax 0 IF! "
     mov     ax, [bp-8]
-    cmp     ax, 2
-    sete    al
+    cmp     ax, 1
+    setne   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L1898
+    je      L2033
     mov     ax, [bp-4]
     add     ax, 2
     cmp     ax, [_sp]
     setl    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L1898:
+L2033:
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L1897
+    je      L2032
     mov     ax, [bp-4]
     add     ax, 2
     imul    ax, ax, 4
@@ -15409,11 +17090,11 @@ L1898:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L1897:
+L2032:
     cmp     ax, 0
-    jne     L1895
+    jne     L2030
 ; {
 ; switch
 ; RPN'ized expression: "stack i 1 + + *u 0 + *u "
@@ -15428,20 +17109,20 @@ L1897:
     add     ax, 0
     mov     bx, ax
     mov     ax, [bx]
-    jmp     L1901
+    jmp     L2036
 ; {
 ; case
 ; RPN'ized expression: "257 "
 ; Expanded expression: "257 "
 ; Expression value: 257
-    jmp     L1902
-L1901:
+    jmp     L2037
+L2036:
     cmp     ax, 257
-    jne     L1903
-L1902:
-; RPN'ized expression: "( IdentTable stack i 1 + + *u 1 + *u + , v GenReadIdent ) "
-; Expanded expression: " IdentTable stack (@-4) *(2) 1 + 4 * + 2 + *(2) +  (@-8) *(2)  GenReadIdent ()4 "
-; Fused expression:    "( + *(@-4) 1 * ax 4 + stack ax + ax 2 + IdentTable *ax , *(2) (@-8) , GenReadIdent )4 "
+    jne     L2038
+L2037:
+; RPN'ized expression: "( stack i 1 + + *u 1 + *u , v GenReadIdent ) "
+; Expanded expression: " stack (@-4) *(2) 1 + 4 * + 2 + *(2)  (@-8) *(2)  GenReadIdent ()4 "
+; Fused expression:    "( + *(@-4) 1 * ax 4 + stack ax + ax 2 *(2) ax , *(2) (@-8) , GenReadIdent )4 "
     mov     ax, [bp-4]
     add     ax, 1
     imul    ax, ax, 4
@@ -15450,24 +17131,21 @@ L1902:
     add     ax, cx
     add     ax, 2
     mov     bx, ax
-    mov     cx, [bx]
-    mov     ax, _IdentTable
-    add     ax, cx
-    push    ax
+    push    word [bx]
     push    word [bp-8]
     call    _GenReadIdent
     sub     sp, -4
 ; break
-    jmp     L1899
+    jmp     L2034
 ; case
 ; RPN'ized expression: "258 "
 ; Expanded expression: "258 "
 ; Expression value: 258
-    jmp     L1904
-L1903:
+    jmp     L2039
+L2038:
     cmp     ax, 258
-    jne     L1905
-L1904:
+    jne     L2040
+L2039:
 ; RPN'ized expression: "( stack i 1 + + *u 1 + *u , v GenReadLocal ) "
 ; Expanded expression: " stack (@-4) *(2) 1 + 4 * + 2 + *(2)  (@-8) *(2)  GenReadLocal ()4 "
 ; Fused expression:    "( + *(@-4) 1 * ax 4 + stack ax + ax 2 *(2) ax , *(2) (@-8) , GenReadLocal )4 "
@@ -15484,16 +17162,16 @@ L1904:
     call    _GenReadLocal
     sub     sp, -4
 ; break
-    jmp     L1899
+    jmp     L2034
 ; case
 ; RPN'ized expression: "259 "
 ; Expanded expression: "259 "
 ; Expression value: 259
-    jmp     L1906
-L1905:
+    jmp     L2041
+L2040:
     cmp     ax, 259
-    jne     L1907
-L1906:
+    jne     L2042
+L2041:
 ; RPN'ized expression: "( v GenReadIndirect ) "
 ; Expanded expression: " (@-8) *(2)  GenReadIndirect ()2 "
 ; Fused expression:    "( *(2) (@-8) , GenReadIndirect )2 "
@@ -15501,38 +17179,38 @@ L1906:
     call    _GenReadIndirect
     sub     sp, -2
 ; break
-    jmp     L1899
+    jmp     L2034
 ; }
-    jmp     L1899
-L1907:
-L1899:
+    jmp     L2034
+L2042:
+L2034:
 ; }
-L1895:
+L2030:
 ; RPN'ized expression: "i ++p "
 ; Expanded expression: "(@-4) ++p(2) "
 ; Fused expression:    "++p(2) *(@-4) "
     mov     ax, [bp-4]
     inc     word [bp-4]
 ; break
-    jmp     L1801
+    jmp     L1968
 ; case
 ; RPN'ized expression: "12 "
 ; Expanded expression: "12 "
 ; Expression value: 12
-    jmp     L1894
-L1893:
+    jmp     L2029
+L2028:
     cmp     ax, 12
-    jne     L1909
-L1894:
+    jne     L2044
+L2029:
 ; case
 ; RPN'ized expression: "13 "
 ; Expanded expression: "13 "
 ; Expression value: 13
-    jmp     L1910
-L1909:
+    jmp     L2045
+L2044:
     cmp     ax, 13
-    jne     L1911
-L1910:
+    jne     L2046
+L2045:
 ; switch
 ; RPN'ized expression: "stack i 1 + + *u 0 + *u "
 ; Expanded expression: "stack (@-4) *(2) 1 + 4 * + 0 + *(2) "
@@ -15546,20 +17224,20 @@ L1910:
     add     ax, 0
     mov     bx, ax
     mov     ax, [bx]
-    jmp     L1915
+    jmp     L2050
 ; {
 ; case
 ; RPN'ized expression: "260 "
 ; Expanded expression: "260 "
 ; Expression value: 260
-    jmp     L1916
-L1915:
+    jmp     L2051
+L2050:
     cmp     ax, 260
-    jne     L1917
-L1916:
-; RPN'ized expression: "( tok , IdentTable stack i 1 + + *u 1 + *u + , v GenIncDecIdent ) "
-; Expanded expression: " (@-6) *(2)  IdentTable stack (@-4) *(2) 1 + 4 * + 2 + *(2) +  (@-8) *(2)  GenIncDecIdent ()6 "
-; Fused expression:    "( *(2) (@-6) , + *(@-4) 1 * ax 4 + stack ax + ax 2 + IdentTable *ax , *(2) (@-8) , GenIncDecIdent )6 "
+    jne     L2052
+L2051:
+; RPN'ized expression: "( tok , stack i 1 + + *u 1 + *u , v GenIncDecIdent ) "
+; Expanded expression: " (@-6) *(2)  stack (@-4) *(2) 1 + 4 * + 2 + *(2)  (@-8) *(2)  GenIncDecIdent ()6 "
+; Fused expression:    "( *(2) (@-6) , + *(@-4) 1 * ax 4 + stack ax + ax 2 *(2) ax , *(2) (@-8) , GenIncDecIdent )6 "
     push    word [bp-6]
     mov     ax, [bp-4]
     add     ax, 1
@@ -15569,24 +17247,21 @@ L1916:
     add     ax, cx
     add     ax, 2
     mov     bx, ax
-    mov     cx, [bx]
-    mov     ax, _IdentTable
-    add     ax, cx
-    push    ax
+    push    word [bx]
     push    word [bp-8]
     call    _GenIncDecIdent
     sub     sp, -6
 ; break
-    jmp     L1913
+    jmp     L2048
 ; case
 ; RPN'ized expression: "261 "
 ; Expanded expression: "261 "
 ; Expression value: 261
-    jmp     L1918
-L1917:
+    jmp     L2053
+L2052:
     cmp     ax, 261
-    jne     L1919
-L1918:
+    jne     L2054
+L2053:
 ; RPN'ized expression: "( tok , stack i 1 + + *u 1 + *u , v GenIncDecLocal ) "
 ; Expanded expression: " (@-6) *(2)  stack (@-4) *(2) 1 + 4 * + 2 + *(2)  (@-8) *(2)  GenIncDecLocal ()6 "
 ; Fused expression:    "( *(2) (@-6) , + *(@-4) 1 * ax 4 + stack ax + ax 2 *(2) ax , *(2) (@-8) , GenIncDecLocal )6 "
@@ -15604,16 +17279,16 @@ L1918:
     call    _GenIncDecLocal
     sub     sp, -6
 ; break
-    jmp     L1913
+    jmp     L2048
 ; case
 ; RPN'ized expression: "262 "
 ; Expanded expression: "262 "
 ; Expression value: 262
-    jmp     L1920
-L1919:
+    jmp     L2055
+L2054:
     cmp     ax, 262
-    jne     L1921
-L1920:
+    jne     L2056
+L2055:
 ; RPN'ized expression: "( tok , v GenIncDecIndirect ) "
 ; Expanded expression: " (@-6) *(2)  (@-8) *(2)  GenIncDecIndirect ()4 "
 ; Fused expression:    "( *(2) (@-6) , *(2) (@-8) , GenIncDecIndirect )4 "
@@ -15622,36 +17297,36 @@ L1920:
     call    _GenIncDecIndirect
     sub     sp, -4
 ; break
-    jmp     L1913
+    jmp     L2048
 ; }
-    jmp     L1913
-L1921:
-L1913:
+    jmp     L2048
+L2056:
+L2048:
 ; RPN'ized expression: "i ++p "
 ; Expanded expression: "(@-4) ++p(2) "
 ; Fused expression:    "++p(2) *(@-4) "
     mov     ax, [bp-4]
     inc     word [bp-4]
 ; break
-    jmp     L1801
+    jmp     L1968
 ; case
 ; RPN'ized expression: "81 "
 ; Expanded expression: "81 "
 ; Expression value: 81
-    jmp     L1912
-L1911:
+    jmp     L2047
+L2046:
     cmp     ax, 81
-    jne     L1923
-L1912:
+    jne     L2058
+L2047:
 ; case
 ; RPN'ized expression: "82 "
 ; Expanded expression: "82 "
 ; Expression value: 82
-    jmp     L1924
-L1923:
+    jmp     L2059
+L2058:
     cmp     ax, 82
-    jne     L1925
-L1924:
+    jne     L2060
+L2059:
 ; switch
 ; RPN'ized expression: "stack i 1 + + *u 0 + *u "
 ; Expanded expression: "stack (@-4) *(2) 1 + 4 * + 0 + *(2) "
@@ -15665,20 +17340,20 @@ L1924:
     add     ax, 0
     mov     bx, ax
     mov     ax, [bx]
-    jmp     L1929
+    jmp     L2064
 ; {
 ; case
 ; RPN'ized expression: "260 "
 ; Expanded expression: "260 "
 ; Expression value: 260
-    jmp     L1930
-L1929:
+    jmp     L2065
+L2064:
     cmp     ax, 260
-    jne     L1931
-L1930:
-; RPN'ized expression: "( tok , IdentTable stack i 1 + + *u 1 + *u + , v GenPostIncDecIdent ) "
-; Expanded expression: " (@-6) *(2)  IdentTable stack (@-4) *(2) 1 + 4 * + 2 + *(2) +  (@-8) *(2)  GenPostIncDecIdent ()6 "
-; Fused expression:    "( *(2) (@-6) , + *(@-4) 1 * ax 4 + stack ax + ax 2 + IdentTable *ax , *(2) (@-8) , GenPostIncDecIdent )6 "
+    jne     L2066
+L2065:
+; RPN'ized expression: "( tok , stack i 1 + + *u 1 + *u , v GenPostIncDecIdent ) "
+; Expanded expression: " (@-6) *(2)  stack (@-4) *(2) 1 + 4 * + 2 + *(2)  (@-8) *(2)  GenPostIncDecIdent ()6 "
+; Fused expression:    "( *(2) (@-6) , + *(@-4) 1 * ax 4 + stack ax + ax 2 *(2) ax , *(2) (@-8) , GenPostIncDecIdent )6 "
     push    word [bp-6]
     mov     ax, [bp-4]
     add     ax, 1
@@ -15688,24 +17363,21 @@ L1930:
     add     ax, cx
     add     ax, 2
     mov     bx, ax
-    mov     cx, [bx]
-    mov     ax, _IdentTable
-    add     ax, cx
-    push    ax
+    push    word [bx]
     push    word [bp-8]
     call    _GenPostIncDecIdent
     sub     sp, -6
 ; break
-    jmp     L1927
+    jmp     L2062
 ; case
 ; RPN'ized expression: "261 "
 ; Expanded expression: "261 "
 ; Expression value: 261
-    jmp     L1932
-L1931:
+    jmp     L2067
+L2066:
     cmp     ax, 261
-    jne     L1933
-L1932:
+    jne     L2068
+L2067:
 ; RPN'ized expression: "( tok , stack i 1 + + *u 1 + *u , v GenPostIncDecLocal ) "
 ; Expanded expression: " (@-6) *(2)  stack (@-4) *(2) 1 + 4 * + 2 + *(2)  (@-8) *(2)  GenPostIncDecLocal ()6 "
 ; Fused expression:    "( *(2) (@-6) , + *(@-4) 1 * ax 4 + stack ax + ax 2 *(2) ax , *(2) (@-8) , GenPostIncDecLocal )6 "
@@ -15723,16 +17395,16 @@ L1932:
     call    _GenPostIncDecLocal
     sub     sp, -6
 ; break
-    jmp     L1927
+    jmp     L2062
 ; case
 ; RPN'ized expression: "262 "
 ; Expanded expression: "262 "
 ; Expression value: 262
-    jmp     L1934
-L1933:
+    jmp     L2069
+L2068:
     cmp     ax, 262
-    jne     L1935
-L1934:
+    jne     L2070
+L2069:
 ; RPN'ized expression: "( tok , v GenPostIncDecIndirect ) "
 ; Expanded expression: " (@-6) *(2)  (@-8) *(2)  GenPostIncDecIndirect ()4 "
 ; Fused expression:    "( *(2) (@-6) , *(2) (@-8) , GenPostIncDecIndirect )4 "
@@ -15741,36 +17413,36 @@ L1934:
     call    _GenPostIncDecIndirect
     sub     sp, -4
 ; break
-    jmp     L1927
+    jmp     L2062
 ; }
-    jmp     L1927
-L1935:
-L1927:
+    jmp     L2062
+L2070:
+L2062:
 ; RPN'ized expression: "i ++p "
 ; Expanded expression: "(@-4) ++p(2) "
 ; Fused expression:    "++p(2) *(@-4) "
     mov     ax, [bp-4]
     inc     word [bp-4]
 ; break
-    jmp     L1801
+    jmp     L1968
 ; case
 ; RPN'ized expression: "83 "
 ; Expanded expression: "83 "
 ; Expression value: 83
-    jmp     L1926
-L1925:
+    jmp     L2061
+L2060:
     cmp     ax, 83
-    jne     L1937
-L1926:
+    jne     L2072
+L2061:
 ; case
 ; RPN'ized expression: "84 "
 ; Expanded expression: "84 "
 ; Expression value: 84
-    jmp     L1938
-L1937:
+    jmp     L2073
+L2072:
     cmp     ax, 84
-    jne     L1939
-L1938:
+    jne     L2074
+L2073:
 ; switch
 ; RPN'ized expression: "stack i 1 + + *u 0 + *u "
 ; Expanded expression: "stack (@-4) *(2) 1 + 4 * + 0 + *(2) "
@@ -15784,20 +17456,20 @@ L1938:
     add     ax, 0
     mov     bx, ax
     mov     ax, [bx]
-    jmp     L1943
+    jmp     L2078
 ; {
 ; case
 ; RPN'ized expression: "260 "
 ; Expanded expression: "260 "
 ; Expression value: 260
-    jmp     L1944
-L1943:
+    jmp     L2079
+L2078:
     cmp     ax, 260
-    jne     L1945
-L1944:
-; RPN'ized expression: "( tok , IdentTable stack i 1 + + *u 1 + *u + , stack i 2 + + *u 1 + *u , v GenPostAddSubIdent ) "
-; Expanded expression: " (@-6) *(2)  IdentTable stack (@-4) *(2) 1 + 4 * + 2 + *(2) +  stack (@-4) *(2) 2 + 4 * + 2 + *(2)  (@-8) *(2)  GenPostAddSubIdent ()8 "
-; Fused expression:    "( *(2) (@-6) , + *(@-4) 1 * ax 4 + stack ax + ax 2 + IdentTable *ax , + *(@-4) 2 * ax 4 + stack ax + ax 2 *(2) ax , *(2) (@-8) , GenPostAddSubIdent )8 "
+    jne     L2080
+L2079:
+; RPN'ized expression: "( tok , stack i 1 + + *u 1 + *u , stack i 2 + + *u 1 + *u , v GenPostAddSubIdent ) "
+; Expanded expression: " (@-6) *(2)  stack (@-4) *(2) 1 + 4 * + 2 + *(2)  stack (@-4) *(2) 2 + 4 * + 2 + *(2)  (@-8) *(2)  GenPostAddSubIdent ()8 "
+; Fused expression:    "( *(2) (@-6) , + *(@-4) 1 * ax 4 + stack ax + ax 2 *(2) ax , + *(@-4) 2 * ax 4 + stack ax + ax 2 *(2) ax , *(2) (@-8) , GenPostAddSubIdent )8 "
     push    word [bp-6]
     mov     ax, [bp-4]
     add     ax, 1
@@ -15807,10 +17479,7 @@ L1944:
     add     ax, cx
     add     ax, 2
     mov     bx, ax
-    mov     cx, [bx]
-    mov     ax, _IdentTable
-    add     ax, cx
-    push    ax
+    push    word [bx]
     mov     ax, [bp-4]
     add     ax, 2
     imul    ax, ax, 4
@@ -15824,16 +17493,16 @@ L1944:
     call    _GenPostAddSubIdent
     sub     sp, -8
 ; break
-    jmp     L1941
+    jmp     L2076
 ; case
 ; RPN'ized expression: "261 "
 ; Expanded expression: "261 "
 ; Expression value: 261
-    jmp     L1946
-L1945:
+    jmp     L2081
+L2080:
     cmp     ax, 261
-    jne     L1947
-L1946:
+    jne     L2082
+L2081:
 ; RPN'ized expression: "( tok , stack i 1 + + *u 1 + *u , stack i 2 + + *u 1 + *u , v GenPostAddSubLocal ) "
 ; Expanded expression: " (@-6) *(2)  stack (@-4) *(2) 1 + 4 * + 2 + *(2)  stack (@-4) *(2) 2 + 4 * + 2 + *(2)  (@-8) *(2)  GenPostAddSubLocal ()8 "
 ; Fused expression:    "( *(2) (@-6) , + *(@-4) 1 * ax 4 + stack ax + ax 2 *(2) ax , + *(@-4) 2 * ax 4 + stack ax + ax 2 *(2) ax , *(2) (@-8) , GenPostAddSubLocal )8 "
@@ -15860,16 +17529,16 @@ L1946:
     call    _GenPostAddSubLocal
     sub     sp, -8
 ; break
-    jmp     L1941
+    jmp     L2076
 ; case
 ; RPN'ized expression: "262 "
 ; Expanded expression: "262 "
 ; Expression value: 262
-    jmp     L1948
-L1947:
+    jmp     L2083
+L2082:
     cmp     ax, 262
-    jne     L1949
-L1948:
+    jne     L2084
+L2083:
 ; RPN'ized expression: "( tok , stack i 2 + + *u 1 + *u , v GenPostAddSubIndirect ) "
 ; Expanded expression: " (@-6) *(2)  stack (@-4) *(2) 2 + 4 * + 2 + *(2)  (@-8) *(2)  GenPostAddSubIndirect ()6 "
 ; Fused expression:    "( *(2) (@-6) , + *(@-4) 2 * ax 4 + stack ax + ax 2 *(2) ax , *(2) (@-8) , GenPostAddSubIndirect )6 "
@@ -15887,11 +17556,11 @@ L1948:
     call    _GenPostAddSubIndirect
     sub     sp, -6
 ; break
-    jmp     L1941
+    jmp     L2076
 ; }
-    jmp     L1941
-L1949:
-L1941:
+    jmp     L2076
+L2084:
+L2076:
 ; RPN'ized expression: "i 2 += "
 ; Expanded expression: "(@-4) 2 +=(2) "
 ; Fused expression:    "+=(34) *(@-4) 2 "
@@ -15899,293 +17568,293 @@ L1941:
     add     ax, 2
     mov     [bp-4], ax
 ; break
-    jmp     L1801
+    jmp     L1968
 ; case
 ; RPN'ized expression: "61 "
 ; Expanded expression: "61 "
 ; Expression value: 61
-    jmp     L1940
-L1939:
+    jmp     L2075
+L2074:
     cmp     ax, 61
-    jne     L1951
-L1940:
+    jne     L2086
+L2075:
 ; case
 ; RPN'ized expression: "68 "
 ; Expanded expression: "68 "
 ; Expression value: 68
-    jmp     L1952
-L1951:
+    jmp     L2087
+L2086:
     cmp     ax, 68
-    jne     L1953
-L1952:
+    jne     L2088
+L2087:
 ; case
 ; RPN'ized expression: "69 "
 ; Expanded expression: "69 "
 ; Expression value: 69
-    jmp     L1954
-L1953:
+    jmp     L2089
+L2088:
     cmp     ax, 69
-    jne     L1955
-L1954:
+    jne     L2090
+L2089:
 ; case
 ; RPN'ized expression: "65 "
 ; Expanded expression: "65 "
 ; Expression value: 65
-    jmp     L1956
-L1955:
+    jmp     L2091
+L2090:
     cmp     ax, 65
-    jne     L1957
-L1956:
+    jne     L2092
+L2091:
 ; case
 ; RPN'ized expression: "66 "
 ; Expanded expression: "66 "
 ; Expression value: 66
-    jmp     L1958
-L1957:
+    jmp     L2093
+L2092:
     cmp     ax, 66
-    jne     L1959
-L1958:
+    jne     L2094
+L2093:
 ; case
 ; RPN'ized expression: "67 "
 ; Expanded expression: "67 "
 ; Expression value: 67
-    jmp     L1960
-L1959:
+    jmp     L2095
+L2094:
     cmp     ax, 67
-    jne     L1961
-L1960:
+    jne     L2096
+L2095:
 ; case
 ; RPN'ized expression: "70 "
 ; Expanded expression: "70 "
 ; Expression value: 70
-    jmp     L1962
-L1961:
+    jmp     L2097
+L2096:
     cmp     ax, 70
-    jne     L1963
-L1962:
+    jne     L2098
+L2097:
 ; case
 ; RPN'ized expression: "71 "
 ; Expanded expression: "71 "
 ; Expression value: 71
-    jmp     L1964
-L1963:
+    jmp     L2099
+L2098:
     cmp     ax, 71
-    jne     L1965
-L1964:
+    jne     L2100
+L2099:
 ; case
 ; RPN'ized expression: "72 "
 ; Expanded expression: "72 "
 ; Expression value: 72
-    jmp     L1966
-L1965:
+    jmp     L2101
+L2100:
     cmp     ax, 72
-    jne     L1967
-L1966:
+    jne     L2102
+L2101:
 ; case
 ; RPN'ized expression: "73 "
 ; Expanded expression: "73 "
 ; Expression value: 73
-    jmp     L1968
-L1967:
+    jmp     L2103
+L2102:
     cmp     ax, 73
-    jne     L1969
-L1968:
+    jne     L2104
+L2103:
 ; case
 ; RPN'ized expression: "74 "
 ; Expanded expression: "74 "
 ; Expression value: 74
-    jmp     L1970
-L1969:
+    jmp     L2105
+L2104:
     cmp     ax, 74
-    jne     L1971
-L1970:
+    jne     L2106
+L2105:
 ; case
 ; RPN'ized expression: "43 "
 ; Expanded expression: "43 "
 ; Expression value: 43
-    jmp     L1972
-L1971:
+    jmp     L2107
+L2106:
     cmp     ax, 43
-    jne     L1973
-L1972:
+    jne     L2108
+L2107:
 ; case
 ; RPN'ized expression: "45 "
 ; Expanded expression: "45 "
 ; Expression value: 45
-    jmp     L1974
-L1973:
+    jmp     L2109
+L2108:
     cmp     ax, 45
-    jne     L1975
-L1974:
+    jne     L2110
+L2109:
 ; case
 ; RPN'ized expression: "42 "
 ; Expanded expression: "42 "
 ; Expression value: 42
-    jmp     L1976
-L1975:
+    jmp     L2111
+L2110:
     cmp     ax, 42
-    jne     L1977
-L1976:
+    jne     L2112
+L2111:
 ; case
 ; RPN'ized expression: "47 "
 ; Expanded expression: "47 "
 ; Expression value: 47
-    jmp     L1978
-L1977:
+    jmp     L2113
+L2112:
     cmp     ax, 47
-    jne     L1979
-L1978:
+    jne     L2114
+L2113:
 ; case
 ; RPN'ized expression: "37 "
 ; Expanded expression: "37 "
 ; Expression value: 37
-    jmp     L1980
-L1979:
+    jmp     L2115
+L2114:
     cmp     ax, 37
-    jne     L1981
-L1980:
+    jne     L2116
+L2115:
 ; case
 ; RPN'ized expression: "4 "
 ; Expanded expression: "4 "
 ; Expression value: 4
-    jmp     L1982
-L1981:
+    jmp     L2117
+L2116:
     cmp     ax, 4
-    jne     L1983
-L1982:
+    jne     L2118
+L2117:
 ; case
 ; RPN'ized expression: "5 "
 ; Expanded expression: "5 "
 ; Expression value: 5
-    jmp     L1984
-L1983:
+    jmp     L2119
+L2118:
     cmp     ax, 5
-    jne     L1985
-L1984:
+    jne     L2120
+L2119:
 ; case
 ; RPN'ized expression: "38 "
 ; Expanded expression: "38 "
 ; Expression value: 38
-    jmp     L1986
-L1985:
+    jmp     L2121
+L2120:
     cmp     ax, 38
-    jne     L1987
-L1986:
+    jne     L2122
+L2121:
 ; case
 ; RPN'ized expression: "94 "
 ; Expanded expression: "94 "
 ; Expression value: 94
-    jmp     L1988
-L1987:
+    jmp     L2123
+L2122:
     cmp     ax, 94
-    jne     L1989
-L1988:
+    jne     L2124
+L2123:
 ; case
 ; RPN'ized expression: "124 "
 ; Expanded expression: "124 "
 ; Expression value: 124
-    jmp     L1990
-L1989:
+    jmp     L2125
+L2124:
     cmp     ax, 124
-    jne     L1991
-L1990:
+    jne     L2126
+L2125:
 ; case
 ; RPN'ized expression: "60 "
 ; Expanded expression: "60 "
 ; Expression value: 60
-    jmp     L1992
-L1991:
+    jmp     L2127
+L2126:
     cmp     ax, 60
-    jne     L1993
-L1992:
+    jne     L2128
+L2127:
 ; case
 ; RPN'ized expression: "62 "
 ; Expanded expression: "62 "
 ; Expression value: 62
-    jmp     L1994
-L1993:
+    jmp     L2129
+L2128:
     cmp     ax, 62
-    jne     L1995
-L1994:
+    jne     L2130
+L2129:
 ; case
 ; RPN'ized expression: "10 "
 ; Expanded expression: "10 "
 ; Expression value: 10
-    jmp     L1996
-L1995:
+    jmp     L2131
+L2130:
     cmp     ax, 10
-    jne     L1997
-L1996:
+    jne     L2132
+L2131:
 ; case
 ; RPN'ized expression: "11 "
 ; Expanded expression: "11 "
 ; Expression value: 11
-    jmp     L1998
-L1997:
+    jmp     L2133
+L2132:
     cmp     ax, 11
-    jne     L1999
-L1998:
+    jne     L2134
+L2133:
 ; case
 ; RPN'ized expression: "8 "
 ; Expanded expression: "8 "
 ; Expression value: 8
-    jmp     L2000
-L1999:
+    jmp     L2135
+L2134:
     cmp     ax, 8
-    jne     L2001
-L2000:
+    jne     L2136
+L2135:
 ; case
 ; RPN'ized expression: "9 "
 ; Expanded expression: "9 "
 ; Expression value: 9
-    jmp     L2002
-L2001:
+    jmp     L2137
+L2136:
     cmp     ax, 9
-    jne     L2003
-L2002:
+    jne     L2138
+L2137:
 ; case
 ; RPN'ized expression: "85 "
 ; Expanded expression: "85 "
 ; Expression value: 85
-    jmp     L2004
-L2003:
+    jmp     L2139
+L2138:
     cmp     ax, 85
-    jne     L2005
-L2004:
+    jne     L2140
+L2139:
 ; case
 ; RPN'ized expression: "86 "
 ; Expanded expression: "86 "
 ; Expression value: 86
-    jmp     L2006
-L2005:
+    jmp     L2141
+L2140:
     cmp     ax, 86
-    jne     L2007
-L2006:
+    jne     L2142
+L2141:
 ; case
 ; RPN'ized expression: "87 "
 ; Expanded expression: "87 "
 ; Expression value: 87
-    jmp     L2008
-L2007:
+    jmp     L2143
+L2142:
     cmp     ax, 87
-    jne     L2009
-L2008:
+    jne     L2144
+L2143:
 ; case
 ; RPN'ized expression: "88 "
 ; Expanded expression: "88 "
 ; Expression value: 88
-    jmp     L2010
-L2009:
+    jmp     L2145
+L2144:
     cmp     ax, 88
-    jne     L2011
-L2010:
+    jne     L2146
+L2145:
 ; if
 ; RPN'ized expression: "tok 61 != "
 ; Expanded expression: "(@-6) *(2) 61 != "
 ; Fused expression:    "!= *(@-6) 61 IF! "
     mov     ax, [bp-6]
     cmp     ax, 61
-    je      L2013
+    je      L2148
 ; {
 ; if
 ; RPN'ized expression: "stack i 2 + + *u 0 + *u 259 == "
@@ -16201,23 +17870,22 @@ L2010:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 259
-    jne     L2015
+    jne     L2150
 ; {
-; RPN'ized expression: "( L2017 printf ) "
-; Expanded expression: " L2017  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2017:
-    db  "    mov     cx, ax",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2017 , printf )2 "
-    push    L2017
-    call    _printf
-    sub     sp, -2
+; RPN'ized expression: "( 0 , 3 , 0 , 5 , 0 , 0 GenPrintInstr2Operands ) "
+; Expanded expression: " 0  3  0  5  0  0  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( 0 , 3 , 0 , 5 , 0 , 0 , GenPrintInstr2Operands )12 "
+    push    0
+    push    3
+    push    0
+    push    5
+    push    0
+    push    0
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
 ; }
-    jmp     L2016
-L2015:
+    jmp     L2151
+L2150:
 ; else
 ; if
 ; RPN'ized expression: "stack i 2 + + *u 0 + *u 262 == "
@@ -16233,109 +17901,31 @@ L2015:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 262
-    jne     L2019
+    jne     L2152
 ; {
-; RPN'ized expression: "( L2021 printf ) "
-; Expanded expression: " L2021  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2021:
-    db  "    mov     bx, ax",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2021 , printf )2 "
-    push    L2021
-    call    _printf
-    sub     sp, -2
-; if
-; RPN'ized expression: "v 16 % 1 == "
-; Expanded expression: "(@-8) *(2) 16 % 1 == "
-; Fused expression:    "% *(@-8) 16 == ax 1 IF! "
+; RPN'ized expression: "( v 16 % GenReadCRegIndirect ) "
+; Expanded expression: " (@-8) *(2) 16 %  GenReadCRegIndirect ()2 "
+; Fused expression:    "( % *(@-8) 16 , GenReadCRegIndirect )2 "
     mov     ax, [bp-8]
     cwd
     mov     cx, 16
     idiv    cx
     mov     ax, dx
-    cmp     ax, 1
-    jne     L2023
-; {
-; if
-; RPN'ized expression: "CharIsSigned "
-; Expanded expression: "CharIsSigned *(2) "
-; Fused expression:    "*(2) CharIsSigned "
-    mov     ax, [_CharIsSigned]
-; JumpIfZero
-    test    ax, ax
-    jz      L2025
-; RPN'ized expression: "( L2027 printf ) "
-; Expanded expression: " L2027  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2027:
-    db  "    movsx   cx, byte [bx]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2027 , printf )2 "
-    push    L2027
-    call    _printf
+    push    ax
+    call    _GenReadCRegIndirect
     sub     sp, -2
-    jmp     L2026
-L2025:
-; else
-; RPN'ized expression: "( L2029 printf ) "
-; Expanded expression: " L2029  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2029:
-    db  "    movzx   cx, byte [bx]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2029 , printf )2 "
-    push    L2029
-    call    _printf
-    sub     sp, -2
-L2026:
 ; }
-    jmp     L2024
-L2023:
-; else
-; if
-; RPN'ized expression: "v 16 % 2 == "
-; Expanded expression: "(@-8) *(2) 16 % 2 == "
-; Fused expression:    "% *(@-8) 16 == ax 2 IF! "
-    mov     ax, [bp-8]
-    cwd
-    mov     cx, 16
-    idiv    cx
-    mov     ax, dx
-    cmp     ax, 2
-    jne     L2031
-; RPN'ized expression: "( L2033 printf ) "
-; Expanded expression: " L2033  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2033:
-    db  "    mov     cx, [bx]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2033 , printf )2 "
-    push    L2033
-    call    _printf
-    sub     sp, -2
-L2031:
-L2024:
+L2152:
+L2151:
 ; }
-L2019:
-L2016:
-; }
-L2013:
+L2148:
 ; if
 ; RPN'ized expression: "tok 61 == "
 ; Expanded expression: "(@-6) *(2) 61 == "
 ; Fused expression:    "== *(@-6) 61 IF! "
     mov     ax, [bp-6]
     cmp     ax, 61
-    jne     L2035
+    jne     L2154
 ; {
 ; if
 ; RPN'ized expression: "stack i 1 + + *u 0 + *u 262 == "
@@ -16351,20 +17941,19 @@ L2013:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 262
-    jne     L2037
-; RPN'ized expression: "( L2039 printf ) "
-; Expanded expression: " L2039  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2039:
-    db  "    mov     bx, ax",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2039 , printf )2 "
-    push    L2039
-    call    _printf
-    sub     sp, -2
-L2037:
+    jne     L2156
+; RPN'ized expression: "( 0 , 3 , 0 , 4 , 0 , 0 GenPrintInstr2Operands ) "
+; Expanded expression: " 0  3  0  4  0  0  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( 0 , 3 , 0 , 4 , 0 , 0 , GenPrintInstr2Operands )12 "
+    push    0
+    push    3
+    push    0
+    push    4
+    push    0
+    push    0
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+L2156:
 ; RPN'ized expression: "i ++p "
 ; Expanded expression: "(@-4) ++p(2) "
 ; Fused expression:    "++p(2) *(@-4) "
@@ -16389,7 +17978,7 @@ L2037:
     add     ax, cx
     mov     [bp-8], ax
 ; }
-L2035:
+L2154:
 ; switch
 ; RPN'ized expression: "stack i 1 + + *u 0 + *u "
 ; Expanded expression: "stack (@-4) *(2) 1 + 4 * + 0 + *(2) "
@@ -16403,26 +17992,20 @@ L2035:
     add     ax, 0
     mov     bx, ax
     mov     ax, [bx]
-    jmp     L2043
+    jmp     L2160
 ; {
 ; case
 ; RPN'ized expression: "256 "
 ; Expanded expression: "256 "
 ; Expression value: 256
-    jmp     L2044
-L2043:
+    jmp     L2161
+L2160:
     cmp     ax, 256
-    jne     L2045
-L2044:
-; RPN'ized expression: "( stack i 1 + + *u 1 + *u , L2047 printf ) "
-; Expanded expression: " stack (@-4) *(2) 1 + 4 * + 2 + *(2)  L2047  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2047:
-    db  "    mov     ax, %d",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( + *(@-4) 1 * ax 4 + stack ax + ax 2 *(2) ax , L2047 , printf )4 "
+    jne     L2162
+L2161:
+; RPN'ized expression: "( stack i 1 + + *u 1 + *u , 11 , 0 , 3 , 0 , 0 GenPrintInstr2Operands ) "
+; Expanded expression: " stack (@-4) *(2) 1 + 4 * + 2 + *(2)  11  0  3  0  0  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( + *(@-4) 1 * ax 4 + stack ax + ax 2 *(2) ax , 11 , 0 , 3 , 0 , 0 , GenPrintInstr2Operands )12 "
     mov     ax, [bp-4]
     add     ax, 1
     imul    ax, ax, 4
@@ -16432,35 +18015,27 @@ SEGMENT _TEXT
     add     ax, 2
     mov     bx, ax
     push    word [bx]
-    push    L2047
-    call    _printf
-    sub     sp, -4
+    push    11
+    push    0
+    push    3
+    push    0
+    push    0
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
 ; break
-    jmp     L2041
+    jmp     L2158
 ; case
 ; RPN'ized expression: "257 "
 ; Expanded expression: "257 "
 ; Expression value: 257
-    jmp     L2046
-L2045:
+    jmp     L2163
+L2162:
     cmp     ax, 257
-    jne     L2049
-L2046:
-; RPN'ized expression: "( L2051 printf ) "
-; Expanded expression: " L2051  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2051:
-    db  "    mov     ax, ",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2051 , printf )2 "
-    push    L2051
-    call    _printf
-    sub     sp, -2
-; RPN'ized expression: "( IdentTable stack i 1 + + *u 1 + *u + GenPrintLabel ) "
-; Expanded expression: " IdentTable stack (@-4) *(2) 1 + 4 * + 2 + *(2) +  GenPrintLabel ()2 "
-; Fused expression:    "( + *(@-4) 1 * ax 4 + stack ax + ax 2 + IdentTable *ax , GenPrintLabel )2 "
+    jne     L2164
+L2163:
+; RPN'ized expression: "( stack i 1 + + *u 1 + *u , 12 , 0 , 3 , 0 , 0 GenPrintInstr2Operands ) "
+; Expanded expression: " stack (@-4) *(2) 1 + 4 * + 2 + *(2)  12  0  3  0  0  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( + *(@-4) 1 * ax 4 + stack ax + ax 2 *(2) ax , 12 , 0 , 3 , 0 , 0 , GenPrintInstr2Operands )12 "
     mov     ax, [bp-4]
     add     ax, 1
     imul    ax, ax, 4
@@ -16469,44 +18044,28 @@ SEGMENT _TEXT
     add     ax, cx
     add     ax, 2
     mov     bx, ax
-    mov     cx, [bx]
-    mov     ax, _IdentTable
-    add     ax, cx
-    push    ax
-    call    _GenPrintLabel
-    sub     sp, -2
-; RPN'ized expression: "( L2053 printf ) "
-; Expanded expression: " L2053  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2053:
-    db  10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2053 , printf )2 "
-    push    L2053
-    call    _printf
-    sub     sp, -2
+    push    word [bx]
+    push    12
+    push    0
+    push    3
+    push    0
+    push    0
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
 ; break
-    jmp     L2041
+    jmp     L2158
 ; case
 ; RPN'ized expression: "258 "
 ; Expanded expression: "258 "
 ; Expression value: 258
-    jmp     L2050
-L2049:
+    jmp     L2165
+L2164:
     cmp     ax, 258
-    jne     L2055
-L2050:
-; RPN'ized expression: "( stack i 1 + + *u 1 + *u , L2057 printf ) "
-; Expanded expression: " stack (@-4) *(2) 1 + 4 * + 2 + *(2)  L2057  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2057:
-    db  "    lea     ax, [bp%+d]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( + *(@-4) 1 * ax 4 + stack ax + ax 2 *(2) ax , L2057 , printf )4 "
+    jne     L2166
+L2165:
+; RPN'ized expression: "( stack i 1 + + *u 1 + *u , 18 , 0 , 3 , 0 , 4 GenPrintInstr2Operands ) "
+; Expanded expression: " stack (@-4) *(2) 1 + 4 * + 2 + *(2)  18  0  3  0  4  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( + *(@-4) 1 * ax 4 + stack ax + ax 2 *(2) ax , 18 , 0 , 3 , 0 , 4 , GenPrintInstr2Operands )12 "
     mov     ax, [bp-4]
     add     ax, 1
     imul    ax, ax, 4
@@ -16516,57 +18075,38 @@ SEGMENT _TEXT
     add     ax, 2
     mov     bx, ax
     push    word [bx]
-    push    L2057
-    call    _printf
-    sub     sp, -4
+    push    18
+    push    0
+    push    3
+    push    0
+    push    4
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
 ; break
-    jmp     L2041
+    jmp     L2158
 ; case
 ; RPN'ized expression: "259 "
 ; Expanded expression: "259 "
 ; Expression value: 259
-    jmp     L2056
-L2055:
+    jmp     L2167
+L2166:
     cmp     ax, 259
-    jne     L2059
-L2056:
+    jne     L2168
+L2167:
 ; break
-    jmp     L2041
+    jmp     L2158
 ; case
 ; RPN'ized expression: "260 "
 ; Expanded expression: "260 "
 ; Expression value: 260
-    jmp     L2060
-L2059:
+    jmp     L2169
+L2168:
     cmp     ax, 260
-    jne     L2061
-L2060:
-; if
-; RPN'ized expression: "v 16 / 1 == "
-; Expanded expression: "(@-8) *(2) 16 / 1 == "
-; Fused expression:    "/ *(@-8) 16 == ax 1 IF! "
-    mov     ax, [bp-8]
-    cwd
-    mov     cx, 16
-    idiv    cx
-    cmp     ax, 1
-    jne     L2063
-; {
-; RPN'ized expression: "( L2065 printf ) "
-; Expanded expression: " L2065  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2065:
-    db  "    mov     al, [",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2065 , printf )2 "
-    push    L2065
-    call    _printf
-    sub     sp, -2
-; RPN'ized expression: "( IdentTable stack i 1 + + *u 1 + *u + GenPrintLabel ) "
-; Expanded expression: " IdentTable stack (@-4) *(2) 1 + 4 * + 2 + *(2) +  GenPrintLabel ()2 "
-; Fused expression:    "( + *(@-4) 1 * ax 4 + stack ax + ax 2 + IdentTable *ax , GenPrintLabel )2 "
+    jne     L2170
+L2169:
+; RPN'ized expression: "( stack i 1 + + *u 1 + *u , v 16 / GenReadIdent ) "
+; Expanded expression: " stack (@-4) *(2) 1 + 4 * + 2 + *(2)  (@-8) *(2) 16 /  GenReadIdent ()4 "
+; Fused expression:    "( + *(@-4) 1 * ax 4 + stack ax + ax 2 *(2) ax , / *(@-8) 16 , GenReadIdent )4 "
     mov     ax, [bp-4]
     add     ax, 1
     imul    ax, ax, 4
@@ -16575,118 +18115,28 @@ SEGMENT _TEXT
     add     ax, cx
     add     ax, 2
     mov     bx, ax
-    mov     cx, [bx]
-    mov     ax, _IdentTable
-    add     ax, cx
-    push    ax
-    call    _GenPrintLabel
-    sub     sp, -2
-; RPN'ized expression: "( L2067 printf ) "
-; Expanded expression: " L2067  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2067:
-    db  "]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2067 , printf )2 "
-    push    L2067
-    call    _printf
-    sub     sp, -2
-; RPN'ized expression: "( GenExtendAlAx ) "
-; Expanded expression: " GenExtendAlAx ()0 "
-; Fused expression:    "( GenExtendAlAx )0 "
-    call    _GenExtendAlAx
-; }
-    jmp     L2064
-L2063:
-; else
-; if
-; RPN'ized expression: "v 16 / 2 == "
-; Expanded expression: "(@-8) *(2) 16 / 2 == "
-; Fused expression:    "/ *(@-8) 16 == ax 2 IF! "
+    push    word [bx]
     mov     ax, [bp-8]
     cwd
     mov     cx, 16
     idiv    cx
-    cmp     ax, 2
-    jne     L2069
-; {
-; RPN'ized expression: "( L2071 printf ) "
-; Expanded expression: " L2071  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2071:
-    db  "    mov     ax, [",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2071 , printf )2 "
-    push    L2071
-    call    _printf
-    sub     sp, -2
-; RPN'ized expression: "( IdentTable stack i 1 + + *u 1 + *u + GenPrintLabel ) "
-; Expanded expression: " IdentTable stack (@-4) *(2) 1 + 4 * + 2 + *(2) +  GenPrintLabel ()2 "
-; Fused expression:    "( + *(@-4) 1 * ax 4 + stack ax + ax 2 + IdentTable *ax , GenPrintLabel )2 "
-    mov     ax, [bp-4]
-    add     ax, 1
-    imul    ax, ax, 4
-    mov     cx, ax
-    mov     ax, _stack
-    add     ax, cx
-    add     ax, 2
-    mov     bx, ax
-    mov     cx, [bx]
-    mov     ax, _IdentTable
-    add     ax, cx
     push    ax
-    call    _GenPrintLabel
-    sub     sp, -2
-; RPN'ized expression: "( L2073 printf ) "
-; Expanded expression: " L2073  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2073:
-    db  "]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2073 , printf )2 "
-    push    L2073
-    call    _printf
-    sub     sp, -2
-; }
-L2069:
-L2064:
+    call    _GenReadIdent
+    sub     sp, -4
 ; break
-    jmp     L2041
+    jmp     L2158
 ; case
 ; RPN'ized expression: "261 "
 ; Expanded expression: "261 "
 ; Expression value: 261
-    jmp     L2062
-L2061:
+    jmp     L2171
+L2170:
     cmp     ax, 261
-    jne     L2075
-L2062:
-; if
-; RPN'ized expression: "v 16 / 1 == "
-; Expanded expression: "(@-8) *(2) 16 / 1 == "
-; Fused expression:    "/ *(@-8) 16 == ax 1 IF! "
-    mov     ax, [bp-8]
-    cwd
-    mov     cx, 16
-    idiv    cx
-    cmp     ax, 1
-    jne     L2077
-; {
-; RPN'ized expression: "( stack i 1 + + *u 1 + *u , L2079 printf ) "
-; Expanded expression: " stack (@-4) *(2) 1 + 4 * + 2 + *(2)  L2079  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2079:
-    db  "    mov     al, [bp%+d]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( + *(@-4) 1 * ax 4 + stack ax + ax 2 *(2) ax , L2079 , printf )4 "
+    jne     L2172
+L2171:
+; RPN'ized expression: "( stack i 1 + + *u 1 + *u , v 16 / GenReadLocal ) "
+; Expanded expression: " stack (@-4) *(2) 1 + 4 * + 2 + *(2)  (@-8) *(2) 16 /  GenReadLocal ()4 "
+; Fused expression:    "( + *(@-4) 1 * ax 4 + stack ax + ax 2 *(2) ax , / *(@-8) 16 , GenReadLocal )4 "
     mov     ax, [bp-4]
     add     ax, 1
     imul    ax, ax, 4
@@ -16696,242 +18146,116 @@ SEGMENT _TEXT
     add     ax, 2
     mov     bx, ax
     push    word [bx]
-    push    L2079
-    call    _printf
-    sub     sp, -4
-; RPN'ized expression: "( GenExtendAlAx ) "
-; Expanded expression: " GenExtendAlAx ()0 "
-; Fused expression:    "( GenExtendAlAx )0 "
-    call    _GenExtendAlAx
-; }
-    jmp     L2078
-L2077:
-; else
-; if
-; RPN'ized expression: "v 16 / 2 == "
-; Expanded expression: "(@-8) *(2) 16 / 2 == "
-; Fused expression:    "/ *(@-8) 16 == ax 2 IF! "
     mov     ax, [bp-8]
     cwd
     mov     cx, 16
     idiv    cx
-    cmp     ax, 2
-    jne     L2081
-; RPN'ized expression: "( stack i 1 + + *u 1 + *u , L2083 printf ) "
-; Expanded expression: " stack (@-4) *(2) 1 + 4 * + 2 + *(2)  L2083  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2083:
-    db  "    mov     ax, [bp%+d]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( + *(@-4) 1 * ax 4 + stack ax + ax 2 *(2) ax , L2083 , printf )4 "
-    mov     ax, [bp-4]
-    add     ax, 1
-    imul    ax, ax, 4
-    mov     cx, ax
-    mov     ax, _stack
-    add     ax, cx
-    add     ax, 2
-    mov     bx, ax
-    push    word [bx]
-    push    L2083
-    call    _printf
+    push    ax
+    call    _GenReadLocal
     sub     sp, -4
-L2081:
-L2078:
 ; break
-    jmp     L2041
+    jmp     L2158
 ; case
 ; RPN'ized expression: "262 "
 ; Expanded expression: "262 "
 ; Expression value: 262
-    jmp     L2076
-L2075:
+    jmp     L2173
+L2172:
     cmp     ax, 262
-    jne     L2085
-L2076:
-; RPN'ized expression: "( L2087 printf ) "
-; Expanded expression: " L2087  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2087:
-    db  "    mov     bx, ax",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2087 , printf )2 "
-    push    L2087
-    call    _printf
-    sub     sp, -2
-; if
-; RPN'ized expression: "v 16 / 1 == "
-; Expanded expression: "(@-8) *(2) 16 / 1 == "
-; Fused expression:    "/ *(@-8) 16 == ax 1 IF! "
+    jne     L2174
+L2173:
+; RPN'ized expression: "( v 16 / GenReadIndirect ) "
+; Expanded expression: " (@-8) *(2) 16 /  GenReadIndirect ()2 "
+; Fused expression:    "( / *(@-8) 16 , GenReadIndirect )2 "
     mov     ax, [bp-8]
     cwd
     mov     cx, 16
     idiv    cx
-    cmp     ax, 1
-    jne     L2089
-; {
-; RPN'ized expression: "( L2091 printf ) "
-; Expanded expression: " L2091  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2091:
-    db  "    mov     al, [bx]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2091 , printf )2 "
-    push    L2091
-    call    _printf
+    push    ax
+    call    _GenReadIndirect
     sub     sp, -2
-; RPN'ized expression: "( GenExtendAlAx ) "
-; Expanded expression: " GenExtendAlAx ()0 "
-; Fused expression:    "( GenExtendAlAx )0 "
-    call    _GenExtendAlAx
-; }
-    jmp     L2090
-L2089:
-; else
-; if
-; RPN'ized expression: "v 16 / 2 == "
-; Expanded expression: "(@-8) *(2) 16 / 2 == "
-; Fused expression:    "/ *(@-8) 16 == ax 2 IF! "
-    mov     ax, [bp-8]
-    cwd
-    mov     cx, 16
-    idiv    cx
-    cmp     ax, 2
-    jne     L2093
-; RPN'ized expression: "( L2095 printf ) "
-; Expanded expression: " L2095  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2095:
-    db  "    mov     ax, [bx]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2095 , printf )2 "
-    push    L2095
-    call    _printf
-    sub     sp, -2
-L2093:
-L2090:
 ; break
-    jmp     L2041
+    jmp     L2158
 ; case
 ; RPN'ized expression: "263 "
 ; Expanded expression: "263 "
 ; Expression value: 263
-    jmp     L2086
-L2085:
+    jmp     L2175
+L2174:
     cmp     ax, 263
-    jne     L2097
-L2086:
-; RPN'ized expression: "( L2099 printf ) "
-; Expanded expression: " L2099  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2099:
-    db  "    pop     ax",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2099 , printf )2 "
-    push    L2099
-    call    _printf
-    sub     sp, -2
+    jne     L2176
+L2175:
+; RPN'ized expression: "( 0 , 3 , 0 , 6 GenPrintInstr1Operand ) "
+; Expanded expression: " 0  3  0  6  GenPrintInstr1Operand ()8 "
+; Fused expression:    "( 0 , 3 , 0 , 6 , GenPrintInstr1Operand )8 "
+    push    0
+    push    3
+    push    0
+    push    6
+    call    _GenPrintInstr1Operand
+    sub     sp, -8
 ; break
-    jmp     L2041
+    jmp     L2158
 ; case
 ; RPN'ized expression: "264 "
 ; Expanded expression: "264 "
 ; Expression value: 264
-    jmp     L2098
-L2097:
+    jmp     L2177
+L2176:
     cmp     ax, 264
-    jne     L2101
-L2098:
-; RPN'ized expression: "( L2103 printf ) "
-; Expanded expression: " L2103  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2103:
-    db  "    pop     bx",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2103 , printf )2 "
-    push    L2103
-    call    _printf
-    sub     sp, -2
-; if
-; RPN'ized expression: "v 16 / 1 == "
-; Expanded expression: "(@-8) *(2) 16 / 1 == "
-; Fused expression:    "/ *(@-8) 16 == ax 1 IF! "
+    jne     L2178
+L2177:
+; RPN'ized expression: "( 0 , 4 , 0 , 6 GenPrintInstr1Operand ) "
+; Expanded expression: " 0  4  0  6  GenPrintInstr1Operand ()8 "
+; Fused expression:    "( 0 , 4 , 0 , 6 , GenPrintInstr1Operand )8 "
+    push    0
+    push    4
+    push    0
+    push    6
+    call    _GenPrintInstr1Operand
+    sub     sp, -8
+; RPN'ized expression: "( 0 , 22 , 0 , ( v 16 / , 9 GenSelectByteOrWord ) , 0 , 0 GenPrintInstr2Operands ) "
+; Expanded expression: " 0  22  0   (@-8) *(2) 16 /  9  GenSelectByteOrWord ()4  0  0  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( 0 , 22 , 0 , ( / *(@-8) 16 , 9 , GenSelectByteOrWord )4 , 0 , 0 , GenPrintInstr2Operands )12 "
+    push    0
+    push    22
+    push    0
     mov     ax, [bp-8]
     cwd
     mov     cx, 16
     idiv    cx
-    cmp     ax, 1
-    jne     L2105
-; {
-; RPN'ized expression: "( L2107 printf ) "
-; Expanded expression: " L2107  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2107:
-    db  "    mov     al, [bx]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2107 , printf )2 "
-    push    L2107
-    call    _printf
-    sub     sp, -2
-; RPN'ized expression: "( GenExtendAlAx ) "
-; Expanded expression: " GenExtendAlAx ()0 "
-; Fused expression:    "( GenExtendAlAx )0 "
-    call    _GenExtendAlAx
-; }
-    jmp     L2106
-L2105:
-; else
-; if
-; RPN'ized expression: "v 16 / 2 == "
-; Expanded expression: "(@-8) *(2) 16 / 2 == "
-; Fused expression:    "/ *(@-8) 16 == ax 2 IF! "
+    push    ax
+    push    9
+    call    _GenSelectByteOrWord
+    sub     sp, -4
+    push    ax
+    push    0
+    push    0
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+; RPN'ized expression: "( v 16 / GenExtendRegAIfNeeded ) "
+; Expanded expression: " (@-8) *(2) 16 /  GenExtendRegAIfNeeded ()2 "
+; Fused expression:    "( / *(@-8) 16 , GenExtendRegAIfNeeded )2 "
     mov     ax, [bp-8]
     cwd
     mov     cx, 16
     idiv    cx
-    cmp     ax, 2
-    jne     L2109
-; RPN'ized expression: "( L2111 printf ) "
-; Expanded expression: " L2111  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2111:
-    db  "    mov     ax, [bx]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2111 , printf )2 "
-    push    L2111
-    call    _printf
+    push    ax
+    call    _GenExtendRegAIfNeeded
     sub     sp, -2
-L2109:
-L2106:
 ; break
-    jmp     L2041
+    jmp     L2158
 ; }
-    jmp     L2041
-L2101:
-L2041:
+    jmp     L2158
+L2178:
+L2158:
 ; if
 ; RPN'ized expression: "tok 61 == "
 ; Expanded expression: "(@-6) *(2) 61 == "
 ; Fused expression:    "== *(@-6) 61 IF! "
     mov     ax, [bp-6]
     cmp     ax, 61
-    jne     L2113
+    jne     L2180
 ; {
 ; RPN'ized expression: "i --p "
 ; Expanded expression: "(@-4) --p(2) "
@@ -16970,209 +18294,206 @@ L2041:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 264
-    jne     L2115
-; RPN'ized expression: "( L2117 printf ) "
-; Expanded expression: " L2117  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2117:
-    db  "    pop     bx",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2117 , printf )2 "
-    push    L2117
-    call    _printf
-    sub     sp, -2
-L2115:
+    jne     L2182
+; RPN'ized expression: "( 0 , 4 , 0 , 6 GenPrintInstr1Operand ) "
+; Expanded expression: " 0  4  0  6  GenPrintInstr1Operand ()8 "
+; Fused expression:    "( 0 , 4 , 0 , 6 , GenPrintInstr1Operand )8 "
+    push    0
+    push    4
+    push    0
+    push    6
+    call    _GenPrintInstr1Operand
+    sub     sp, -8
+L2182:
 ; }
-L2113:
+L2180:
 ; switch
 ; RPN'ized expression: "tok "
 ; Expanded expression: "(@-6) *(2) "
 ; Fused expression:    "*(2) (@-6) "
     mov     ax, [bp-6]
-    jmp     L2121
+    jmp     L2186
 ; {
 ; case
 ; RPN'ized expression: "68 "
 ; Expanded expression: "68 "
 ; Expression value: 68
-    jmp     L2122
-L2121:
+    jmp     L2187
+L2186:
     cmp     ax, 68
-    jne     L2123
-L2122:
+    jne     L2188
+L2187:
 ; case
 ; RPN'ized expression: "69 "
 ; Expanded expression: "69 "
 ; Expression value: 69
-    jmp     L2124
-L2123:
+    jmp     L2189
+L2188:
     cmp     ax, 69
-    jne     L2125
-L2124:
+    jne     L2190
+L2189:
 ; case
 ; RPN'ized expression: "72 "
 ; Expanded expression: "72 "
 ; Expression value: 72
-    jmp     L2126
-L2125:
+    jmp     L2191
+L2190:
     cmp     ax, 72
-    jne     L2127
-L2126:
+    jne     L2192
+L2191:
 ; case
 ; RPN'ized expression: "73 "
 ; Expanded expression: "73 "
 ; Expression value: 73
-    jmp     L2128
-L2127:
+    jmp     L2193
+L2192:
     cmp     ax, 73
-    jne     L2129
-L2128:
+    jne     L2194
+L2193:
 ; case
 ; RPN'ized expression: "74 "
 ; Expanded expression: "74 "
 ; Expression value: 74
-    jmp     L2130
-L2129:
+    jmp     L2195
+L2194:
     cmp     ax, 74
-    jne     L2131
-L2130:
+    jne     L2196
+L2195:
 ; case
 ; RPN'ized expression: "43 "
 ; Expanded expression: "43 "
 ; Expression value: 43
-    jmp     L2132
-L2131:
+    jmp     L2197
+L2196:
     cmp     ax, 43
-    jne     L2133
-L2132:
+    jne     L2198
+L2197:
 ; case
 ; RPN'ized expression: "45 "
 ; Expanded expression: "45 "
 ; Expression value: 45
-    jmp     L2134
-L2133:
+    jmp     L2199
+L2198:
     cmp     ax, 45
-    jne     L2135
-L2134:
+    jne     L2200
+L2199:
 ; case
 ; RPN'ized expression: "38 "
 ; Expanded expression: "38 "
 ; Expression value: 38
-    jmp     L2136
-L2135:
+    jmp     L2201
+L2200:
     cmp     ax, 38
-    jne     L2137
-L2136:
+    jne     L2202
+L2201:
 ; case
 ; RPN'ized expression: "94 "
 ; Expanded expression: "94 "
 ; Expression value: 94
-    jmp     L2138
-L2137:
+    jmp     L2203
+L2202:
     cmp     ax, 94
-    jne     L2139
-L2138:
+    jne     L2204
+L2203:
 ; case
 ; RPN'ized expression: "124 "
 ; Expanded expression: "124 "
 ; Expression value: 124
-    jmp     L2140
-L2139:
+    jmp     L2205
+L2204:
     cmp     ax, 124
-    jne     L2141
-L2140:
+    jne     L2206
+L2205:
 ; case
 ; RPN'ized expression: "60 "
 ; Expanded expression: "60 "
 ; Expression value: 60
-    jmp     L2142
-L2141:
+    jmp     L2207
+L2206:
     cmp     ax, 60
-    jne     L2143
-L2142:
+    jne     L2208
+L2207:
 ; case
 ; RPN'ized expression: "62 "
 ; Expanded expression: "62 "
 ; Expression value: 62
-    jmp     L2144
-L2143:
+    jmp     L2209
+L2208:
     cmp     ax, 62
-    jne     L2145
-L2144:
+    jne     L2210
+L2209:
 ; case
 ; RPN'ized expression: "10 "
 ; Expanded expression: "10 "
 ; Expression value: 10
-    jmp     L2146
-L2145:
+    jmp     L2211
+L2210:
     cmp     ax, 10
-    jne     L2147
-L2146:
+    jne     L2212
+L2211:
 ; case
 ; RPN'ized expression: "11 "
 ; Expanded expression: "11 "
 ; Expression value: 11
-    jmp     L2148
-L2147:
+    jmp     L2213
+L2212:
     cmp     ax, 11
-    jne     L2149
-L2148:
+    jne     L2214
+L2213:
 ; case
 ; RPN'ized expression: "8 "
 ; Expanded expression: "8 "
 ; Expression value: 8
-    jmp     L2150
-L2149:
+    jmp     L2215
+L2214:
     cmp     ax, 8
-    jne     L2151
-L2150:
+    jne     L2216
+L2215:
 ; case
 ; RPN'ized expression: "9 "
 ; Expanded expression: "9 "
 ; Expression value: 9
-    jmp     L2152
-L2151:
+    jmp     L2217
+L2216:
     cmp     ax, 9
-    jne     L2153
-L2152:
+    jne     L2218
+L2217:
 ; case
 ; RPN'ized expression: "85 "
 ; Expanded expression: "85 "
 ; Expression value: 85
-    jmp     L2154
-L2153:
+    jmp     L2219
+L2218:
     cmp     ax, 85
-    jne     L2155
-L2154:
+    jne     L2220
+L2219:
 ; case
 ; RPN'ized expression: "86 "
 ; Expanded expression: "86 "
 ; Expression value: 86
-    jmp     L2156
-L2155:
+    jmp     L2221
+L2220:
     cmp     ax, 86
-    jne     L2157
-L2156:
+    jne     L2222
+L2221:
 ; case
 ; RPN'ized expression: "87 "
 ; Expanded expression: "87 "
 ; Expression value: 87
-    jmp     L2158
-L2157:
+    jmp     L2223
+L2222:
     cmp     ax, 87
-    jne     L2159
-L2158:
+    jne     L2224
+L2223:
 ; case
 ; RPN'ized expression: "88 "
 ; Expanded expression: "88 "
 ; Expression value: 88
-    jmp     L2160
-L2159:
+    jmp     L2225
+L2224:
     cmp     ax, 88
-    jne     L2161
-L2160:
+    jne     L2226
+L2225:
 ; RPN'ized expression: "instr ( tok GenGetBinaryOperatorInstr ) = "
 ; Expanded expression: "(@-10)  (@-6) *(2)  GenGetBinaryOperatorInstr ()2 =(2) "
 ; Fused expression:    "( *(2) (@-6) , GenGetBinaryOperatorInstr )2 =(34) *(@-10) ax "
@@ -17193,26 +18514,20 @@ L2160:
     add     ax, 0
     mov     bx, ax
     mov     ax, [bx]
-    jmp     L2165
+    jmp     L2230
 ; {
 ; case
 ; RPN'ized expression: "256 "
 ; Expanded expression: "256 "
 ; Expression value: 256
-    jmp     L2166
-L2165:
+    jmp     L2231
+L2230:
     cmp     ax, 256
-    jne     L2167
-L2166:
-; RPN'ized expression: "( stack i 2 + + *u 1 + *u , instr , L2169 printf ) "
-; Expanded expression: " stack (@-4) *(2) 2 + 4 * + 2 + *(2)  (@-10) *(2)  L2169  printf ()6 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2169:
-    db  "    %-4s    ax, %d",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( + *(@-4) 2 * ax 4 + stack ax + ax 2 *(2) ax , *(2) (@-10) , L2169 , printf )6 "
+    jne     L2232
+L2231:
+; RPN'ized expression: "( stack i 2 + + *u 1 + *u , 11 , 0 , 3 , 0 , instr GenPrintInstr2Operands ) "
+; Expanded expression: " stack (@-4) *(2) 2 + 4 * + 2 + *(2)  11  0  3  0  (@-10) *(2)  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( + *(@-4) 2 * ax 4 + stack ax + ax 2 *(2) ax , 11 , 0 , 3 , 0 , *(2) (@-10) , GenPrintInstr2Operands )12 "
     mov     ax, [bp-4]
     add     ax, 2
     imul    ax, ax, 4
@@ -17222,37 +18537,27 @@ SEGMENT _TEXT
     add     ax, 2
     mov     bx, ax
     push    word [bx]
+    push    11
+    push    0
+    push    3
+    push    0
     push    word [bp-10]
-    push    L2169
-    call    _printf
-    sub     sp, -6
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
 ; break
-    jmp     L2163
+    jmp     L2228
 ; case
 ; RPN'ized expression: "257 "
 ; Expanded expression: "257 "
 ; Expression value: 257
-    jmp     L2168
-L2167:
+    jmp     L2233
+L2232:
     cmp     ax, 257
-    jne     L2171
-L2168:
-; RPN'ized expression: "( instr , L2173 printf ) "
-; Expanded expression: " (@-10) *(2)  L2173  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2173:
-    db  "    %-4s    ax, ",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@-10) , L2173 , printf )4 "
-    push    word [bp-10]
-    push    L2173
-    call    _printf
-    sub     sp, -4
-; RPN'ized expression: "( IdentTable stack i 2 + + *u 1 + *u + GenPrintLabel ) "
-; Expanded expression: " IdentTable stack (@-4) *(2) 2 + 4 * + 2 + *(2) +  GenPrintLabel ()2 "
-; Fused expression:    "( + *(@-4) 2 * ax 4 + stack ax + ax 2 + IdentTable *ax , GenPrintLabel )2 "
+    jne     L2234
+L2233:
+; RPN'ized expression: "( stack i 2 + + *u 1 + *u , 12 , 0 , 3 , 0 , instr GenPrintInstr2Operands ) "
+; Expanded expression: " stack (@-4) *(2) 2 + 4 * + 2 + *(2)  12  0  3  0  (@-10) *(2)  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( + *(@-4) 2 * ax 4 + stack ax + ax 2 *(2) ax , 12 , 0 , 3 , 0 , *(2) (@-10) , GenPrintInstr2Operands )12 "
     mov     ax, [bp-4]
     add     ax, 2
     imul    ax, ax, 4
@@ -17261,45 +18566,28 @@ SEGMENT _TEXT
     add     ax, cx
     add     ax, 2
     mov     bx, ax
-    mov     cx, [bx]
-    mov     ax, _IdentTable
-    add     ax, cx
-    push    ax
-    call    _GenPrintLabel
-    sub     sp, -2
-; RPN'ized expression: "( L2175 printf ) "
-; Expanded expression: " L2175  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2175:
-    db  10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2175 , printf )2 "
-    push    L2175
-    call    _printf
-    sub     sp, -2
+    push    word [bx]
+    push    12
+    push    0
+    push    3
+    push    0
+    push    word [bp-10]
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
 ; break
-    jmp     L2163
+    jmp     L2228
 ; case
 ; RPN'ized expression: "258 "
 ; Expanded expression: "258 "
 ; Expression value: 258
-    jmp     L2172
-L2171:
+    jmp     L2235
+L2234:
     cmp     ax, 258
-    jne     L2177
-L2172:
-; RPN'ized expression: "( instr , stack i 2 + + *u 1 + *u , L2179 printf ) "
-; Expanded expression: " (@-10) *(2)  stack (@-4) *(2) 2 + 4 * + 2 + *(2)  L2179  printf ()6 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2179:
-    db  "    lea     cx, [bp%+d]",10,"    %-4s    ax, cx",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@-10) , + *(@-4) 2 * ax 4 + stack ax + ax 2 *(2) ax , L2179 , printf )6 "
-    push    word [bp-10]
+    jne     L2236
+L2235:
+; RPN'ized expression: "( stack i 2 + + *u 1 + *u , 18 , 0 , 5 , 0 , 4 GenPrintInstr2Operands ) "
+; Expanded expression: " stack (@-4) *(2) 2 + 4 * + 2 + *(2)  18  0  5  0  4  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( + *(@-4) 2 * ax 4 + stack ax + ax 2 *(2) ax , 18 , 0 , 5 , 0 , 4 , GenPrintInstr2Operands )12 "
     mov     ax, [bp-4]
     add     ax, 2
     imul    ax, ax, 4
@@ -17309,53 +18597,66 @@ SEGMENT _TEXT
     add     ax, 2
     mov     bx, ax
     push    word [bx]
-    push    L2179
-    call    _printf
-    sub     sp, -6
+    push    18
+    push    0
+    push    5
+    push    0
+    push    4
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+; RPN'ized expression: "( 0 , 5 , 0 , 3 , 0 , instr GenPrintInstr2Operands ) "
+; Expanded expression: " 0  5  0  3  0  (@-10) *(2)  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( 0 , 5 , 0 , 3 , 0 , *(2) (@-10) , GenPrintInstr2Operands )12 "
+    push    0
+    push    5
+    push    0
+    push    3
+    push    0
+    push    word [bp-10]
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
 ; break
-    jmp     L2163
+    jmp     L2228
 ; case
 ; RPN'ized expression: "259 "
 ; Expanded expression: "259 "
 ; Expression value: 259
-    jmp     L2178
-L2177:
+    jmp     L2237
+L2236:
     cmp     ax, 259
-    jne     L2181
-L2178:
+    jne     L2238
+L2237:
 ; case
 ; RPN'ized expression: "262 "
 ; Expanded expression: "262 "
 ; Expression value: 262
-    jmp     L2182
-L2181:
+    jmp     L2239
+L2238:
     cmp     ax, 262
-    jne     L2183
-L2182:
-; RPN'ized expression: "( instr , L2185 printf ) "
-; Expanded expression: " (@-10) *(2)  L2185  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2185:
-    db  "    %-4s    ax, cx",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@-10) , L2185 , printf )4 "
+    jne     L2240
+L2239:
+; RPN'ized expression: "( 0 , 5 , 0 , 3 , 0 , instr GenPrintInstr2Operands ) "
+; Expanded expression: " 0  5  0  3  0  (@-10) *(2)  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( 0 , 5 , 0 , 3 , 0 , *(2) (@-10) , GenPrintInstr2Operands )12 "
+    push    0
+    push    5
+    push    0
+    push    3
+    push    0
     push    word [bp-10]
-    push    L2185
-    call    _printf
-    sub     sp, -4
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
 ; break
-    jmp     L2163
+    jmp     L2228
 ; case
 ; RPN'ized expression: "260 "
 ; Expanded expression: "260 "
 ; Expression value: 260
-    jmp     L2184
-L2183:
+    jmp     L2241
+L2240:
     cmp     ax, 260
-    jne     L2187
-L2184:
+    jne     L2242
+L2241:
 ; if
 ; RPN'ized expression: "v 16 % 1 == "
 ; Expanded expression: "(@-8) *(2) 16 % 1 == "
@@ -17366,47 +18667,11 @@ L2184:
     idiv    cx
     mov     ax, dx
     cmp     ax, 1
-    jne     L2189
+    jne     L2244
 ; {
-; if
-; RPN'ized expression: "CharIsSigned "
-; Expanded expression: "CharIsSigned *(2) "
-; Fused expression:    "*(2) CharIsSigned "
-    mov     ax, [_CharIsSigned]
-; JumpIfZero
-    test    ax, ax
-    jz      L2191
-; RPN'ized expression: "( L2193 printf ) "
-; Expanded expression: " L2193  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2193:
-    db  "    movsx   cx, byte [",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2193 , printf )2 "
-    push    L2193
-    call    _printf
-    sub     sp, -2
-    jmp     L2192
-L2191:
-; else
-; RPN'ized expression: "( L2195 printf ) "
-; Expanded expression: " L2195  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2195:
-    db  "    movzx   cx, byte [",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2195 , printf )2 "
-    push    L2195
-    call    _printf
-    sub     sp, -2
-L2192:
-; RPN'ized expression: "( IdentTable stack i 2 + + *u 1 + *u + GenPrintLabel ) "
-; Expanded expression: " IdentTable stack (@-4) *(2) 2 + 4 * + 2 + *(2) +  GenPrintLabel ()2 "
-; Fused expression:    "( + *(@-4) 2 * ax 4 + stack ax + ax 2 + IdentTable *ax , GenPrintLabel )2 "
+; RPN'ized expression: "( stack i 2 + + *u 1 + *u , v 16 % GenReadCRegIdent ) "
+; Expanded expression: " stack (@-4) *(2) 2 + 4 * + 2 + *(2)  (@-8) *(2) 16 %  GenReadCRegIdent ()4 "
+; Fused expression:    "( + *(@-4) 2 * ax 4 + stack ax + ax 2 *(2) ax , % *(@-8) 16 , GenReadCRegIdent )4 "
     mov     ax, [bp-4]
     add     ax, 2
     imul    ax, ax, 4
@@ -17415,69 +18680,34 @@ L2192:
     add     ax, cx
     add     ax, 2
     mov     bx, ax
-    mov     cx, [bx]
-    mov     ax, _IdentTable
-    add     ax, cx
-    push    ax
-    call    _GenPrintLabel
-    sub     sp, -2
-; RPN'ized expression: "( L2197 printf ) "
-; Expanded expression: " L2197  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2197:
-    db  "]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2197 , printf )2 "
-    push    L2197
-    call    _printf
-    sub     sp, -2
-; RPN'ized expression: "( instr , L2199 printf ) "
-; Expanded expression: " (@-10) *(2)  L2199  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2199:
-    db  "    %-4s    ax, cx",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@-10) , L2199 , printf )4 "
-    push    word [bp-10]
-    push    L2199
-    call    _printf
-    sub     sp, -4
-; }
-    jmp     L2190
-L2189:
-; else
-; if
-; RPN'ized expression: "v 16 % 2 == "
-; Expanded expression: "(@-8) *(2) 16 % 2 == "
-; Fused expression:    "% *(@-8) 16 == ax 2 IF! "
+    push    word [bx]
     mov     ax, [bp-8]
     cwd
     mov     cx, 16
     idiv    cx
     mov     ax, dx
-    cmp     ax, 2
-    jne     L2201
-; {
-; RPN'ized expression: "( instr , L2203 printf ) "
-; Expanded expression: " (@-10) *(2)  L2203  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2203:
-    db  "    %-4s    ax, [",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@-10) , L2203 , printf )4 "
-    push    word [bp-10]
-    push    L2203
-    call    _printf
+    push    ax
+    call    _GenReadCRegIdent
     sub     sp, -4
-; RPN'ized expression: "( IdentTable stack i 2 + + *u 1 + *u + GenPrintLabel ) "
-; Expanded expression: " IdentTable stack (@-4) *(2) 2 + 4 * + 2 + *(2) +  GenPrintLabel ()2 "
-; Fused expression:    "( + *(@-4) 2 * ax 4 + stack ax + ax 2 + IdentTable *ax , GenPrintLabel )2 "
+; RPN'ized expression: "( 0 , 5 , 0 , 3 , 0 , instr GenPrintInstr2Operands ) "
+; Expanded expression: " 0  5  0  3  0  (@-10) *(2)  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( 0 , 5 , 0 , 3 , 0 , *(2) (@-10) , GenPrintInstr2Operands )12 "
+    push    0
+    push    5
+    push    0
+    push    3
+    push    0
+    push    word [bp-10]
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+; }
+    jmp     L2245
+L2244:
+; else
+; {
+; RPN'ized expression: "( stack i 2 + + *u 1 + *u , 14 , 0 , 3 , 0 , instr GenPrintInstr2Operands ) "
+; Expanded expression: " stack (@-4) *(2) 2 + 4 * + 2 + *(2)  14  0  3  0  (@-10) *(2)  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( + *(@-4) 2 * ax 4 + stack ax + ax 2 *(2) ax , 14 , 0 , 3 , 0 , *(2) (@-10) , GenPrintInstr2Operands )12 "
     mov     ax, [bp-4]
     add     ax, 2
     imul    ax, ax, 4
@@ -17486,38 +18716,27 @@ SEGMENT _TEXT
     add     ax, cx
     add     ax, 2
     mov     bx, ax
-    mov     cx, [bx]
-    mov     ax, _IdentTable
-    add     ax, cx
-    push    ax
-    call    _GenPrintLabel
-    sub     sp, -2
-; RPN'ized expression: "( L2205 printf ) "
-; Expanded expression: " L2205  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2205:
-    db  "]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2205 , printf )2 "
-    push    L2205
-    call    _printf
-    sub     sp, -2
+    push    word [bx]
+    push    14
+    push    0
+    push    3
+    push    0
+    push    word [bp-10]
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
 ; }
-L2201:
-L2190:
+L2245:
 ; break
-    jmp     L2163
+    jmp     L2228
 ; case
 ; RPN'ized expression: "261 "
 ; Expanded expression: "261 "
 ; Expression value: 261
-    jmp     L2188
-L2187:
+    jmp     L2243
+L2242:
     cmp     ax, 261
-    jne     L2207
-L2188:
+    jne     L2246
+L2243:
 ; if
 ; RPN'ized expression: "v 16 % 1 == "
 ; Expanded expression: "(@-8) *(2) 16 % 1 == "
@@ -17528,25 +18747,11 @@ L2188:
     idiv    cx
     mov     ax, dx
     cmp     ax, 1
-    jne     L2209
+    jne     L2248
 ; {
-; if
-; RPN'ized expression: "CharIsSigned "
-; Expanded expression: "CharIsSigned *(2) "
-; Fused expression:    "*(2) CharIsSigned "
-    mov     ax, [_CharIsSigned]
-; JumpIfZero
-    test    ax, ax
-    jz      L2211
-; RPN'ized expression: "( stack i 2 + + *u 1 + *u , L2213 printf ) "
-; Expanded expression: " stack (@-4) *(2) 2 + 4 * + 2 + *(2)  L2213  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2213:
-    db  "    movsx   cx, byte [bp%+d]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( + *(@-4) 2 * ax 4 + stack ax + ax 2 *(2) ax , L2213 , printf )4 "
+; RPN'ized expression: "( stack i 2 + + *u 1 + *u , v 16 % GenReadCRegLocal ) "
+; Expanded expression: " stack (@-4) *(2) 2 + 4 * + 2 + *(2)  (@-8) *(2) 16 %  GenReadCRegLocal ()4 "
+; Fused expression:    "( + *(@-4) 2 * ax 4 + stack ax + ax 2 *(2) ax , % *(@-8) 16 , GenReadCRegLocal )4 "
     mov     ax, [bp-4]
     add     ax, 2
     imul    ax, ax, 4
@@ -17556,71 +18761,33 @@ SEGMENT _TEXT
     add     ax, 2
     mov     bx, ax
     push    word [bx]
-    push    L2213
-    call    _printf
-    sub     sp, -4
-    jmp     L2212
-L2211:
-; else
-; RPN'ized expression: "( stack i 2 + + *u 1 + *u , L2215 printf ) "
-; Expanded expression: " stack (@-4) *(2) 2 + 4 * + 2 + *(2)  L2215  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2215:
-    db  "    movzx   cx, byte [bp%+d]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( + *(@-4) 2 * ax 4 + stack ax + ax 2 *(2) ax , L2215 , printf )4 "
-    mov     ax, [bp-4]
-    add     ax, 2
-    imul    ax, ax, 4
-    mov     cx, ax
-    mov     ax, _stack
-    add     ax, cx
-    add     ax, 2
-    mov     bx, ax
-    push    word [bx]
-    push    L2215
-    call    _printf
-    sub     sp, -4
-L2212:
-; RPN'ized expression: "( instr , L2217 printf ) "
-; Expanded expression: " (@-10) *(2)  L2217  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2217:
-    db  "    %-4s    ax, cx",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@-10) , L2217 , printf )4 "
-    push    word [bp-10]
-    push    L2217
-    call    _printf
-    sub     sp, -4
-; }
-    jmp     L2210
-L2209:
-; else
-; if
-; RPN'ized expression: "v 16 % 2 == "
-; Expanded expression: "(@-8) *(2) 16 % 2 == "
-; Fused expression:    "% *(@-8) 16 == ax 2 IF! "
     mov     ax, [bp-8]
     cwd
     mov     cx, 16
     idiv    cx
     mov     ax, dx
-    cmp     ax, 2
-    jne     L2219
-; RPN'ized expression: "( stack i 2 + + *u 1 + *u , instr , L2221 printf ) "
-; Expanded expression: " stack (@-4) *(2) 2 + 4 * + 2 + *(2)  (@-10) *(2)  L2221  printf ()6 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2221:
-    db  "    %-4s    ax, [bp%+d]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( + *(@-4) 2 * ax 4 + stack ax + ax 2 *(2) ax , *(2) (@-10) , L2221 , printf )6 "
+    push    ax
+    call    _GenReadCRegLocal
+    sub     sp, -4
+; RPN'ized expression: "( 0 , 5 , 0 , 3 , 0 , instr GenPrintInstr2Operands ) "
+; Expanded expression: " 0  5  0  3  0  (@-10) *(2)  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( 0 , 5 , 0 , 3 , 0 , *(2) (@-10) , GenPrintInstr2Operands )12 "
+    push    0
+    push    5
+    push    0
+    push    3
+    push    0
+    push    word [bp-10]
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+; }
+    jmp     L2249
+L2248:
+; else
+; {
+; RPN'ized expression: "( stack i 2 + + *u 1 + *u , 18 , 0 , 3 , 0 , instr GenPrintInstr2Operands ) "
+; Expanded expression: " stack (@-4) *(2) 2 + 4 * + 2 + *(2)  18  0  3  0  (@-10) *(2)  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( + *(@-4) 2 * ax 4 + stack ax + ax 2 *(2) ax , 18 , 0 , 3 , 0 , *(2) (@-10) , GenPrintInstr2Operands )12 "
     mov     ax, [bp-4]
     add     ax, 2
     imul    ax, ax, 4
@@ -17630,33 +18797,36 @@ SEGMENT _TEXT
     add     ax, 2
     mov     bx, ax
     push    word [bx]
+    push    18
+    push    0
+    push    3
+    push    0
     push    word [bp-10]
-    push    L2221
-    call    _printf
-    sub     sp, -6
-L2219:
-L2210:
-; break
-    jmp     L2163
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
 ; }
-    jmp     L2163
-L2207:
-L2163:
+L2249:
+; break
+    jmp     L2228
+; }
+    jmp     L2228
+L2246:
+L2228:
 ; if
 ; RPN'ized expression: "i 3 + sp < stack i 3 + + *u 0 + *u 22 == stack i 3 + + *u 0 + *u 76 == || && "
-; Expanded expression: "(@-4) *(2) 3 + sp *(2) < _Bool [sh&&->2225] stack (@-4) *(2) 3 + 4 * + 0 + *(2) 22 == _Bool [sh||->2226] stack (@-4) *(2) 3 + 4 * + 0 + *(2) 76 == _Bool ||[2226] _Bool &&[2225] "
-; Fused expression:    "+ *(@-4) 3 < ax *sp _Bool [sh&&->2225] + *(@-4) 3 * ax 4 + stack ax + ax 0 == *ax 22 _Bool [sh||->2226] + *(@-4) 3 * ax 4 + stack ax + ax 0 == *ax 76 _Bool ||[2226] _Bool &&[2225] "
+; Expanded expression: "(@-4) *(2) 3 + sp *(2) < _Bool [sh&&->2252] stack (@-4) *(2) 3 + 4 * + 0 + *(2) 22 == _Bool [sh||->2253] stack (@-4) *(2) 3 + 4 * + 0 + *(2) 76 == _Bool ||[2253] _Bool &&[2252] "
+; Fused expression:    "+ *(@-4) 3 < ax *sp _Bool [sh&&->2252] + *(@-4) 3 * ax 4 + stack ax + ax 0 == *ax 22 _Bool [sh||->2253] + *(@-4) 3 * ax 4 + stack ax + ax 0 == *ax 76 _Bool ||[2253] _Bool &&[2252] "
     mov     ax, [bp-4]
     add     ax, 3
     cmp     ax, [_sp]
     setl    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L2225
+    je      L2252
     mov     ax, [bp-4]
     add     ax, 3
     imul    ax, ax, 4
@@ -17670,11 +18840,11 @@ L2163:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L2226
+    jne     L2253
     mov     ax, [bp-4]
     add     ax, 3
     imul    ax, ax, 4
@@ -17688,17 +18858,114 @@ L2163:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L2226:
+L2253:
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L2225:
+L2252:
 ; JumpIfZero
     test    ax, ax
-    jz      L2223
+    je      L2250
 ; {
+; switch
+; RPN'ized expression: "tok "
+; Expanded expression: "(@-6) *(2) "
+; Fused expression:    "*(2) (@-6) "
+    mov     ax, [bp-6]
+    jmp     L2256
+; {
+; case
+; RPN'ized expression: "60 "
+; Expanded expression: "60 "
+; Expression value: 60
+    jmp     L2257
+L2256:
+    cmp     ax, 60
+    jne     L2258
+L2257:
+; case
+; RPN'ized expression: "85 "
+; Expanded expression: "85 "
+; Expression value: 85
+    jmp     L2259
+L2258:
+    cmp     ax, 85
+    jne     L2260
+L2259:
+; case
+; RPN'ized expression: "62 "
+; Expanded expression: "62 "
+; Expression value: 62
+    jmp     L2261
+L2260:
+    cmp     ax, 62
+    jne     L2262
+L2261:
+; case
+; RPN'ized expression: "86 "
+; Expanded expression: "86 "
+; Expression value: 86
+    jmp     L2263
+L2262:
+    cmp     ax, 86
+    jne     L2264
+L2263:
+; case
+; RPN'ized expression: "10 "
+; Expanded expression: "10 "
+; Expression value: 10
+    jmp     L2265
+L2264:
+    cmp     ax, 10
+    jne     L2266
+L2265:
+; case
+; RPN'ized expression: "87 "
+; Expanded expression: "87 "
+; Expression value: 87
+    jmp     L2267
+L2266:
+    cmp     ax, 87
+    jne     L2268
+L2267:
+; case
+; RPN'ized expression: "11 "
+; Expanded expression: "11 "
+; Expression value: 11
+    jmp     L2269
+L2268:
+    cmp     ax, 11
+    jne     L2270
+L2269:
+; case
+; RPN'ized expression: "88 "
+; Expanded expression: "88 "
+; Expression value: 88
+    jmp     L2271
+L2270:
+    cmp     ax, 88
+    jne     L2272
+L2271:
+; case
+; RPN'ized expression: "8 "
+; Expanded expression: "8 "
+; Expression value: 8
+    jmp     L2273
+L2272:
+    cmp     ax, 8
+    jne     L2274
+L2273:
+; case
+; RPN'ized expression: "9 "
+; Expanded expression: "9 "
+; Expression value: 9
+    jmp     L2275
+L2274:
+    cmp     ax, 9
+    jne     L2276
+L2275:
 ; if
 ; RPN'ized expression: "stack i 3 + + *u 0 + *u 22 == "
 ; Expanded expression: "stack (@-4) *(2) 3 + 4 * + 0 + *(2) 22 == "
@@ -17713,506 +18980,10 @@ L2225:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 22
-    jne     L2227
-; {
-; switch
-; RPN'ized expression: "tok "
-; Expanded expression: "(@-6) *(2) "
-; Fused expression:    "*(2) (@-6) "
-    mov     ax, [bp-6]
-    jmp     L2231
-; {
-; case
-; RPN'ized expression: "60 "
-; Expanded expression: "60 "
-; Expression value: 60
-    jmp     L2232
-L2231:
-    cmp     ax, 60
-    jne     L2233
-L2232:
-; RPN'ized expression: "( L2235 printf ) "
-; Expanded expression: " L2235  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2235:
-    db  "    jl      ",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2235 , printf )2 "
-    push    L2235
-    call    _printf
-    sub     sp, -2
-; break
-    jmp     L2229
-; case
-; RPN'ized expression: "85 "
-; Expanded expression: "85 "
-; Expression value: 85
-    jmp     L2234
-L2233:
-    cmp     ax, 85
-    jne     L2237
-L2234:
-; RPN'ized expression: "( L2239 printf ) "
-; Expanded expression: " L2239  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2239:
-    db  "    jb      ",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2239 , printf )2 "
-    push    L2239
-    call    _printf
-    sub     sp, -2
-; break
-    jmp     L2229
-; case
-; RPN'ized expression: "62 "
-; Expanded expression: "62 "
-; Expression value: 62
-    jmp     L2238
-L2237:
-    cmp     ax, 62
-    jne     L2241
-L2238:
-; RPN'ized expression: "( L2243 printf ) "
-; Expanded expression: " L2243  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2243:
-    db  "    jg      ",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2243 , printf )2 "
-    push    L2243
-    call    _printf
-    sub     sp, -2
-; break
-    jmp     L2229
-; case
-; RPN'ized expression: "86 "
-; Expanded expression: "86 "
-; Expression value: 86
-    jmp     L2242
-L2241:
-    cmp     ax, 86
-    jne     L2245
-L2242:
-; RPN'ized expression: "( L2247 printf ) "
-; Expanded expression: " L2247  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2247:
-    db  "    ja      ",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2247 , printf )2 "
-    push    L2247
-    call    _printf
-    sub     sp, -2
-; break
-    jmp     L2229
-; case
-; RPN'ized expression: "10 "
-; Expanded expression: "10 "
-; Expression value: 10
-    jmp     L2246
-L2245:
-    cmp     ax, 10
-    jne     L2249
-L2246:
-; RPN'ized expression: "( L2251 printf ) "
-; Expanded expression: " L2251  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2251:
-    db  "    jle     ",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2251 , printf )2 "
-    push    L2251
-    call    _printf
-    sub     sp, -2
-; break
-    jmp     L2229
-; case
-; RPN'ized expression: "87 "
-; Expanded expression: "87 "
-; Expression value: 87
-    jmp     L2250
-L2249:
-    cmp     ax, 87
-    jne     L2253
-L2250:
-; RPN'ized expression: "( L2255 printf ) "
-; Expanded expression: " L2255  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2255:
-    db  "    jbe     ",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2255 , printf )2 "
-    push    L2255
-    call    _printf
-    sub     sp, -2
-; break
-    jmp     L2229
-; case
-; RPN'ized expression: "11 "
-; Expanded expression: "11 "
-; Expression value: 11
-    jmp     L2254
-L2253:
-    cmp     ax, 11
-    jne     L2257
-L2254:
-; RPN'ized expression: "( L2259 printf ) "
-; Expanded expression: " L2259  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2259:
-    db  "    jge     ",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2259 , printf )2 "
-    push    L2259
-    call    _printf
-    sub     sp, -2
-; break
-    jmp     L2229
-; case
-; RPN'ized expression: "88 "
-; Expanded expression: "88 "
-; Expression value: 88
-    jmp     L2258
-L2257:
-    cmp     ax, 88
-    jne     L2261
-L2258:
-; RPN'ized expression: "( L2263 printf ) "
-; Expanded expression: " L2263  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2263:
-    db  "    jae     ",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2263 , printf )2 "
-    push    L2263
-    call    _printf
-    sub     sp, -2
-; break
-    jmp     L2229
-; case
-; RPN'ized expression: "8 "
-; Expanded expression: "8 "
-; Expression value: 8
-    jmp     L2262
-L2261:
-    cmp     ax, 8
-    jne     L2265
-L2262:
-; RPN'ized expression: "( L2267 printf ) "
-; Expanded expression: " L2267  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2267:
-    db  "    je      ",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2267 , printf )2 "
-    push    L2267
-    call    _printf
-    sub     sp, -2
-; break
-    jmp     L2229
-; case
-; RPN'ized expression: "9 "
-; Expanded expression: "9 "
-; Expression value: 9
-    jmp     L2266
-L2265:
-    cmp     ax, 9
-    jne     L2269
-L2266:
-; RPN'ized expression: "( L2271 printf ) "
-; Expanded expression: " L2271  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2271:
-    db  "    jne     ",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2271 , printf )2 "
-    push    L2271
-    call    _printf
-    sub     sp, -2
-; break
-    jmp     L2229
-; }
-    jmp     L2229
-L2269:
-L2229:
-; }
-    jmp     L2228
-L2227:
-; else
-; {
-; switch
-; RPN'ized expression: "tok "
-; Expanded expression: "(@-6) *(2) "
-; Fused expression:    "*(2) (@-6) "
-    mov     ax, [bp-6]
-    jmp     L2275
-; {
-; case
-; RPN'ized expression: "60 "
-; Expanded expression: "60 "
-; Expression value: 60
-    jmp     L2276
-L2275:
-    cmp     ax, 60
-    jne     L2277
-L2276:
-; RPN'ized expression: "( L2279 printf ) "
-; Expanded expression: " L2279  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2279:
-    db  "    jge     ",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2279 , printf )2 "
-    push    L2279
-    call    _printf
-    sub     sp, -2
-; break
-    jmp     L2273
-; case
-; RPN'ized expression: "85 "
-; Expanded expression: "85 "
-; Expression value: 85
-    jmp     L2278
-L2277:
-    cmp     ax, 85
-    jne     L2281
-L2278:
-; RPN'ized expression: "( L2283 printf ) "
-; Expanded expression: " L2283  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2283:
-    db  "    jae     ",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2283 , printf )2 "
-    push    L2283
-    call    _printf
-    sub     sp, -2
-; break
-    jmp     L2273
-; case
-; RPN'ized expression: "62 "
-; Expanded expression: "62 "
-; Expression value: 62
-    jmp     L2282
-L2281:
-    cmp     ax, 62
-    jne     L2285
-L2282:
-; RPN'ized expression: "( L2287 printf ) "
-; Expanded expression: " L2287  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2287:
-    db  "    jle     ",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2287 , printf )2 "
-    push    L2287
-    call    _printf
-    sub     sp, -2
-; break
-    jmp     L2273
-; case
-; RPN'ized expression: "86 "
-; Expanded expression: "86 "
-; Expression value: 86
-    jmp     L2286
-L2285:
-    cmp     ax, 86
-    jne     L2289
-L2286:
-; RPN'ized expression: "( L2291 printf ) "
-; Expanded expression: " L2291  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2291:
-    db  "    jbe     ",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2291 , printf )2 "
-    push    L2291
-    call    _printf
-    sub     sp, -2
-; break
-    jmp     L2273
-; case
-; RPN'ized expression: "10 "
-; Expanded expression: "10 "
-; Expression value: 10
-    jmp     L2290
-L2289:
-    cmp     ax, 10
-    jne     L2293
-L2290:
-; RPN'ized expression: "( L2295 printf ) "
-; Expanded expression: " L2295  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2295:
-    db  "    jg      ",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2295 , printf )2 "
-    push    L2295
-    call    _printf
-    sub     sp, -2
-; break
-    jmp     L2273
-; case
-; RPN'ized expression: "87 "
-; Expanded expression: "87 "
-; Expression value: 87
-    jmp     L2294
-L2293:
-    cmp     ax, 87
-    jne     L2297
-L2294:
-; RPN'ized expression: "( L2299 printf ) "
-; Expanded expression: " L2299  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2299:
-    db  "    ja      ",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2299 , printf )2 "
-    push    L2299
-    call    _printf
-    sub     sp, -2
-; break
-    jmp     L2273
-; case
-; RPN'ized expression: "11 "
-; Expanded expression: "11 "
-; Expression value: 11
-    jmp     L2298
-L2297:
-    cmp     ax, 11
-    jne     L2301
-L2298:
-; RPN'ized expression: "( L2303 printf ) "
-; Expanded expression: " L2303  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2303:
-    db  "    jl      ",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2303 , printf )2 "
-    push    L2303
-    call    _printf
-    sub     sp, -2
-; break
-    jmp     L2273
-; case
-; RPN'ized expression: "88 "
-; Expanded expression: "88 "
-; Expression value: 88
-    jmp     L2302
-L2301:
-    cmp     ax, 88
-    jne     L2305
-L2302:
-; RPN'ized expression: "( L2307 printf ) "
-; Expanded expression: " L2307  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2307:
-    db  "    jb      ",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2307 , printf )2 "
-    push    L2307
-    call    _printf
-    sub     sp, -2
-; break
-    jmp     L2273
-; case
-; RPN'ized expression: "8 "
-; Expanded expression: "8 "
-; Expression value: 8
-    jmp     L2306
-L2305:
-    cmp     ax, 8
-    jne     L2309
-L2306:
-; RPN'ized expression: "( L2311 printf ) "
-; Expanded expression: " L2311  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2311:
-    db  "    jne     ",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2311 , printf )2 "
-    push    L2311
-    call    _printf
-    sub     sp, -2
-; break
-    jmp     L2273
-; case
-; RPN'ized expression: "9 "
-; Expanded expression: "9 "
-; Expression value: 9
-    jmp     L2310
-L2309:
-    cmp     ax, 9
-    jne     L2313
-L2310:
-; RPN'ized expression: "( L2315 printf ) "
-; Expanded expression: " L2315  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2315:
-    db  "    je      ",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2315 , printf )2 "
-    push    L2315
-    call    _printf
-    sub     sp, -2
-; break
-    jmp     L2273
-; }
-    jmp     L2273
-L2313:
-L2273:
-; }
-L2228:
-; RPN'ized expression: "( stack i 3 + + *u 1 + *u , L2317 printf ) "
-; Expanded expression: " stack (@-4) *(2) 3 + 4 * + 2 + *(2)  L2317  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2317:
-    db  "L%d",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( + *(@-4) 3 * ax 4 + stack ax + ax 2 *(2) ax , L2317 , printf )4 "
+    jne     L2278
+; RPN'ized expression: "( stack i 3 + + *u 1 + *u , 13 , tok , 26 GenPrintInstr1Operand ) "
+; Expanded expression: " stack (@-4) *(2) 3 + 4 * + 2 + *(2)  13  (@-6) *(2)  26  GenPrintInstr1Operand ()8 "
+; Fused expression:    "( + *(@-4) 3 * ax 4 + stack ax + ax 2 *(2) ax , 13 , *(2) (@-6) , 26 , GenPrintInstr1Operand )8 "
     mov     ax, [bp-4]
     add     ax, 3
     imul    ax, ax, 4
@@ -18222,12 +18993,41 @@ SEGMENT _TEXT
     add     ax, 2
     mov     bx, ax
     push    word [bx]
-    push    L2317
-    call    _printf
-    sub     sp, -4
+    push    13
+    push    word [bp-6]
+    push    26
+    call    _GenPrintInstr1Operand
+    sub     sp, -8
+    jmp     L2279
+L2278:
+; else
+; RPN'ized expression: "( stack i 3 + + *u 1 + *u , 13 , tok , 27 GenPrintInstr1Operand ) "
+; Expanded expression: " stack (@-4) *(2) 3 + 4 * + 2 + *(2)  13  (@-6) *(2)  27  GenPrintInstr1Operand ()8 "
+; Fused expression:    "( + *(@-4) 3 * ax 4 + stack ax + ax 2 *(2) ax , 13 , *(2) (@-6) , 27 , GenPrintInstr1Operand )8 "
+    mov     ax, [bp-4]
+    add     ax, 3
+    imul    ax, ax, 4
+    mov     cx, ax
+    mov     ax, _stack
+    add     ax, cx
+    add     ax, 2
+    mov     bx, ax
+    push    word [bx]
+    push    13
+    push    word [bp-6]
+    push    27
+    call    _GenPrintInstr1Operand
+    sub     sp, -8
+L2279:
+; break
+    jmp     L2254
 ; }
-    jmp     L2224
-L2223:
+    jmp     L2254
+L2276:
+L2254:
+; }
+    jmp     L2251
+L2250:
 ; else
 ; {
 ; switch
@@ -18235,264 +19035,141 @@ L2223:
 ; Expanded expression: "(@-6) *(2) "
 ; Fused expression:    "*(2) (@-6) "
     mov     ax, [bp-6]
-    jmp     L2321
+    jmp     L2282
 ; {
 ; case
 ; RPN'ized expression: "60 "
 ; Expanded expression: "60 "
 ; Expression value: 60
-    jmp     L2322
-L2321:
+    jmp     L2283
+L2282:
     cmp     ax, 60
-    jne     L2323
-L2322:
-; RPN'ized expression: "( L2325 printf ) "
-; Expanded expression: " L2325  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2325:
-    db  "    setl    al",10,"    cbw",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2325 , printf )2 "
-    push    L2325
-    call    _printf
-    sub     sp, -2
-; break
-    jmp     L2319
+    jne     L2284
+L2283:
 ; case
 ; RPN'ized expression: "85 "
 ; Expanded expression: "85 "
 ; Expression value: 85
-    jmp     L2324
-L2323:
+    jmp     L2285
+L2284:
     cmp     ax, 85
-    jne     L2327
-L2324:
-; RPN'ized expression: "( L2329 printf ) "
-; Expanded expression: " L2329  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2329:
-    db  "    setb    al",10,"    cbw",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2329 , printf )2 "
-    push    L2329
-    call    _printf
-    sub     sp, -2
-; break
-    jmp     L2319
+    jne     L2286
+L2285:
 ; case
 ; RPN'ized expression: "62 "
 ; Expanded expression: "62 "
 ; Expression value: 62
-    jmp     L2328
-L2327:
+    jmp     L2287
+L2286:
     cmp     ax, 62
-    jne     L2331
-L2328:
-; RPN'ized expression: "( L2333 printf ) "
-; Expanded expression: " L2333  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2333:
-    db  "    setg    al",10,"    cbw",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2333 , printf )2 "
-    push    L2333
-    call    _printf
-    sub     sp, -2
-; break
-    jmp     L2319
+    jne     L2288
+L2287:
 ; case
 ; RPN'ized expression: "86 "
 ; Expanded expression: "86 "
 ; Expression value: 86
-    jmp     L2332
-L2331:
+    jmp     L2289
+L2288:
     cmp     ax, 86
-    jne     L2335
-L2332:
-; RPN'ized expression: "( L2337 printf ) "
-; Expanded expression: " L2337  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2337:
-    db  "    seta    al",10,"    cbw",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2337 , printf )2 "
-    push    L2337
-    call    _printf
-    sub     sp, -2
-; break
-    jmp     L2319
+    jne     L2290
+L2289:
 ; case
 ; RPN'ized expression: "10 "
 ; Expanded expression: "10 "
 ; Expression value: 10
-    jmp     L2336
-L2335:
+    jmp     L2291
+L2290:
     cmp     ax, 10
-    jne     L2339
-L2336:
-; RPN'ized expression: "( L2341 printf ) "
-; Expanded expression: " L2341  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2341:
-    db  "    setle   al",10,"    cbw",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2341 , printf )2 "
-    push    L2341
-    call    _printf
-    sub     sp, -2
-; break
-    jmp     L2319
+    jne     L2292
+L2291:
 ; case
 ; RPN'ized expression: "87 "
 ; Expanded expression: "87 "
 ; Expression value: 87
-    jmp     L2340
-L2339:
+    jmp     L2293
+L2292:
     cmp     ax, 87
-    jne     L2343
-L2340:
-; RPN'ized expression: "( L2345 printf ) "
-; Expanded expression: " L2345  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2345:
-    db  "    setbe   al",10,"    cbw",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2345 , printf )2 "
-    push    L2345
-    call    _printf
-    sub     sp, -2
-; break
-    jmp     L2319
+    jne     L2294
+L2293:
 ; case
 ; RPN'ized expression: "11 "
 ; Expanded expression: "11 "
 ; Expression value: 11
-    jmp     L2344
-L2343:
+    jmp     L2295
+L2294:
     cmp     ax, 11
-    jne     L2347
-L2344:
-; RPN'ized expression: "( L2349 printf ) "
-; Expanded expression: " L2349  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2349:
-    db  "    setge   al",10,"    cbw",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2349 , printf )2 "
-    push    L2349
-    call    _printf
-    sub     sp, -2
-; break
-    jmp     L2319
+    jne     L2296
+L2295:
 ; case
 ; RPN'ized expression: "88 "
 ; Expanded expression: "88 "
 ; Expression value: 88
-    jmp     L2348
-L2347:
+    jmp     L2297
+L2296:
     cmp     ax, 88
-    jne     L2351
-L2348:
-; RPN'ized expression: "( L2353 printf ) "
-; Expanded expression: " L2353  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2353:
-    db  "    setae   al",10,"    cbw",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2353 , printf )2 "
-    push    L2353
-    call    _printf
-    sub     sp, -2
-; break
-    jmp     L2319
+    jne     L2298
+L2297:
 ; case
 ; RPN'ized expression: "8 "
 ; Expanded expression: "8 "
 ; Expression value: 8
-    jmp     L2352
-L2351:
+    jmp     L2299
+L2298:
     cmp     ax, 8
-    jne     L2355
-L2352:
-; RPN'ized expression: "( L2357 printf ) "
-; Expanded expression: " L2357  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2357:
-    db  "    sete    al",10,"    cbw",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2357 , printf )2 "
-    push    L2357
-    call    _printf
-    sub     sp, -2
-; break
-    jmp     L2319
+    jne     L2300
+L2299:
 ; case
 ; RPN'ized expression: "9 "
 ; Expanded expression: "9 "
 ; Expression value: 9
-    jmp     L2356
-L2355:
+    jmp     L2301
+L2300:
     cmp     ax, 9
-    jne     L2359
-L2356:
-; RPN'ized expression: "( L2361 printf ) "
-; Expanded expression: " L2361  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2361:
-    db  "    setne   al",10,"    cbw",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2361 , printf )2 "
-    push    L2361
-    call    _printf
+    jne     L2302
+L2301:
+; RPN'ized expression: "( 0 , 0 , tok , 25 GenPrintInstr1Operand ) "
+; Expanded expression: " 0  0  (@-6) *(2)  25  GenPrintInstr1Operand ()8 "
+; Fused expression:    "( 0 , 0 , *(2) (@-6) , 25 , GenPrintInstr1Operand )8 "
+    push    0
+    push    0
+    push    word [bp-6]
+    push    25
+    call    _GenPrintInstr1Operand
+    sub     sp, -8
+; RPN'ized expression: "( 23 GenPrintInstrNoOperand ) "
+; Expanded expression: " 23  GenPrintInstrNoOperand ()2 "
+; Fused expression:    "( 23 , GenPrintInstrNoOperand )2 "
+    push    23
+    call    _GenPrintInstrNoOperand
     sub     sp, -2
 ; break
-    jmp     L2319
+    jmp     L2280
 ; }
-    jmp     L2319
-L2359:
-L2319:
+    jmp     L2280
+L2302:
+L2280:
 ; }
-L2224:
+L2251:
 ; break
-    jmp     L2119
+    jmp     L2184
 ; case
 ; RPN'ized expression: "42 "
 ; Expanded expression: "42 "
 ; Expression value: 42
-    jmp     L2162
-L2161:
+    jmp     L2227
+L2226:
     cmp     ax, 42
-    jne     L2363
-L2162:
+    jne     L2304
+L2227:
 ; case
 ; RPN'ized expression: "65 "
 ; Expanded expression: "65 "
 ; Expression value: 65
-    jmp     L2364
-L2363:
+    jmp     L2305
+L2304:
     cmp     ax, 65
-    jne     L2365
-L2364:
+    jne     L2306
+L2305:
 ; RPN'ized expression: "instr ( tok GenGetBinaryOperatorInstr ) = "
 ; Expanded expression: "(@-10)  (@-6) *(2)  GenGetBinaryOperatorInstr ()2 =(2) "
 ; Fused expression:    "( *(2) (@-6) , GenGetBinaryOperatorInstr )2 =(34) *(@-10) ax "
@@ -18513,26 +19190,20 @@ L2364:
     add     ax, 0
     mov     bx, ax
     mov     ax, [bx]
-    jmp     L2369
+    jmp     L2310
 ; {
 ; case
 ; RPN'ized expression: "256 "
 ; Expanded expression: "256 "
 ; Expression value: 256
-    jmp     L2370
-L2369:
+    jmp     L2311
+L2310:
     cmp     ax, 256
-    jne     L2371
-L2370:
-; RPN'ized expression: "( stack i 2 + + *u 1 + *u , L2373 printf ) "
-; Expanded expression: " stack (@-4) *(2) 2 + 4 * + 2 + *(2)  L2373  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2373:
-    db  "    imul    ax, ax, %d",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( + *(@-4) 2 * ax 4 + stack ax + ax 2 *(2) ax , L2373 , printf )4 "
+    jne     L2312
+L2311:
+; RPN'ized expression: "( stack i 2 + + *u 1 + *u , 11 , 0 , 3 , 0 , 3 , 0 , 17 GenPrintInstr3Operands ) "
+; Expanded expression: " stack (@-4) *(2) 2 + 4 * + 2 + *(2)  11  0  3  0  3  0  17  GenPrintInstr3Operands ()16 "
+; Fused expression:    "( + *(@-4) 2 * ax 4 + stack ax + ax 2 *(2) ax , 11 , 0 , 3 , 0 , 3 , 0 , 17 , GenPrintInstr3Operands )16 "
     mov     ax, [bp-4]
     add     ax, 2
     imul    ax, ax, 4
@@ -18542,35 +19213,29 @@ SEGMENT _TEXT
     add     ax, 2
     mov     bx, ax
     push    word [bx]
-    push    L2373
-    call    _printf
-    sub     sp, -4
+    push    11
+    push    0
+    push    3
+    push    0
+    push    3
+    push    0
+    push    17
+    call    _GenPrintInstr3Operands
+    sub     sp, -16
 ; break
-    jmp     L2367
+    jmp     L2308
 ; case
 ; RPN'ized expression: "257 "
 ; Expanded expression: "257 "
 ; Expression value: 257
-    jmp     L2372
-L2371:
+    jmp     L2313
+L2312:
     cmp     ax, 257
-    jne     L2375
-L2372:
-; RPN'ized expression: "( L2377 printf ) "
-; Expanded expression: " L2377  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2377:
-    db  "    imul    ax, ax, ",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2377 , printf )2 "
-    push    L2377
-    call    _printf
-    sub     sp, -2
-; RPN'ized expression: "( IdentTable stack i 2 + + *u 1 + *u + GenPrintLabel ) "
-; Expanded expression: " IdentTable stack (@-4) *(2) 2 + 4 * + 2 + *(2) +  GenPrintLabel ()2 "
-; Fused expression:    "( + *(@-4) 2 * ax 4 + stack ax + ax 2 + IdentTable *ax , GenPrintLabel )2 "
+    jne     L2314
+L2313:
+; RPN'ized expression: "( stack i 2 + + *u 1 + *u , 12 , 0 , 3 , 0 , 3 , 0 , 17 GenPrintInstr3Operands ) "
+; Expanded expression: " stack (@-4) *(2) 2 + 4 * + 2 + *(2)  12  0  3  0  3  0  17  GenPrintInstr3Operands ()16 "
+; Fused expression:    "( + *(@-4) 2 * ax 4 + stack ax + ax 2 *(2) ax , 12 , 0 , 3 , 0 , 3 , 0 , 17 , GenPrintInstr3Operands )16 "
     mov     ax, [bp-4]
     add     ax, 2
     imul    ax, ax, 4
@@ -18579,45 +19244,30 @@ SEGMENT _TEXT
     add     ax, cx
     add     ax, 2
     mov     bx, ax
-    mov     cx, [bx]
-    mov     ax, _IdentTable
-    add     ax, cx
-    push    ax
-    call    _GenPrintLabel
-    sub     sp, -2
-; RPN'ized expression: "( L2379 printf ) "
-; Expanded expression: " L2379  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2379:
-    db  10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2379 , printf )2 "
-    push    L2379
-    call    _printf
-    sub     sp, -2
+    push    word [bx]
+    push    12
+    push    0
+    push    3
+    push    0
+    push    3
+    push    0
+    push    17
+    call    _GenPrintInstr3Operands
+    sub     sp, -16
 ; break
-    jmp     L2367
+    jmp     L2308
 ; case
 ; RPN'ized expression: "258 "
 ; Expanded expression: "258 "
 ; Expression value: 258
-    jmp     L2376
-L2375:
+    jmp     L2315
+L2314:
     cmp     ax, 258
-    jne     L2381
-L2376:
-; RPN'ized expression: "( instr , stack i 2 + + *u 1 + *u , L2383 printf ) "
-; Expanded expression: " (@-10) *(2)  stack (@-4) *(2) 2 + 4 * + 2 + *(2)  L2383  printf ()6 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2383:
-    db  "    lea     cx, [bp%+d]",10,"    %-4s    cx",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@-10) , + *(@-4) 2 * ax 4 + stack ax + ax 2 *(2) ax , L2383 , printf )6 "
-    push    word [bp-10]
+    jne     L2316
+L2315:
+; RPN'ized expression: "( stack i 2 + + *u 1 + *u , 18 , 0 , 5 , 0 , 4 GenPrintInstr2Operands ) "
+; Expanded expression: " stack (@-4) *(2) 2 + 4 * + 2 + *(2)  18  0  5  0  4  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( + *(@-4) 2 * ax 4 + stack ax + ax 2 *(2) ax , 18 , 0 , 5 , 0 , 4 , GenPrintInstr2Operands )12 "
     mov     ax, [bp-4]
     add     ax, 2
     imul    ax, ax, 4
@@ -18627,53 +19277,62 @@ SEGMENT _TEXT
     add     ax, 2
     mov     bx, ax
     push    word [bx]
-    push    L2383
-    call    _printf
-    sub     sp, -6
+    push    18
+    push    0
+    push    5
+    push    0
+    push    4
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+; RPN'ized expression: "( 0 , 5 , 0 , instr GenPrintInstr1Operand ) "
+; Expanded expression: " 0  5  0  (@-10) *(2)  GenPrintInstr1Operand ()8 "
+; Fused expression:    "( 0 , 5 , 0 , *(2) (@-10) , GenPrintInstr1Operand )8 "
+    push    0
+    push    5
+    push    0
+    push    word [bp-10]
+    call    _GenPrintInstr1Operand
+    sub     sp, -8
 ; break
-    jmp     L2367
+    jmp     L2308
 ; case
 ; RPN'ized expression: "259 "
 ; Expanded expression: "259 "
 ; Expression value: 259
-    jmp     L2382
-L2381:
+    jmp     L2317
+L2316:
     cmp     ax, 259
-    jne     L2385
-L2382:
+    jne     L2318
+L2317:
 ; case
 ; RPN'ized expression: "262 "
 ; Expanded expression: "262 "
 ; Expression value: 262
-    jmp     L2386
-L2385:
+    jmp     L2319
+L2318:
     cmp     ax, 262
-    jne     L2387
-L2386:
-; RPN'ized expression: "( instr , L2389 printf ) "
-; Expanded expression: " (@-10) *(2)  L2389  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2389:
-    db  "    %-4s    cx",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@-10) , L2389 , printf )4 "
+    jne     L2320
+L2319:
+; RPN'ized expression: "( 0 , 5 , 0 , instr GenPrintInstr1Operand ) "
+; Expanded expression: " 0  5  0  (@-10) *(2)  GenPrintInstr1Operand ()8 "
+; Fused expression:    "( 0 , 5 , 0 , *(2) (@-10) , GenPrintInstr1Operand )8 "
+    push    0
+    push    5
+    push    0
     push    word [bp-10]
-    push    L2389
-    call    _printf
-    sub     sp, -4
+    call    _GenPrintInstr1Operand
+    sub     sp, -8
 ; break
-    jmp     L2367
+    jmp     L2308
 ; case
 ; RPN'ized expression: "260 "
 ; Expanded expression: "260 "
 ; Expression value: 260
-    jmp     L2388
-L2387:
+    jmp     L2321
+L2320:
     cmp     ax, 260
-    jne     L2391
-L2388:
+    jne     L2322
+L2321:
 ; if
 ; RPN'ized expression: "v 16 % 1 == "
 ; Expanded expression: "(@-8) *(2) 16 % 1 == "
@@ -18684,47 +19343,11 @@ L2388:
     idiv    cx
     mov     ax, dx
     cmp     ax, 1
-    jne     L2393
+    jne     L2324
 ; {
-; if
-; RPN'ized expression: "CharIsSigned "
-; Expanded expression: "CharIsSigned *(2) "
-; Fused expression:    "*(2) CharIsSigned "
-    mov     ax, [_CharIsSigned]
-; JumpIfZero
-    test    ax, ax
-    jz      L2395
-; RPN'ized expression: "( L2397 printf ) "
-; Expanded expression: " L2397  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2397:
-    db  "    movsx   cx, byte [",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2397 , printf )2 "
-    push    L2397
-    call    _printf
-    sub     sp, -2
-    jmp     L2396
-L2395:
-; else
-; RPN'ized expression: "( L2399 printf ) "
-; Expanded expression: " L2399  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2399:
-    db  "    movzx   cx, byte [",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2399 , printf )2 "
-    push    L2399
-    call    _printf
-    sub     sp, -2
-L2396:
-; RPN'ized expression: "( IdentTable stack i 2 + + *u 1 + *u + GenPrintLabel ) "
-; Expanded expression: " IdentTable stack (@-4) *(2) 2 + 4 * + 2 + *(2) +  GenPrintLabel ()2 "
-; Fused expression:    "( + *(@-4) 2 * ax 4 + stack ax + ax 2 + IdentTable *ax , GenPrintLabel )2 "
+; RPN'ized expression: "( stack i 2 + + *u 1 + *u , v 16 % GenReadCRegIdent ) "
+; Expanded expression: " stack (@-4) *(2) 2 + 4 * + 2 + *(2)  (@-8) *(2) 16 %  GenReadCRegIdent ()4 "
+; Fused expression:    "( + *(@-4) 2 * ax 4 + stack ax + ax 2 *(2) ax , % *(@-8) 16 , GenReadCRegIdent )4 "
     mov     ax, [bp-4]
     add     ax, 2
     imul    ax, ax, 4
@@ -18733,69 +19356,32 @@ L2396:
     add     ax, cx
     add     ax, 2
     mov     bx, ax
-    mov     cx, [bx]
-    mov     ax, _IdentTable
-    add     ax, cx
-    push    ax
-    call    _GenPrintLabel
-    sub     sp, -2
-; RPN'ized expression: "( L2401 printf ) "
-; Expanded expression: " L2401  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2401:
-    db  "]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2401 , printf )2 "
-    push    L2401
-    call    _printf
-    sub     sp, -2
-; RPN'ized expression: "( instr , L2403 printf ) "
-; Expanded expression: " (@-10) *(2)  L2403  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2403:
-    db  "    %-4s    cx",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@-10) , L2403 , printf )4 "
-    push    word [bp-10]
-    push    L2403
-    call    _printf
-    sub     sp, -4
-; }
-    jmp     L2394
-L2393:
-; else
-; if
-; RPN'ized expression: "v 16 % 2 == "
-; Expanded expression: "(@-8) *(2) 16 % 2 == "
-; Fused expression:    "% *(@-8) 16 == ax 2 IF! "
+    push    word [bx]
     mov     ax, [bp-8]
     cwd
     mov     cx, 16
     idiv    cx
     mov     ax, dx
-    cmp     ax, 2
-    jne     L2405
-; {
-; RPN'ized expression: "( instr , L2407 printf ) "
-; Expanded expression: " (@-10) *(2)  L2407  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2407:
-    db  "    %-4s    word [",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@-10) , L2407 , printf )4 "
-    push    word [bp-10]
-    push    L2407
-    call    _printf
+    push    ax
+    call    _GenReadCRegIdent
     sub     sp, -4
-; RPN'ized expression: "( IdentTable stack i 2 + + *u 1 + *u + GenPrintLabel ) "
-; Expanded expression: " IdentTable stack (@-4) *(2) 2 + 4 * + 2 + *(2) +  GenPrintLabel ()2 "
-; Fused expression:    "( + *(@-4) 2 * ax 4 + stack ax + ax 2 + IdentTable *ax , GenPrintLabel )2 "
+; RPN'ized expression: "( 0 , 5 , 0 , instr GenPrintInstr1Operand ) "
+; Expanded expression: " 0  5  0  (@-10) *(2)  GenPrintInstr1Operand ()8 "
+; Fused expression:    "( 0 , 5 , 0 , *(2) (@-10) , GenPrintInstr1Operand )8 "
+    push    0
+    push    5
+    push    0
+    push    word [bp-10]
+    call    _GenPrintInstr1Operand
+    sub     sp, -8
+; }
+    jmp     L2325
+L2324:
+; else
+; {
+; RPN'ized expression: "( stack i 2 + + *u 1 + *u , 16 , 0 , instr GenPrintInstr1Operand ) "
+; Expanded expression: " stack (@-4) *(2) 2 + 4 * + 2 + *(2)  16  0  (@-10) *(2)  GenPrintInstr1Operand ()8 "
+; Fused expression:    "( + *(@-4) 2 * ax 4 + stack ax + ax 2 *(2) ax , 16 , 0 , *(2) (@-10) , GenPrintInstr1Operand )8 "
     mov     ax, [bp-4]
     add     ax, 2
     imul    ax, ax, 4
@@ -18804,38 +19390,25 @@ SEGMENT _TEXT
     add     ax, cx
     add     ax, 2
     mov     bx, ax
-    mov     cx, [bx]
-    mov     ax, _IdentTable
-    add     ax, cx
-    push    ax
-    call    _GenPrintLabel
-    sub     sp, -2
-; RPN'ized expression: "( L2409 printf ) "
-; Expanded expression: " L2409  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2409:
-    db  "]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2409 , printf )2 "
-    push    L2409
-    call    _printf
-    sub     sp, -2
+    push    word [bx]
+    push    16
+    push    0
+    push    word [bp-10]
+    call    _GenPrintInstr1Operand
+    sub     sp, -8
 ; }
-L2405:
-L2394:
+L2325:
 ; break
-    jmp     L2367
+    jmp     L2308
 ; case
 ; RPN'ized expression: "261 "
 ; Expanded expression: "261 "
 ; Expression value: 261
-    jmp     L2392
-L2391:
+    jmp     L2323
+L2322:
     cmp     ax, 261
-    jne     L2411
-L2392:
+    jne     L2326
+L2323:
 ; if
 ; RPN'ized expression: "v 16 % 1 == "
 ; Expanded expression: "(@-8) *(2) 16 % 1 == "
@@ -18846,25 +19419,11 @@ L2392:
     idiv    cx
     mov     ax, dx
     cmp     ax, 1
-    jne     L2413
+    jne     L2328
 ; {
-; if
-; RPN'ized expression: "CharIsSigned "
-; Expanded expression: "CharIsSigned *(2) "
-; Fused expression:    "*(2) CharIsSigned "
-    mov     ax, [_CharIsSigned]
-; JumpIfZero
-    test    ax, ax
-    jz      L2415
-; RPN'ized expression: "( stack i 2 + + *u 1 + *u , L2417 printf ) "
-; Expanded expression: " stack (@-4) *(2) 2 + 4 * + 2 + *(2)  L2417  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2417:
-    db  "    movsx   cx, byte [bp%+d]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( + *(@-4) 2 * ax 4 + stack ax + ax 2 *(2) ax , L2417 , printf )4 "
+; RPN'ized expression: "( stack i 2 + + *u 1 + *u , v 16 % GenReadCRegLocal ) "
+; Expanded expression: " stack (@-4) *(2) 2 + 4 * + 2 + *(2)  (@-8) *(2) 16 %  GenReadCRegLocal ()4 "
+; Fused expression:    "( + *(@-4) 2 * ax 4 + stack ax + ax 2 *(2) ax , % *(@-8) 16 , GenReadCRegLocal )4 "
     mov     ax, [bp-4]
     add     ax, 2
     imul    ax, ax, 4
@@ -18874,71 +19433,31 @@ SEGMENT _TEXT
     add     ax, 2
     mov     bx, ax
     push    word [bx]
-    push    L2417
-    call    _printf
-    sub     sp, -4
-    jmp     L2416
-L2415:
-; else
-; RPN'ized expression: "( stack i 2 + + *u 1 + *u , L2419 printf ) "
-; Expanded expression: " stack (@-4) *(2) 2 + 4 * + 2 + *(2)  L2419  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2419:
-    db  "    movzx   cx, byte [bp%+d]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( + *(@-4) 2 * ax 4 + stack ax + ax 2 *(2) ax , L2419 , printf )4 "
-    mov     ax, [bp-4]
-    add     ax, 2
-    imul    ax, ax, 4
-    mov     cx, ax
-    mov     ax, _stack
-    add     ax, cx
-    add     ax, 2
-    mov     bx, ax
-    push    word [bx]
-    push    L2419
-    call    _printf
-    sub     sp, -4
-L2416:
-; RPN'ized expression: "( instr , L2421 printf ) "
-; Expanded expression: " (@-10) *(2)  L2421  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2421:
-    db  "    %-4s    cx",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@-10) , L2421 , printf )4 "
-    push    word [bp-10]
-    push    L2421
-    call    _printf
-    sub     sp, -4
-; }
-    jmp     L2414
-L2413:
-; else
-; if
-; RPN'ized expression: "v 16 % 2 == "
-; Expanded expression: "(@-8) *(2) 16 % 2 == "
-; Fused expression:    "% *(@-8) 16 == ax 2 IF! "
     mov     ax, [bp-8]
     cwd
     mov     cx, 16
     idiv    cx
     mov     ax, dx
-    cmp     ax, 2
-    jne     L2423
-; RPN'ized expression: "( stack i 2 + + *u 1 + *u , instr , L2425 printf ) "
-; Expanded expression: " stack (@-4) *(2) 2 + 4 * + 2 + *(2)  (@-10) *(2)  L2425  printf ()6 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2425:
-    db  "    %-4s    word [bp%+d]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( + *(@-4) 2 * ax 4 + stack ax + ax 2 *(2) ax , *(2) (@-10) , L2425 , printf )6 "
+    push    ax
+    call    _GenReadCRegLocal
+    sub     sp, -4
+; RPN'ized expression: "( 0 , 5 , 0 , instr GenPrintInstr1Operand ) "
+; Expanded expression: " 0  5  0  (@-10) *(2)  GenPrintInstr1Operand ()8 "
+; Fused expression:    "( 0 , 5 , 0 , *(2) (@-10) , GenPrintInstr1Operand )8 "
+    push    0
+    push    5
+    push    0
+    push    word [bp-10]
+    call    _GenPrintInstr1Operand
+    sub     sp, -8
+; }
+    jmp     L2329
+L2328:
+; else
+; {
+; RPN'ized expression: "( stack i 2 + + *u 1 + *u , 20 , 0 , instr GenPrintInstr1Operand ) "
+; Expanded expression: " stack (@-4) *(2) 2 + 4 * + 2 + *(2)  20  0  (@-10) *(2)  GenPrintInstr1Operand ()8 "
+; Fused expression:    "( + *(@-4) 2 * ax 4 + stack ax + ax 2 *(2) ax , 20 , 0 , *(2) (@-10) , GenPrintInstr1Operand )8 "
     mov     ax, [bp-4]
     add     ax, 2
     imul    ax, ax, 4
@@ -18948,56 +19467,57 @@ SEGMENT _TEXT
     add     ax, 2
     mov     bx, ax
     push    word [bx]
+    push    20
+    push    0
     push    word [bp-10]
-    push    L2425
-    call    _printf
-    sub     sp, -6
-L2423:
-L2414:
-; break
-    jmp     L2367
+    call    _GenPrintInstr1Operand
+    sub     sp, -8
 ; }
-    jmp     L2367
-L2411:
-L2367:
+L2329:
 ; break
-    jmp     L2119
+    jmp     L2308
+; }
+    jmp     L2308
+L2326:
+L2308:
+; break
+    jmp     L2184
 ; case
 ; RPN'ized expression: "47 "
 ; Expanded expression: "47 "
 ; Expression value: 47
-    jmp     L2366
-L2365:
+    jmp     L2307
+L2306:
     cmp     ax, 47
-    jne     L2427
-L2366:
+    jne     L2330
+L2307:
 ; case
 ; RPN'ized expression: "37 "
 ; Expanded expression: "37 "
 ; Expression value: 37
-    jmp     L2428
-L2427:
+    jmp     L2331
+L2330:
     cmp     ax, 37
-    jne     L2429
-L2428:
+    jne     L2332
+L2331:
 ; case
 ; RPN'ized expression: "66 "
 ; Expanded expression: "66 "
 ; Expression value: 66
-    jmp     L2430
-L2429:
+    jmp     L2333
+L2332:
     cmp     ax, 66
-    jne     L2431
-L2430:
+    jne     L2334
+L2333:
 ; case
 ; RPN'ized expression: "67 "
 ; Expanded expression: "67 "
 ; Expression value: 67
-    jmp     L2432
-L2431:
+    jmp     L2335
+L2334:
     cmp     ax, 67
-    jne     L2433
-L2432:
+    jne     L2336
+L2335:
 ; RPN'ized expression: "instr ( tok GenGetBinaryOperatorInstr ) = "
 ; Expanded expression: "(@-10)  (@-6) *(2)  GenGetBinaryOperatorInstr ()2 =(2) "
 ; Fused expression:    "( *(2) (@-6) , GenGetBinaryOperatorInstr )2 =(34) *(@-10) ax "
@@ -19005,17 +19525,11 @@ L2432:
     call    _GenGetBinaryOperatorInstr
     sub     sp, -2
     mov     [bp-10], ax
-; RPN'ized expression: "( L2435 printf ) "
-; Expanded expression: " L2435  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2435:
-    db  "    cwd",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2435 , printf )2 "
-    push    L2435
-    call    _printf
+; RPN'ized expression: "( 24 GenPrintInstrNoOperand ) "
+; Expanded expression: " 24  GenPrintInstrNoOperand ()2 "
+; Fused expression:    "( 24 , GenPrintInstrNoOperand )2 "
+    push    24
+    call    _GenPrintInstrNoOperand
     sub     sp, -2
 ; switch
 ; RPN'ized expression: "stack i 2 + + *u 0 + *u "
@@ -19030,27 +19544,20 @@ SEGMENT _TEXT
     add     ax, 0
     mov     bx, ax
     mov     ax, [bx]
-    jmp     L2439
+    jmp     L2340
 ; {
 ; case
 ; RPN'ized expression: "256 "
 ; Expanded expression: "256 "
 ; Expression value: 256
-    jmp     L2440
-L2439:
+    jmp     L2341
+L2340:
     cmp     ax, 256
-    jne     L2441
-L2440:
-; RPN'ized expression: "( instr , stack i 2 + + *u 1 + *u , L2443 printf ) "
-; Expanded expression: " (@-10) *(2)  stack (@-4) *(2) 2 + 4 * + 2 + *(2)  L2443  printf ()6 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2443:
-    db  "    mov     cx, %d",10,"    %-4s    cx",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@-10) , + *(@-4) 2 * ax 4 + stack ax + ax 2 *(2) ax , L2443 , printf )6 "
-    push    word [bp-10]
+    jne     L2342
+L2341:
+; RPN'ized expression: "( stack i 2 + + *u 1 + *u , 11 , 0 , 5 , 0 , 0 GenPrintInstr2Operands ) "
+; Expanded expression: " stack (@-4) *(2) 2 + 4 * + 2 + *(2)  11  0  5  0  0  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( + *(@-4) 2 * ax 4 + stack ax + ax 2 *(2) ax , 11 , 0 , 5 , 0 , 0 , GenPrintInstr2Operands )12 "
     mov     ax, [bp-4]
     add     ax, 2
     imul    ax, ax, 4
@@ -19060,35 +19567,36 @@ SEGMENT _TEXT
     add     ax, 2
     mov     bx, ax
     push    word [bx]
-    push    L2443
-    call    _printf
-    sub     sp, -6
+    push    11
+    push    0
+    push    5
+    push    0
+    push    0
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+; RPN'ized expression: "( 0 , 5 , 0 , instr GenPrintInstr1Operand ) "
+; Expanded expression: " 0  5  0  (@-10) *(2)  GenPrintInstr1Operand ()8 "
+; Fused expression:    "( 0 , 5 , 0 , *(2) (@-10) , GenPrintInstr1Operand )8 "
+    push    0
+    push    5
+    push    0
+    push    word [bp-10]
+    call    _GenPrintInstr1Operand
+    sub     sp, -8
 ; break
-    jmp     L2437
+    jmp     L2338
 ; case
 ; RPN'ized expression: "257 "
 ; Expanded expression: "257 "
 ; Expression value: 257
-    jmp     L2442
-L2441:
+    jmp     L2343
+L2342:
     cmp     ax, 257
-    jne     L2445
-L2442:
-; RPN'ized expression: "( L2447 printf ) "
-; Expanded expression: " L2447  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2447:
-    db  "    mov     cx, ",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2447 , printf )2 "
-    push    L2447
-    call    _printf
-    sub     sp, -2
-; RPN'ized expression: "( IdentTable stack i 2 + + *u 1 + *u + GenPrintLabel ) "
-; Expanded expression: " IdentTable stack (@-4) *(2) 2 + 4 * + 2 + *(2) +  GenPrintLabel ()2 "
-; Fused expression:    "( + *(@-4) 2 * ax 4 + stack ax + ax 2 + IdentTable *ax , GenPrintLabel )2 "
+    jne     L2344
+L2343:
+; RPN'ized expression: "( stack i 2 + + *u 1 + *u , 12 , 0 , 5 , 0 , 0 GenPrintInstr2Operands ) "
+; Expanded expression: " stack (@-4) *(2) 2 + 4 * + 2 + *(2)  12  0  5  0  0  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( + *(@-4) 2 * ax 4 + stack ax + ax 2 *(2) ax , 12 , 0 , 5 , 0 , 0 , GenPrintInstr2Operands )12 "
     mov     ax, [bp-4]
     add     ax, 2
     imul    ax, ax, 4
@@ -19097,58 +19605,37 @@ SEGMENT _TEXT
     add     ax, cx
     add     ax, 2
     mov     bx, ax
-    mov     cx, [bx]
-    mov     ax, _IdentTable
-    add     ax, cx
-    push    ax
-    call    _GenPrintLabel
-    sub     sp, -2
-; RPN'ized expression: "( L2449 printf ) "
-; Expanded expression: " L2449  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2449:
-    db  10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2449 , printf )2 "
-    push    L2449
-    call    _printf
-    sub     sp, -2
-; RPN'ized expression: "( instr , L2451 printf ) "
-; Expanded expression: " (@-10) *(2)  L2451  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2451:
-    db  "    %-4s    cx",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@-10) , L2451 , printf )4 "
+    push    word [bx]
+    push    12
+    push    0
+    push    5
+    push    0
+    push    0
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+; RPN'ized expression: "( 0 , 5 , 0 , instr GenPrintInstr1Operand ) "
+; Expanded expression: " 0  5  0  (@-10) *(2)  GenPrintInstr1Operand ()8 "
+; Fused expression:    "( 0 , 5 , 0 , *(2) (@-10) , GenPrintInstr1Operand )8 "
+    push    0
+    push    5
+    push    0
     push    word [bp-10]
-    push    L2451
-    call    _printf
-    sub     sp, -4
+    call    _GenPrintInstr1Operand
+    sub     sp, -8
 ; break
-    jmp     L2437
+    jmp     L2338
 ; case
 ; RPN'ized expression: "258 "
 ; Expanded expression: "258 "
 ; Expression value: 258
-    jmp     L2446
-L2445:
+    jmp     L2345
+L2344:
     cmp     ax, 258
-    jne     L2453
-L2446:
-; RPN'ized expression: "( instr , stack i 2 + + *u 1 + *u , L2455 printf ) "
-; Expanded expression: " (@-10) *(2)  stack (@-4) *(2) 2 + 4 * + 2 + *(2)  L2455  printf ()6 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2455:
-    db  "    lea     cx, [bp%+d]",10,"    %-4s    cx",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@-10) , + *(@-4) 2 * ax 4 + stack ax + ax 2 *(2) ax , L2455 , printf )6 "
-    push    word [bp-10]
+    jne     L2346
+L2345:
+; RPN'ized expression: "( stack i 2 + + *u 1 + *u , 18 , 0 , 5 , 0 , 4 GenPrintInstr2Operands ) "
+; Expanded expression: " stack (@-4) *(2) 2 + 4 * + 2 + *(2)  18  0  5  0  4  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( + *(@-4) 2 * ax 4 + stack ax + ax 2 *(2) ax , 18 , 0 , 5 , 0 , 4 , GenPrintInstr2Operands )12 "
     mov     ax, [bp-4]
     add     ax, 2
     imul    ax, ax, 4
@@ -19158,53 +19645,62 @@ SEGMENT _TEXT
     add     ax, 2
     mov     bx, ax
     push    word [bx]
-    push    L2455
-    call    _printf
-    sub     sp, -6
+    push    18
+    push    0
+    push    5
+    push    0
+    push    4
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+; RPN'ized expression: "( 0 , 5 , 0 , instr GenPrintInstr1Operand ) "
+; Expanded expression: " 0  5  0  (@-10) *(2)  GenPrintInstr1Operand ()8 "
+; Fused expression:    "( 0 , 5 , 0 , *(2) (@-10) , GenPrintInstr1Operand )8 "
+    push    0
+    push    5
+    push    0
+    push    word [bp-10]
+    call    _GenPrintInstr1Operand
+    sub     sp, -8
 ; break
-    jmp     L2437
+    jmp     L2338
 ; case
 ; RPN'ized expression: "259 "
 ; Expanded expression: "259 "
 ; Expression value: 259
-    jmp     L2454
-L2453:
+    jmp     L2347
+L2346:
     cmp     ax, 259
-    jne     L2457
-L2454:
+    jne     L2348
+L2347:
 ; case
 ; RPN'ized expression: "262 "
 ; Expanded expression: "262 "
 ; Expression value: 262
-    jmp     L2458
-L2457:
+    jmp     L2349
+L2348:
     cmp     ax, 262
-    jne     L2459
-L2458:
-; RPN'ized expression: "( instr , L2461 printf ) "
-; Expanded expression: " (@-10) *(2)  L2461  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2461:
-    db  "    %-4s    cx",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@-10) , L2461 , printf )4 "
+    jne     L2350
+L2349:
+; RPN'ized expression: "( 0 , 5 , 0 , instr GenPrintInstr1Operand ) "
+; Expanded expression: " 0  5  0  (@-10) *(2)  GenPrintInstr1Operand ()8 "
+; Fused expression:    "( 0 , 5 , 0 , *(2) (@-10) , GenPrintInstr1Operand )8 "
+    push    0
+    push    5
+    push    0
     push    word [bp-10]
-    push    L2461
-    call    _printf
-    sub     sp, -4
+    call    _GenPrintInstr1Operand
+    sub     sp, -8
 ; break
-    jmp     L2437
+    jmp     L2338
 ; case
 ; RPN'ized expression: "260 "
 ; Expanded expression: "260 "
 ; Expression value: 260
-    jmp     L2460
-L2459:
+    jmp     L2351
+L2350:
     cmp     ax, 260
-    jne     L2463
-L2460:
+    jne     L2352
+L2351:
 ; if
 ; RPN'ized expression: "v 16 % 1 == "
 ; Expanded expression: "(@-8) *(2) 16 % 1 == "
@@ -19215,47 +19711,11 @@ L2460:
     idiv    cx
     mov     ax, dx
     cmp     ax, 1
-    jne     L2465
+    jne     L2354
 ; {
-; if
-; RPN'ized expression: "CharIsSigned "
-; Expanded expression: "CharIsSigned *(2) "
-; Fused expression:    "*(2) CharIsSigned "
-    mov     ax, [_CharIsSigned]
-; JumpIfZero
-    test    ax, ax
-    jz      L2467
-; RPN'ized expression: "( L2469 printf ) "
-; Expanded expression: " L2469  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2469:
-    db  "    movsx   cx, byte [",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2469 , printf )2 "
-    push    L2469
-    call    _printf
-    sub     sp, -2
-    jmp     L2468
-L2467:
-; else
-; RPN'ized expression: "( L2471 printf ) "
-; Expanded expression: " L2471  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2471:
-    db  "    movzx   cx, byte [",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2471 , printf )2 "
-    push    L2471
-    call    _printf
-    sub     sp, -2
-L2468:
-; RPN'ized expression: "( IdentTable stack i 2 + + *u 1 + *u + GenPrintLabel ) "
-; Expanded expression: " IdentTable stack (@-4) *(2) 2 + 4 * + 2 + *(2) +  GenPrintLabel ()2 "
-; Fused expression:    "( + *(@-4) 2 * ax 4 + stack ax + ax 2 + IdentTable *ax , GenPrintLabel )2 "
+; RPN'ized expression: "( stack i 2 + + *u 1 + *u , v 16 % GenReadCRegIdent ) "
+; Expanded expression: " stack (@-4) *(2) 2 + 4 * + 2 + *(2)  (@-8) *(2) 16 %  GenReadCRegIdent ()4 "
+; Fused expression:    "( + *(@-4) 2 * ax 4 + stack ax + ax 2 *(2) ax , % *(@-8) 16 , GenReadCRegIdent )4 "
     mov     ax, [bp-4]
     add     ax, 2
     imul    ax, ax, 4
@@ -19264,69 +19724,32 @@ L2468:
     add     ax, cx
     add     ax, 2
     mov     bx, ax
-    mov     cx, [bx]
-    mov     ax, _IdentTable
-    add     ax, cx
-    push    ax
-    call    _GenPrintLabel
-    sub     sp, -2
-; RPN'ized expression: "( L2473 printf ) "
-; Expanded expression: " L2473  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2473:
-    db  "]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2473 , printf )2 "
-    push    L2473
-    call    _printf
-    sub     sp, -2
-; RPN'ized expression: "( instr , L2475 printf ) "
-; Expanded expression: " (@-10) *(2)  L2475  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2475:
-    db  "    %-4s    cx",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@-10) , L2475 , printf )4 "
-    push    word [bp-10]
-    push    L2475
-    call    _printf
-    sub     sp, -4
-; }
-    jmp     L2466
-L2465:
-; else
-; if
-; RPN'ized expression: "v 16 % 2 == "
-; Expanded expression: "(@-8) *(2) 16 % 2 == "
-; Fused expression:    "% *(@-8) 16 == ax 2 IF! "
+    push    word [bx]
     mov     ax, [bp-8]
     cwd
     mov     cx, 16
     idiv    cx
     mov     ax, dx
-    cmp     ax, 2
-    jne     L2477
-; {
-; RPN'ized expression: "( instr , L2479 printf ) "
-; Expanded expression: " (@-10) *(2)  L2479  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2479:
-    db  "    %-4s    word [",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@-10) , L2479 , printf )4 "
-    push    word [bp-10]
-    push    L2479
-    call    _printf
+    push    ax
+    call    _GenReadCRegIdent
     sub     sp, -4
-; RPN'ized expression: "( IdentTable stack i 2 + + *u 1 + *u + GenPrintLabel ) "
-; Expanded expression: " IdentTable stack (@-4) *(2) 2 + 4 * + 2 + *(2) +  GenPrintLabel ()2 "
-; Fused expression:    "( + *(@-4) 2 * ax 4 + stack ax + ax 2 + IdentTable *ax , GenPrintLabel )2 "
+; RPN'ized expression: "( 0 , 5 , 0 , instr GenPrintInstr1Operand ) "
+; Expanded expression: " 0  5  0  (@-10) *(2)  GenPrintInstr1Operand ()8 "
+; Fused expression:    "( 0 , 5 , 0 , *(2) (@-10) , GenPrintInstr1Operand )8 "
+    push    0
+    push    5
+    push    0
+    push    word [bp-10]
+    call    _GenPrintInstr1Operand
+    sub     sp, -8
+; }
+    jmp     L2355
+L2354:
+; else
+; {
+; RPN'ized expression: "( stack i 2 + + *u 1 + *u , 16 , 0 , instr GenPrintInstr1Operand ) "
+; Expanded expression: " stack (@-4) *(2) 2 + 4 * + 2 + *(2)  16  0  (@-10) *(2)  GenPrintInstr1Operand ()8 "
+; Fused expression:    "( + *(@-4) 2 * ax 4 + stack ax + ax 2 *(2) ax , 16 , 0 , *(2) (@-10) , GenPrintInstr1Operand )8 "
     mov     ax, [bp-4]
     add     ax, 2
     imul    ax, ax, 4
@@ -19335,38 +19758,25 @@ SEGMENT _TEXT
     add     ax, cx
     add     ax, 2
     mov     bx, ax
-    mov     cx, [bx]
-    mov     ax, _IdentTable
-    add     ax, cx
-    push    ax
-    call    _GenPrintLabel
-    sub     sp, -2
-; RPN'ized expression: "( L2481 printf ) "
-; Expanded expression: " L2481  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2481:
-    db  "]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2481 , printf )2 "
-    push    L2481
-    call    _printf
-    sub     sp, -2
+    push    word [bx]
+    push    16
+    push    0
+    push    word [bp-10]
+    call    _GenPrintInstr1Operand
+    sub     sp, -8
 ; }
-L2477:
-L2466:
+L2355:
 ; break
-    jmp     L2437
+    jmp     L2338
 ; case
 ; RPN'ized expression: "261 "
 ; Expanded expression: "261 "
 ; Expression value: 261
-    jmp     L2464
-L2463:
+    jmp     L2353
+L2352:
     cmp     ax, 261
-    jne     L2483
-L2464:
+    jne     L2356
+L2353:
 ; if
 ; RPN'ized expression: "v 16 % 1 == "
 ; Expanded expression: "(@-8) *(2) 16 % 1 == "
@@ -19377,25 +19787,11 @@ L2464:
     idiv    cx
     mov     ax, dx
     cmp     ax, 1
-    jne     L2485
+    jne     L2358
 ; {
-; if
-; RPN'ized expression: "CharIsSigned "
-; Expanded expression: "CharIsSigned *(2) "
-; Fused expression:    "*(2) CharIsSigned "
-    mov     ax, [_CharIsSigned]
-; JumpIfZero
-    test    ax, ax
-    jz      L2487
-; RPN'ized expression: "( stack i 2 + + *u 1 + *u , L2489 printf ) "
-; Expanded expression: " stack (@-4) *(2) 2 + 4 * + 2 + *(2)  L2489  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2489:
-    db  "    movsx   cx, byte [bp%+d]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( + *(@-4) 2 * ax 4 + stack ax + ax 2 *(2) ax , L2489 , printf )4 "
+; RPN'ized expression: "( stack i 2 + + *u 1 + *u , v 16 % GenReadCRegLocal ) "
+; Expanded expression: " stack (@-4) *(2) 2 + 4 * + 2 + *(2)  (@-8) *(2) 16 %  GenReadCRegLocal ()4 "
+; Fused expression:    "( + *(@-4) 2 * ax 4 + stack ax + ax 2 *(2) ax , % *(@-8) 16 , GenReadCRegLocal )4 "
     mov     ax, [bp-4]
     add     ax, 2
     imul    ax, ax, 4
@@ -19405,71 +19801,31 @@ SEGMENT _TEXT
     add     ax, 2
     mov     bx, ax
     push    word [bx]
-    push    L2489
-    call    _printf
-    sub     sp, -4
-    jmp     L2488
-L2487:
-; else
-; RPN'ized expression: "( stack i 2 + + *u 1 + *u , L2491 printf ) "
-; Expanded expression: " stack (@-4) *(2) 2 + 4 * + 2 + *(2)  L2491  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2491:
-    db  "    movzx   cx, byte [bp%+d]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( + *(@-4) 2 * ax 4 + stack ax + ax 2 *(2) ax , L2491 , printf )4 "
-    mov     ax, [bp-4]
-    add     ax, 2
-    imul    ax, ax, 4
-    mov     cx, ax
-    mov     ax, _stack
-    add     ax, cx
-    add     ax, 2
-    mov     bx, ax
-    push    word [bx]
-    push    L2491
-    call    _printf
-    sub     sp, -4
-L2488:
-; RPN'ized expression: "( instr , L2493 printf ) "
-; Expanded expression: " (@-10) *(2)  L2493  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2493:
-    db  "    %-4s    cx",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@-10) , L2493 , printf )4 "
-    push    word [bp-10]
-    push    L2493
-    call    _printf
-    sub     sp, -4
-; }
-    jmp     L2486
-L2485:
-; else
-; if
-; RPN'ized expression: "v 16 % 2 == "
-; Expanded expression: "(@-8) *(2) 16 % 2 == "
-; Fused expression:    "% *(@-8) 16 == ax 2 IF! "
     mov     ax, [bp-8]
     cwd
     mov     cx, 16
     idiv    cx
     mov     ax, dx
-    cmp     ax, 2
-    jne     L2495
-; RPN'ized expression: "( stack i 2 + + *u 1 + *u , instr , L2497 printf ) "
-; Expanded expression: " stack (@-4) *(2) 2 + 4 * + 2 + *(2)  (@-10) *(2)  L2497  printf ()6 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2497:
-    db  "    %-4s    word [bp%+d]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( + *(@-4) 2 * ax 4 + stack ax + ax 2 *(2) ax , *(2) (@-10) , L2497 , printf )6 "
+    push    ax
+    call    _GenReadCRegLocal
+    sub     sp, -4
+; RPN'ized expression: "( 0 , 5 , 0 , instr GenPrintInstr1Operand ) "
+; Expanded expression: " 0  5  0  (@-10) *(2)  GenPrintInstr1Operand ()8 "
+; Fused expression:    "( 0 , 5 , 0 , *(2) (@-10) , GenPrintInstr1Operand )8 "
+    push    0
+    push    5
+    push    0
+    push    word [bp-10]
+    call    _GenPrintInstr1Operand
+    sub     sp, -8
+; }
+    jmp     L2359
+L2358:
+; else
+; {
+; RPN'ized expression: "( stack i 2 + + *u 1 + *u , 20 , 0 , instr GenPrintInstr1Operand ) "
+; Expanded expression: " stack (@-4) *(2) 2 + 4 * + 2 + *(2)  20  0  (@-10) *(2)  GenPrintInstr1Operand ()8 "
+; Fused expression:    "( + *(@-4) 2 * ax 4 + stack ax + ax 2 *(2) ax , 20 , 0 , *(2) (@-10) , GenPrintInstr1Operand )8 "
     mov     ax, [bp-4]
     add     ax, 2
     imul    ax, ax, 4
@@ -19479,94 +19835,92 @@ SEGMENT _TEXT
     add     ax, 2
     mov     bx, ax
     push    word [bx]
+    push    20
+    push    0
     push    word [bp-10]
-    push    L2497
-    call    _printf
-    sub     sp, -6
-L2495:
-L2486:
-; break
-    jmp     L2437
+    call    _GenPrintInstr1Operand
+    sub     sp, -8
 ; }
-    jmp     L2437
-L2483:
-L2437:
+L2359:
+; }
+    jmp     L2338
+L2356:
+L2338:
 ; if
 ; RPN'ized expression: "tok 37 == tok 67 == || "
-; Expanded expression: "(@-6) *(2) 37 == _Bool [sh||->2501] (@-6) *(2) 67 == _Bool ||[2501] "
-; Fused expression:    "== *(@-6) 37 _Bool [sh||->2501] == *(@-6) 67 _Bool ||[2501] "
+; Expanded expression: "(@-6) *(2) 37 == _Bool [sh||->2362] (@-6) *(2) 67 == _Bool ||[2362] "
+; Fused expression:    "== *(@-6) 37 _Bool [sh||->2362] == *(@-6) 67 _Bool ||[2362] "
     mov     ax, [bp-6]
     cmp     ax, 37
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L2501
+    jne     L2362
     mov     ax, [bp-6]
     cmp     ax, 67
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L2501:
+L2362:
 ; JumpIfZero
     test    ax, ax
-    jz      L2499
-; RPN'ized expression: "( L2502 printf ) "
-; Expanded expression: " L2502  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2502:
-    db  "    mov     ax, dx",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2502 , printf )2 "
-    push    L2502
-    call    _printf
-    sub     sp, -2
-L2499:
+    je      L2360
+; RPN'ized expression: "( 0 , 6 , 0 , 3 , 0 , 0 GenPrintInstr2Operands ) "
+; Expanded expression: " 0  6  0  3  0  0  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( 0 , 6 , 0 , 3 , 0 , 0 , GenPrintInstr2Operands )12 "
+    push    0
+    push    6
+    push    0
+    push    3
+    push    0
+    push    0
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+L2360:
 ; break
-    jmp     L2119
+    jmp     L2184
 ; case
 ; RPN'ized expression: "4 "
 ; Expanded expression: "4 "
 ; Expression value: 4
-    jmp     L2434
-L2433:
+    jmp     L2337
+L2336:
     cmp     ax, 4
-    jne     L2504
-L2434:
+    jne     L2363
+L2337:
 ; case
 ; RPN'ized expression: "5 "
 ; Expanded expression: "5 "
 ; Expression value: 5
-    jmp     L2505
-L2504:
+    jmp     L2364
+L2363:
     cmp     ax, 5
-    jne     L2506
-L2505:
+    jne     L2365
+L2364:
 ; case
 ; RPN'ized expression: "70 "
 ; Expanded expression: "70 "
 ; Expression value: 70
-    jmp     L2507
-L2506:
+    jmp     L2366
+L2365:
     cmp     ax, 70
-    jne     L2508
-L2507:
+    jne     L2367
+L2366:
 ; case
 ; RPN'ized expression: "71 "
 ; Expanded expression: "71 "
 ; Expression value: 71
-    jmp     L2509
-L2508:
+    jmp     L2368
+L2367:
     cmp     ax, 71
-    jne     L2510
-L2509:
+    jne     L2369
+L2368:
 ; RPN'ized expression: "instr ( tok GenGetBinaryOperatorInstr ) = "
 ; Expanded expression: "(@-10)  (@-6) *(2)  GenGetBinaryOperatorInstr ()2 =(2) "
 ; Fused expression:    "( *(2) (@-6) , GenGetBinaryOperatorInstr )2 =(34) *(@-10) ax "
@@ -19587,26 +19941,20 @@ L2509:
     add     ax, 0
     mov     bx, ax
     mov     ax, [bx]
-    jmp     L2514
+    jmp     L2373
 ; {
 ; case
 ; RPN'ized expression: "256 "
 ; Expanded expression: "256 "
 ; Expression value: 256
-    jmp     L2515
-L2514:
+    jmp     L2374
+L2373:
     cmp     ax, 256
-    jne     L2516
-L2515:
-; RPN'ized expression: "( stack i 2 + + *u 1 + *u , instr , L2518 printf ) "
-; Expanded expression: " stack (@-4) *(2) 2 + 4 * + 2 + *(2)  (@-10) *(2)  L2518  printf ()6 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2518:
-    db  "    %-4s    ax, %d",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( + *(@-4) 2 * ax 4 + stack ax + ax 2 *(2) ax , *(2) (@-10) , L2518 , printf )6 "
+    jne     L2375
+L2374:
+; RPN'ized expression: "( stack i 2 + + *u 1 + *u , 11 , 0 , 3 , 0 , instr GenPrintInstr2Operands ) "
+; Expanded expression: " stack (@-4) *(2) 2 + 4 * + 2 + *(2)  11  0  3  0  (@-10) *(2)  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( + *(@-4) 2 * ax 4 + stack ax + ax 2 *(2) ax , 11 , 0 , 3 , 0 , *(2) (@-10) , GenPrintInstr2Operands )12 "
     mov     ax, [bp-4]
     add     ax, 2
     imul    ax, ax, 4
@@ -19616,37 +19964,27 @@ SEGMENT _TEXT
     add     ax, 2
     mov     bx, ax
     push    word [bx]
+    push    11
+    push    0
+    push    3
+    push    0
     push    word [bp-10]
-    push    L2518
-    call    _printf
-    sub     sp, -6
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
 ; break
-    jmp     L2512
+    jmp     L2371
 ; case
 ; RPN'ized expression: "257 "
 ; Expanded expression: "257 "
 ; Expression value: 257
-    jmp     L2517
-L2516:
+    jmp     L2376
+L2375:
     cmp     ax, 257
-    jne     L2520
-L2517:
-; RPN'ized expression: "( instr , L2522 printf ) "
-; Expanded expression: " (@-10) *(2)  L2522  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2522:
-    db  "    %-4s    ax, ",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@-10) , L2522 , printf )4 "
-    push    word [bp-10]
-    push    L2522
-    call    _printf
-    sub     sp, -4
-; RPN'ized expression: "( IdentTable stack i 2 + + *u 1 + *u + GenPrintLabel ) "
-; Expanded expression: " IdentTable stack (@-4) *(2) 2 + 4 * + 2 + *(2) +  GenPrintLabel ()2 "
-; Fused expression:    "( + *(@-4) 2 * ax 4 + stack ax + ax 2 + IdentTable *ax , GenPrintLabel )2 "
+    jne     L2377
+L2376:
+; RPN'ized expression: "( stack i 2 + + *u 1 + *u , 12 , 0 , 3 , 0 , instr GenPrintInstr2Operands ) "
+; Expanded expression: " stack (@-4) *(2) 2 + 4 * + 2 + *(2)  12  0  3  0  (@-10) *(2)  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( + *(@-4) 2 * ax 4 + stack ax + ax 2 *(2) ax , 12 , 0 , 3 , 0 , *(2) (@-10) , GenPrintInstr2Operands )12 "
     mov     ax, [bp-4]
     add     ax, 2
     imul    ax, ax, 4
@@ -19655,45 +19993,28 @@ SEGMENT _TEXT
     add     ax, cx
     add     ax, 2
     mov     bx, ax
-    mov     cx, [bx]
-    mov     ax, _IdentTable
-    add     ax, cx
-    push    ax
-    call    _GenPrintLabel
-    sub     sp, -2
-; RPN'ized expression: "( L2524 printf ) "
-; Expanded expression: " L2524  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2524:
-    db  10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2524 , printf )2 "
-    push    L2524
-    call    _printf
-    sub     sp, -2
+    push    word [bx]
+    push    12
+    push    0
+    push    3
+    push    0
+    push    word [bp-10]
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
 ; break
-    jmp     L2512
+    jmp     L2371
 ; case
 ; RPN'ized expression: "258 "
 ; Expanded expression: "258 "
 ; Expression value: 258
-    jmp     L2521
-L2520:
+    jmp     L2378
+L2377:
     cmp     ax, 258
-    jne     L2526
-L2521:
-; RPN'ized expression: "( instr , stack i 2 + + *u 1 + *u , L2528 printf ) "
-; Expanded expression: " (@-10) *(2)  stack (@-4) *(2) 2 + 4 * + 2 + *(2)  L2528  printf ()6 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2528:
-    db  "    lea     cx, [bp%+d]",10,"    %-4s    ax, cl",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@-10) , + *(@-4) 2 * ax 4 + stack ax + ax 2 *(2) ax , L2528 , printf )6 "
-    push    word [bp-10]
+    jne     L2379
+L2378:
+; RPN'ized expression: "( stack i 2 + + *u 1 + *u , 18 , 0 , 5 , 0 , 4 GenPrintInstr2Operands ) "
+; Expanded expression: " stack (@-4) *(2) 2 + 4 * + 2 + *(2)  18  0  5  0  4  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( + *(@-4) 2 * ax 4 + stack ax + ax 2 *(2) ax , 18 , 0 , 5 , 0 , 4 , GenPrintInstr2Operands )12 "
     mov     ax, [bp-4]
     add     ax, 2
     imul    ax, ax, 4
@@ -19703,128 +20024,69 @@ SEGMENT _TEXT
     add     ax, 2
     mov     bx, ax
     push    word [bx]
-    push    L2528
-    call    _printf
-    sub     sp, -6
+    push    18
+    push    0
+    push    5
+    push    0
+    push    4
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+; RPN'ized expression: "( 0 , 2 , 0 , 3 , 0 , instr GenPrintInstr2Operands ) "
+; Expanded expression: " 0  2  0  3  0  (@-10) *(2)  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( 0 , 2 , 0 , 3 , 0 , *(2) (@-10) , GenPrintInstr2Operands )12 "
+    push    0
+    push    2
+    push    0
+    push    3
+    push    0
+    push    word [bp-10]
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
 ; break
-    jmp     L2512
+    jmp     L2371
 ; case
 ; RPN'ized expression: "259 "
 ; Expanded expression: "259 "
 ; Expression value: 259
-    jmp     L2527
-L2526:
+    jmp     L2380
+L2379:
     cmp     ax, 259
-    jne     L2530
-L2527:
+    jne     L2381
+L2380:
 ; case
 ; RPN'ized expression: "262 "
 ; Expanded expression: "262 "
 ; Expression value: 262
-    jmp     L2531
-L2530:
+    jmp     L2382
+L2381:
     cmp     ax, 262
-    jne     L2532
-L2531:
-; RPN'ized expression: "( instr , L2534 printf ) "
-; Expanded expression: " (@-10) *(2)  L2534  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2534:
-    db  "    %-4s    ax, cl",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@-10) , L2534 , printf )4 "
+    jne     L2383
+L2382:
+; RPN'ized expression: "( 0 , 2 , 0 , 3 , 0 , instr GenPrintInstr2Operands ) "
+; Expanded expression: " 0  2  0  3  0  (@-10) *(2)  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( 0 , 2 , 0 , 3 , 0 , *(2) (@-10) , GenPrintInstr2Operands )12 "
+    push    0
+    push    2
+    push    0
+    push    3
+    push    0
     push    word [bp-10]
-    push    L2534
-    call    _printf
-    sub     sp, -4
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
 ; break
-    jmp     L2512
+    jmp     L2371
 ; case
 ; RPN'ized expression: "260 "
 ; Expanded expression: "260 "
 ; Expression value: 260
-    jmp     L2533
-L2532:
+    jmp     L2384
+L2383:
     cmp     ax, 260
-    jne     L2536
-L2533:
-; RPN'ized expression: "( L2538 printf ) "
-; Expanded expression: " L2538  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2538:
-    db  "    mov     cl, [",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2538 , printf )2 "
-    push    L2538
-    call    _printf
-    sub     sp, -2
-; RPN'ized expression: "( IdentTable stack i 2 + + *u 1 + *u + GenPrintLabel ) "
-; Expanded expression: " IdentTable stack (@-4) *(2) 2 + 4 * + 2 + *(2) +  GenPrintLabel ()2 "
-; Fused expression:    "( + *(@-4) 2 * ax 4 + stack ax + ax 2 + IdentTable *ax , GenPrintLabel )2 "
-    mov     ax, [bp-4]
-    add     ax, 2
-    imul    ax, ax, 4
-    mov     cx, ax
-    mov     ax, _stack
-    add     ax, cx
-    add     ax, 2
-    mov     bx, ax
-    mov     cx, [bx]
-    mov     ax, _IdentTable
-    add     ax, cx
-    push    ax
-    call    _GenPrintLabel
-    sub     sp, -2
-; RPN'ized expression: "( L2540 printf ) "
-; Expanded expression: " L2540  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2540:
-    db  "]",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2540 , printf )2 "
-    push    L2540
-    call    _printf
-    sub     sp, -2
-; RPN'ized expression: "( instr , L2542 printf ) "
-; Expanded expression: " (@-10) *(2)  L2542  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2542:
-    db  "    %-4s    ax, cl",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@-10) , L2542 , printf )4 "
-    push    word [bp-10]
-    push    L2542
-    call    _printf
-    sub     sp, -4
-; break
-    jmp     L2512
-; case
-; RPN'ized expression: "261 "
-; Expanded expression: "261 "
-; Expression value: 261
-    jmp     L2537
-L2536:
-    cmp     ax, 261
-    jne     L2544
-L2537:
-; RPN'ized expression: "( instr , stack i 2 + + *u 1 + *u , L2546 printf ) "
-; Expanded expression: " (@-10) *(2)  stack (@-4) *(2) 2 + 4 * + 2 + *(2)  L2546  printf ()6 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2546:
-    db  "    mov     cl, [bp%+d]",10,"    %-4s    ax, cl",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( *(2) (@-10) , + *(@-4) 2 * ax 4 + stack ax + ax 2 *(2) ax , L2546 , printf )6 "
-    push    word [bp-10]
+    jne     L2385
+L2384:
+; RPN'ized expression: "( stack i 2 + + *u 1 + *u , 14 , 0 , 2 , 0 , 0 GenPrintInstr2Operands ) "
+; Expanded expression: " stack (@-4) *(2) 2 + 4 * + 2 + *(2)  14  0  2  0  0  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( + *(@-4) 2 * ax 4 + stack ax + ax 2 *(2) ax , 14 , 0 , 2 , 0 , 0 , GenPrintInstr2Operands )12 "
     mov     ax, [bp-4]
     add     ax, 2
     imul    ax, ax, 4
@@ -19834,159 +20096,215 @@ SEGMENT _TEXT
     add     ax, 2
     mov     bx, ax
     push    word [bx]
-    push    L2546
-    call    _printf
-    sub     sp, -6
+    push    14
+    push    0
+    push    2
+    push    0
+    push    0
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+; RPN'ized expression: "( 0 , 2 , 0 , 3 , 0 , instr GenPrintInstr2Operands ) "
+; Expanded expression: " 0  2  0  3  0  (@-10) *(2)  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( 0 , 2 , 0 , 3 , 0 , *(2) (@-10) , GenPrintInstr2Operands )12 "
+    push    0
+    push    2
+    push    0
+    push    3
+    push    0
+    push    word [bp-10]
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
 ; break
-    jmp     L2512
+    jmp     L2371
+; case
+; RPN'ized expression: "261 "
+; Expanded expression: "261 "
+; Expression value: 261
+    jmp     L2386
+L2385:
+    cmp     ax, 261
+    jne     L2387
+L2386:
+; RPN'ized expression: "( stack i 2 + + *u 1 + *u , 18 , 0 , 2 , 0 , 0 GenPrintInstr2Operands ) "
+; Expanded expression: " stack (@-4) *(2) 2 + 4 * + 2 + *(2)  18  0  2  0  0  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( + *(@-4) 2 * ax 4 + stack ax + ax 2 *(2) ax , 18 , 0 , 2 , 0 , 0 , GenPrintInstr2Operands )12 "
+    mov     ax, [bp-4]
+    add     ax, 2
+    imul    ax, ax, 4
+    mov     cx, ax
+    mov     ax, _stack
+    add     ax, cx
+    add     ax, 2
+    mov     bx, ax
+    push    word [bx]
+    push    18
+    push    0
+    push    2
+    push    0
+    push    0
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+; RPN'ized expression: "( 0 , 2 , 0 , 3 , 0 , instr GenPrintInstr2Operands ) "
+; Expanded expression: " 0  2  0  3  0  (@-10) *(2)  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( 0 , 2 , 0 , 3 , 0 , *(2) (@-10) , GenPrintInstr2Operands )12 "
+    push    0
+    push    2
+    push    0
+    push    3
+    push    0
+    push    word [bp-10]
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
+; break
+    jmp     L2371
 ; }
-    jmp     L2512
-L2544:
-L2512:
+    jmp     L2371
+L2387:
+L2371:
 ; break
-    jmp     L2119
+    jmp     L2184
 ; case
 ; RPN'ized expression: "61 "
 ; Expanded expression: "61 "
 ; Expression value: 61
-    jmp     L2511
-L2510:
+    jmp     L2370
+L2369:
     cmp     ax, 61
-    jne     L2548
-L2511:
+    jne     L2389
+L2370:
 ; break
-    jmp     L2119
+    jmp     L2184
 ; default
-L2120:
-; RPN'ized expression: "( ( tok GetTokenName ) , L2550 error ) "
-; Expanded expression: "  (@-6) *(2)  GetTokenName ()2  L2550  error ()4 "
+L2185:
+; RPN'ized expression: "( ( tok GetTokenName ) , L2391 error ) "
+; Expanded expression: "  (@-6) *(2)  GetTokenName ()2  L2391  error ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L2550:
+L2391:
     db  "WTF?! unexpected token %s",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( ( *(2) (@-6) , GetTokenName )2 , L2550 , error )4 "
+; Fused expression:    "( ( *(2) (@-6) , GetTokenName )2 , L2391 , error )4 "
     push    word [bp-6]
     call    _GetTokenName
     sub     sp, -2
     push    ax
-    push    L2550
+    push    L2391
     call    _error
     sub     sp, -4
 ; break
-    jmp     L2119
+    jmp     L2184
 ; }
-    jmp     L2119
-L2548:
-    jmp     L2120
-L2119:
+    jmp     L2184
+L2389:
+    jmp     L2185
+L2184:
 ; switch
 ; RPN'ized expression: "tok "
 ; Expanded expression: "(@-6) *(2) "
 ; Fused expression:    "*(2) (@-6) "
     mov     ax, [bp-6]
-    jmp     L2554
+    jmp     L2395
 ; {
 ; case
 ; RPN'ized expression: "61 "
 ; Expanded expression: "61 "
 ; Expression value: 61
-    jmp     L2555
-L2554:
+    jmp     L2396
+L2395:
     cmp     ax, 61
-    jne     L2556
-L2555:
+    jne     L2397
+L2396:
 ; case
 ; RPN'ized expression: "68 "
 ; Expanded expression: "68 "
 ; Expression value: 68
-    jmp     L2557
-L2556:
+    jmp     L2398
+L2397:
     cmp     ax, 68
-    jne     L2558
-L2557:
+    jne     L2399
+L2398:
 ; case
 ; RPN'ized expression: "69 "
 ; Expanded expression: "69 "
 ; Expression value: 69
-    jmp     L2559
-L2558:
+    jmp     L2400
+L2399:
     cmp     ax, 69
-    jne     L2560
-L2559:
+    jne     L2401
+L2400:
 ; case
 ; RPN'ized expression: "65 "
 ; Expanded expression: "65 "
 ; Expression value: 65
-    jmp     L2561
-L2560:
+    jmp     L2402
+L2401:
     cmp     ax, 65
-    jne     L2562
-L2561:
+    jne     L2403
+L2402:
 ; case
 ; RPN'ized expression: "66 "
 ; Expanded expression: "66 "
 ; Expression value: 66
-    jmp     L2563
-L2562:
+    jmp     L2404
+L2403:
     cmp     ax, 66
-    jne     L2564
-L2563:
+    jne     L2405
+L2404:
 ; case
 ; RPN'ized expression: "67 "
 ; Expanded expression: "67 "
 ; Expression value: 67
-    jmp     L2565
-L2564:
+    jmp     L2406
+L2405:
     cmp     ax, 67
-    jne     L2566
-L2565:
+    jne     L2407
+L2406:
 ; case
 ; RPN'ized expression: "70 "
 ; Expanded expression: "70 "
 ; Expression value: 70
-    jmp     L2567
-L2566:
+    jmp     L2408
+L2407:
     cmp     ax, 70
-    jne     L2568
-L2567:
+    jne     L2409
+L2408:
 ; case
 ; RPN'ized expression: "71 "
 ; Expanded expression: "71 "
 ; Expression value: 71
-    jmp     L2569
-L2568:
+    jmp     L2410
+L2409:
     cmp     ax, 71
-    jne     L2570
-L2569:
+    jne     L2411
+L2410:
 ; case
 ; RPN'ized expression: "72 "
 ; Expanded expression: "72 "
 ; Expression value: 72
-    jmp     L2571
-L2570:
+    jmp     L2412
+L2411:
     cmp     ax, 72
-    jne     L2572
-L2571:
+    jne     L2413
+L2412:
 ; case
 ; RPN'ized expression: "73 "
 ; Expanded expression: "73 "
 ; Expression value: 73
-    jmp     L2573
-L2572:
+    jmp     L2414
+L2413:
     cmp     ax, 73
-    jne     L2574
-L2573:
+    jne     L2415
+L2414:
 ; case
 ; RPN'ized expression: "74 "
 ; Expanded expression: "74 "
 ; Expression value: 74
-    jmp     L2575
-L2574:
+    jmp     L2416
+L2415:
     cmp     ax, 74
-    jne     L2576
-L2575:
+    jne     L2417
+L2416:
 ; switch
 ; RPN'ized expression: "stack i 1 + + *u 0 + *u "
 ; Expanded expression: "stack (@-4) *(2) 1 + 4 * + 0 + *(2) "
@@ -20000,32 +20318,30 @@ L2575:
     add     ax, 0
     mov     bx, ax
     mov     ax, [bx]
-    jmp     L2580
+    jmp     L2421
 ; {
 ; case
 ; RPN'ized expression: "260 "
 ; Expanded expression: "260 "
 ; Expression value: 260
-    jmp     L2581
-L2580:
+    jmp     L2422
+L2421:
     cmp     ax, 260
-    jne     L2582
-L2581:
-; RPN'ized expression: "( L2584 printf ) "
-; Expanded expression: " L2584  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2584:
-    db  "    mov     [",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2584 , printf )2 "
-    push    L2584
-    call    _printf
-    sub     sp, -2
-; RPN'ized expression: "( IdentTable stack i 1 + + *u 1 + *u + GenPrintLabel ) "
-; Expanded expression: " IdentTable stack (@-4) *(2) 1 + 4 * + 2 + *(2) +  GenPrintLabel ()2 "
-; Fused expression:    "( + *(@-4) 1 * ax 4 + stack ax + ax 2 + IdentTable *ax , GenPrintLabel )2 "
+    jne     L2423
+L2422:
+; RPN'ized expression: "( 0 , ( v 16 / , 9 GenSelectByteOrWord ) , stack i 1 + + *u 1 + *u , 14 , 0 , 0 GenPrintInstr2Operands ) "
+; Expanded expression: " 0   (@-8) *(2) 16 /  9  GenSelectByteOrWord ()4  stack (@-4) *(2) 1 + 4 * + 2 + *(2)  14  0  0  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( 0 , ( / *(@-8) 16 , 9 , GenSelectByteOrWord )4 , + *(@-4) 1 * ax 4 + stack ax + ax 2 *(2) ax , 14 , 0 , 0 , GenPrintInstr2Operands )12 "
+    push    0
+    mov     ax, [bp-8]
+    cwd
+    mov     cx, 16
+    idiv    cx
+    push    ax
+    push    9
+    call    _GenSelectByteOrWord
+    sub     sp, -4
+    push    ax
     mov     ax, [bp-4]
     add     ax, 1
     imul    ax, ax, 4
@@ -20034,103 +20350,36 @@ SEGMENT _TEXT
     add     ax, cx
     add     ax, 2
     mov     bx, ax
-    mov     cx, [bx]
-    mov     ax, _IdentTable
-    add     ax, cx
-    push    ax
-    call    _GenPrintLabel
-    sub     sp, -2
-; RPN'ized expression: "( L2586 printf ) "
-; Expanded expression: " L2586  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2586:
-    db  "]",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2586 , printf )2 "
-    push    L2586
-    call    _printf
-    sub     sp, -2
-; if
-; RPN'ized expression: "v 16 / 1 == "
-; Expanded expression: "(@-8) *(2) 16 / 1 == "
-; Fused expression:    "/ *(@-8) 16 == ax 1 IF! "
-    mov     ax, [bp-8]
-    cwd
-    mov     cx, 16
-    idiv    cx
-    cmp     ax, 1
-    jne     L2588
-; RPN'ized expression: "( L2590 printf ) "
-; Expanded expression: " L2590  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2590:
-    db  ", al",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2590 , printf )2 "
-    push    L2590
-    call    _printf
-    sub     sp, -2
-    jmp     L2589
-L2588:
-; else
-; if
-; RPN'ized expression: "v 16 / 2 == "
-; Expanded expression: "(@-8) *(2) 16 / 2 == "
-; Fused expression:    "/ *(@-8) 16 == ax 2 IF! "
-    mov     ax, [bp-8]
-    cwd
-    mov     cx, 16
-    idiv    cx
-    cmp     ax, 2
-    jne     L2592
-; RPN'ized expression: "( L2594 printf ) "
-; Expanded expression: " L2594  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2594:
-    db  ", ax",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2594 , printf )2 "
-    push    L2594
-    call    _printf
-    sub     sp, -2
-L2592:
-L2589:
+    push    word [bx]
+    push    14
+    push    0
+    push    0
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
 ; break
-    jmp     L2578
+    jmp     L2419
 ; case
 ; RPN'ized expression: "261 "
 ; Expanded expression: "261 "
 ; Expression value: 261
-    jmp     L2583
-L2582:
+    jmp     L2424
+L2423:
     cmp     ax, 261
-    jne     L2596
-L2583:
-; if
-; RPN'ized expression: "v 16 / 1 == "
-; Expanded expression: "(@-8) *(2) 16 / 1 == "
-; Fused expression:    "/ *(@-8) 16 == ax 1 IF! "
+    jne     L2425
+L2424:
+; RPN'ized expression: "( 0 , ( v 16 / , 9 GenSelectByteOrWord ) , stack i 1 + + *u 1 + *u , 18 , 0 , 0 GenPrintInstr2Operands ) "
+; Expanded expression: " 0   (@-8) *(2) 16 /  9  GenSelectByteOrWord ()4  stack (@-4) *(2) 1 + 4 * + 2 + *(2)  18  0  0  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( 0 , ( / *(@-8) 16 , 9 , GenSelectByteOrWord )4 , + *(@-4) 1 * ax 4 + stack ax + ax 2 *(2) ax , 18 , 0 , 0 , GenPrintInstr2Operands )12 "
+    push    0
     mov     ax, [bp-8]
     cwd
     mov     cx, 16
     idiv    cx
-    cmp     ax, 1
-    jne     L2598
-; RPN'ized expression: "( stack i 1 + + *u 1 + *u , L2600 printf ) "
-; Expanded expression: " stack (@-4) *(2) 1 + 4 * + 2 + *(2)  L2600  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2600:
-    db  "    mov     [bp%+d], al",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( + *(@-4) 1 * ax 4 + stack ax + ax 2 *(2) ax , L2600 , printf )4 "
+    push    ax
+    push    9
+    call    _GenSelectByteOrWord
+    sub     sp, -4
+    push    ax
     mov     ax, [bp-4]
     add     ax, 1
     imul    ax, ax, 4
@@ -20140,139 +20389,70 @@ SEGMENT _TEXT
     add     ax, 2
     mov     bx, ax
     push    word [bx]
-    push    L2600
-    call    _printf
-    sub     sp, -4
-    jmp     L2599
-L2598:
-; else
-; if
-; RPN'ized expression: "v 16 / 2 == "
-; Expanded expression: "(@-8) *(2) 16 / 2 == "
-; Fused expression:    "/ *(@-8) 16 == ax 2 IF! "
-    mov     ax, [bp-8]
-    cwd
-    mov     cx, 16
-    idiv    cx
-    cmp     ax, 2
-    jne     L2602
-; RPN'ized expression: "( stack i 1 + + *u 1 + *u , L2604 printf ) "
-; Expanded expression: " stack (@-4) *(2) 1 + 4 * + 2 + *(2)  L2604  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2604:
-    db  "    mov     [bp%+d], ax",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( + *(@-4) 1 * ax 4 + stack ax + ax 2 *(2) ax , L2604 , printf )4 "
-    mov     ax, [bp-4]
-    add     ax, 1
-    imul    ax, ax, 4
-    mov     cx, ax
-    mov     ax, _stack
-    add     ax, cx
-    add     ax, 2
-    mov     bx, ax
-    push    word [bx]
-    push    L2604
-    call    _printf
-    sub     sp, -4
-L2602:
-L2599:
+    push    18
+    push    0
+    push    0
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
 ; break
-    jmp     L2578
+    jmp     L2419
 ; case
 ; RPN'ized expression: "262 "
 ; Expanded expression: "262 "
 ; Expression value: 262
-    jmp     L2597
-L2596:
+    jmp     L2426
+L2425:
     cmp     ax, 262
-    jne     L2606
-L2597:
+    jne     L2427
+L2426:
 ; case
 ; RPN'ized expression: "264 "
 ; Expanded expression: "264 "
 ; Expression value: 264
-    jmp     L2607
-L2606:
+    jmp     L2428
+L2427:
     cmp     ax, 264
-    jne     L2608
-L2607:
-; if
-; RPN'ized expression: "v 16 / 1 == "
-; Expanded expression: "(@-8) *(2) 16 / 1 == "
-; Fused expression:    "/ *(@-8) 16 == ax 1 IF! "
+    jne     L2429
+L2428:
+; RPN'ized expression: "( 0 , ( v 16 / , 9 GenSelectByteOrWord ) , 0 , 22 , 0 , 0 GenPrintInstr2Operands ) "
+; Expanded expression: " 0   (@-8) *(2) 16 /  9  GenSelectByteOrWord ()4  0  22  0  0  GenPrintInstr2Operands ()12 "
+; Fused expression:    "( 0 , ( / *(@-8) 16 , 9 , GenSelectByteOrWord )4 , 0 , 22 , 0 , 0 , GenPrintInstr2Operands )12 "
+    push    0
     mov     ax, [bp-8]
     cwd
     mov     cx, 16
     idiv    cx
-    cmp     ax, 1
-    jne     L2610
-; RPN'ized expression: "( L2612 printf ) "
-; Expanded expression: " L2612  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2612:
-    db  "    mov     [bx], al",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2612 , printf )2 "
-    push    L2612
-    call    _printf
-    sub     sp, -2
-    jmp     L2611
-L2610:
-; else
-; if
-; RPN'ized expression: "v 16 / 2 == "
-; Expanded expression: "(@-8) *(2) 16 / 2 == "
-; Fused expression:    "/ *(@-8) 16 == ax 2 IF! "
-    mov     ax, [bp-8]
-    cwd
-    mov     cx, 16
-    idiv    cx
-    cmp     ax, 2
-    jne     L2614
-; RPN'ized expression: "( L2616 printf ) "
-; Expanded expression: " L2616  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2616:
-    db  "    mov     [bx], ax",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2616 , printf )2 "
-    push    L2616
-    call    _printf
-    sub     sp, -2
-L2614:
-L2611:
+    push    ax
+    push    9
+    call    _GenSelectByteOrWord
+    sub     sp, -4
+    push    ax
+    push    0
+    push    22
+    push    0
+    push    0
+    call    _GenPrintInstr2Operands
+    sub     sp, -12
 ; break
-    jmp     L2578
+    jmp     L2419
 ; }
-    jmp     L2578
-L2608:
-L2578:
-; if
-; RPN'ized expression: "v 16 / 1 == "
-; Expanded expression: "(@-8) *(2) 16 / 1 == "
-; Fused expression:    "/ *(@-8) 16 == ax 1 IF! "
+    jmp     L2419
+L2429:
+L2419:
+; RPN'ized expression: "( v 16 / GenExtendRegAIfNeeded ) "
+; Expanded expression: " (@-8) *(2) 16 /  GenExtendRegAIfNeeded ()2 "
+; Fused expression:    "( / *(@-8) 16 , GenExtendRegAIfNeeded )2 "
     mov     ax, [bp-8]
     cwd
     mov     cx, 16
     idiv    cx
-    cmp     ax, 1
-    jne     L2618
-; RPN'ized expression: "( GenExtendAlAx ) "
-; Expanded expression: " GenExtendAlAx ()0 "
-; Fused expression:    "( GenExtendAlAx )0 "
-    call    _GenExtendAlAx
-L2618:
+    push    ax
+    call    _GenExtendRegAIfNeeded
+    sub     sp, -2
 ; }
-    jmp     L2552
-L2576:
-L2552:
+    jmp     L2393
+L2417:
+L2393:
 ; RPN'ized expression: "i 2 += "
 ; Expanded expression: "(@-4) 2 +=(2) "
 ; Fused expression:    "+=(34) *(@-4) 2 "
@@ -20280,16 +20460,16 @@ L2552:
     add     ax, 2
     mov     [bp-4], ax
 ; break
-    jmp     L1801
+    jmp     L1968
 ; case
 ; RPN'ized expression: "41 "
 ; Expanded expression: "41 "
 ; Expression value: 41
-    jmp     L2012
-L2011:
+    jmp     L2147
+L2146:
     cmp     ax, 41
-    jne     L2620
-L2012:
+    jne     L2431
+L2147:
 ; if
 ; RPN'ized expression: "stack i 1 - + *u 0 + *u 16 == "
 ; Expanded expression: "stack (@-4) *(2) 1 - 4 * + 0 + *(2) 16 == "
@@ -20304,23 +20484,11 @@ L2012:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 16
-    jne     L2622
+    jne     L2433
 ; {
-; RPN'ized expression: "( L2624 printf ) "
-; Expanded expression: " L2624  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2624:
-    db  "    call    ",0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2624 , printf )2 "
-    push    L2624
-    call    _printf
-    sub     sp, -2
-; RPN'ized expression: "( IdentTable stack i 1 - + *u 1 + *u + GenPrintLabel ) "
-; Expanded expression: " IdentTable stack (@-4) *(2) 1 - 4 * + 2 + *(2) +  GenPrintLabel ()2 "
-; Fused expression:    "( - *(@-4) 1 * ax 4 + stack ax + ax 2 + IdentTable *ax , GenPrintLabel )2 "
+; RPN'ized expression: "( stack i 1 - + *u 1 + *u , 12 , 0 , 29 GenPrintInstr1Operand ) "
+; Expanded expression: " stack (@-4) *(2) 1 - 4 * + 2 + *(2)  12  0  29  GenPrintInstr1Operand ()8 "
+; Fused expression:    "( - *(@-4) 1 * ax 4 + stack ax + ax 2 *(2) ax , 12 , 0 , 29 , GenPrintInstr1Operand )8 "
     mov     ax, [bp-4]
     sub     ax, 1
     imul    ax, ax, 4
@@ -20329,43 +20497,28 @@ SEGMENT _TEXT
     add     ax, cx
     add     ax, 2
     mov     bx, ax
-    mov     cx, [bx]
-    mov     ax, _IdentTable
-    add     ax, cx
-    push    ax
-    call    _GenPrintLabel
-    sub     sp, -2
-; RPN'ized expression: "( L2626 printf ) "
-; Expanded expression: " L2626  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2626:
-    db  10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2626 , printf )2 "
-    push    L2626
-    call    _printf
-    sub     sp, -2
+    push    word [bx]
+    push    12
+    push    0
+    push    29
+    call    _GenPrintInstr1Operand
+    sub     sp, -8
 ; }
-    jmp     L2623
-L2622:
+    jmp     L2434
+L2433:
 ; else
 ; {
-; RPN'ized expression: "( L2628 printf ) "
-; Expanded expression: " L2628  printf ()2 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L2628:
-    db  "    call    ax",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( L2628 , printf )2 "
-    push    L2628
-    call    _printf
-    sub     sp, -2
+; RPN'ized expression: "( 0 , 3 , 0 , 29 GenPrintInstr1Operand ) "
+; Expanded expression: " 0  3  0  29  GenPrintInstr1Operand ()8 "
+; Fused expression:    "( 0 , 3 , 0 , 29 , GenPrintInstr1Operand )8 "
+    push    0
+    push    3
+    push    0
+    push    29
+    call    _GenPrintInstr1Operand
+    sub     sp, -8
 ; }
-L2623:
+L2434:
 ; if
 ; RPN'ized expression: "v "
 ; Expanded expression: "(@-8) *(2) "
@@ -20373,7 +20526,7 @@ L2623:
     mov     ax, [bp-8]
 ; JumpIfZero
     test    ax, ax
-    jz      L2630
+    je      L2435
 ; RPN'ized expression: "( v -u GenLocalAlloc ) "
 ; Expanded expression: " (@-8) *(2) -u  GenLocalAlloc ()2 "
 ; Fused expression:    "( *(2) (@-8) -u , GenLocalAlloc )2 "
@@ -20382,68 +20535,68 @@ L2623:
     push    ax
     call    _GenLocalAlloc
     sub     sp, -2
-L2630:
+L2435:
 ; break
-    jmp     L1801
+    jmp     L1968
 ; case
 ; RPN'ized expression: "40 "
 ; Expanded expression: "40 "
 ; Expression value: 40
-    jmp     L2621
-L2620:
+    jmp     L2432
+L2431:
     cmp     ax, 40
-    jne     L2632
-L2621:
+    jne     L2437
+L2432:
 ; case
 ; RPN'ized expression: "22 "
 ; Expanded expression: "22 "
 ; Expression value: 22
-    jmp     L2633
-L2632:
+    jmp     L2438
+L2437:
     cmp     ax, 22
-    jne     L2634
-L2633:
+    jne     L2439
+L2438:
 ; case
 ; RPN'ized expression: "76 "
 ; Expanded expression: "76 "
 ; Expression value: 76
-    jmp     L2635
-L2634:
+    jmp     L2440
+L2439:
     cmp     ax, 76
-    jne     L2636
-L2635:
+    jne     L2441
+L2440:
 ; break
-    jmp     L1801
+    jmp     L1968
 ; default
-L1802:
-; RPN'ized expression: "( ( tok GetTokenName ) , L2638 error ) "
-; Expanded expression: "  (@-6) *(2)  GetTokenName ()2  L2638  error ()4 "
+L1969:
+; RPN'ized expression: "( ( tok GetTokenName ) , L2443 error ) "
+; Expanded expression: "  (@-6) *(2)  GetTokenName ()2  L2443  error ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L2638:
+L2443:
     db  "WTF?! unexpected token %s",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( ( *(2) (@-6) , GetTokenName )2 , L2638 , error )4 "
+; Fused expression:    "( ( *(2) (@-6) , GetTokenName )2 , L2443 , error )4 "
     push    word [bp-6]
     call    _GetTokenName
     sub     sp, -2
     push    ax
-    push    L2638
+    push    L2443
     call    _error
     sub     sp, -4
 ; break
-    jmp     L1801
+    jmp     L1968
 ; }
-    jmp     L1801
-L2636:
-    jmp     L1802
-L1801:
+    jmp     L1968
+L2441:
+    jmp     L1969
+L1968:
     sub     sp, -6
 ; }
-    jmp     L1798
-L1800:
-L1649:
+    jmp     L1965
+L1967:
+L1816:
     leave
     ret
 ; SEGMENT _TEXT
@@ -20464,22 +20617,22 @@ _GenStrData:
 ; Fused expression:    "=(34) *(@-2) 0 "
     mov     ax, 0
     mov     [bp-2], ax
-L2641:
+L2446:
 ; RPN'ized expression: "i sp < "
 ; Expanded expression: "(@-2) *(2) sp *(2) < "
 ; Fused expression:    "< *(@-2) *sp IF! "
     mov     ax, [bp-2]
     cmp     ax, [_sp]
-    jge     L2644
-    jmp     L2643
-L2642:
+    jge     L2449
+    jmp     L2448
+L2447:
 ; RPN'ized expression: "i ++p "
 ; Expanded expression: "(@-2) ++p(2) "
 ; Fused expression:    "++p(2) *(@-2) "
     mov     ax, [bp-2]
     inc     word [bp-2]
-    jmp     L2641
-L2643:
+    jmp     L2446
+L2448:
 ; {
 ; loc         tok : (@-4): int
     sub     sp, 2
@@ -20515,18 +20668,18 @@ L2643:
     mov     [bp-6], ax
 ; if
 ; RPN'ized expression: "tok 16 == ( p *u isdigit ) && "
-; Expanded expression: "(@-4) *(2) 16 == _Bool [sh&&->2647]  (@-6) *(2) *(1)  isdigit ()2 _Bool &&[2647] "
-; Fused expression:    "== *(@-4) 16 _Bool [sh&&->2647] ( *(2) (@-6) *(1) ax , isdigit )2 _Bool &&[2647] "
+; Expanded expression: "(@-4) *(2) 16 == _Bool [sh&&->2452]  (@-6) *(2) *(1)  isdigit ()2 _Bool &&[2452] "
+; Fused expression:    "== *(@-4) 16 _Bool [sh&&->2452] ( *(2) (@-6) *(1) ax , isdigit )2 _Bool &&[2452] "
     mov     ax, [bp-4]
     cmp     ax, 16
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L2647
+    je      L2452
     mov     ax, [bp-6]
     mov     bx, ax
     mov     al, [bx]
@@ -20535,12 +20688,12 @@ L2643:
     call    _isdigit
     sub     sp, -2
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L2647:
+L2452:
 ; JumpIfZero
     test    ax, ax
-    jz      L2645
+    je      L2450
 ; {
 ; loc             label : (@-8): int
     sub     sp, 2
@@ -20585,7 +20738,7 @@ L2647:
 ; Fused expression:    "== *OutputFormat 0 IF! "
     mov     ax, [_OutputFormat]
     cmp     ax, 0
-    jne     L2648
+    jne     L2453
 ; {
 ; if
 ; RPN'ized expression: "insertJump "
@@ -20594,7 +20747,7 @@ L2647:
     mov     ax, [bp+4]
 ; JumpIfZero
     test    ax, ax
-    jz      L2650
+    je      L2455
 ; RPN'ized expression: "( label 1 + GenJumpUncond ) "
 ; Expanded expression: " (@-8) *(2) 1 +  GenJumpUncond ()2 "
 ; Fused expression:    "( + *(@-8) 1 , GenJumpUncond )2 "
@@ -20603,10 +20756,10 @@ L2647:
     push    ax
     call    _GenJumpUncond
     sub     sp, -2
-L2650:
+L2455:
 ; }
-    jmp     L2649
-L2648:
+    jmp     L2454
+L2453:
 ; else
 ; {
 ; if
@@ -20616,14 +20769,14 @@ L2648:
     mov     ax, [bp+4]
 ; JumpIfZero
     test    ax, ax
-    jz      L2652
+    je      L2457
 ; RPN'ized expression: "( CodeFooter printf ) "
 ; Expanded expression: " CodeFooter *(2)  printf ()2 "
 ; Fused expression:    "( *(2) CodeFooter , printf )2 "
     push    word [_CodeFooter]
     call    _printf
     sub     sp, -2
-L2652:
+L2457:
 ; RPN'ized expression: "( DataHeader printf ) "
 ; Expanded expression: " DataHeader *(2)  printf ()2 "
 ; Fused expression:    "( *(2) DataHeader , printf )2 "
@@ -20631,40 +20784,40 @@ L2652:
     call    _printf
     sub     sp, -2
 ; }
-L2649:
+L2454:
 ; RPN'ized expression: "( label GenNumLabel ) "
 ; Expanded expression: " (@-8) *(2)  GenNumLabel ()2 "
 ; Fused expression:    "( *(2) (@-8) , GenNumLabel )2 "
     push    word [bp-8]
     call    _GenNumLabel
     sub     sp, -2
-; RPN'ized expression: "( L2654 printf ) "
-; Expanded expression: " L2654  printf ()2 "
+; RPN'ized expression: "( L2459 printf ) "
+; Expanded expression: " L2459  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L2654:
+L2459:
     db  "    db  ",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L2654 , printf )2 "
-    push    L2654
+; Fused expression:    "( L2459 , printf )2 "
+    push    L2459
     call    _printf
     sub     sp, -2
 ; while
 ; RPN'ized expression: "len --p "
 ; Expanded expression: "(@-12) --p(2) "
-L2656:
+L2461:
 ; Fused expression:    "--p(2) *(@-12) "
     mov     ax, [bp-12]
     dec     word [bp-12]
 ; JumpIfZero
     test    ax, ax
-    jz      L2657
+    je      L2462
 ; {
 ; if
 ; RPN'ized expression: "p *u 32 >= p *u 126 <= && p *u 34 != && "
-; Expanded expression: "(@-6) *(2) *(1) 32 >= _Bool [sh&&->2661] (@-6) *(2) *(1) 126 <= _Bool &&[2661] _Bool [sh&&->2660] (@-6) *(2) *(1) 34 != _Bool &&[2660] "
-; Fused expression:    "*(2) (@-6) >= *ax 32 _Bool [sh&&->2661] *(2) (@-6) <= *ax 126 _Bool &&[2661] _Bool [sh&&->2660] *(2) (@-6) != *ax 34 _Bool &&[2660] "
+; Expanded expression: "(@-6) *(2) *(1) 32 >= _Bool [sh&&->2466] (@-6) *(2) *(1) 126 <= _Bool &&[2466] _Bool [sh&&->2465] (@-6) *(2) *(1) 34 != _Bool &&[2465] "
+; Fused expression:    "*(2) (@-6) >= *ax 32 _Bool [sh&&->2466] *(2) (@-6) <= *ax 126 _Bool &&[2466] _Bool [sh&&->2465] *(2) (@-6) != *ax 34 _Bool &&[2465] "
     mov     ax, [bp-6]
     mov     bx, ax
     mov     al, [bx]
@@ -20673,11 +20826,11 @@ L2656:
     setge   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L2661
+    je      L2466
     mov     ax, [bp-6]
     mov     bx, ax
     mov     al, [bx]
@@ -20686,15 +20839,15 @@ L2656:
     setle   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L2661:
+L2466:
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L2660
+    je      L2465
     mov     ax, [bp-6]
     mov     bx, ax
     mov     al, [bx]
@@ -20703,12 +20856,12 @@ L2661:
     setne   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L2660:
+L2465:
 ; JumpIfZero
     test    ax, ax
-    jz      L2658
+    je      L2463
 ; {
 ; if
 ; RPN'ized expression: "quot 0 == "
@@ -20716,47 +20869,47 @@ L2660:
 ; Fused expression:    "== *(@-10) 0 IF! "
     mov     ax, [bp-10]
     cmp     ax, 0
-    jne     L2662
+    jne     L2467
 ; {
 ; RPN'ized expression: "quot 1 = "
 ; Expanded expression: "(@-10) 1 =(2) "
 ; Fused expression:    "=(34) *(@-10) 1 "
     mov     ax, 1
     mov     [bp-10], ax
-; RPN'ized expression: "( L2664 printf ) "
-; Expanded expression: " L2664  printf ()2 "
+; RPN'ized expression: "( L2469 printf ) "
+; Expanded expression: " L2469  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L2664:
+L2469:
     db  34,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L2664 , printf )2 "
-    push    L2664
+; Fused expression:    "( L2469 , printf )2 "
+    push    L2469
     call    _printf
     sub     sp, -2
 ; }
-L2662:
-; RPN'ized expression: "( p *u , L2666 printf ) "
-; Expanded expression: " (@-6) *(2) *(1)  L2666  printf ()4 "
+L2467:
+; RPN'ized expression: "( p *u , L2471 printf ) "
+; Expanded expression: " (@-6) *(2) *(1)  L2471  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L2666:
+L2471:
     db  "%c",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( *(2) (@-6) *(1) ax , L2666 , printf )4 "
+; Fused expression:    "( *(2) (@-6) *(1) ax , L2471 , printf )4 "
     mov     ax, [bp-6]
     mov     bx, ax
     mov     al, [bx]
     cbw
     push    ax
-    push    L2666
+    push    L2471
     call    _printf
     sub     sp, -4
 ; }
-    jmp     L2659
-L2658:
+    jmp     L2464
+L2463:
 ; else
 ; {
 ; if
@@ -20766,42 +20919,42 @@ L2658:
     mov     ax, [bp-10]
 ; JumpIfZero
     test    ax, ax
-    jz      L2668
+    je      L2473
 ; {
 ; RPN'ized expression: "quot 0 = "
 ; Expanded expression: "(@-10) 0 =(2) "
 ; Fused expression:    "=(34) *(@-10) 0 "
     mov     ax, 0
     mov     [bp-10], ax
-; RPN'ized expression: "( L2670 printf ) "
-; Expanded expression: " L2670  printf ()2 "
+; RPN'ized expression: "( L2475 printf ) "
+; Expanded expression: " L2475  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L2670:
+L2475:
     db  34,",",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L2670 , printf )2 "
-    push    L2670
+; Fused expression:    "( L2475 , printf )2 "
+    push    L2475
     call    _printf
     sub     sp, -2
 ; }
-L2668:
-; RPN'ized expression: "( p *u , L2672 printf ) "
-; Expanded expression: " (@-6) *(2) *(1)  L2672  printf ()4 "
+L2473:
+; RPN'ized expression: "( p *u , L2477 printf ) "
+; Expanded expression: " (@-6) *(2) *(1)  L2477  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L2672:
+L2477:
     db  "%d",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( *(2) (@-6) *(1) ax , L2672 , printf )4 "
+; Fused expression:    "( *(2) (@-6) *(1) ax , L2477 , printf )4 "
     mov     ax, [bp-6]
     mov     bx, ax
     mov     al, [bx]
     cbw
     push    ax
-    push    L2672
+    push    L2477
     call    _printf
     sub     sp, -4
 ; if
@@ -20811,30 +20964,30 @@ SEGMENT _TEXT
     mov     ax, [bp-12]
 ; JumpIfZero
     test    ax, ax
-    jz      L2674
-; RPN'ized expression: "( L2676 printf ) "
-; Expanded expression: " L2676  printf ()2 "
+    je      L2479
+; RPN'ized expression: "( L2481 printf ) "
+; Expanded expression: " L2481  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L2676:
+L2481:
     db  ",",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L2676 , printf )2 "
-    push    L2676
+; Fused expression:    "( L2481 , printf )2 "
+    push    L2481
     call    _printf
     sub     sp, -2
-L2674:
+L2479:
 ; }
-L2659:
+L2464:
 ; RPN'ized expression: "p ++p "
 ; Expanded expression: "(@-6) ++p(2) "
 ; Fused expression:    "++p(2) *(@-6) "
     mov     ax, [bp-6]
     inc     word [bp-6]
 ; }
-    jmp     L2656
-L2657:
+    jmp     L2461
+L2462:
 ; if
 ; RPN'ized expression: "quot "
 ; Expanded expression: "(@-10) *(2) "
@@ -20842,30 +20995,30 @@ L2657:
     mov     ax, [bp-10]
 ; JumpIfZero
     test    ax, ax
-    jz      L2678
-; RPN'ized expression: "( L2680 printf ) "
-; Expanded expression: " L2680  printf ()2 "
+    je      L2483
+; RPN'ized expression: "( L2485 printf ) "
+; Expanded expression: " L2485  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L2680:
+L2485:
     db  34,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L2680 , printf )2 "
-    push    L2680
+; Fused expression:    "( L2485 , printf )2 "
+    push    L2485
     call    _printf
     sub     sp, -2
-L2678:
-; RPN'ized expression: "( L2682 printf ) "
-; Expanded expression: " L2682  printf ()2 "
+L2483:
+; RPN'ized expression: "( L2487 printf ) "
+; Expanded expression: " L2487  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L2682:
+L2487:
     db  10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L2682 , printf )2 "
-    push    L2682
+; Fused expression:    "( L2487 , printf )2 "
+    push    L2487
     call    _printf
     sub     sp, -2
 ; if
@@ -20874,7 +21027,7 @@ SEGMENT _TEXT
 ; Fused expression:    "== *OutputFormat 0 IF! "
     mov     ax, [_OutputFormat]
     cmp     ax, 0
-    jne     L2684
+    jne     L2489
 ; {
 ; if
 ; RPN'ized expression: "insertJump "
@@ -20883,7 +21036,7 @@ SEGMENT _TEXT
     mov     ax, [bp+4]
 ; JumpIfZero
     test    ax, ax
-    jz      L2686
+    je      L2491
 ; RPN'ized expression: "( label 1 + GenNumLabel ) "
 ; Expanded expression: " (@-8) *(2) 1 +  GenNumLabel ()2 "
 ; Fused expression:    "( + *(@-8) 1 , GenNumLabel )2 "
@@ -20892,10 +21045,10 @@ SEGMENT _TEXT
     push    ax
     call    _GenNumLabel
     sub     sp, -2
-L2686:
+L2491:
 ; }
-    jmp     L2685
-L2684:
+    jmp     L2490
+L2489:
 ; else
 ; {
 ; RPN'ized expression: "( DataFooter printf ) "
@@ -20911,24 +21064,24 @@ L2684:
     mov     ax, [bp+4]
 ; JumpIfZero
     test    ax, ax
-    jz      L2688
+    je      L2493
 ; RPN'ized expression: "( CodeHeader printf ) "
 ; Expanded expression: " CodeHeader *(2)  printf ()2 "
 ; Fused expression:    "( *(2) CodeHeader , printf )2 "
     push    word [_CodeHeader]
     call    _printf
     sub     sp, -2
-L2688:
+L2493:
 ; }
-L2685:
+L2490:
     sub     sp, -6
 ; }
-L2645:
+L2450:
     sub     sp, -4
 ; }
-    jmp     L2642
-L2644:
-L2640:
+    jmp     L2447
+L2449:
+L2445:
     leave
     ret
 ; SEGMENT _TEXT
@@ -20948,7 +21101,7 @@ _GenExpr:
 ; Expanded expression: " GenExpr1 ()0 "
 ; Fused expression:    "( GenExpr1 )0 "
     call    _GenExpr1
-L2690:
+L2495:
     leave
     ret
 ; SEGMENT _TEXT
@@ -20969,20 +21122,20 @@ _push2:
 ; Fused expression:    ">= *sp 100 IF! "
     mov     ax, [_sp]
     cmp     ax, 100
-    jl      L2692
-; RPN'ized expression: "( L2694 error ) "
-; Expanded expression: " L2694  error ()2 "
+    jl      L2497
+; RPN'ized expression: "( L2499 error ) "
+; Expanded expression: " L2499  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L2694:
+L2499:
     db  "stack overflow!",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L2694 , error )2 "
-    push    L2694
+; Fused expression:    "( L2499 , error )2 "
+    push    L2499
     call    _error
     sub     sp, -2
-L2692:
+L2497:
 ; RPN'ized expression: "stack sp + *u 0 + *u v = "
 ; Expanded expression: "stack sp *(2) 4 * + 0 + (@4) *(2) =(2) "
 ; Fused expression:    "* *sp 4 + stack ax + ax 0 =(34) *ax *(@4) "
@@ -21008,7 +21161,7 @@ L2692:
     mov     bx, ax
     mov     ax, [bp+6]
     mov     [bx], ax
-L2691:
+L2496:
     leave
     ret
 ; SEGMENT _TEXT
@@ -21028,7 +21181,7 @@ _push:
     push    word [bp+4]
     call    _push2
     sub     sp, -4
-L2696:
+L2501:
     leave
     ret
 ; SEGMENT _TEXT
@@ -21044,20 +21197,20 @@ _stacktop:
 ; Fused expression:    "== *sp 0 IF! "
     mov     ax, [_sp]
     cmp     ax, 0
-    jne     L2698
-; RPN'ized expression: "( L2700 error ) "
-; Expanded expression: " L2700  error ()2 "
+    jne     L2503
+; RPN'ized expression: "( L2505 error ) "
+; Expanded expression: " L2505  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L2700:
+L2505:
     db  "stack underflow!",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L2700 , error )2 "
-    push    L2700
+; Fused expression:    "( L2505 , error )2 "
+    push    L2505
     call    _error
     sub     sp, -2
-L2698:
+L2503:
 ; return
 ; RPN'ized expression: "stack sp 1 - + *u 0 + *u "
 ; Expanded expression: "stack sp *(2) 1 - 4 * + 0 + *(2) "
@@ -21071,8 +21224,8 @@ L2698:
     add     ax, 0
     mov     bx, ax
     mov     ax, [bx]
-    jmp     L2697
-L2697:
+    jmp     L2502
+L2502:
     leave
     ret
 ; SEGMENT _TEXT
@@ -21119,8 +21272,8 @@ _pop2:
 ; Expanded expression: "(@-2) *(2) "
 ; Fused expression:    "*(2) (@-2) "
     mov     ax, [bp-2]
-    jmp     L2702
-L2702:
+    jmp     L2507
+L2507:
     leave
     ret
 ; SEGMENT _TEXT
@@ -21140,8 +21293,8 @@ _pop:
     push    ax
     call    _pop2
     sub     sp, -2
-    jmp     L2703
-L2703:
+    jmp     L2508
+L2508:
     leave
     ret
 ; SEGMENT _TEXT
@@ -21164,20 +21317,20 @@ _ins2:
 ; Fused expression:    ">= *sp 100 IF! "
     mov     ax, [_sp]
     cmp     ax, 100
-    jl      L2705
-; RPN'ized expression: "( L2707 error ) "
-; Expanded expression: " L2707  error ()2 "
+    jl      L2510
+; RPN'ized expression: "( L2512 error ) "
+; Expanded expression: " L2512  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L2707:
+L2512:
     db  "stack overflow!",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L2707 , error )2 "
-    push    L2707
+; Fused expression:    "( L2512 , error )2 "
+    push    L2512
     call    _error
     sub     sp, -2
-L2705:
+L2510:
 ; RPN'ized expression: "( stack 0 + *u sizeof sp pos - * , stack pos + *u &u , stack pos 1 + + *u &u memmove ) "
 ; Expanded expression: " 4 sp *(2) (@4) *(2) - *  stack (@4) *(2) 4 * +  stack (@4) *(2) 1 + 4 * +  memmove ()6 "
 ; Fused expression:    "( - *sp *(@4) * 4 ax , * *(@4) 4 + stack ax , + *(@4) 1 * ax 4 + stack ax , memmove )6 "
@@ -21231,7 +21384,7 @@ L2705:
 ; Fused expression:    "++p(2) *sp "
     mov     ax, [_sp]
     inc     word [_sp]
-L2704:
+L2509:
     leave
     ret
 ; SEGMENT _TEXT
@@ -21254,7 +21407,7 @@ _ins:
     push    word [bp+4]
     call    _ins2
     sub     sp, -6
-L2709:
+L2514:
     leave
     ret
 ; SEGMENT _TEXT
@@ -21302,7 +21455,7 @@ _del:
     mov     ax, [_sp]
     sub     ax, [bp+6]
     mov     [_sp], ax
-L2710:
+L2515:
     leave
     ret
 ; SEGMENT _TEXT
@@ -21323,20 +21476,20 @@ _pushop2:
 ; Fused expression:    ">= *opsp 100 IF! "
     mov     ax, [_opsp]
     cmp     ax, 100
-    jl      L2712
-; RPN'ized expression: "( L2714 error ) "
-; Expanded expression: " L2714  error ()2 "
+    jl      L2517
+; RPN'ized expression: "( L2519 error ) "
+; Expanded expression: " L2519  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L2714:
+L2519:
     db  "operator stack overflow!",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L2714 , error )2 "
-    push    L2714
+; Fused expression:    "( L2519 , error )2 "
+    push    L2519
     call    _error
     sub     sp, -2
-L2712:
+L2517:
 ; RPN'ized expression: "opstack opsp + *u 0 + *u v = "
 ; Expanded expression: "opstack opsp *(2) 4 * + 0 + (@4) *(2) =(2) "
 ; Fused expression:    "* *opsp 4 + opstack ax + ax 0 =(34) *ax *(@4) "
@@ -21362,7 +21515,7 @@ L2712:
     mov     bx, ax
     mov     ax, [bp+6]
     mov     [bx], ax
-L2711:
+L2516:
     leave
     ret
 ; SEGMENT _TEXT
@@ -21382,7 +21535,7 @@ _pushop:
     push    word [bp+4]
     call    _pushop2
     sub     sp, -4
-L2716:
+L2521:
     leave
     ret
 ; SEGMENT _TEXT
@@ -21398,20 +21551,20 @@ _opstacktop:
 ; Fused expression:    "== *opsp 0 IF! "
     mov     ax, [_opsp]
     cmp     ax, 0
-    jne     L2718
-; RPN'ized expression: "( L2720 error ) "
-; Expanded expression: " L2720  error ()2 "
+    jne     L2523
+; RPN'ized expression: "( L2525 error ) "
+; Expanded expression: " L2525  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L2720:
+L2525:
     db  "operator stack underflow!",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L2720 , error )2 "
-    push    L2720
+; Fused expression:    "( L2525 , error )2 "
+    push    L2525
     call    _error
     sub     sp, -2
-L2718:
+L2523:
 ; return
 ; RPN'ized expression: "opstack opsp 1 - + *u 0 + *u "
 ; Expanded expression: "opstack opsp *(2) 1 - 4 * + 0 + *(2) "
@@ -21425,8 +21578,8 @@ L2718:
     add     ax, 0
     mov     bx, ax
     mov     ax, [bx]
-    jmp     L2717
-L2717:
+    jmp     L2522
+L2522:
     leave
     ret
 ; SEGMENT _TEXT
@@ -21473,8 +21626,8 @@ _popop2:
 ; Expanded expression: "(@-2) *(2) "
 ; Fused expression:    "*(2) (@-2) "
     mov     ax, [bp-2]
-    jmp     L2722
-L2722:
+    jmp     L2527
+L2527:
     leave
     ret
 ; SEGMENT _TEXT
@@ -21494,8 +21647,8 @@ _popop:
     push    ax
     call    _popop2
     sub     sp, -2
-    jmp     L2723
-L2723:
+    jmp     L2528
+L2528:
     leave
     ret
 ; SEGMENT _TEXT
@@ -21513,336 +21666,336 @@ _isop:
 ; Expanded expression: "(@4) *(2) "
 ; Fused expression:    "*(2) (@4) "
     mov     ax, [bp+4]
-    jmp     L2727
+    jmp     L2532
 ; {
 ; case
 ; RPN'ized expression: "33 "
 ; Expanded expression: "33 "
 ; Expression value: 33
-    jmp     L2728
-L2727:
+    jmp     L2533
+L2532:
     cmp     ax, 33
-    jne     L2729
-L2728:
+    jne     L2534
+L2533:
 ; case
 ; RPN'ized expression: "126 "
 ; Expanded expression: "126 "
 ; Expression value: 126
-    jmp     L2730
-L2729:
+    jmp     L2535
+L2534:
     cmp     ax, 126
-    jne     L2731
-L2730:
+    jne     L2536
+L2535:
 ; case
 ; RPN'ized expression: "38 "
 ; Expanded expression: "38 "
 ; Expression value: 38
-    jmp     L2732
-L2731:
+    jmp     L2537
+L2536:
     cmp     ax, 38
-    jne     L2733
-L2732:
+    jne     L2538
+L2537:
 ; case
 ; RPN'ized expression: "42 "
 ; Expanded expression: "42 "
 ; Expression value: 42
-    jmp     L2734
-L2733:
+    jmp     L2539
+L2538:
     cmp     ax, 42
-    jne     L2735
-L2734:
+    jne     L2540
+L2539:
 ; case
 ; RPN'ized expression: "47 "
 ; Expanded expression: "47 "
 ; Expression value: 47
-    jmp     L2736
-L2735:
+    jmp     L2541
+L2540:
     cmp     ax, 47
-    jne     L2737
-L2736:
+    jne     L2542
+L2541:
 ; case
 ; RPN'ized expression: "37 "
 ; Expanded expression: "37 "
 ; Expression value: 37
-    jmp     L2738
-L2737:
+    jmp     L2543
+L2542:
     cmp     ax, 37
-    jne     L2739
-L2738:
+    jne     L2544
+L2543:
 ; case
 ; RPN'ized expression: "43 "
 ; Expanded expression: "43 "
 ; Expression value: 43
-    jmp     L2740
-L2739:
+    jmp     L2545
+L2544:
     cmp     ax, 43
-    jne     L2741
-L2740:
+    jne     L2546
+L2545:
 ; case
 ; RPN'ized expression: "45 "
 ; Expanded expression: "45 "
 ; Expression value: 45
-    jmp     L2742
-L2741:
+    jmp     L2547
+L2546:
     cmp     ax, 45
-    jne     L2743
-L2742:
+    jne     L2548
+L2547:
 ; case
 ; RPN'ized expression: "124 "
 ; Expanded expression: "124 "
 ; Expression value: 124
-    jmp     L2744
-L2743:
+    jmp     L2549
+L2548:
     cmp     ax, 124
-    jne     L2745
-L2744:
+    jne     L2550
+L2549:
 ; case
 ; RPN'ized expression: "94 "
 ; Expanded expression: "94 "
 ; Expression value: 94
-    jmp     L2746
-L2745:
+    jmp     L2551
+L2550:
     cmp     ax, 94
-    jne     L2747
-L2746:
+    jne     L2552
+L2551:
 ; case
 ; RPN'ized expression: "60 "
 ; Expanded expression: "60 "
 ; Expression value: 60
-    jmp     L2748
-L2747:
+    jmp     L2553
+L2552:
     cmp     ax, 60
-    jne     L2749
-L2748:
+    jne     L2554
+L2553:
 ; case
 ; RPN'ized expression: "62 "
 ; Expanded expression: "62 "
 ; Expression value: 62
-    jmp     L2750
-L2749:
+    jmp     L2555
+L2554:
     cmp     ax, 62
-    jne     L2751
-L2750:
+    jne     L2556
+L2555:
 ; case
 ; RPN'ized expression: "61 "
 ; Expanded expression: "61 "
 ; Expression value: 61
-    jmp     L2752
-L2751:
+    jmp     L2557
+L2556:
     cmp     ax, 61
-    jne     L2753
-L2752:
+    jne     L2558
+L2557:
 ; case
 ; RPN'ized expression: "7 "
 ; Expanded expression: "7 "
 ; Expression value: 7
-    jmp     L2754
-L2753:
+    jmp     L2559
+L2558:
     cmp     ax, 7
-    jne     L2755
-L2754:
+    jne     L2560
+L2559:
 ; case
 ; RPN'ized expression: "6 "
 ; Expanded expression: "6 "
 ; Expression value: 6
-    jmp     L2756
-L2755:
+    jmp     L2561
+L2560:
     cmp     ax, 6
-    jne     L2757
-L2756:
+    jne     L2562
+L2561:
 ; case
 ; RPN'ized expression: "8 "
 ; Expanded expression: "8 "
 ; Expression value: 8
-    jmp     L2758
-L2757:
+    jmp     L2563
+L2562:
     cmp     ax, 8
-    jne     L2759
-L2758:
+    jne     L2564
+L2563:
 ; case
 ; RPN'ized expression: "9 "
 ; Expanded expression: "9 "
 ; Expression value: 9
-    jmp     L2760
-L2759:
+    jmp     L2565
+L2564:
     cmp     ax, 9
-    jne     L2761
-L2760:
+    jne     L2566
+L2565:
 ; case
 ; RPN'ized expression: "10 "
 ; Expanded expression: "10 "
 ; Expression value: 10
-    jmp     L2762
-L2761:
+    jmp     L2567
+L2566:
     cmp     ax, 10
-    jne     L2763
-L2762:
+    jne     L2568
+L2567:
 ; case
 ; RPN'ized expression: "11 "
 ; Expanded expression: "11 "
 ; Expression value: 11
-    jmp     L2764
-L2763:
+    jmp     L2569
+L2568:
     cmp     ax, 11
-    jne     L2765
-L2764:
+    jne     L2570
+L2569:
 ; case
 ; RPN'ized expression: "4 "
 ; Expanded expression: "4 "
 ; Expression value: 4
-    jmp     L2766
-L2765:
+    jmp     L2571
+L2570:
     cmp     ax, 4
-    jne     L2767
-L2766:
+    jne     L2572
+L2571:
 ; case
 ; RPN'ized expression: "5 "
 ; Expanded expression: "5 "
 ; Expression value: 5
-    jmp     L2768
-L2767:
+    jmp     L2573
+L2572:
     cmp     ax, 5
-    jne     L2769
-L2768:
+    jne     L2574
+L2573:
 ; case
 ; RPN'ized expression: "12 "
 ; Expanded expression: "12 "
 ; Expression value: 12
-    jmp     L2770
-L2769:
+    jmp     L2575
+L2574:
     cmp     ax, 12
-    jne     L2771
-L2770:
+    jne     L2576
+L2575:
 ; case
 ; RPN'ized expression: "13 "
 ; Expanded expression: "13 "
 ; Expression value: 13
-    jmp     L2772
-L2771:
+    jmp     L2577
+L2576:
     cmp     ax, 13
-    jne     L2773
-L2772:
+    jne     L2578
+L2577:
 ; case
 ; RPN'ized expression: "27 "
 ; Expanded expression: "27 "
 ; Expression value: 27
-    jmp     L2774
-L2773:
+    jmp     L2579
+L2578:
     cmp     ax, 27
-    jne     L2775
-L2774:
+    jne     L2580
+L2579:
 ; case
 ; RPN'ized expression: "65 "
 ; Expanded expression: "65 "
 ; Expression value: 65
-    jmp     L2776
-L2775:
+    jmp     L2581
+L2580:
     cmp     ax, 65
-    jne     L2777
-L2776:
+    jne     L2582
+L2581:
 ; case
 ; RPN'ized expression: "66 "
 ; Expanded expression: "66 "
 ; Expression value: 66
-    jmp     L2778
-L2777:
+    jmp     L2583
+L2582:
     cmp     ax, 66
-    jne     L2779
-L2778:
+    jne     L2584
+L2583:
 ; case
 ; RPN'ized expression: "67 "
 ; Expanded expression: "67 "
 ; Expression value: 67
-    jmp     L2780
-L2779:
+    jmp     L2585
+L2584:
     cmp     ax, 67
-    jne     L2781
-L2780:
+    jne     L2586
+L2585:
 ; case
 ; RPN'ized expression: "68 "
 ; Expanded expression: "68 "
 ; Expression value: 68
-    jmp     L2782
-L2781:
+    jmp     L2587
+L2586:
     cmp     ax, 68
-    jne     L2783
-L2782:
+    jne     L2588
+L2587:
 ; case
 ; RPN'ized expression: "69 "
 ; Expanded expression: "69 "
 ; Expression value: 69
-    jmp     L2784
-L2783:
+    jmp     L2589
+L2588:
     cmp     ax, 69
-    jne     L2785
-L2784:
+    jne     L2590
+L2589:
 ; case
 ; RPN'ized expression: "70 "
 ; Expanded expression: "70 "
 ; Expression value: 70
-    jmp     L2786
-L2785:
+    jmp     L2591
+L2590:
     cmp     ax, 70
-    jne     L2787
-L2786:
+    jne     L2592
+L2591:
 ; case
 ; RPN'ized expression: "71 "
 ; Expanded expression: "71 "
 ; Expression value: 71
-    jmp     L2788
-L2787:
+    jmp     L2593
+L2592:
     cmp     ax, 71
-    jne     L2789
-L2788:
+    jne     L2594
+L2593:
 ; case
 ; RPN'ized expression: "72 "
 ; Expanded expression: "72 "
 ; Expression value: 72
-    jmp     L2790
-L2789:
+    jmp     L2595
+L2594:
     cmp     ax, 72
-    jne     L2791
-L2790:
+    jne     L2596
+L2595:
 ; case
 ; RPN'ized expression: "73 "
 ; Expanded expression: "73 "
 ; Expression value: 73
-    jmp     L2792
-L2791:
+    jmp     L2597
+L2596:
     cmp     ax, 73
-    jne     L2793
-L2792:
+    jne     L2598
+L2597:
 ; case
 ; RPN'ized expression: "74 "
 ; Expanded expression: "74 "
 ; Expression value: 74
-    jmp     L2794
-L2793:
+    jmp     L2599
+L2598:
     cmp     ax, 74
-    jne     L2795
-L2794:
+    jne     L2600
+L2599:
 ; return
 ; RPN'ized expression: "1 "
 ; Expanded expression: "1 "
 ; Expression value: 1
 ; Fused expression:    "1 "
     mov     ax, 1
-    jmp     L2724
+    jmp     L2529
 ; default
-L2726:
+L2531:
 ; return
 ; RPN'ized expression: "0 "
 ; Expanded expression: "0 "
 ; Expression value: 0
 ; Fused expression:    "0 "
     mov     ax, 0
-    jmp     L2724
+    jmp     L2529
 ; }
-    jmp     L2725
-L2795:
-    jmp     L2726
-L2725:
-L2724:
+    jmp     L2530
+L2600:
+    jmp     L2531
+L2530:
+L2529:
     leave
     ret
 ; SEGMENT _TEXT
@@ -21857,70 +22010,70 @@ _isunary:
 ; loc     tok : (@4): int
 ; return
 ; RPN'ized expression: "tok 33 == tok 126 == || tok 12 == || tok 13 == || tok 27 == || "
-; Expanded expression: "(@4) *(2) 33 == _Bool [sh||->2801] (@4) *(2) 126 == _Bool ||[2801] _Bool [sh||->2800] (@4) *(2) 12 == _Bool ||[2800] _Bool [sh||->2799] (@4) *(2) 13 == _Bool ||[2799] _Bool [sh||->2798] (@4) *(2) 27 == _Bool ||[2798] "
-; Fused expression:    "== *(@4) 33 _Bool [sh||->2801] == *(@4) 126 _Bool ||[2801] _Bool [sh||->2800] == *(@4) 12 _Bool ||[2800] _Bool [sh||->2799] == *(@4) 13 _Bool ||[2799] _Bool [sh||->2798] == *(@4) 27 _Bool ||[2798] "
+; Expanded expression: "(@4) *(2) 33 == _Bool [sh||->2606] (@4) *(2) 126 == _Bool ||[2606] _Bool [sh||->2605] (@4) *(2) 12 == _Bool ||[2605] _Bool [sh||->2604] (@4) *(2) 13 == _Bool ||[2604] _Bool [sh||->2603] (@4) *(2) 27 == _Bool ||[2603] "
+; Fused expression:    "== *(@4) 33 _Bool [sh||->2606] == *(@4) 126 _Bool ||[2606] _Bool [sh||->2605] == *(@4) 12 _Bool ||[2605] _Bool [sh||->2604] == *(@4) 13 _Bool ||[2604] _Bool [sh||->2603] == *(@4) 27 _Bool ||[2603] "
     mov     ax, [bp+4]
     cmp     ax, 33
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L2801
+    jne     L2606
     mov     ax, [bp+4]
     cmp     ax, 126
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L2801:
+L2606:
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L2800
+    jne     L2605
     mov     ax, [bp+4]
     cmp     ax, 12
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L2800:
+L2605:
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L2799
+    jne     L2604
     mov     ax, [bp+4]
     cmp     ax, 13
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L2799:
+L2604:
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L2798
+    jne     L2603
     mov     ax, [bp+4]
     cmp     ax, 27
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L2798:
-    jmp     L2797
-L2797:
+L2603:
+    jmp     L2602
+L2602:
     leave
     ret
 ; SEGMENT _TEXT
@@ -21938,358 +22091,358 @@ _preced:
 ; Expanded expression: "(@4) *(2) "
 ; Fused expression:    "*(2) (@4) "
     mov     ax, [bp+4]
-    jmp     L2805
+    jmp     L2610
 ; {
 ; case
 ; RPN'ized expression: "42 "
 ; Expanded expression: "42 "
 ; Expression value: 42
-    jmp     L2806
-L2805:
+    jmp     L2611
+L2610:
     cmp     ax, 42
-    jne     L2807
-L2806:
+    jne     L2612
+L2611:
 ; case
 ; RPN'ized expression: "47 "
 ; Expanded expression: "47 "
 ; Expression value: 47
-    jmp     L2808
-L2807:
+    jmp     L2613
+L2612:
     cmp     ax, 47
-    jne     L2809
-L2808:
+    jne     L2614
+L2613:
 ; case
 ; RPN'ized expression: "37 "
 ; Expanded expression: "37 "
 ; Expression value: 37
-    jmp     L2810
-L2809:
+    jmp     L2615
+L2614:
     cmp     ax, 37
-    jne     L2811
-L2810:
+    jne     L2616
+L2615:
 ; return
 ; RPN'ized expression: "11 "
 ; Expanded expression: "11 "
 ; Expression value: 11
 ; Fused expression:    "11 "
     mov     ax, 11
-    jmp     L2802
+    jmp     L2607
 ; case
 ; RPN'ized expression: "43 "
 ; Expanded expression: "43 "
 ; Expression value: 43
-    jmp     L2812
-L2811:
+    jmp     L2617
+L2616:
     cmp     ax, 43
-    jne     L2813
-L2812:
+    jne     L2618
+L2617:
 ; case
 ; RPN'ized expression: "45 "
 ; Expanded expression: "45 "
 ; Expression value: 45
-    jmp     L2814
-L2813:
+    jmp     L2619
+L2618:
     cmp     ax, 45
-    jne     L2815
-L2814:
+    jne     L2620
+L2619:
 ; return
 ; RPN'ized expression: "10 "
 ; Expanded expression: "10 "
 ; Expression value: 10
 ; Fused expression:    "10 "
     mov     ax, 10
-    jmp     L2802
+    jmp     L2607
 ; case
 ; RPN'ized expression: "4 "
 ; Expanded expression: "4 "
 ; Expression value: 4
-    jmp     L2816
-L2815:
+    jmp     L2621
+L2620:
     cmp     ax, 4
-    jne     L2817
-L2816:
+    jne     L2622
+L2621:
 ; case
 ; RPN'ized expression: "5 "
 ; Expanded expression: "5 "
 ; Expression value: 5
-    jmp     L2818
-L2817:
+    jmp     L2623
+L2622:
     cmp     ax, 5
-    jne     L2819
-L2818:
+    jne     L2624
+L2623:
 ; return
 ; RPN'ized expression: "9 "
 ; Expanded expression: "9 "
 ; Expression value: 9
 ; Fused expression:    "9 "
     mov     ax, 9
-    jmp     L2802
+    jmp     L2607
 ; case
 ; RPN'ized expression: "60 "
 ; Expanded expression: "60 "
 ; Expression value: 60
-    jmp     L2820
-L2819:
+    jmp     L2625
+L2624:
     cmp     ax, 60
-    jne     L2821
-L2820:
+    jne     L2626
+L2625:
 ; case
 ; RPN'ized expression: "62 "
 ; Expanded expression: "62 "
 ; Expression value: 62
-    jmp     L2822
-L2821:
+    jmp     L2627
+L2626:
     cmp     ax, 62
-    jne     L2823
-L2822:
+    jne     L2628
+L2627:
 ; case
 ; RPN'ized expression: "10 "
 ; Expanded expression: "10 "
 ; Expression value: 10
-    jmp     L2824
-L2823:
+    jmp     L2629
+L2628:
     cmp     ax, 10
-    jne     L2825
-L2824:
+    jne     L2630
+L2629:
 ; case
 ; RPN'ized expression: "11 "
 ; Expanded expression: "11 "
 ; Expression value: 11
-    jmp     L2826
-L2825:
+    jmp     L2631
+L2630:
     cmp     ax, 11
-    jne     L2827
-L2826:
+    jne     L2632
+L2631:
 ; return
 ; RPN'ized expression: "8 "
 ; Expanded expression: "8 "
 ; Expression value: 8
 ; Fused expression:    "8 "
     mov     ax, 8
-    jmp     L2802
+    jmp     L2607
 ; case
 ; RPN'ized expression: "8 "
 ; Expanded expression: "8 "
 ; Expression value: 8
-    jmp     L2828
-L2827:
+    jmp     L2633
+L2632:
     cmp     ax, 8
-    jne     L2829
-L2828:
+    jne     L2634
+L2633:
 ; case
 ; RPN'ized expression: "9 "
 ; Expanded expression: "9 "
 ; Expression value: 9
-    jmp     L2830
-L2829:
+    jmp     L2635
+L2634:
     cmp     ax, 9
-    jne     L2831
-L2830:
+    jne     L2636
+L2635:
 ; return
 ; RPN'ized expression: "7 "
 ; Expanded expression: "7 "
 ; Expression value: 7
 ; Fused expression:    "7 "
     mov     ax, 7
-    jmp     L2802
+    jmp     L2607
 ; case
 ; RPN'ized expression: "38 "
 ; Expanded expression: "38 "
 ; Expression value: 38
-    jmp     L2832
-L2831:
+    jmp     L2637
+L2636:
     cmp     ax, 38
-    jne     L2833
-L2832:
+    jne     L2638
+L2637:
 ; return
 ; RPN'ized expression: "6 "
 ; Expanded expression: "6 "
 ; Expression value: 6
 ; Fused expression:    "6 "
     mov     ax, 6
-    jmp     L2802
+    jmp     L2607
 ; case
 ; RPN'ized expression: "94 "
 ; Expanded expression: "94 "
 ; Expression value: 94
-    jmp     L2834
-L2833:
+    jmp     L2639
+L2638:
     cmp     ax, 94
-    jne     L2835
-L2834:
+    jne     L2640
+L2639:
 ; return
 ; RPN'ized expression: "5 "
 ; Expanded expression: "5 "
 ; Expression value: 5
 ; Fused expression:    "5 "
     mov     ax, 5
-    jmp     L2802
+    jmp     L2607
 ; case
 ; RPN'ized expression: "124 "
 ; Expanded expression: "124 "
 ; Expression value: 124
-    jmp     L2836
-L2835:
+    jmp     L2641
+L2640:
     cmp     ax, 124
-    jne     L2837
-L2836:
+    jne     L2642
+L2641:
 ; return
 ; RPN'ized expression: "4 "
 ; Expanded expression: "4 "
 ; Expression value: 4
 ; Fused expression:    "4 "
     mov     ax, 4
-    jmp     L2802
+    jmp     L2607
 ; case
 ; RPN'ized expression: "6 "
 ; Expanded expression: "6 "
 ; Expression value: 6
-    jmp     L2838
-L2837:
+    jmp     L2643
+L2642:
     cmp     ax, 6
-    jne     L2839
-L2838:
+    jne     L2644
+L2643:
 ; return
 ; RPN'ized expression: "3 "
 ; Expanded expression: "3 "
 ; Expression value: 3
 ; Fused expression:    "3 "
     mov     ax, 3
-    jmp     L2802
+    jmp     L2607
 ; case
 ; RPN'ized expression: "7 "
 ; Expanded expression: "7 "
 ; Expression value: 7
-    jmp     L2840
-L2839:
+    jmp     L2645
+L2644:
     cmp     ax, 7
-    jne     L2841
-L2840:
+    jne     L2646
+L2645:
 ; return
 ; RPN'ized expression: "2 "
 ; Expanded expression: "2 "
 ; Expression value: 2
 ; Fused expression:    "2 "
     mov     ax, 2
-    jmp     L2802
+    jmp     L2607
 ; case
 ; RPN'ized expression: "61 "
 ; Expanded expression: "61 "
 ; Expression value: 61
-    jmp     L2842
-L2841:
+    jmp     L2647
+L2646:
     cmp     ax, 61
-    jne     L2843
-L2842:
+    jne     L2648
+L2647:
 ; case
 ; RPN'ized expression: "65 "
 ; Expanded expression: "65 "
 ; Expression value: 65
-    jmp     L2844
-L2843:
+    jmp     L2649
+L2648:
     cmp     ax, 65
-    jne     L2845
-L2844:
+    jne     L2650
+L2649:
 ; case
 ; RPN'ized expression: "66 "
 ; Expanded expression: "66 "
 ; Expression value: 66
-    jmp     L2846
-L2845:
+    jmp     L2651
+L2650:
     cmp     ax, 66
-    jne     L2847
-L2846:
+    jne     L2652
+L2651:
 ; case
 ; RPN'ized expression: "67 "
 ; Expanded expression: "67 "
 ; Expression value: 67
-    jmp     L2848
-L2847:
+    jmp     L2653
+L2652:
     cmp     ax, 67
-    jne     L2849
-L2848:
+    jne     L2654
+L2653:
 ; case
 ; RPN'ized expression: "68 "
 ; Expanded expression: "68 "
 ; Expression value: 68
-    jmp     L2850
-L2849:
+    jmp     L2655
+L2654:
     cmp     ax, 68
-    jne     L2851
-L2850:
+    jne     L2656
+L2655:
 ; case
 ; RPN'ized expression: "69 "
 ; Expanded expression: "69 "
 ; Expression value: 69
-    jmp     L2852
-L2851:
+    jmp     L2657
+L2656:
     cmp     ax, 69
-    jne     L2853
-L2852:
+    jne     L2658
+L2657:
 ; case
 ; RPN'ized expression: "70 "
 ; Expanded expression: "70 "
 ; Expression value: 70
-    jmp     L2854
-L2853:
+    jmp     L2659
+L2658:
     cmp     ax, 70
-    jne     L2855
-L2854:
+    jne     L2660
+L2659:
 ; case
 ; RPN'ized expression: "71 "
 ; Expanded expression: "71 "
 ; Expression value: 71
-    jmp     L2856
-L2855:
+    jmp     L2661
+L2660:
     cmp     ax, 71
-    jne     L2857
-L2856:
+    jne     L2662
+L2661:
 ; case
 ; RPN'ized expression: "72 "
 ; Expanded expression: "72 "
 ; Expression value: 72
-    jmp     L2858
-L2857:
+    jmp     L2663
+L2662:
     cmp     ax, 72
-    jne     L2859
-L2858:
+    jne     L2664
+L2663:
 ; case
 ; RPN'ized expression: "73 "
 ; Expanded expression: "73 "
 ; Expression value: 73
-    jmp     L2860
-L2859:
+    jmp     L2665
+L2664:
     cmp     ax, 73
-    jne     L2861
-L2860:
+    jne     L2666
+L2665:
 ; case
 ; RPN'ized expression: "74 "
 ; Expanded expression: "74 "
 ; Expression value: 74
-    jmp     L2862
-L2861:
+    jmp     L2667
+L2666:
     cmp     ax, 74
-    jne     L2863
-L2862:
+    jne     L2668
+L2667:
 ; return
 ; RPN'ized expression: "1 "
 ; Expanded expression: "1 "
 ; Expression value: 1
 ; Fused expression:    "1 "
     mov     ax, 1
-    jmp     L2802
+    jmp     L2607
 ; }
-    jmp     L2803
-L2863:
-L2803:
+    jmp     L2608
+L2668:
+L2608:
 ; return
 ; RPN'ized expression: "0 "
 ; Expanded expression: "0 "
 ; Expression value: 0
 ; Fused expression:    "0 "
     mov     ax, 0
-    jmp     L2802
-L2802:
+    jmp     L2607
+L2607:
     leave
     ret
 ; SEGMENT _TEXT
@@ -22309,118 +22462,118 @@ _precedGEQ:
 ; Expanded expression: "(@4) *(2) "
 ; Fused expression:    "*(2) (@4) "
     mov     ax, [bp+4]
-    jmp     L2868
+    jmp     L2673
 ; {
 ; case
 ; RPN'ized expression: "61 "
 ; Expanded expression: "61 "
 ; Expression value: 61
-    jmp     L2869
-L2868:
+    jmp     L2674
+L2673:
     cmp     ax, 61
-    jne     L2870
-L2869:
+    jne     L2675
+L2674:
 ; case
 ; RPN'ized expression: "65 "
 ; Expanded expression: "65 "
 ; Expression value: 65
-    jmp     L2871
-L2870:
+    jmp     L2676
+L2675:
     cmp     ax, 65
-    jne     L2872
-L2871:
+    jne     L2677
+L2676:
 ; case
 ; RPN'ized expression: "66 "
 ; Expanded expression: "66 "
 ; Expression value: 66
-    jmp     L2873
-L2872:
+    jmp     L2678
+L2677:
     cmp     ax, 66
-    jne     L2874
-L2873:
+    jne     L2679
+L2678:
 ; case
 ; RPN'ized expression: "67 "
 ; Expanded expression: "67 "
 ; Expression value: 67
-    jmp     L2875
-L2874:
+    jmp     L2680
+L2679:
     cmp     ax, 67
-    jne     L2876
-L2875:
+    jne     L2681
+L2680:
 ; case
 ; RPN'ized expression: "68 "
 ; Expanded expression: "68 "
 ; Expression value: 68
-    jmp     L2877
-L2876:
+    jmp     L2682
+L2681:
     cmp     ax, 68
-    jne     L2878
-L2877:
+    jne     L2683
+L2682:
 ; case
 ; RPN'ized expression: "69 "
 ; Expanded expression: "69 "
 ; Expression value: 69
-    jmp     L2879
-L2878:
+    jmp     L2684
+L2683:
     cmp     ax, 69
-    jne     L2880
-L2879:
+    jne     L2685
+L2684:
 ; case
 ; RPN'ized expression: "70 "
 ; Expanded expression: "70 "
 ; Expression value: 70
-    jmp     L2881
-L2880:
+    jmp     L2686
+L2685:
     cmp     ax, 70
-    jne     L2882
-L2881:
+    jne     L2687
+L2686:
 ; case
 ; RPN'ized expression: "71 "
 ; Expanded expression: "71 "
 ; Expression value: 71
-    jmp     L2883
-L2882:
+    jmp     L2688
+L2687:
     cmp     ax, 71
-    jne     L2884
-L2883:
+    jne     L2689
+L2688:
 ; case
 ; RPN'ized expression: "72 "
 ; Expanded expression: "72 "
 ; Expression value: 72
-    jmp     L2885
-L2884:
+    jmp     L2690
+L2689:
     cmp     ax, 72
-    jne     L2886
-L2885:
+    jne     L2691
+L2690:
 ; case
 ; RPN'ized expression: "73 "
 ; Expanded expression: "73 "
 ; Expression value: 73
-    jmp     L2887
-L2886:
+    jmp     L2692
+L2691:
     cmp     ax, 73
-    jne     L2888
-L2887:
+    jne     L2693
+L2692:
 ; case
 ; RPN'ized expression: "74 "
 ; Expanded expression: "74 "
 ; Expression value: 74
-    jmp     L2889
-L2888:
+    jmp     L2694
+L2693:
     cmp     ax, 74
-    jne     L2890
-L2889:
+    jne     L2695
+L2694:
 ; return
 ; RPN'ized expression: "0 "
 ; Expanded expression: "0 "
 ; Expression value: 0
 ; Fused expression:    "0 "
     mov     ax, 0
-    jmp     L2865
+    jmp     L2670
 ; }
-    jmp     L2866
-L2890:
-L2866:
+    jmp     L2671
+L2695:
+L2671:
 ; return
 ; RPN'ized expression: "( lfttok preced ) ( rhttok preced ) >= "
 ; Expanded expression: " (@4) *(2)  preced ()2  (@6) *(2)  preced ()2 >= "
@@ -22437,8 +22590,8 @@ L2866:
     cmp     ax, cx
     setge   al
     cbw
-    jmp     L2865
-L2865:
+    jmp     L2670
+L2670:
     leave
     ret
 ; SEGMENT _TEXT
@@ -22474,51 +22627,51 @@ _exprUnary:
     mov     ax, 0
     mov     [bx], ax
 ; if
-; RPN'ized expression: "( tok isop ) ( tok isunary ) ( tok , L2895 strchr ) 0 != || && "
-; Expanded expression: " (@4) *(2)  isop ()2 _Bool [sh&&->2897]  (@4) *(2)  isunary ()2 _Bool [sh||->2898]  (@4) *(2)  L2895  strchr ()4 0 != _Bool ||[2898] _Bool &&[2897] "
+; RPN'ized expression: "( tok isop ) ( tok isunary ) ( tok , L2700 strchr ) 0 != || && "
+; Expanded expression: " (@4) *(2)  isop ()2 _Bool [sh&&->2702]  (@4) *(2)  isunary ()2 _Bool [sh||->2703]  (@4) *(2)  L2700  strchr ()4 0 != _Bool ||[2703] _Bool &&[2702] "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L2895:
+L2700:
     db  "&*+-",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( *(2) (@4) , isop )2 _Bool [sh&&->2897] ( *(2) (@4) , isunary )2 _Bool [sh||->2898] ( *(2) (@4) , L2895 , strchr )4 != ax 0 _Bool ||[2898] _Bool &&[2897] "
+; Fused expression:    "( *(2) (@4) , isop )2 _Bool [sh&&->2702] ( *(2) (@4) , isunary )2 _Bool [sh||->2703] ( *(2) (@4) , L2700 , strchr )4 != ax 0 _Bool ||[2703] _Bool &&[2702] "
     push    word [bp+4]
     call    _isop
     sub     sp, -2
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L2897
+    je      L2702
     push    word [bp+4]
     call    _isunary
     sub     sp, -2
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L2898
+    jne     L2703
     push    word [bp+4]
-    push    L2895
+    push    L2700
     call    _strchr
     sub     sp, -4
     cmp     ax, 0
     setne   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L2898:
+L2703:
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L2897:
+L2702:
 ; JumpIfZero
     test    ax, ax
-    jz      L2893
+    je      L2698
 ; {
 ; loc         lastTok : (@-4): int
     sub     sp, 2
@@ -22545,40 +22698,40 @@ L2897:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 0
-    jne     L2899
-; RPN'ized expression: "( ( lastTok GetTokenName ) , L2901 error ) "
-; Expanded expression: "  (@-4) *(2)  GetTokenName ()2  L2901  error ()4 "
+    jne     L2704
+; RPN'ized expression: "( ( lastTok GetTokenName ) , L2706 error ) "
+; Expanded expression: "  (@-4) *(2)  GetTokenName ()2  L2706  error ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L2901:
+L2706:
     db  "exprUnary(): primary expression expected after token %s",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( ( *(2) (@-4) , GetTokenName )2 , L2901 , error )4 "
+; Fused expression:    "( ( *(2) (@-4) , GetTokenName )2 , L2706 , error )4 "
     push    word [bp-4]
     call    _GetTokenName
     sub     sp, -2
     push    ax
-    push    L2901
+    push    L2706
     call    _error
     sub     sp, -4
-L2899:
+L2704:
 ; switch
 ; RPN'ized expression: "lastTok "
 ; Expanded expression: "(@-4) *(2) "
 ; Fused expression:    "*(2) (@-4) "
     mov     ax, [bp-4]
-    jmp     L2905
+    jmp     L2710
 ; {
 ; case
 ; RPN'ized expression: "38 "
 ; Expanded expression: "38 "
 ; Expression value: 38
-    jmp     L2906
-L2905:
+    jmp     L2711
+L2710:
     cmp     ax, 38
-    jne     L2907
-L2906:
+    jne     L2712
+L2711:
 ; RPN'ized expression: "( 77 push ) "
 ; Expanded expression: " 77  push ()2 "
 ; Fused expression:    "( 77 , push )2 "
@@ -22586,16 +22739,16 @@ L2906:
     call    _push
     sub     sp, -2
 ; break
-    jmp     L2903
+    jmp     L2708
 ; case
 ; RPN'ized expression: "42 "
 ; Expanded expression: "42 "
 ; Expression value: 42
-    jmp     L2908
-L2907:
+    jmp     L2713
+L2712:
     cmp     ax, 42
-    jne     L2909
-L2908:
+    jne     L2714
+L2713:
 ; RPN'ized expression: "( 78 push ) "
 ; Expanded expression: " 78  push ()2 "
 ; Fused expression:    "( 78 , push )2 "
@@ -22603,16 +22756,16 @@ L2908:
     call    _push
     sub     sp, -2
 ; break
-    jmp     L2903
+    jmp     L2708
 ; case
 ; RPN'ized expression: "43 "
 ; Expanded expression: "43 "
 ; Expression value: 43
-    jmp     L2910
-L2909:
+    jmp     L2715
+L2714:
     cmp     ax, 43
-    jne     L2911
-L2910:
+    jne     L2716
+L2715:
 ; RPN'ized expression: "( 79 push ) "
 ; Expanded expression: " 79  push ()2 "
 ; Fused expression:    "( 79 , push )2 "
@@ -22620,16 +22773,16 @@ L2910:
     call    _push
     sub     sp, -2
 ; break
-    jmp     L2903
+    jmp     L2708
 ; case
 ; RPN'ized expression: "45 "
 ; Expanded expression: "45 "
 ; Expression value: 45
-    jmp     L2912
-L2911:
+    jmp     L2717
+L2716:
     cmp     ax, 45
-    jne     L2913
-L2912:
+    jne     L2718
+L2717:
 ; RPN'ized expression: "( 80 push ) "
 ; Expanded expression: " 80  push ()2 "
 ; Fused expression:    "( 80 , push )2 "
@@ -22637,16 +22790,16 @@ L2912:
     call    _push
     sub     sp, -2
 ; break
-    jmp     L2903
+    jmp     L2708
 ; case
 ; RPN'ized expression: "33 "
 ; Expanded expression: "33 "
 ; Expression value: 33
-    jmp     L2914
-L2913:
+    jmp     L2719
+L2718:
     cmp     ax, 33
-    jne     L2915
-L2914:
+    jne     L2720
+L2719:
 ; RPN'ized expression: "( 0 , 1 push2 ) "
 ; Expanded expression: " 0  1  push2 ()4 "
 ; Fused expression:    "( 0 , 1 , push2 )4 "
@@ -22661,9 +22814,9 @@ L2914:
     call    _push
     sub     sp, -2
 ; break
-    jmp     L2903
+    jmp     L2708
 ; default
-L2904:
+L2709:
 ; RPN'ized expression: "( lastTok push ) "
 ; Expanded expression: " (@-4) *(2)  push ()2 "
 ; Fused expression:    "( *(2) (@-4) , push )2 "
@@ -22671,16 +22824,16 @@ L2904:
     call    _push
     sub     sp, -2
 ; break
-    jmp     L2903
+    jmp     L2708
 ; }
-    jmp     L2903
-L2915:
-    jmp     L2904
-L2903:
+    jmp     L2708
+L2720:
+    jmp     L2709
+L2708:
     sub     sp, -2
 ; }
-    jmp     L2894
-L2893:
+    jmp     L2699
+L2698:
 ; else
 ; {
 ; loc         inspos : (@-4): int
@@ -22693,29 +22846,29 @@ L2893:
     mov     [bp-4], ax
 ; if
 ; RPN'ized expression: "tok 1 == tok 2 == || "
-; Expanded expression: "(@4) *(2) 1 == _Bool [sh||->2919] (@4) *(2) 2 == _Bool ||[2919] "
-; Fused expression:    "== *(@4) 1 _Bool [sh||->2919] == *(@4) 2 _Bool ||[2919] "
+; Expanded expression: "(@4) *(2) 1 == _Bool [sh||->2724] (@4) *(2) 2 == _Bool ||[2724] "
+; Fused expression:    "== *(@4) 1 _Bool [sh||->2724] == *(@4) 2 _Bool ||[2724] "
     mov     ax, [bp+4]
     cmp     ax, 1
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L2919
+    jne     L2724
     mov     ax, [bp+4]
     cmp     ax, 2
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L2919:
+L2724:
 ; JumpIfZero
     test    ax, ax
-    jz      L2917
+    je      L2722
 ; {
 ; RPN'ized expression: "( ( GetTokenValueInt ) , tok push2 ) "
 ; Expanded expression: "  GetTokenValueInt ()0  (@4) *(2)  push2 ()4 "
@@ -22738,8 +22891,8 @@ L2919:
     call    _GetToken
     mov     [bp+4], ax
 ; }
-    jmp     L2918
-L2917:
+    jmp     L2723
+L2722:
 ; else
 ; if
 ; RPN'ized expression: "tok 3 == "
@@ -22747,7 +22900,7 @@ L2917:
 ; Fused expression:    "== *(@4) 3 IF! "
     mov     ax, [bp+4]
     cmp     ax, 3
-    jne     L2920
+    jne     L2725
 ; {
 ; loc             lbl : (@-6): int
     sub     sp, 2
@@ -22809,7 +22962,7 @@ L2917:
     mov     ax, [bp-6]
     mov     [bp-10], ax
 ; do
-L2922:
+L2727:
 ; {
 ; RPN'ized expression: "p -- *u 48 i 10 % + = "
 ; Expanded expression: "(@-22) --(2) 48 (@-10) *(2) 10 % + =(1) "
@@ -22840,13 +22993,13 @@ L2922:
 ; while
 ; RPN'ized expression: "i "
 ; Expanded expression: "(@-10) *(2) "
-L2923:
+L2728:
 ; Fused expression:    "*(2) (@-10) "
     mov     ax, [bp-10]
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L2922
-L2924:
+    jne     L2727
+L2729:
 ; RPN'ized expression: "( id ( p AddIdent ) = , 16 PushSyntax2 ) "
 ; Expanded expression: " (@-12)  (@-22) *(2)  AddIdent ()2 =(2)  16  PushSyntax2 ()4 "
 ; Fused expression:    "( ( *(2) (@-22) , AddIdent )2 =(34) *(@-12) ax , 16 , PushSyntax2 )4 "
@@ -22904,8 +23057,8 @@ L2924:
     mov     [bp+4], ax
     sub     sp, -18
 ; }
-    jmp     L2921
-L2920:
+    jmp     L2726
+L2725:
 ; else
 ; if
 ; RPN'ized expression: "( 0 , tok TokenStartsDeclaration ) "
@@ -22917,7 +23070,7 @@ L2920:
     sub     sp, -4
 ; JumpIfZero
     test    ax, ax
-    jz      L2925
+    je      L2730
 ; {
 ; loc             synPtr : (@-6): int
     sub     sp, 2
@@ -22934,34 +23087,34 @@ L2920:
 ; Fused expression:    "!= *(@4) 41 IF! "
     mov     ax, [bp+4]
     cmp     ax, 41
-    je      L2927
-; RPN'ized expression: "( ( tok GetTokenName ) , L2929 error ) "
-; Expanded expression: "  (@4) *(2)  GetTokenName ()2  L2929  error ()4 "
+    je      L2732
+; RPN'ized expression: "( ( tok GetTokenName ) , L2734 error ) "
+; Expanded expression: "  (@4) *(2)  GetTokenName ()2  L2734  error ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L2929:
+L2734:
     db  "exprUnary(): ')' expected, unexpected token %s",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( ( *(2) (@4) , GetTokenName )2 , L2929 , error )4 "
+; Fused expression:    "( ( *(2) (@4) , GetTokenName )2 , L2734 , error )4 "
     push    word [bp+4]
     call    _GetTokenName
     sub     sp, -2
     push    ax
-    push    L2929
+    push    L2734
     call    _error
     sub     sp, -4
-L2927:
-; RPN'ized expression: "synPtr ( L2931 FindSymbol ) = "
-; Expanded expression: "(@-6)  L2931  FindSymbol ()2 =(2) "
+L2732:
+; RPN'ized expression: "synPtr ( L2736 FindSymbol ) = "
+; Expanded expression: "(@-6)  L2736  FindSymbol ()2 =(2) "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L2931:
+L2736:
     db  "<something>",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L2931 , FindSymbol )2 =(34) *(@-6) ax "
-    push    L2931
+; Fused expression:    "( L2736 , FindSymbol )2 =(34) *(@-6) ax "
+    push    L2736
     call    _FindSymbol
     sub     sp, -2
     mov     [bp-6], ax
@@ -22989,8 +23142,8 @@ SEGMENT _TEXT
     mov     [bp-2], ax
     sub     sp, -2
 ; }
-    jmp     L2926
-L2925:
+    jmp     L2731
+L2730:
 ; else
 ; if
 ; RPN'ized expression: "tok 16 == "
@@ -22998,7 +23151,7 @@ L2925:
 ; Fused expression:    "== *(@4) 16 IF! "
     mov     ax, [bp+4]
     cmp     ax, 16
-    jne     L2933
+    jne     L2738
 ; {
 ; loc             synPtr : (@-6): int
     sub     sp, 2
@@ -23017,22 +23170,22 @@ L2925:
 ; Fused expression:    "< *(@-6) 0 IF! "
     mov     ax, [bp-6]
     cmp     ax, 0
-    jge     L2935
-; RPN'ized expression: "( ( GetTokenIdentName ) , L2937 error ) "
-; Expanded expression: "  GetTokenIdentName ()0  L2937  error ()4 "
+    jge     L2740
+; RPN'ized expression: "( ( GetTokenIdentName ) , L2742 error ) "
+; Expanded expression: "  GetTokenIdentName ()0  L2742  error ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L2937:
+L2742:
     db  "exprUnary(): undefined identifier '%s'",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( ( GetTokenIdentName )0 , L2937 , error )4 "
+; Fused expression:    "( ( GetTokenIdentName )0 , L2742 , error )4 "
     call    _GetTokenIdentName
     push    ax
-    push    L2937
+    push    L2742
     call    _error
     sub     sp, -4
-L2935:
+L2740:
 ; RPN'ized expression: "( SyntaxStack synPtr + *u 1 + *u , tok push2 ) "
 ; Expanded expression: " SyntaxStack (@-6) *(2) 4 * + 2 + *(2)  (@4) *(2)  push2 ()4 "
 ; Fused expression:    "( * *(@-6) 4 + SyntaxStack ax + ax 2 *(2) ax , *(2) (@4) , push2 )4 "
@@ -23061,8 +23214,8 @@ L2935:
     mov     [bp+4], ax
     sub     sp, -2
 ; }
-    jmp     L2934
-L2933:
+    jmp     L2739
+L2738:
 ; else
 ; if
 ; RPN'ized expression: "tok 40 == "
@@ -23070,7 +23223,7 @@ L2933:
 ; Fused expression:    "== *(@4) 40 IF! "
     mov     ax, [bp+4]
     cmp     ax, 40
-    jne     L2939
+    jne     L2744
 ; {
 ; RPN'ized expression: "tok ( gotUnary , ( GetToken ) expr ) = "
 ; Expanded expression: "(@4)  (@6) *(2)   GetToken ()0  expr ()4 =(2) "
@@ -23087,24 +23240,24 @@ L2933:
 ; Fused expression:    "!= *(@4) 41 IF! "
     mov     ax, [bp+4]
     cmp     ax, 41
-    je      L2941
-; RPN'ized expression: "( ( tok GetTokenName ) , L2943 error ) "
-; Expanded expression: "  (@4) *(2)  GetTokenName ()2  L2943  error ()4 "
+    je      L2746
+; RPN'ized expression: "( ( tok GetTokenName ) , L2748 error ) "
+; Expanded expression: "  (@4) *(2)  GetTokenName ()2  L2748  error ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L2943:
+L2748:
     db  "exprUnary(): ')' expected, unexpected token %s",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( ( *(2) (@4) , GetTokenName )2 , L2943 , error )4 "
+; Fused expression:    "( ( *(2) (@4) , GetTokenName )2 , L2748 , error )4 "
     push    word [bp+4]
     call    _GetTokenName
     sub     sp, -2
     push    ax
-    push    L2943
+    push    L2748
     call    _error
     sub     sp, -4
-L2941:
+L2746:
 ; if
 ; RPN'ized expression: "gotUnary *u 0 == "
 ; Expanded expression: "(@6) *(2) *(2) 0 == "
@@ -23113,83 +23266,83 @@ L2941:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 0
-    jne     L2945
-; RPN'ized expression: "( L2947 error ) "
-; Expanded expression: " L2947  error ()2 "
+    jne     L2750
+; RPN'ized expression: "( L2752 error ) "
+; Expanded expression: " L2752  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L2947:
+L2752:
     db  "exprUnary(): primary expression expected in '()'",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L2947 , error )2 "
-    push    L2947
+; Fused expression:    "( L2752 , error )2 "
+    push    L2752
     call    _error
     sub     sp, -2
-L2945:
+L2750:
 ; RPN'ized expression: "tok ( GetToken ) = "
 ; Expanded expression: "(@4)  GetToken ()0 =(2) "
 ; Fused expression:    "( GetToken )0 =(34) *(@4) ax "
     call    _GetToken
     mov     [bp+4], ax
 ; }
-L2939:
-L2934:
-L2926:
-L2921:
-L2918:
+L2744:
+L2739:
+L2731:
+L2726:
+L2723:
 ; while
 ; RPN'ized expression: "gotUnary *u decl 0 == && "
-; Expanded expression: "(@6) *(2) *(2) _Bool [sh&&->2951] (@-2) *(2) 0 == _Bool &&[2951] "
-L2949:
-; Fused expression:    "*(2) (@6) *(2) ax _Bool [sh&&->2951] == *(@-2) 0 _Bool &&[2951] "
+; Expanded expression: "(@6) *(2) *(2) _Bool [sh&&->2756] (@-2) *(2) 0 == _Bool &&[2756] "
+L2754:
+; Fused expression:    "*(2) (@6) *(2) ax _Bool [sh&&->2756] == *(@-2) 0 _Bool &&[2756] "
     mov     ax, [bp+6]
     mov     bx, ax
     mov     ax, [bx]
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L2951
+    je      L2756
     mov     ax, [bp-2]
     cmp     ax, 0
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L2951:
+L2756:
 ; JumpIfZero
     test    ax, ax
-    jz      L2950
+    je      L2755
 ; {
 ; while
 ; RPN'ized expression: "tok 40 == tok 91 == || "
-; Expanded expression: "(@4) *(2) 40 == _Bool [sh||->2954] (@4) *(2) 91 == _Bool ||[2954] "
-L2952:
-; Fused expression:    "== *(@4) 40 _Bool [sh||->2954] == *(@4) 91 _Bool ||[2954] "
+; Expanded expression: "(@4) *(2) 40 == _Bool [sh||->2759] (@4) *(2) 91 == _Bool ||[2759] "
+L2757:
+; Fused expression:    "== *(@4) 40 _Bool [sh||->2759] == *(@4) 91 _Bool ||[2759] "
     mov     ax, [bp+4]
     cmp     ax, 40
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L2954
+    jne     L2759
     mov     ax, [bp+4]
     cmp     ax, 91
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L2954:
+L2759:
 ; JumpIfZero
     test    ax, ax
-    jz      L2953
+    je      L2758
 ; {
 ; loc                 brak : (@-6): int
     sub     sp, 2
@@ -23205,7 +23358,7 @@ L2954:
 ; Fused expression:    "== *(@-6) 40 IF! "
     mov     ax, [bp-6]
     cmp     ax, 40
-    jne     L2955
+    jne     L2760
 ; {
 ; loc                     acnt : (@-8): int
     sub     sp, 2
@@ -23224,11 +23377,11 @@ L2954:
     call    _ins
     sub     sp, -4
 ; for
-L2957:
-    jmp     L2959
-L2958:
-    jmp     L2957
-L2959:
+L2762:
+    jmp     L2764
+L2763:
+    jmp     L2762
+L2764:
 ; {
 ; loc                         pos2 : (@-10): int
     sub     sp, 2
@@ -23254,11 +23407,11 @@ L2959:
 ; while
 ; RPN'ized expression: "pos2 sp < "
 ; Expanded expression: "(@-10) *(2) sp *(2) < "
-L2961:
+L2766:
 ; Fused expression:    "< *(@-10) *sp IF! "
     mov     ax, [bp-10]
     cmp     ax, [_sp]
-    jge     L2962
+    jge     L2767
 ; {
 ; loc                             v : (@-12): int
     sub     sp, 2
@@ -23289,15 +23442,15 @@ L2961:
     inc     word [bp-10]
     sub     sp, -4
 ; }
-    jmp     L2961
-L2962:
+    jmp     L2766
+L2767:
 ; if
 ; RPN'ized expression: "tok 44 == "
 ; Expanded expression: "(@4) *(2) 44 == "
 ; Fused expression:    "== *(@4) 44 IF! "
     mov     ax, [bp+4]
     cmp     ax, 44
-    jne     L2963
+    jne     L2768
 ; {
 ; if
 ; RPN'ized expression: "gotUnary *u 0 == "
@@ -23307,20 +23460,20 @@ L2962:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 0
-    jne     L2965
-; RPN'ized expression: "( L2967 error ) "
-; Expanded expression: " L2967  error ()2 "
+    jne     L2770
+; RPN'ized expression: "( L2772 error ) "
+; Expanded expression: " L2772  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L2967:
+L2772:
     db  "exprUnary(): primary expression (fxn argument) expected before ','",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L2967 , error )2 "
-    push    L2967
+; Fused expression:    "( L2772 , error )2 "
+    push    L2772
     call    _error
     sub     sp, -2
-L2965:
+L2770:
 ; RPN'ized expression: "acnt ++p "
 ; Expanded expression: "(@-8) ++p(2) "
 ; Fused expression:    "++p(2) *(@-8) "
@@ -23337,28 +23490,28 @@ L2965:
     sub     sp, -4
 ; continue
     sub     sp, -2
-    jmp     L2958
+    jmp     L2763
 ; }
-L2963:
+L2768:
 ; if
 ; RPN'ized expression: "tok 41 == "
 ; Expanded expression: "(@4) *(2) 41 == "
 ; Fused expression:    "== *(@4) 41 IF! "
     mov     ax, [bp+4]
     cmp     ax, 41
-    jne     L2969
+    jne     L2774
 ; {
 ; if
 ; RPN'ized expression: "acnt gotUnary *u 0 == && "
-; Expanded expression: "(@-8) *(2) _Bool [sh&&->2973] (@6) *(2) *(2) 0 == _Bool &&[2973] "
-; Fused expression:    "*(2) (@-8) _Bool [sh&&->2973] *(2) (@6) == *ax 0 _Bool &&[2973] "
+; Expanded expression: "(@-8) *(2) _Bool [sh&&->2778] (@6) *(2) *(2) 0 == _Bool &&[2778] "
+; Fused expression:    "*(2) (@-8) _Bool [sh&&->2778] *(2) (@6) == *ax 0 _Bool &&[2778] "
     mov     ax, [bp-8]
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L2973
+    je      L2778
     mov     ax, [bp+6]
     mov     bx, ax
     mov     ax, [bx]
@@ -23366,25 +23519,25 @@ L2963:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L2973:
+L2778:
 ; JumpIfZero
     test    ax, ax
-    jz      L2971
-; RPN'ized expression: "( L2974 error ) "
-; Expanded expression: " L2974  error ()2 "
+    je      L2776
+; RPN'ized expression: "( L2779 error ) "
+; Expanded expression: " L2779  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L2974:
+L2779:
     db  "exprUnary(): primary expression (fxn argument) expected between ',' and ')'",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L2974 , error )2 "
-    push    L2974
+; Fused expression:    "( L2779 , error )2 "
+    push    L2779
     call    _error
     sub     sp, -2
-L2971:
+L2776:
 ; RPN'ized expression: "gotUnary *u 1 = "
 ; Expanded expression: "(@6) *(2) 1 =(2) "
 ; Fused expression:    "*(2) (@6) =(34) *ax 1 "
@@ -23394,41 +23547,41 @@ L2971:
     mov     [bx], ax
 ; break
     sub     sp, -2
-    jmp     L2960
+    jmp     L2765
 ; }
-L2969:
-; RPN'ized expression: "( ( tok GetTokenName ) , L2976 error ) "
-; Expanded expression: "  (@4) *(2)  GetTokenName ()2  L2976  error ()4 "
+L2774:
+; RPN'ized expression: "( ( tok GetTokenName ) , L2781 error ) "
+; Expanded expression: "  (@4) *(2)  GetTokenName ()2  L2781  error ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L2976:
+L2781:
     db  "exprUnary(): ',' or ')' expected, unexpected token %s",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( ( *(2) (@4) , GetTokenName )2 , L2976 , error )4 "
+; Fused expression:    "( ( *(2) (@4) , GetTokenName )2 , L2781 , error )4 "
     push    word [bp+4]
     call    _GetTokenName
     sub     sp, -2
     push    ax
-    push    L2976
+    push    L2781
     call    _error
     sub     sp, -4
     sub     sp, -2
 ; }
-    jmp     L2958
-L2960:
+    jmp     L2763
+L2765:
     sub     sp, -2
 ; }
-    jmp     L2956
-L2955:
+    jmp     L2761
+L2760:
 ; else
 ; {
 ; for
-L2978:
-    jmp     L2980
-L2979:
-    jmp     L2978
-L2980:
+L2783:
+    jmp     L2785
+L2784:
+    jmp     L2783
+L2785:
 ; {
 ; RPN'ized expression: "tok ( GetToken ) = "
 ; Expanded expression: "(@4)  GetToken ()0 =(2) "
@@ -23451,51 +23604,51 @@ L2980:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 0
-    jne     L2982
-; RPN'ized expression: "( L2984 error ) "
-; Expanded expression: " L2984  error ()2 "
+    jne     L2787
+; RPN'ized expression: "( L2789 error ) "
+; Expanded expression: " L2789  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L2984:
+L2789:
     db  "exprUnary(): primary expression expected in '[]'",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L2984 , error )2 "
-    push    L2984
+; Fused expression:    "( L2789 , error )2 "
+    push    L2789
     call    _error
     sub     sp, -2
-L2982:
+L2787:
 ; if
 ; RPN'ized expression: "tok 93 == "
 ; Expanded expression: "(@4) *(2) 93 == "
 ; Fused expression:    "== *(@4) 93 IF! "
     mov     ax, [bp+4]
     cmp     ax, 93
-    jne     L2986
+    jne     L2791
 ; break
-    jmp     L2981
-L2986:
-; RPN'ized expression: "( ( tok GetTokenName ) , L2988 error ) "
-; Expanded expression: "  (@4) *(2)  GetTokenName ()2  L2988  error ()4 "
+    jmp     L2786
+L2791:
+; RPN'ized expression: "( ( tok GetTokenName ) , L2793 error ) "
+; Expanded expression: "  (@4) *(2)  GetTokenName ()2  L2793  error ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L2988:
+L2793:
     db  "exprUnary(): ']' expected, unexpected token %s",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( ( *(2) (@4) , GetTokenName )2 , L2988 , error )4 "
+; Fused expression:    "( ( *(2) (@4) , GetTokenName )2 , L2793 , error )4 "
     push    word [bp+4]
     call    _GetTokenName
     sub     sp, -2
     push    ax
-    push    L2988
+    push    L2793
     call    _error
     sub     sp, -4
 ; }
-    jmp     L2979
-L2981:
+    jmp     L2784
+L2786:
 ; }
-L2956:
+L2761:
 ; RPN'ized expression: "tok ( GetToken ) = "
 ; Expanded expression: "(@4)  GetToken ()0 =(2) "
 ; Fused expression:    "( GetToken )0 =(34) *(@4) ax "
@@ -23507,15 +23660,15 @@ L2956:
 ; Fused expression:    "== *(@-6) 40 IF! "
     mov     ax, [bp-6]
     cmp     ax, 40
-    jne     L2990
+    jne     L2795
 ; RPN'ized expression: "( 41 push ) "
 ; Expanded expression: " 41  push ()2 "
 ; Fused expression:    "( 41 , push )2 "
     push    41
     call    _push
     sub     sp, -2
-    jmp     L2991
-L2990:
+    jmp     L2796
+L2795:
 ; else
 ; {
 ; RPN'ized expression: "( 43 push ) "
@@ -23531,36 +23684,36 @@ L2990:
     call    _push
     sub     sp, -2
 ; }
-L2991:
+L2796:
     sub     sp, -2
 ; }
-    jmp     L2952
-L2953:
+    jmp     L2757
+L2758:
 ; if
 ; RPN'ized expression: "tok 12 == tok 13 == || "
-; Expanded expression: "(@4) *(2) 12 == _Bool [sh||->2994] (@4) *(2) 13 == _Bool ||[2994] "
-; Fused expression:    "== *(@4) 12 _Bool [sh||->2994] == *(@4) 13 _Bool ||[2994] "
+; Expanded expression: "(@4) *(2) 12 == _Bool [sh||->2799] (@4) *(2) 13 == _Bool ||[2799] "
+; Fused expression:    "== *(@4) 12 _Bool [sh||->2799] == *(@4) 13 _Bool ||[2799] "
     mov     ax, [bp+4]
     cmp     ax, 12
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L2994
+    jne     L2799
     mov     ax, [bp+4]
     cmp     ax, 13
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L2994:
+L2799:
 ; JumpIfZero
     test    ax, ax
-    jz      L2992
+    je      L2797
 ; {
 ; if
 ; RPN'ized expression: "tok 12 == "
@@ -23568,15 +23721,15 @@ L2994:
 ; Fused expression:    "== *(@4) 12 IF! "
     mov     ax, [bp+4]
     cmp     ax, 12
-    jne     L2995
+    jne     L2800
 ; RPN'ized expression: "( 81 push ) "
 ; Expanded expression: " 81  push ()2 "
 ; Fused expression:    "( 81 , push )2 "
     push    81
     call    _push
     sub     sp, -2
-    jmp     L2996
-L2995:
+    jmp     L2801
+L2800:
 ; else
 ; RPN'ized expression: "( 82 push ) "
 ; Expanded expression: " 82  push ()2 "
@@ -23584,34 +23737,34 @@ L2995:
     push    82
     call    _push
     sub     sp, -2
-L2996:
+L2801:
 ; RPN'ized expression: "tok ( GetToken ) = "
 ; Expanded expression: "(@4)  GetToken ()0 =(2) "
 ; Fused expression:    "( GetToken )0 =(34) *(@4) ax "
     call    _GetToken
     mov     [bp+4], ax
 ; }
-    jmp     L2993
-L2992:
+    jmp     L2798
+L2797:
 ; else
 ; {
 ; break
-    jmp     L2950
+    jmp     L2755
 ; }
-L2993:
+L2798:
 ; }
-    jmp     L2949
-L2950:
+    jmp     L2754
+L2755:
     sub     sp, -2
 ; }
-L2894:
+L2699:
 ; return
 ; RPN'ized expression: "tok "
 ; Expanded expression: "(@4) *(2) "
 ; Fused expression:    "*(2) (@4) "
     mov     ax, [bp+4]
-    jmp     L2892
-L2892:
+    jmp     L2697
+L2697:
     leave
     ret
 ; SEGMENT _TEXT
@@ -23648,67 +23801,67 @@ _expr:
     sub     sp, -4
     mov     [bp+4], ax
 ; while
-; RPN'ized expression: "tok 0 != ( tok , L3000 strchr ) 0 == && gotUnary *u && "
-; Expanded expression: "(@4) *(2) 0 != _Bool [sh&&->3003]  (@4) *(2)  L3000  strchr ()4 0 == _Bool &&[3003] _Bool [sh&&->3002] (@6) *(2) *(2) _Bool &&[3002] "
-L2998:
+; RPN'ized expression: "tok 0 != ( tok , L2805 strchr ) 0 == && gotUnary *u && "
+; Expanded expression: "(@4) *(2) 0 != _Bool [sh&&->2808]  (@4) *(2)  L2805  strchr ()4 0 == _Bool &&[2808] _Bool [sh&&->2807] (@6) *(2) *(2) _Bool &&[2807] "
+L2803:
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3000:
+L2805:
     db  ",;:)]",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "!= *(@4) 0 _Bool [sh&&->3003] ( *(2) (@4) , L3000 , strchr )4 == ax 0 _Bool &&[3003] _Bool [sh&&->3002] *(2) (@6) *(2) ax _Bool &&[3002] "
+; Fused expression:    "!= *(@4) 0 _Bool [sh&&->2808] ( *(2) (@4) , L2805 , strchr )4 == ax 0 _Bool &&[2808] _Bool [sh&&->2807] *(2) (@6) *(2) ax _Bool &&[2807] "
     mov     ax, [bp+4]
     cmp     ax, 0
     setne   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3003
+    je      L2808
     push    word [bp+4]
-    push    L3000
+    push    L2805
     call    _strchr
     sub     sp, -4
     cmp     ax, 0
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3003:
+L2808:
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3002
+    je      L2807
     mov     ax, [bp+6]
     mov     bx, ax
     mov     ax, [bx]
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3002:
+L2807:
 ; JumpIfZero
     test    ax, ax
-    jz      L2999
+    je      L2804
 ; {
 ; if
 ; RPN'ized expression: "( tok isop ) ( tok isunary ) 0 == && "
-; Expanded expression: " (@4) *(2)  isop ()2 _Bool [sh&&->3006]  (@4) *(2)  isunary ()2 0 == _Bool &&[3006] "
-; Fused expression:    "( *(2) (@4) , isop )2 _Bool [sh&&->3006] ( *(2) (@4) , isunary )2 == ax 0 _Bool &&[3006] "
+; Expanded expression: " (@4) *(2)  isop ()2 _Bool [sh&&->2811]  (@4) *(2)  isunary ()2 0 == _Bool &&[2811] "
+; Fused expression:    "( *(2) (@4) , isop )2 _Bool [sh&&->2811] ( *(2) (@4) , isunary )2 == ax 0 _Bool &&[2811] "
     push    word [bp+4]
     call    _isop
     sub     sp, -2
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3006
+    je      L2811
     push    word [bp+4]
     call    _isunary
     sub     sp, -2
@@ -23716,12 +23869,12 @@ L3002:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3006:
+L2811:
 ; JumpIfZero
     test    ax, ax
-    jz      L3004
+    je      L2809
 ; {
 ; loc             lastTok : (@-2): int
     sub     sp, 2
@@ -23734,7 +23887,7 @@ L3006:
 ; while
 ; RPN'ized expression: "( tok , ( opstacktop ) precedGEQ ) "
 ; Expanded expression: " (@4) *(2)   opstacktop ()0  precedGEQ ()4 "
-L3007:
+L2812:
 ; Fused expression:    "( *(2) (@4) , ( opstacktop )0 , precedGEQ )4 "
     push    word [bp+4]
     call    _opstacktop
@@ -23743,7 +23896,7 @@ L3007:
     sub     sp, -4
 ; JumpIfZero
     test    ax, ax
-    jz      L3008
+    je      L2813
 ; {
 ; loc                 v : (@-4): int
     sub     sp, 2
@@ -23766,8 +23919,8 @@ L3007:
     sub     sp, -4
     sub     sp, -4
 ; }
-    jmp     L3007
-L3008:
+    jmp     L2812
+L2813:
 ; RPN'ized expression: "( tok pushop ) "
 ; Expanded expression: " (@4) *(2)  pushop ()2 "
 ; Fused expression:    "( *(2) (@4) , pushop )2 "
@@ -23791,57 +23944,57 @@ L3008:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 0
-    jne     L3009
-; RPN'ized expression: "( ( lastTok GetTokenName ) , L3011 error ) "
-; Expanded expression: "  (@-2) *(2)  GetTokenName ()2  L3011  error ()4 "
+    jne     L2814
+; RPN'ized expression: "( ( lastTok GetTokenName ) , L2816 error ) "
+; Expanded expression: "  (@-2) *(2)  GetTokenName ()2  L2816  error ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3011:
+L2816:
     db  "expr(): primary expression expected after token %s",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( ( *(2) (@-2) , GetTokenName )2 , L3011 , error )4 "
+; Fused expression:    "( ( *(2) (@-2) , GetTokenName )2 , L2816 , error )4 "
     push    word [bp-2]
     call    _GetTokenName
     sub     sp, -2
     push    ax
-    push    L3011
+    push    L2816
     call    _error
     sub     sp, -4
-L3009:
+L2814:
 ; continue
     sub     sp, -2
-    jmp     L2998
+    jmp     L2803
     sub     sp, -2
 ; }
-L3004:
-; RPN'ized expression: "( ( tok GetTokenName ) , L3013 error ) "
-; Expanded expression: "  (@4) *(2)  GetTokenName ()2  L3013  error ()4 "
+L2809:
+; RPN'ized expression: "( ( tok GetTokenName ) , L2818 error ) "
+; Expanded expression: "  (@4) *(2)  GetTokenName ()2  L2818  error ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3013:
+L2818:
     db  "expr(): Unexpected token %s",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( ( *(2) (@4) , GetTokenName )2 , L3013 , error )4 "
+; Fused expression:    "( ( *(2) (@4) , GetTokenName )2 , L2818 , error )4 "
     push    word [bp+4]
     call    _GetTokenName
     sub     sp, -2
     push    ax
-    push    L3013
+    push    L2818
     call    _error
     sub     sp, -4
 ; }
-    jmp     L2998
-L2999:
+    jmp     L2803
+L2804:
 ; while
 ; RPN'ized expression: "( opstacktop ) 0 != "
 ; Expanded expression: " opstacktop ()0 0 != "
-L3015:
+L2820:
 ; Fused expression:    "( opstacktop )0 != ax 0 IF! "
     call    _opstacktop
     cmp     ax, 0
-    je      L3016
+    je      L2821
 ; {
 ; loc         v : (@-2): int
     sub     sp, 2
@@ -23864,8 +24017,8 @@ L3015:
     sub     sp, -4
     sub     sp, -4
 ; }
-    jmp     L3015
-L3016:
+    jmp     L2820
+L2821:
 ; RPN'ized expression: "( popop ) "
 ; Expanded expression: " popop ()0 "
 ; Fused expression:    "( popop )0 "
@@ -23875,8 +24028,8 @@ L3016:
 ; Expanded expression: "(@4) *(2) "
 ; Fused expression:    "*(2) (@4) "
     mov     ax, [bp+4]
-    jmp     L2997
-L2997:
+    jmp     L2802
+L2802:
     leave
     ret
 ; SEGMENT _TEXT
@@ -23893,8 +24046,8 @@ _decayArray:
 ; loc     arithmetic : (@6): int
 ; if
 ; RPN'ized expression: "ExprTypeSynPtr *u 0 >= SyntaxStack ExprTypeSynPtr *u + *u 0 + *u 91 == && "
-; Expanded expression: "(@4) *(2) *(2) 0 >= _Bool [sh&&->3020] SyntaxStack (@4) *(2) *(2) 4 * + 0 + *(2) 91 == _Bool &&[3020] "
-; Fused expression:    "*(2) (@4) >= *ax 0 _Bool [sh&&->3020] *(2) (@4) * *ax 4 + SyntaxStack ax + ax 0 == *ax 91 _Bool &&[3020] "
+; Expanded expression: "(@4) *(2) *(2) 0 >= _Bool [sh&&->2825] SyntaxStack (@4) *(2) *(2) 4 * + 0 + *(2) 91 == _Bool &&[2825] "
+; Fused expression:    "*(2) (@4) >= *ax 0 _Bool [sh&&->2825] *(2) (@4) * *ax 4 + SyntaxStack ax + ax 0 == *ax 91 _Bool &&[2825] "
     mov     ax, [bp+4]
     mov     bx, ax
     mov     ax, [bx]
@@ -23902,11 +24055,11 @@ _decayArray:
     setge   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3020
+    je      L2825
     mov     ax, [bp+4]
     mov     bx, ax
     mov     ax, [bx]
@@ -23921,17 +24074,17 @@ _decayArray:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3020:
+L2825:
 ; JumpIfZero
     test    ax, ax
-    jz      L3018
+    je      L2823
 ; {
 ; while
 ; RPN'ized expression: "SyntaxStack ExprTypeSynPtr *u + *u 0 + *u 93 != "
 ; Expanded expression: "SyntaxStack (@4) *(2) *(2) 4 * + 0 + *(2) 93 != "
-L3021:
+L2826:
 ; Fused expression:    "*(2) (@4) * *ax 4 + SyntaxStack ax + ax 0 != *ax 93 IF! "
     mov     ax, [bp+4]
     mov     bx, ax
@@ -23944,7 +24097,7 @@ L3021:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 93
-    je      L3022
+    je      L2827
 ; RPN'ized expression: "ExprTypeSynPtr *u ++ "
 ; Expanded expression: "(@4) *(2) ++(2) "
 ; Fused expression:    "*(2) (@4) ++(2) *ax "
@@ -23952,8 +24105,8 @@ L3021:
     mov     bx, ax
     inc     word [bx]
     mov     ax, [bx]
-    jmp     L3021
-L3022:
+    jmp     L2826
+L2827:
 ; RPN'ized expression: "ExprTypeSynPtr *u ++ "
 ; Expanded expression: "(@4) *(2) ++(2) "
 ; Fused expression:    "*(2) (@4) ++(2) *ax "
@@ -23973,13 +24126,13 @@ L3022:
     pop     bx
     mov     [bx], ax
 ; }
-    jmp     L3019
-L3018:
+    jmp     L2824
+L2823:
 ; else
 ; if
 ; RPN'ized expression: "ExprTypeSynPtr *u 0 >= SyntaxStack ExprTypeSynPtr *u + *u 0 + *u 42 == && "
-; Expanded expression: "(@4) *(2) *(2) 0 >= _Bool [sh&&->3025] SyntaxStack (@4) *(2) *(2) 4 * + 0 + *(2) 42 == _Bool &&[3025] "
-; Fused expression:    "*(2) (@4) >= *ax 0 _Bool [sh&&->3025] *(2) (@4) * *ax 4 + SyntaxStack ax + ax 0 == *ax 42 _Bool &&[3025] "
+; Expanded expression: "(@4) *(2) *(2) 0 >= _Bool [sh&&->2830] SyntaxStack (@4) *(2) *(2) 4 * + 0 + *(2) 42 == _Bool &&[2830] "
+; Fused expression:    "*(2) (@4) >= *ax 0 _Bool [sh&&->2830] *(2) (@4) * *ax 4 + SyntaxStack ax + ax 0 == *ax 42 _Bool &&[2830] "
     mov     ax, [bp+4]
     mov     bx, ax
     mov     ax, [bx]
@@ -23987,11 +24140,11 @@ L3018:
     setge   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3025
+    je      L2830
     mov     ax, [bp+4]
     mov     bx, ax
     mov     ax, [bx]
@@ -24006,12 +24159,12 @@ L3018:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3025:
+L2830:
 ; JumpIfZero
     test    ax, ax
-    jz      L3023
+    je      L2828
 ; {
 ; RPN'ized expression: "ExprTypeSynPtr *u ++ "
 ; Expanded expression: "(@4) *(2) ++(2) "
@@ -24032,8 +24185,8 @@ L3025:
     pop     bx
     mov     [bx], ax
 ; }
-L3023:
-L3019:
+L2828:
+L2824:
 ; if
 ; RPN'ized expression: "arithmetic "
 ; Expanded expression: "(@6) *(2) "
@@ -24041,7 +24194,7 @@ L3019:
     mov     ax, [bp+6]
 ; JumpIfZero
     test    ax, ax
-    jz      L3026
+    je      L2831
 ; {
 ; if
 ; RPN'ized expression: "ExprTypeSynPtr *u 0 < "
@@ -24051,7 +24204,7 @@ L3019:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 0
-    jge     L3028
+    jge     L2833
 ; {
 ; if
 ; RPN'ized expression: "SyntaxStack ExprTypeSynPtr *u -u + *u 0 + *u 17 == "
@@ -24069,20 +24222,20 @@ L3019:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 17
-    jne     L3030
-; RPN'ized expression: "( L3032 error ) "
-; Expanded expression: " L3032  error ()2 "
+    jne     L2835
+; RPN'ized expression: "( L2837 error ) "
+; Expanded expression: " L2837  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3032:
+L2837:
     db  "Error: decayArray(): cannot do pointer arithmetic on a pointer to 'void'",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3032 , error )2 "
-    push    L3032
+; Fused expression:    "( L2837 , error )2 "
+    push    L2837
     call    _error
     sub     sp, -2
-L3030:
+L2835:
 ; if
 ; RPN'ized expression: "SyntaxStack ExprTypeSynPtr *u -u + *u 0 + *u 40 == "
 ; Expanded expression: "SyntaxStack (@4) *(2) *(2) -u 4 * + 0 + *(2) 40 == "
@@ -24099,23 +24252,23 @@ L3030:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 40
-    jne     L3034
-; RPN'ized expression: "( L3036 error ) "
-; Expanded expression: " L3036  error ()2 "
+    jne     L2839
+; RPN'ized expression: "( L2841 error ) "
+; Expanded expression: " L2841  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3036:
+L2841:
     db  "Error: decayArray(): cannot do pointer arithmetic on a pointer to a function",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3036 , error )2 "
-    push    L3036
+; Fused expression:    "( L2841 , error )2 "
+    push    L2841
     call    _error
     sub     sp, -2
-L3034:
+L2839:
 ; }
-    jmp     L3029
-L3028:
+    jmp     L2834
+L2833:
 ; else
 ; {
 ; if
@@ -24133,25 +24286,25 @@ L3028:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 40
-    jne     L3038
-; RPN'ized expression: "( L3040 error ) "
-; Expanded expression: " L3040  error ()2 "
+    jne     L2843
+; RPN'ized expression: "( L2845 error ) "
+; Expanded expression: " L2845  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3040:
+L2845:
     db  "Error: decayArray(): cannot do arithmetic on a function",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3040 , error )2 "
-    push    L3040
+; Fused expression:    "( L2845 , error )2 "
+    push    L2845
     call    _error
     sub     sp, -2
-L3038:
+L2843:
 ; }
-L3029:
+L2834:
 ; }
-L3026:
-L3017:
+L2831:
+L2822:
     leave
     ret
 ; SEGMENT _TEXT
@@ -24168,18 +24321,18 @@ _nonVoidTypeCheck:
 ; loc     tok : (@6): int
 ; if
 ; RPN'ized expression: "ExprTypeSynPtr 0 >= SyntaxStack ExprTypeSynPtr + *u 0 + *u 17 == && "
-; Expanded expression: "(@4) *(2) 0 >= _Bool [sh&&->3045] SyntaxStack (@4) *(2) 4 * + 0 + *(2) 17 == _Bool &&[3045] "
-; Fused expression:    ">= *(@4) 0 _Bool [sh&&->3045] * *(@4) 4 + SyntaxStack ax + ax 0 == *ax 17 _Bool &&[3045] "
+; Expanded expression: "(@4) *(2) 0 >= _Bool [sh&&->2850] SyntaxStack (@4) *(2) 4 * + 0 + *(2) 17 == _Bool &&[2850] "
+; Fused expression:    ">= *(@4) 0 _Bool [sh&&->2850] * *(@4) 4 + SyntaxStack ax + ax 0 == *ax 17 _Bool &&[2850] "
     mov     ax, [bp+4]
     cmp     ax, 0
     setge   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3045
+    je      L2850
     mov     ax, [bp+4]
     imul    ax, ax, 4
     mov     cx, ax
@@ -24192,30 +24345,30 @@ _nonVoidTypeCheck:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3045:
+L2850:
 ; JumpIfZero
     test    ax, ax
-    jz      L3043
-; RPN'ized expression: "( ( tok GetTokenName ) , L3046 error ) "
-; Expanded expression: "  (@6) *(2)  GetTokenName ()2  L3046  error ()4 "
+    je      L2848
+; RPN'ized expression: "( ( tok GetTokenName ) , L2851 error ) "
+; Expanded expression: "  (@6) *(2)  GetTokenName ()2  L2851  error ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3046:
+L2851:
     db  "Error: nonVoidTypeCheck(): unexpected operand type 'void' for operator '%s'",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( ( *(2) (@6) , GetTokenName )2 , L3046 , error )4 "
+; Fused expression:    "( ( *(2) (@6) , GetTokenName )2 , L2851 , error )4 "
     push    word [bp+6]
     call    _GetTokenName
     sub     sp, -2
     push    ax
-    push    L3046
+    push    L2851
     call    _error
     sub     sp, -4
-L3043:
-L3042:
+L2848:
+L2847:
     leave
     ret
 ; SEGMENT _TEXT
@@ -24232,18 +24385,18 @@ _numericTypeCheck:
 ; loc     tok : (@6): int
 ; if
 ; RPN'ized expression: "ExprTypeSynPtr 0 >= SyntaxStack ExprTypeSynPtr + *u 0 + *u 18 == SyntaxStack ExprTypeSynPtr + *u 0 + *u 19 == || && "
-; Expanded expression: "(@4) *(2) 0 >= _Bool [sh&&->3051] SyntaxStack (@4) *(2) 4 * + 0 + *(2) 18 == _Bool [sh||->3052] SyntaxStack (@4) *(2) 4 * + 0 + *(2) 19 == _Bool ||[3052] _Bool &&[3051] "
-; Fused expression:    ">= *(@4) 0 _Bool [sh&&->3051] * *(@4) 4 + SyntaxStack ax + ax 0 == *ax 18 _Bool [sh||->3052] * *(@4) 4 + SyntaxStack ax + ax 0 == *ax 19 _Bool ||[3052] _Bool &&[3051] "
+; Expanded expression: "(@4) *(2) 0 >= _Bool [sh&&->2856] SyntaxStack (@4) *(2) 4 * + 0 + *(2) 18 == _Bool [sh||->2857] SyntaxStack (@4) *(2) 4 * + 0 + *(2) 19 == _Bool ||[2857] _Bool &&[2856] "
+; Fused expression:    ">= *(@4) 0 _Bool [sh&&->2856] * *(@4) 4 + SyntaxStack ax + ax 0 == *ax 18 _Bool [sh||->2857] * *(@4) 4 + SyntaxStack ax + ax 0 == *ax 19 _Bool ||[2857] _Bool &&[2856] "
     mov     ax, [bp+4]
     cmp     ax, 0
     setge   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3051
+    je      L2856
     mov     ax, [bp+4]
     imul    ax, ax, 4
     mov     cx, ax
@@ -24256,11 +24409,11 @@ _numericTypeCheck:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L3052
+    jne     L2857
     mov     ax, [bp+4]
     imul    ax, ax, 4
     mov     cx, ax
@@ -24273,36 +24426,36 @@ _numericTypeCheck:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3052:
+L2857:
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3051:
+L2856:
 ; JumpIfZero
     test    ax, ax
-    jz      L3049
+    je      L2854
 ; return
-    jmp     L3048
-L3049:
-; RPN'ized expression: "( ( tok GetTokenName ) , L3053 error ) "
-; Expanded expression: "  (@6) *(2)  GetTokenName ()2  L3053  error ()4 "
+    jmp     L2853
+L2854:
+; RPN'ized expression: "( ( tok GetTokenName ) , L2858 error ) "
+; Expanded expression: "  (@6) *(2)  GetTokenName ()2  L2858  error ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3053:
+L2858:
     db  "Error: numericTypeCheck(): unexpected operand type for operator '%s', numeric type expected",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( ( *(2) (@6) , GetTokenName )2 , L3053 , error )4 "
+; Fused expression:    "( ( *(2) (@6) , GetTokenName )2 , L2858 , error )4 "
     push    word [bp+6]
     call    _GetTokenName
     sub     sp, -2
     push    ax
-    push    L3053
+    push    L2858
     call    _error
     sub     sp, -4
-L3048:
+L2853:
     leave
     ret
 ; SEGMENT _TEXT
@@ -24317,8 +24470,8 @@ _promoteType:
 ; loc     ExprTypeSynPtr : (@4): * int
 ; if
 ; RPN'ized expression: "ExprTypeSynPtr *u 0 >= SyntaxStack ExprTypeSynPtr *u + *u 0 + *u 18 == && "
-; Expanded expression: "(@4) *(2) *(2) 0 >= _Bool [sh&&->3058] SyntaxStack (@4) *(2) *(2) 4 * + 0 + *(2) 18 == _Bool &&[3058] "
-; Fused expression:    "*(2) (@4) >= *ax 0 _Bool [sh&&->3058] *(2) (@4) * *ax 4 + SyntaxStack ax + ax 0 == *ax 18 _Bool &&[3058] "
+; Expanded expression: "(@4) *(2) *(2) 0 >= _Bool [sh&&->2863] SyntaxStack (@4) *(2) *(2) 4 * + 0 + *(2) 18 == _Bool &&[2863] "
+; Fused expression:    "*(2) (@4) >= *ax 0 _Bool [sh&&->2863] *(2) (@4) * *ax 4 + SyntaxStack ax + ax 0 == *ax 18 _Bool &&[2863] "
     mov     ax, [bp+4]
     mov     bx, ax
     mov     ax, [bx]
@@ -24326,11 +24479,11 @@ _promoteType:
     setge   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3058
+    je      L2863
     mov     ax, [bp+4]
     mov     bx, ax
     mov     ax, [bx]
@@ -24345,12 +24498,12 @@ _promoteType:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3058:
+L2863:
 ; JumpIfZero
     test    ax, ax
-    jz      L3056
+    je      L2861
 ; RPN'ized expression: "ExprTypeSynPtr *u 1 = "
 ; Expanded expression: "(@4) *(2) 1 =(2) "
 ; Fused expression:    "*(2) (@4) =(34) *ax 1 "
@@ -24358,8 +24511,8 @@ L3058:
     mov     bx, ax
     mov     ax, 1
     mov     [bx], ax
-L3056:
-L3055:
+L2861:
+L2860:
     leave
     ret
 ; SEGMENT _TEXT
@@ -24404,7 +24557,7 @@ _GetFxnInfo:
 ; Fused expression:    "< *(@4) 0 IF! "
     mov     ax, [bp+4]
     cmp     ax, 0
-    jge     L3060
+    jge     L2865
 ; {
 ; RPN'ized expression: "ptr 1 = "
 ; Expanded expression: "(@-2) 1 =(2) "
@@ -24418,12 +24571,12 @@ _GetFxnInfo:
     neg     ax
     mov     [bp+4], ax
 ; }
-L3060:
+L2865:
 ; while
 ; RPN'ized expression: "SyntaxStack ExprTypeSynPtr + *u 0 + *u 16 == SyntaxStack ExprTypeSynPtr + *u 0 + *u 89 == || "
-; Expanded expression: "SyntaxStack (@4) *(2) 4 * + 0 + *(2) 16 == _Bool [sh||->3064] SyntaxStack (@4) *(2) 4 * + 0 + *(2) 89 == _Bool ||[3064] "
-L3062:
-; Fused expression:    "* *(@4) 4 + SyntaxStack ax + ax 0 == *ax 16 _Bool [sh||->3064] * *(@4) 4 + SyntaxStack ax + ax 0 == *ax 89 _Bool ||[3064] "
+; Expanded expression: "SyntaxStack (@4) *(2) 4 * + 0 + *(2) 16 == _Bool [sh||->2869] SyntaxStack (@4) *(2) 4 * + 0 + *(2) 89 == _Bool ||[2869] "
+L2867:
+; Fused expression:    "* *(@4) 4 + SyntaxStack ax + ax 0 == *ax 16 _Bool [sh||->2869] * *(@4) 4 + SyntaxStack ax + ax 0 == *ax 89 _Bool ||[2869] "
     mov     ax, [bp+4]
     imul    ax, ax, 4
     mov     cx, ax
@@ -24436,11 +24589,11 @@ L3062:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L3064
+    jne     L2869
     mov     ax, [bp+4]
     imul    ax, ax, 4
     mov     cx, ax
@@ -24453,23 +24606,23 @@ L3062:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3064:
+L2869:
 ; JumpIfZero
     test    ax, ax
-    jz      L3063
+    je      L2868
 ; RPN'ized expression: "ExprTypeSynPtr ++p "
 ; Expanded expression: "(@4) ++p(2) "
 ; Fused expression:    "++p(2) *(@4) "
     mov     ax, [bp+4]
     inc     word [bp+4]
-    jmp     L3062
-L3063:
+    jmp     L2867
+L2868:
 ; if
 ; RPN'ized expression: "SyntaxStack ExprTypeSynPtr + *u 0 + *u 40 == ptr 0 == SyntaxStack ExprTypeSynPtr + *u 0 + *u 42 == && SyntaxStack ExprTypeSynPtr 1 + + *u 0 + *u 40 == && || 0 == "
-; Expanded expression: "SyntaxStack (@4) *(2) 4 * + 0 + *(2) 40 == _Bool [sh||->3067] (@-2) *(2) 0 == _Bool [sh&&->3069] SyntaxStack (@4) *(2) 4 * + 0 + *(2) 42 == _Bool &&[3069] _Bool [sh&&->3068] SyntaxStack (@4) *(2) 1 + 4 * + 0 + *(2) 40 == _Bool &&[3068] _Bool ||[3067] 0 == "
-; Fused expression:    "* *(@4) 4 + SyntaxStack ax + ax 0 == *ax 40 _Bool [sh||->3067] == *(@-2) 0 _Bool [sh&&->3069] * *(@4) 4 + SyntaxStack ax + ax 0 == *ax 42 _Bool &&[3069] _Bool [sh&&->3068] + *(@4) 1 * ax 4 + SyntaxStack ax + ax 0 == *ax 40 _Bool &&[3068] _Bool ||[3067] == ax 0 IF! "
+; Expanded expression: "SyntaxStack (@4) *(2) 4 * + 0 + *(2) 40 == _Bool [sh||->2872] (@-2) *(2) 0 == _Bool [sh&&->2874] SyntaxStack (@4) *(2) 4 * + 0 + *(2) 42 == _Bool &&[2874] _Bool [sh&&->2873] SyntaxStack (@4) *(2) 1 + 4 * + 0 + *(2) 40 == _Bool &&[2873] _Bool ||[2872] 0 == "
+; Fused expression:    "* *(@4) 4 + SyntaxStack ax + ax 0 == *ax 40 _Bool [sh||->2872] == *(@-2) 0 _Bool [sh&&->2874] * *(@4) 4 + SyntaxStack ax + ax 0 == *ax 42 _Bool &&[2874] _Bool [sh&&->2873] + *(@4) 1 * ax 4 + SyntaxStack ax + ax 0 == *ax 40 _Bool &&[2873] _Bool ||[2872] == ax 0 IF! "
     mov     ax, [bp+4]
     imul    ax, ax, 4
     mov     cx, ax
@@ -24482,21 +24635,21 @@ L3063:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L3067
+    jne     L2872
     mov     ax, [bp-2]
     cmp     ax, 0
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3069
+    je      L2874
     mov     ax, [bp+4]
     imul    ax, ax, 4
     mov     cx, ax
@@ -24509,15 +24662,15 @@ L3063:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3069:
+L2874:
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3068
+    je      L2873
     mov     ax, [bp+4]
     add     ax, 1
     imul    ax, ax, 4
@@ -24531,27 +24684,27 @@ L3069:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3068:
+L2873:
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3067:
+L2872:
     cmp     ax, 0
-    jne     L3065
+    jne     L2870
 ; return
 ; RPN'ized expression: "0 "
 ; Expanded expression: "0 "
 ; Expression value: 0
 ; Fused expression:    "0 "
     mov     ax, 0
-    jmp     L3059
-L3065:
+    jmp     L2864
+L2870:
 ; while
 ; RPN'ized expression: "SyntaxStack ExprTypeSynPtr + *u 0 + *u 40 != "
 ; Expanded expression: "SyntaxStack (@4) *(2) 4 * + 0 + *(2) 40 != "
-L3070:
+L2875:
 ; Fused expression:    "* *(@4) 4 + SyntaxStack ax + ax 0 != *ax 40 IF! "
     mov     ax, [bp+4]
     imul    ax, ax, 4
@@ -24562,14 +24715,14 @@ L3070:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 40
-    je      L3071
+    je      L2876
 ; RPN'ized expression: "ExprTypeSynPtr ++p "
 ; Expanded expression: "(@4) ++p(2) "
 ; Fused expression:    "++p(2) *(@4) "
     mov     ax, [bp+4]
     inc     word [bp+4]
-    jmp     L3070
-L3071:
+    jmp     L2875
+L2876:
 ; RPN'ized expression: "ExprTypeSynPtr ++p "
 ; Expanded expression: "(@4) ++p(2) "
 ; Fused expression:    "++p(2) *(@4) "
@@ -24588,7 +24741,7 @@ L3071:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 41
-    jne     L3072
+    jne     L2877
 ; {
 ; RPN'ized expression: "MaxParams *u 32767 = "
 ; Expanded expression: "(@8) *(2) 32767 =(2) "
@@ -24612,9 +24765,9 @@ L3071:
 ; Expression value: 1
 ; Fused expression:    "1 "
     mov     ax, 1
-    jmp     L3059
+    jmp     L2864
 ; }
-L3072:
+L2877:
 ; if
 ; RPN'ized expression: "SyntaxStack ExprTypeSynPtr 1 + + *u 0 + *u 17 == "
 ; Expanded expression: "SyntaxStack (@4) *(2) 1 + 4 * + 0 + *(2) 17 == "
@@ -24629,7 +24782,7 @@ L3072:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 17
-    jne     L3074
+    jne     L2879
 ; {
 ; RPN'ized expression: "ReturnExprTypeSynPtr *u ExprTypeSynPtr 3 + = "
 ; Expanded expression: "(@10) *(2) (@4) *(2) 3 + =(2) "
@@ -24646,15 +24799,15 @@ L3072:
 ; Expression value: 1
 ; Fused expression:    "1 "
     mov     ax, 1
-    jmp     L3059
+    jmp     L2864
 ; }
-L3074:
+L2879:
 ; for
-L3076:
-    jmp     L3078
-L3077:
-    jmp     L3076
-L3078:
+L2881:
+    jmp     L2883
+L2882:
+    jmp     L2881
+L2883:
 ; {
 ; loc         tok : (@-4): int
     sub     sp, 2
@@ -24677,7 +24830,7 @@ L3078:
 ; Fused expression:    "== *(@-4) 16 IF! "
     mov     ax, [bp-4]
     cmp     ax, 16
-    jne     L3080
+    jne     L2885
 ; {
 ; if
 ; RPN'ized expression: "SyntaxStack ExprTypeSynPtr 1 + + *u 0 + *u 15 != "
@@ -24693,7 +24846,7 @@ L3078:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 15
-    je      L3082
+    je      L2887
 ; {
 ; RPN'ized expression: "MinParams *u ++ "
 ; Expanded expression: "(@6) *(2) ++(2) "
@@ -24710,8 +24863,8 @@ L3078:
     inc     word [bx]
     mov     ax, [bx]
 ; }
-    jmp     L3083
-L3082:
+    jmp     L2888
+L2887:
 ; else
 ; {
 ; RPN'ized expression: "MaxParams *u 32767 = "
@@ -24722,10 +24875,10 @@ L3082:
     mov     ax, 32767
     mov     [bx], ax
 ; }
-L3083:
+L2888:
 ; }
-    jmp     L3081
-L3080:
+    jmp     L2886
+L2885:
 ; else
 ; if
 ; RPN'ized expression: "tok 40 == "
@@ -24733,7 +24886,7 @@ L3080:
 ; Fused expression:    "== *(@-4) 40 IF! "
     mov     ax, [bp-4]
     cmp     ax, 40
-    jne     L3084
+    jne     L2889
 ; {
 ; loc             c : (@-6): int
     sub     sp, 2
@@ -24746,27 +24899,27 @@ L3080:
     mov     [bp-6], ax
 ; while
 ; RPN'ized expression: "c ExprTypeSynPtr SyntaxStackCnt < && "
-; Expanded expression: "(@-6) *(2) _Bool [sh&&->3088] (@4) *(2) SyntaxStackCnt *(2) < _Bool &&[3088] "
-L3086:
-; Fused expression:    "*(2) (@-6) _Bool [sh&&->3088] < *(@4) *SyntaxStackCnt _Bool &&[3088] "
+; Expanded expression: "(@-6) *(2) _Bool [sh&&->2893] (@4) *(2) SyntaxStackCnt *(2) < _Bool &&[2893] "
+L2891:
+; Fused expression:    "*(2) (@-6) _Bool [sh&&->2893] < *(@4) *SyntaxStackCnt _Bool &&[2893] "
     mov     ax, [bp-6]
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3088
+    je      L2893
     mov     ax, [bp+4]
     cmp     ax, [_SyntaxStackCnt]
     setl    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3088:
+L2893:
 ; JumpIfZero
     test    ax, ax
-    jz      L3087
+    je      L2892
 ; {
 ; RPN'ized expression: "tok SyntaxStack ExprTypeSynPtr ++ + *u 0 + *u = "
 ; Expanded expression: "(@-4) SyntaxStack (@4) ++(2) 4 * + 0 + *(2) =(2) "
@@ -24801,12 +24954,12 @@ L3088:
     add     ax, cx
     mov     [bp-6], ax
 ; }
-    jmp     L3086
-L3087:
+    jmp     L2891
+L2892:
     sub     sp, -2
 ; }
-    jmp     L3085
-L3084:
+    jmp     L2890
+L2889:
 ; else
 ; if
 ; RPN'ized expression: "tok 41 == "
@@ -24814,7 +24967,7 @@ L3084:
 ; Fused expression:    "== *(@-4) 41 IF! "
     mov     ax, [bp-4]
     cmp     ax, 41
-    jne     L3089
+    jne     L2894
 ; {
 ; RPN'ized expression: "ExprTypeSynPtr ++p "
 ; Expanded expression: "(@4) ++p(2) "
@@ -24823,11 +24976,11 @@ L3084:
     inc     word [bp+4]
 ; break
     sub     sp, -2
-    jmp     L3079
+    jmp     L2884
 ; }
-L3089:
-L3085:
-L3081:
+L2894:
+L2890:
+L2886:
 ; RPN'ized expression: "ExprTypeSynPtr ++p "
 ; Expanded expression: "(@4) ++p(2) "
 ; Fused expression:    "++p(2) *(@4) "
@@ -24835,8 +24988,8 @@ L3081:
     inc     word [bp+4]
     sub     sp, -2
 ; }
-    jmp     L3077
-L3079:
+    jmp     L2882
+L2884:
 ; RPN'ized expression: "ReturnExprTypeSynPtr *u ExprTypeSynPtr = "
 ; Expanded expression: "(@10) *(2) (@4) *(2) =(2) "
 ; Fused expression:    "*(2) (@10) =(34) *ax *(@4) "
@@ -24850,8 +25003,8 @@ L3079:
 ; Expression value: 1
 ; Fused expression:    "1 "
     mov     ax, 1
-    jmp     L3059
-L3059:
+    jmp     L2864
+L2864:
     leave
     ret
 ; SEGMENT _TEXT
@@ -24872,18 +25025,18 @@ _simplifyConstExpr:
 ; loc     bottom : (@10): int
 ; if
 ; RPN'ized expression: "isConst 0 == stack top + *u 0 + *u 1 == || "
-; Expanded expression: "(@6) *(2) 0 == _Bool [sh||->3094] stack (@8) *(2) 4 * + 0 + *(2) 1 == _Bool ||[3094] "
-; Fused expression:    "== *(@6) 0 _Bool [sh||->3094] * *(@8) 4 + stack ax + ax 0 == *ax 1 _Bool ||[3094] "
+; Expanded expression: "(@6) *(2) 0 == _Bool [sh||->2899] stack (@8) *(2) 4 * + 0 + *(2) 1 == _Bool ||[2899] "
+; Fused expression:    "== *(@6) 0 _Bool [sh||->2899] * *(@8) 4 + stack ax + ax 0 == *ax 1 _Bool ||[2899] "
     mov     ax, [bp+6]
     cmp     ax, 0
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L3094
+    jne     L2899
     mov     ax, [bp+8]
     imul    ax, ax, 4
     mov     cx, ax
@@ -24896,15 +25049,15 @@ _simplifyConstExpr:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3094:
+L2899:
 ; JumpIfZero
     test    ax, ax
-    jz      L3092
+    je      L2897
 ; return
-    jmp     L3091
-L3092:
+    jmp     L2896
+L2897:
 ; RPN'ized expression: "stack top + *u 0 + *u 1 = "
 ; Expanded expression: "stack (@8) *(2) 4 * + 0 + 1 =(2) "
 ; Fused expression:    "* *(@8) 4 + stack ax + ax 0 =(34) *ax 1 "
@@ -24938,7 +25091,7 @@ L3092:
     push    word [bp+10]
     call    _del
     sub     sp, -4
-L3091:
+L2896:
     leave
     ret
 ; SEGMENT _TEXT
@@ -24978,20 +25131,20 @@ _exprval:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 0
-    jge     L3096
-; RPN'ized expression: "( L3098 error ) "
-; Expanded expression: " L3098  error ()2 "
+    jge     L2901
+; RPN'ized expression: "( L2903 error ) "
+; Expanded expression: " L2903  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3098:
+L2903:
     db  "exprval(): idx < 0",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3098 , error )2 "
-    push    L3098
+; Fused expression:    "( L2903 , error )2 "
+    push    L2903
     call    _error
     sub     sp, -2
-L3096:
+L2901:
 ; RPN'ized expression: "tok stack idx *u + *u 0 + *u = "
 ; Expanded expression: "(@-2) stack (@4) *(2) *(2) 4 * + 0 + *(2) =(2) "
 ; Fused expression:    "*(2) (@4) * *ax 4 + stack ax + ax 0 =(34) *(@-2) *ax "
@@ -25044,26 +25197,26 @@ L3096:
 ; Expanded expression: "(@-2) *(2) "
 ; Fused expression:    "*(2) (@-2) "
     mov     ax, [bp-2]
-    jmp     L3102
+    jmp     L2907
 ; {
 ; case
 ; RPN'ized expression: "1 "
 ; Expanded expression: "1 "
 ; Expression value: 1
-    jmp     L3103
-L3102:
+    jmp     L2908
+L2907:
     cmp     ax, 1
-    jne     L3104
-L3103:
+    jne     L2909
+L2908:
 ; case
 ; RPN'ized expression: "2 "
 ; Expanded expression: "2 "
 ; Expression value: 2
-    jmp     L3105
-L3104:
+    jmp     L2910
+L2909:
     cmp     ax, 2
-    jne     L3106
-L3105:
+    jne     L2911
+L2910:
 ; RPN'ized expression: "ExprTypeSynPtr *u 1 = "
 ; Expanded expression: "(@6) *(2) 1 =(2) "
 ; Fused expression:    "*(2) (@6) =(34) *ax 1 "
@@ -25079,16 +25232,16 @@ L3105:
     mov     ax, 1
     mov     [bx], ax
 ; break
-    jmp     L3100
+    jmp     L2905
 ; case
 ; RPN'ized expression: "16 "
 ; Expanded expression: "16 "
 ; Expression value: 16
-    jmp     L3107
-L3106:
+    jmp     L2912
+L2911:
     cmp     ax, 16
-    jne     L3108
-L3107:
+    jne     L2913
+L2912:
 ; {
 ; loc             synPtr : (@-16): int
     sub     sp, 2
@@ -25113,16 +25266,16 @@ L3107:
     sub     sp, -2
     mov     [bp-18], ax
 ; if
-; RPN'ized expression: "( L3112 , IdentTable SyntaxStack synPtr + *u 1 + *u + strcmp ) 0 == idx *u 2 + sp >= stack idx *u 2 + + *u 0 + *u 27 != || && "
-; Expanded expression: " L3112  IdentTable SyntaxStack (@-16) *(2) 4 * + 2 + *(2) +  strcmp ()4 0 == _Bool [sh&&->3114] (@4) *(2) *(2) 2 + sp *(2) >= _Bool [sh||->3115] stack (@4) *(2) *(2) 2 + 4 * + 0 + *(2) 27 != _Bool ||[3115] _Bool &&[3114] "
+; RPN'ized expression: "( L2917 , IdentTable SyntaxStack synPtr + *u 1 + *u + strcmp ) 0 == idx *u 2 + sp >= stack idx *u 2 + + *u 0 + *u 27 != || && "
+; Expanded expression: " L2917  IdentTable SyntaxStack (@-16) *(2) 4 * + 2 + *(2) +  strcmp ()4 0 == _Bool [sh&&->2919] (@4) *(2) *(2) 2 + sp *(2) >= _Bool [sh||->2920] stack (@4) *(2) *(2) 2 + 4 * + 0 + *(2) 27 != _Bool ||[2920] _Bool &&[2919] "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3112:
+L2917:
     db  "<something>",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3112 , * *(@-16) 4 + SyntaxStack ax + ax 2 + IdentTable *ax , strcmp )4 == ax 0 _Bool [sh&&->3114] *(2) (@4) + *ax 2 >= ax *sp _Bool [sh||->3115] *(2) (@4) + *ax 2 * ax 4 + stack ax + ax 0 != *ax 27 _Bool ||[3115] _Bool &&[3114] "
-    push    L3112
+; Fused expression:    "( L2917 , * *(@-16) 4 + SyntaxStack ax + ax 2 + IdentTable *ax , strcmp )4 == ax 0 _Bool [sh&&->2919] *(2) (@4) + *ax 2 >= ax *sp _Bool [sh||->2920] *(2) (@4) + *ax 2 * ax 4 + stack ax + ax 0 != *ax 27 _Bool ||[2920] _Bool &&[2919] "
+    push    L2917
     mov     ax, [bp-16]
     imul    ax, ax, 4
     mov     cx, ax
@@ -25140,11 +25293,11 @@ SEGMENT _TEXT
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3114
+    je      L2919
     mov     ax, [bp+4]
     mov     bx, ax
     mov     ax, [bx]
@@ -25153,11 +25306,11 @@ SEGMENT _TEXT
     setge   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L3115
+    jne     L2920
     mov     ax, [bp+4]
     mov     bx, ax
     mov     ax, [bx]
@@ -25173,54 +25326,54 @@ SEGMENT _TEXT
     setne   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3115:
+L2920:
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3114:
+L2919:
 ; JumpIfZero
     test    ax, ax
-    jz      L3110
-; RPN'ized expression: "( L3116 error ) "
-; Expanded expression: " L3116  error ()2 "
+    je      L2915
+; RPN'ized expression: "( L2921 error ) "
+; Expanded expression: " L2921  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3116:
+L2921:
     db  "Error: exprval(): unexpected type declaration",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3116 , error )2 "
-    push    L3116
+; Fused expression:    "( L2921 , error )2 "
+    push    L2921
     call    _error
     sub     sp, -2
-L3110:
+L2915:
 ; if
 ; RPN'ized expression: "type 4 == type 5 == || "
-; Expanded expression: "(@-18) *(2) 4 == _Bool [sh||->3120] (@-18) *(2) 5 == _Bool ||[3120] "
-; Fused expression:    "== *(@-18) 4 _Bool [sh||->3120] == *(@-18) 5 _Bool ||[3120] "
+; Expanded expression: "(@-18) *(2) 4 == _Bool [sh||->2925] (@-18) *(2) 5 == _Bool ||[2925] "
+; Fused expression:    "== *(@-18) 4 _Bool [sh||->2925] == *(@-18) 5 _Bool ||[2925] "
     mov     ax, [bp-18]
     cmp     ax, 4
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L3120
+    jne     L2925
     mov     ax, [bp-18]
     cmp     ax, 5
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3120:
+L2925:
 ; JumpIfZero
     test    ax, ax
-    jz      L3118
+    je      L2923
 ; {
 ; RPN'ized expression: "stack idx *u 1 + + *u 0 + *u 89 = "
 ; Expanded expression: "stack (@4) *(2) *(2) 1 + 4 * + 0 + 89 =(2) "
@@ -25262,32 +25415,32 @@ L3120:
     pop     bx
     mov     [bx], ax
 ; }
-L3118:
+L2923:
 ; if
 ; RPN'ized expression: "type 4 == type 2 == || "
-; Expanded expression: "(@-18) *(2) 4 == _Bool [sh||->3123] (@-18) *(2) 2 == _Bool ||[3123] "
-; Fused expression:    "== *(@-18) 4 _Bool [sh||->3123] == *(@-18) 2 _Bool ||[3123] "
+; Expanded expression: "(@-18) *(2) 4 == _Bool [sh||->2928] (@-18) *(2) 2 == _Bool ||[2928] "
+; Fused expression:    "== *(@-18) 4 _Bool [sh||->2928] == *(@-18) 2 _Bool ||[2928] "
     mov     ax, [bp-18]
     cmp     ax, 4
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L3123
+    jne     L2928
     mov     ax, [bp-18]
     cmp     ax, 2
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3123:
+L2928:
 ; JumpIfZero
     test    ax, ax
-    jz      L3121
+    je      L2926
 ; {
 ; RPN'ized expression: "( ( synPtr GetDeclSize ) , 78 , idx *u 2 + ins2 ) "
 ; Expanded expression: "  (@-16) *(2)  GetDeclSize ()2  78  (@4) *(2) *(2) 2 +  ins2 ()6 "
@@ -25305,12 +25458,12 @@ L3123:
     call    _ins2
     sub     sp, -6
 ; }
-L3121:
+L2926:
 ; while
 ; RPN'ized expression: "SyntaxStack synPtr + *u 0 + *u 16 == SyntaxStack synPtr + *u 0 + *u 89 == || "
-; Expanded expression: "SyntaxStack (@-16) *(2) 4 * + 0 + *(2) 16 == _Bool [sh||->3126] SyntaxStack (@-16) *(2) 4 * + 0 + *(2) 89 == _Bool ||[3126] "
-L3124:
-; Fused expression:    "* *(@-16) 4 + SyntaxStack ax + ax 0 == *ax 16 _Bool [sh||->3126] * *(@-16) 4 + SyntaxStack ax + ax 0 == *ax 89 _Bool ||[3126] "
+; Expanded expression: "SyntaxStack (@-16) *(2) 4 * + 0 + *(2) 16 == _Bool [sh||->2931] SyntaxStack (@-16) *(2) 4 * + 0 + *(2) 89 == _Bool ||[2931] "
+L2929:
+; Fused expression:    "* *(@-16) 4 + SyntaxStack ax + ax 0 == *ax 16 _Bool [sh||->2931] * *(@-16) 4 + SyntaxStack ax + ax 0 == *ax 89 _Bool ||[2931] "
     mov     ax, [bp-16]
     imul    ax, ax, 4
     mov     cx, ax
@@ -25323,11 +25476,11 @@ L3124:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L3126
+    jne     L2931
     mov     ax, [bp-16]
     imul    ax, ax, 4
     mov     cx, ax
@@ -25340,19 +25493,19 @@ L3124:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3126:
+L2931:
 ; JumpIfZero
     test    ax, ax
-    jz      L3125
+    je      L2930
 ; RPN'ized expression: "synPtr ++p "
 ; Expanded expression: "(@-16) ++p(2) "
 ; Fused expression:    "++p(2) *(@-16) "
     mov     ax, [bp-16]
     inc     word [bp-16]
-    jmp     L3124
-L3125:
+    jmp     L2929
+L2930:
 ; RPN'ized expression: "ExprTypeSynPtr *u synPtr = "
 ; Expanded expression: "(@6) *(2) (@-16) *(2) =(2) "
 ; Fused expression:    "*(2) (@6) =(34) *ax *(@-16) "
@@ -25370,16 +25523,16 @@ L3125:
     mov     ax, 0
     mov     [bx], ax
 ; break
-    jmp     L3100
+    jmp     L2905
 ; case
 ; RPN'ized expression: "27 "
 ; Expanded expression: "27 "
 ; Expression value: 27
-    jmp     L3109
-L3108:
+    jmp     L2914
+L2913:
     cmp     ax, 27
-    jne     L3127
-L3109:
+    jne     L2932
+L2914:
 ; RPN'ized expression: "s ( ConstExpr , ExprTypeSynPtr , idx exprval ) = "
 ; Expanded expression: "(@-4)  (@8) *(2)  (@6) *(2)  (@4) *(2)  exprval ()6 =(2) "
 ; Fused expression:    "( *(2) (@8) , *(2) (@6) , *(2) (@4) , exprval )6 =(34) *(@-4) ax "
@@ -25397,7 +25550,7 @@ L3109:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 0
-    jl      L3129
+    jl      L2934
 ; RPN'ized expression: "s ( ExprTypeSynPtr *u GetDeclSize ) = "
 ; Expanded expression: "(@-4)  (@6) *(2) *(2)  GetDeclSize ()2 =(2) "
 ; Fused expression:    "( *(2) (@6) *(2) ax , GetDeclSize )2 =(34) *(@-4) ax "
@@ -25407,35 +25560,35 @@ L3109:
     call    _GetDeclSize
     sub     sp, -2
     mov     [bp-4], ax
-    jmp     L3130
-L3129:
+    jmp     L2935
+L2934:
 ; else
 ; RPN'ized expression: "s SizeOfWord = "
 ; Expanded expression: "(@-4) SizeOfWord *(2) =(2) "
 ; Fused expression:    "=(34) *(@-4) *SizeOfWord "
     mov     ax, [_SizeOfWord]
     mov     [bp-4], ax
-L3130:
+L2935:
 ; if
 ; RPN'ized expression: "s 0 <= "
 ; Expanded expression: "(@-4) *(2) 0 <= "
 ; Fused expression:    "<= *(@-4) 0 IF! "
     mov     ax, [bp-4]
     cmp     ax, 0
-    jg      L3131
-; RPN'ized expression: "( L3133 error ) "
-; Expanded expression: " L3133  error ()2 "
+    jg      L2936
+; RPN'ized expression: "( L2938 error ) "
+; Expanded expression: " L2938  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3133:
+L2938:
     db  "Error: exprval(): sizeof of incomplete type (e.g. 'void')",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3133 , error )2 "
-    push    L3133
+; Fused expression:    "( L2938 , error )2 "
+    push    L2938
     call    _error
     sub     sp, -2
-L3131:
+L2936:
 ; RPN'ized expression: "stack oldIdxRight 1 + oldSpRight sp - - + *u 0 + *u 1 = "
 ; Expanded expression: "stack (@-8) *(2) 1 + (@-10) *(2) sp *(2) - - 4 * + 0 + 1 =(2) "
 ; Fused expression:    "+ *(@-8) 1 push-ax - *(@-10) *sp - *sp ax * ax 4 + stack ax + ax 0 =(34) *ax 1 "
@@ -25511,16 +25664,16 @@ L3131:
     mov     ax, 1
     mov     [bx], ax
 ; break
-    jmp     L3100
+    jmp     L2905
 ; case
 ; RPN'ized expression: "77 "
 ; Expanded expression: "77 "
 ; Expression value: 77
-    jmp     L3128
-L3127:
+    jmp     L2933
+L2932:
     cmp     ax, 77
-    jne     L3135
-L3128:
+    jne     L2940
+L2933:
 ; RPN'ized expression: "( ConstExpr , ExprTypeSynPtr , idx exprval ) "
 ; Expanded expression: " (@8) *(2)  (@6) *(2)  (@4) *(2)  exprval ()6 "
 ; Fused expression:    "( *(2) (@8) , *(2) (@6) , *(2) (@4) , exprval )6 "
@@ -25531,8 +25684,8 @@ L3128:
     sub     sp, -6
 ; if
 ; RPN'ized expression: "ExprTypeSynPtr *u 0 >= SyntaxStack ExprTypeSynPtr *u + *u 0 + *u 91 == && "
-; Expanded expression: "(@6) *(2) *(2) 0 >= _Bool [sh&&->3139] SyntaxStack (@6) *(2) *(2) 4 * + 0 + *(2) 91 == _Bool &&[3139] "
-; Fused expression:    "*(2) (@6) >= *ax 0 _Bool [sh&&->3139] *(2) (@6) * *ax 4 + SyntaxStack ax + ax 0 == *ax 91 _Bool &&[3139] "
+; Expanded expression: "(@6) *(2) *(2) 0 >= _Bool [sh&&->2944] SyntaxStack (@6) *(2) *(2) 4 * + 0 + *(2) 91 == _Bool &&[2944] "
+; Fused expression:    "*(2) (@6) >= *ax 0 _Bool [sh&&->2944] *(2) (@6) * *ax 4 + SyntaxStack ax + ax 0 == *ax 91 _Bool &&[2944] "
     mov     ax, [bp+6]
     mov     bx, ax
     mov     ax, [bx]
@@ -25540,11 +25693,11 @@ L3128:
     setge   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3139
+    je      L2944
     mov     ax, [bp+6]
     mov     bx, ax
     mov     ax, [bx]
@@ -25559,12 +25712,12 @@ L3128:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3139:
+L2944:
 ; JumpIfZero
     test    ax, ax
-    jz      L3137
+    je      L2942
 ; {
 ; RPN'ized expression: "ExprTypeSynPtr *u ExprTypeSynPtr *u -u = "
 ; Expanded expression: "(@6) *(2) (@6) *(2) *(2) -u =(2) "
@@ -25593,13 +25746,13 @@ L3139:
     call    _del
     sub     sp, -4
 ; }
-    jmp     L3138
-L3137:
+    jmp     L2943
+L2942:
 ; else
 ; if
 ; RPN'ized expression: "ExprTypeSynPtr *u 0 >= SyntaxStack ExprTypeSynPtr *u + *u 0 + *u 40 == && "
-; Expanded expression: "(@6) *(2) *(2) 0 >= _Bool [sh&&->3142] SyntaxStack (@6) *(2) *(2) 4 * + 0 + *(2) 40 == _Bool &&[3142] "
-; Fused expression:    "*(2) (@6) >= *ax 0 _Bool [sh&&->3142] *(2) (@6) * *ax 4 + SyntaxStack ax + ax 0 == *ax 40 _Bool &&[3142] "
+; Expanded expression: "(@6) *(2) *(2) 0 >= _Bool [sh&&->2947] SyntaxStack (@6) *(2) *(2) 4 * + 0 + *(2) 40 == _Bool &&[2947] "
+; Fused expression:    "*(2) (@6) >= *ax 0 _Bool [sh&&->2947] *(2) (@6) * *ax 4 + SyntaxStack ax + ax 0 == *ax 40 _Bool &&[2947] "
     mov     ax, [bp+6]
     mov     bx, ax
     mov     ax, [bx]
@@ -25607,11 +25760,11 @@ L3137:
     setge   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3142
+    je      L2947
     mov     ax, [bp+6]
     mov     bx, ax
     mov     ax, [bx]
@@ -25626,12 +25779,12 @@ L3137:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3142:
+L2947:
 ; JumpIfZero
     test    ax, ax
-    jz      L3140
+    je      L2945
 ; {
 ; RPN'ized expression: "ExprTypeSynPtr *u ExprTypeSynPtr *u -u = "
 ; Expanded expression: "(@6) *(2) (@6) *(2) *(2) -u =(2) "
@@ -25660,13 +25813,13 @@ L3142:
     call    _del
     sub     sp, -4
 ; }
-    jmp     L3141
-L3140:
+    jmp     L2946
+L2945:
 ; else
 ; if
 ; RPN'ized expression: "ExprTypeSynPtr *u 0 >= oldIdxRight oldSpRight sp - - 0 >= && stack oldIdxRight oldSpRight sp - - + *u 0 + *u 78 == && "
-; Expanded expression: "(@6) *(2) *(2) 0 >= _Bool [sh&&->3146] (@-8) *(2) (@-10) *(2) sp *(2) - - 0 >= _Bool &&[3146] _Bool [sh&&->3145] stack (@-8) *(2) (@-10) *(2) sp *(2) - - 4 * + 0 + *(2) 78 == _Bool &&[3145] "
-; Fused expression:    "*(2) (@6) >= *ax 0 _Bool [sh&&->3146] - *(@-10) *sp - *(@-8) ax >= ax 0 _Bool &&[3146] _Bool [sh&&->3145] - *(@-10) *sp - *(@-8) ax * ax 4 + stack ax + ax 0 == *ax 78 _Bool &&[3145] "
+; Expanded expression: "(@6) *(2) *(2) 0 >= _Bool [sh&&->2951] (@-8) *(2) (@-10) *(2) sp *(2) - - 0 >= _Bool &&[2951] _Bool [sh&&->2950] stack (@-8) *(2) (@-10) *(2) sp *(2) - - 4 * + 0 + *(2) 78 == _Bool &&[2950] "
+; Fused expression:    "*(2) (@6) >= *ax 0 _Bool [sh&&->2951] - *(@-10) *sp - *(@-8) ax >= ax 0 _Bool &&[2951] _Bool [sh&&->2950] - *(@-10) *sp - *(@-8) ax * ax 4 + stack ax + ax 0 == *ax 78 _Bool &&[2950] "
     mov     ax, [bp+6]
     mov     bx, ax
     mov     ax, [bx]
@@ -25674,11 +25827,11 @@ L3140:
     setge   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3146
+    je      L2951
     mov     ax, [bp-10]
     sub     ax, [_sp]
     mov     cx, ax
@@ -25688,15 +25841,15 @@ L3140:
     setge   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3146:
+L2951:
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3145
+    je      L2950
     mov     ax, [bp-10]
     sub     ax, [_sp]
     mov     cx, ax
@@ -25713,12 +25866,12 @@ L3146:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3145:
+L2950:
 ; JumpIfZero
     test    ax, ax
-    jz      L3143
+    je      L2948
 ; {
 ; RPN'ized expression: "ExprTypeSynPtr *u ExprTypeSynPtr *u -u = "
 ; Expanded expression: "(@6) *(2) (@6) *(2) *(2) -u =(2) "
@@ -25744,24 +25897,24 @@ L3145:
     call    _del
     sub     sp, -4
 ; }
-    jmp     L3144
-L3143:
+    jmp     L2949
+L2948:
 ; else
-; RPN'ized expression: "( L3147 error ) "
-; Expanded expression: " L3147  error ()2 "
+; RPN'ized expression: "( L2952 error ) "
+; Expanded expression: " L2952  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3147:
+L2952:
     db  "Error: exprval(): lvalue expected after '&'",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3147 , error )2 "
-    push    L3147
+; Fused expression:    "( L2952 , error )2 "
+    push    L2952
     call    _error
     sub     sp, -2
-L3144:
-L3141:
-L3138:
+L2949:
+L2946:
+L2943:
 ; RPN'ized expression: "ConstExpr *u 0 = "
 ; Expanded expression: "(@8) *(2) 0 =(2) "
 ; Fused expression:    "*(2) (@8) =(34) *ax 0 "
@@ -25770,16 +25923,16 @@ L3138:
     mov     ax, 0
     mov     [bx], ax
 ; break
-    jmp     L3100
+    jmp     L2905
 ; case
 ; RPN'ized expression: "78 "
 ; Expanded expression: "78 "
 ; Expression value: 78
-    jmp     L3136
-L3135:
+    jmp     L2941
+L2940:
     cmp     ax, 78
-    jne     L3149
-L3136:
+    jne     L2954
+L2941:
 ; RPN'ized expression: "( ConstExpr , ExprTypeSynPtr , idx exprval ) "
 ; Expanded expression: " (@8) *(2)  (@6) *(2)  (@4) *(2)  exprval ()6 "
 ; Fused expression:    "( *(2) (@8) , *(2) (@6) , *(2) (@4) , exprval )6 "
@@ -25790,8 +25943,8 @@ L3136:
     sub     sp, -6
 ; if
 ; RPN'ized expression: "ExprTypeSynPtr *u 0 < SyntaxStack ExprTypeSynPtr *u + *u 0 + *u 42 == || "
-; Expanded expression: "(@6) *(2) *(2) 0 < _Bool [sh||->3153] SyntaxStack (@6) *(2) *(2) 4 * + 0 + *(2) 42 == _Bool ||[3153] "
-; Fused expression:    "*(2) (@6) < *ax 0 _Bool [sh||->3153] *(2) (@6) * *ax 4 + SyntaxStack ax + ax 0 == *ax 42 _Bool ||[3153] "
+; Expanded expression: "(@6) *(2) *(2) 0 < _Bool [sh||->2958] SyntaxStack (@6) *(2) *(2) 4 * + 0 + *(2) 42 == _Bool ||[2958] "
+; Fused expression:    "*(2) (@6) < *ax 0 _Bool [sh||->2958] *(2) (@6) * *ax 4 + SyntaxStack ax + ax 0 == *ax 42 _Bool ||[2958] "
     mov     ax, [bp+6]
     mov     bx, ax
     mov     ax, [bx]
@@ -25799,11 +25952,11 @@ L3136:
     setl    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L3153
+    jne     L2958
     mov     ax, [bp+6]
     mov     bx, ax
     mov     ax, [bx]
@@ -25818,12 +25971,12 @@ L3136:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3153:
+L2958:
 ; JumpIfZero
     test    ax, ax
-    jz      L3151
+    je      L2956
 ; {
 ; if
 ; RPN'ized expression: "ExprTypeSynPtr *u 0 < "
@@ -25833,7 +25986,7 @@ L3153:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 0
-    jge     L3154
+    jge     L2959
 ; RPN'ized expression: "ExprTypeSynPtr *u ExprTypeSynPtr *u -u = "
 ; Expanded expression: "(@6) *(2) (@6) *(2) *(2) -u =(2) "
 ; Fused expression:    "*(2) (@6) push-ax *(2) (@6) *(2) ax -u =(34) **sp ax "
@@ -25845,8 +25998,8 @@ L3153:
     neg     ax
     pop     bx
     mov     [bx], ax
-    jmp     L3155
-L3154:
+    jmp     L2960
+L2959:
 ; else
 ; RPN'ized expression: "ExprTypeSynPtr *u ++ "
 ; Expanded expression: "(@6) *(2) ++(2) "
@@ -25855,7 +26008,7 @@ L3154:
     mov     bx, ax
     inc     word [bx]
     mov     ax, [bx]
-L3155:
+L2960:
 ; if
 ; RPN'ized expression: "SyntaxStack ExprTypeSynPtr *u + *u 0 + *u 17 == "
 ; Expanded expression: "SyntaxStack (@6) *(2) *(2) 4 * + 0 + *(2) 17 == "
@@ -25871,20 +26024,20 @@ L3155:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 17
-    jne     L3156
-; RPN'ized expression: "( L3158 error ) "
-; Expanded expression: " L3158  error ()2 "
+    jne     L2961
+; RPN'ized expression: "( L2963 error ) "
+; Expanded expression: " L2963  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3158:
+L2963:
     db  "Error: exprval(): cannot dereference a pointer to 'void'",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3158 , error )2 "
-    push    L3158
+; Fused expression:    "( L2963 , error )2 "
+    push    L2963
     call    _error
     sub     sp, -2
-L3156:
+L2961:
 ; if
 ; RPN'ized expression: "SyntaxStack ExprTypeSynPtr *u + *u 0 + *u 91 == "
 ; Expanded expression: "SyntaxStack (@6) *(2) *(2) 4 * + 0 + *(2) 91 == "
@@ -25900,7 +26053,7 @@ L3156:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 91
-    jne     L3160
+    jne     L2965
 ; RPN'ized expression: "( 1 , oldIdxRight 1 + oldSpRight sp - - del ) "
 ; Expanded expression: " 1  (@-8) *(2) 1 + (@-10) *(2) sp *(2) - -  del ()4 "
 ; Fused expression:    "( 1 , + *(@-8) 1 push-ax - *(@-10) *sp - *sp ax , del )4 "
@@ -25916,7 +26069,7 @@ L3156:
     push    ax
     call    _del
     sub     sp, -4
-L3160:
+L2965:
 ; if
 ; RPN'ized expression: "SyntaxStack ExprTypeSynPtr *u + *u 0 + *u 40 == "
 ; Expanded expression: "SyntaxStack (@6) *(2) *(2) 4 * + 0 + *(2) 40 == "
@@ -25932,7 +26085,7 @@ L3160:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 40
-    jne     L3162
+    jne     L2967
 ; RPN'ized expression: "( 1 , oldIdxRight 1 + oldSpRight sp - - del ) "
 ; Expanded expression: " 1  (@-8) *(2) 1 + (@-10) *(2) sp *(2) - -  del ()4 "
 ; Fused expression:    "( 1 , + *(@-8) 1 push-ax - *(@-10) *sp - *sp ax , del )4 "
@@ -25948,8 +26101,8 @@ L3160:
     push    ax
     call    _del
     sub     sp, -4
-    jmp     L3163
-L3162:
+    jmp     L2968
+L2967:
 ; else
 ; RPN'ized expression: "stack oldIdxRight 1 + oldSpRight sp - - + *u 1 + *u ( ExprTypeSynPtr *u GetDeclSize ) = "
 ; Expanded expression: "stack (@-8) *(2) 1 + (@-10) *(2) sp *(2) - - 4 * + 2 +  (@6) *(2) *(2)  GetDeclSize ()2 =(2) "
@@ -25975,10 +26128,10 @@ L3162:
     sub     sp, -2
     pop     bx
     mov     [bx], ax
-L3163:
+L2968:
 ; }
-    jmp     L3152
-L3151:
+    jmp     L2957
+L2956:
 ; else
 ; if
 ; RPN'ized expression: "SyntaxStack ExprTypeSynPtr *u + *u 0 + *u 91 == "
@@ -25995,12 +26148,12 @@ L3151:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 91
-    jne     L3164
+    jne     L2969
 ; {
 ; while
 ; RPN'ized expression: "SyntaxStack ExprTypeSynPtr *u + *u 0 + *u 93 != "
 ; Expanded expression: "SyntaxStack (@6) *(2) *(2) 4 * + 0 + *(2) 93 != "
-L3166:
+L2971:
 ; Fused expression:    "*(2) (@6) * *ax 4 + SyntaxStack ax + ax 0 != *ax 93 IF! "
     mov     ax, [bp+6]
     mov     bx, ax
@@ -26013,7 +26166,7 @@ L3166:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 93
-    je      L3167
+    je      L2972
 ; RPN'ized expression: "ExprTypeSynPtr *u ++ "
 ; Expanded expression: "(@6) *(2) ++(2) "
 ; Fused expression:    "*(2) (@6) ++(2) *ax "
@@ -26021,8 +26174,8 @@ L3166:
     mov     bx, ax
     inc     word [bx]
     mov     ax, [bx]
-    jmp     L3166
-L3167:
+    jmp     L2971
+L2972:
 ; RPN'ized expression: "ExprTypeSynPtr *u ++ "
 ; Expanded expression: "(@6) *(2) ++(2) "
 ; Fused expression:    "*(2) (@6) ++(2) *ax "
@@ -26045,7 +26198,7 @@ L3167:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 91
-    jne     L3168
+    jne     L2973
 ; RPN'ized expression: "( 1 , oldIdxRight 1 + oldSpRight sp - - del ) "
 ; Expanded expression: " 1  (@-8) *(2) 1 + (@-10) *(2) sp *(2) - -  del ()4 "
 ; Fused expression:    "( 1 , + *(@-8) 1 push-ax - *(@-10) *sp - *sp ax , del )4 "
@@ -26061,8 +26214,8 @@ L3167:
     push    ax
     call    _del
     sub     sp, -4
-    jmp     L3169
-L3168:
+    jmp     L2974
+L2973:
 ; else
 ; RPN'ized expression: "stack oldIdxRight 1 + oldSpRight sp - - + *u 1 + *u ( ExprTypeSynPtr *u GetDeclSize ) = "
 ; Expanded expression: "stack (@-8) *(2) 1 + (@-10) *(2) sp *(2) - - 4 * + 2 +  (@6) *(2) *(2)  GetDeclSize ()2 =(2) "
@@ -26088,25 +26241,25 @@ L3168:
     sub     sp, -2
     pop     bx
     mov     [bx], ax
-L3169:
+L2974:
 ; }
-    jmp     L3165
-L3164:
+    jmp     L2970
+L2969:
 ; else
-; RPN'ized expression: "( L3170 error ) "
-; Expanded expression: " L3170  error ()2 "
+; RPN'ized expression: "( L2975 error ) "
+; Expanded expression: " L2975  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3170:
+L2975:
     db  "Error: exprval(): pointer/array expected before '*' or '[]'",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3170 , error )2 "
-    push    L3170
+; Fused expression:    "( L2975 , error )2 "
+    push    L2975
     call    _error
     sub     sp, -2
-L3165:
-L3152:
+L2970:
+L2957:
 ; RPN'ized expression: "ConstExpr *u 0 = "
 ; Expanded expression: "(@8) *(2) 0 =(2) "
 ; Fused expression:    "*(2) (@8) =(34) *ax 0 "
@@ -26115,25 +26268,25 @@ L3152:
     mov     ax, 0
     mov     [bx], ax
 ; break
-    jmp     L3100
+    jmp     L2905
 ; case
 ; RPN'ized expression: "43 "
 ; Expanded expression: "43 "
 ; Expression value: 43
-    jmp     L3150
-L3149:
+    jmp     L2955
+L2954:
     cmp     ax, 43
-    jne     L3172
-L3150:
+    jne     L2977
+L2955:
 ; case
 ; RPN'ized expression: "45 "
 ; Expanded expression: "45 "
 ; Expression value: 45
-    jmp     L3173
-L3172:
+    jmp     L2978
+L2977:
     cmp     ax, 45
-    jne     L3174
-L3173:
+    jne     L2979
+L2978:
 ; {
 ; loc             ptrmask : (@-16): int
     sub     sp, 2
@@ -26255,29 +26408,29 @@ L3173:
     mov     [bp-16], ax
 ; if
 ; RPN'ized expression: "ptrmask 1 == tok 43 == && "
-; Expanded expression: "(@-16) *(2) 1 == _Bool [sh&&->3178] (@-2) *(2) 43 == _Bool &&[3178] "
-; Fused expression:    "== *(@-16) 1 _Bool [sh&&->3178] == *(@-2) 43 _Bool &&[3178] "
+; Expanded expression: "(@-16) *(2) 1 == _Bool [sh&&->2983] (@-2) *(2) 43 == _Bool &&[2983] "
+; Fused expression:    "== *(@-16) 1 _Bool [sh&&->2983] == *(@-2) 43 _Bool &&[2983] "
     mov     ax, [bp-16]
     cmp     ax, 1
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3178
+    je      L2983
     mov     ax, [bp-2]
     cmp     ax, 43
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3178:
+L2983:
 ; JumpIfZero
     test    ax, ax
-    jz      L3176
+    je      L2981
 ; {
 ; RPN'ized expression: "incSize ( RightExprTypeSynPtr -u GetDeclSize ) = "
 ; Expanded expression: "(@-26)  (@-6) *(2) -u  GetDeclSize ()2 =(2) "
@@ -26298,7 +26451,7 @@ L3178:
     mov     ax, [bx]
 ; JumpIfZero
     test    ax, ax
-    jz      L3179
+    je      L2984
 ; {
 ; RPN'ized expression: "stack oldIdxLeft oldSpLeft sp - - + *u 1 + *u incSize *= "
 ; Expanded expression: "stack (@-18) *(2) (@-20) *(2) sp *(2) - - 4 * + 2 + (@-26) *(2) *=(2) "
@@ -26325,8 +26478,8 @@ L3178:
     add     ax, [bp-24]
     mov     [bp-4], ax
 ; }
-    jmp     L3180
-L3179:
+    jmp     L2985
+L2984:
 ; else
 ; if
 ; RPN'ized expression: "incSize 1 != "
@@ -26334,7 +26487,7 @@ L3179:
 ; Fused expression:    "!= *(@-26) 1 IF! "
     mov     ax, [bp-26]
     cmp     ax, 1
-    je      L3181
+    je      L2986
 ; {
 ; RPN'ized expression: "( incSize , 1 , oldIdxLeft 1 + oldSpLeft sp - - ins2 ) "
 ; Expanded expression: " (@-26) *(2)  1  (@-18) *(2) 1 + (@-20) *(2) sp *(2) - -  ins2 ()6 "
@@ -26368,8 +26521,8 @@ L3179:
     call    _ins
     sub     sp, -4
 ; }
-L3181:
-L3180:
+L2986:
+L2985:
 ; RPN'ized expression: "ExprTypeSynPtr *u RightExprTypeSynPtr = "
 ; Expanded expression: "(@6) *(2) (@-6) *(2) =(2) "
 ; Fused expression:    "*(2) (@6) =(34) *ax *(@-6) "
@@ -26378,8 +26531,8 @@ L3180:
     mov     ax, [bp-6]
     mov     [bx], ax
 ; }
-    jmp     L3177
-L3176:
+    jmp     L2982
+L2981:
 ; else
 ; if
 ; RPN'ized expression: "ptrmask 2 == "
@@ -26387,7 +26540,7 @@ L3176:
 ; Fused expression:    "== *(@-16) 2 IF! "
     mov     ax, [bp-16]
     cmp     ax, 2
-    jne     L3183
+    jne     L2988
 ; {
 ; RPN'ized expression: "incSize ( ExprTypeSynPtr *u -u GetDeclSize ) = "
 ; Expanded expression: "(@-26)  (@6) *(2) *(2) -u  GetDeclSize ()2 =(2) "
@@ -26410,7 +26563,7 @@ L3176:
     mov     ax, [bx]
 ; JumpIfZero
     test    ax, ax
-    jz      L3185
+    je      L2990
 ; {
 ; RPN'ized expression: "stack oldIdxRight oldSpRight sp - - + *u 1 + *u incSize *= "
 ; Expanded expression: "stack (@-8) *(2) (@-10) *(2) sp *(2) - - 4 * + 2 + (@-26) *(2) *=(2) "
@@ -26455,8 +26608,8 @@ L3176:
     add     ax, cx
     mov     [bp-4], ax
 ; }
-    jmp     L3186
-L3185:
+    jmp     L2991
+L2990:
 ; else
 ; if
 ; RPN'ized expression: "incSize 1 != "
@@ -26464,7 +26617,7 @@ L3185:
 ; Fused expression:    "!= *(@-26) 1 IF! "
     mov     ax, [bp-26]
     cmp     ax, 1
-    je      L3187
+    je      L2992
 ; {
 ; RPN'ized expression: "( incSize , 1 , oldIdxRight 1 + oldSpRight sp - - ins2 ) "
 ; Expanded expression: " (@-26) *(2)  1  (@-8) *(2) 1 + (@-10) *(2) sp *(2) - -  ins2 ()6 "
@@ -26498,11 +26651,11 @@ L3185:
     call    _ins
     sub     sp, -4
 ; }
-L3187:
-L3186:
+L2992:
+L2991:
 ; }
-    jmp     L3184
-L3183:
+    jmp     L2989
+L2988:
 ; else
 ; if
 ; RPN'ized expression: "ptrmask "
@@ -26511,22 +26664,22 @@ L3183:
     mov     ax, [bp-16]
 ; JumpIfZero
     test    ax, ax
-    jz      L3189
-; RPN'ized expression: "( L3191 error ) "
-; Expanded expression: " L3191  error ()2 "
+    je      L2994
+; RPN'ized expression: "( L2996 error ) "
+; Expanded expression: " L2996  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3191:
+L2996:
     db  "Error: exprval(): invalid/unsupported combination of operands for '+' or '-'",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3191 , error )2 "
-    push    L3191
+; Fused expression:    "( L2996 , error )2 "
+    push    L2996
     call    _error
     sub     sp, -2
-L3189:
-L3184:
-L3177:
+L2994:
+L2989:
+L2982:
 ; RPN'ized expression: "( ExprTypeSynPtr promoteType ) "
 ; Expanded expression: " (@6) *(2)  promoteType ()2 "
 ; Fused expression:    "( *(2) (@6) , promoteType )2 "
@@ -26534,8 +26687,8 @@ L3177:
     call    _promoteType
     sub     sp, -2
 ; RPN'ized expression: "ConstExpr *u constExpr 0 + *u constExpr 1 + *u && = "
-; Expanded expression: "(@8) *(2) (@-14) 0 + *(2) _Bool [sh&&->3193] (@-14) 2 + *(2) _Bool &&[3193] =(2) "
-; Fused expression:    "*(2) (@8) push-ax + (@-14) 0 *(2) ax _Bool [sh&&->3193] + (@-14) 2 *(2) ax _Bool &&[3193] =(34) **sp ax "
+; Expanded expression: "(@8) *(2) (@-14) 0 + *(2) _Bool [sh&&->2998] (@-14) 2 + *(2) _Bool &&[2998] =(2) "
+; Fused expression:    "*(2) (@8) push-ax + (@-14) 0 *(2) ax _Bool [sh&&->2998] + (@-14) 2 *(2) ax _Bool &&[2998] =(34) **sp ax "
     mov     ax, [bp+8]
     push    ax
     lea     ax, [bp-14]
@@ -26543,19 +26696,19 @@ L3177:
     mov     bx, ax
     mov     ax, [bx]
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3193
+    je      L2998
     lea     ax, [bp-14]
     add     ax, 2
     mov     bx, ax
     mov     ax, [bx]
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3193:
+L2998:
     pop     bx
     mov     [bx], ax
 ; RPN'ized expression: "( idx *u 1 + , oldIdxRight 1 + oldSpRight sp - - , ConstExpr *u , s simplifyConstExpr ) "
@@ -26584,43 +26737,43 @@ L3193:
     sub     sp, -12
 ; }
 ; break
-    jmp     L3100
+    jmp     L2905
 ; case
 ; RPN'ized expression: "12 "
 ; Expanded expression: "12 "
 ; Expression value: 12
-    jmp     L3175
-L3174:
+    jmp     L2980
+L2979:
     cmp     ax, 12
-    jne     L3194
-L3175:
+    jne     L2999
+L2980:
 ; case
 ; RPN'ized expression: "13 "
 ; Expanded expression: "13 "
 ; Expression value: 13
-    jmp     L3195
-L3194:
+    jmp     L3000
+L2999:
     cmp     ax, 13
-    jne     L3196
-L3195:
+    jne     L3001
+L3000:
 ; case
 ; RPN'ized expression: "81 "
 ; Expanded expression: "81 "
 ; Expression value: 81
-    jmp     L3197
-L3196:
+    jmp     L3002
+L3001:
     cmp     ax, 81
-    jne     L3198
-L3197:
+    jne     L3003
+L3002:
 ; case
 ; RPN'ized expression: "82 "
 ; Expanded expression: "82 "
 ; Expression value: 82
-    jmp     L3199
-L3198:
+    jmp     L3004
+L3003:
     cmp     ax, 82
-    jne     L3200
-L3199:
+    jne     L3005
+L3004:
 ; {
 ; loc             incSize : (@-16): int
     sub     sp, 2
@@ -26635,51 +26788,51 @@ L3199:
     sub     sp, 2
 ; =
 ; RPN'ized expression: "tok 12 == tok 81 == || "
-; Expanded expression: "(@-2) *(2) 12 == _Bool [sh||->3202] (@-2) *(2) 81 == _Bool ||[3202] "
-; Fused expression:    "== *(@-2) 12 _Bool [sh||->3202] == *(@-2) 81 _Bool ||[3202] =(34) *(@-18) ax "
+; Expanded expression: "(@-2) *(2) 12 == _Bool [sh||->3007] (@-2) *(2) 81 == _Bool ||[3007] "
+; Fused expression:    "== *(@-2) 12 _Bool [sh||->3007] == *(@-2) 81 _Bool ||[3007] =(34) *(@-18) ax "
     mov     ax, [bp-2]
     cmp     ax, 12
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L3202
+    jne     L3007
     mov     ax, [bp-2]
     cmp     ax, 81
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3202:
+L3007:
     mov     [bp-18], ax
 ; loc             post : (@-20): int
     sub     sp, 2
 ; =
 ; RPN'ized expression: "tok 81 == tok 82 == || "
-; Expanded expression: "(@-2) *(2) 81 == _Bool [sh||->3203] (@-2) *(2) 82 == _Bool ||[3203] "
-; Fused expression:    "== *(@-2) 81 _Bool [sh||->3203] == *(@-2) 82 _Bool ||[3203] =(34) *(@-20) ax "
+; Expanded expression: "(@-2) *(2) 81 == _Bool [sh||->3008] (@-2) *(2) 82 == _Bool ||[3008] "
+; Fused expression:    "== *(@-2) 81 _Bool [sh||->3008] == *(@-2) 82 _Bool ||[3008] =(34) *(@-20) ax "
     mov     ax, [bp-2]
     cmp     ax, 81
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L3203
+    jne     L3008
     mov     ax, [bp-2]
     cmp     ax, 82
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3203:
+L3008:
     mov     [bp-20], ax
 ; loc             opSize : (@-22): int
     sub     sp, 2
@@ -26709,8 +26862,8 @@ L3203:
     sub     sp, -4
 ; if
 ; RPN'ized expression: "oldIdxRight oldSpRight sp - - 0 >= stack oldIdxRight oldSpRight sp - - + *u 0 + *u 78 == && 0 == "
-; Expanded expression: "(@-8) *(2) (@-10) *(2) sp *(2) - - 0 >= _Bool [sh&&->3206] stack (@-8) *(2) (@-10) *(2) sp *(2) - - 4 * + 0 + *(2) 78 == _Bool &&[3206] 0 == "
-; Fused expression:    "- *(@-10) *sp - *(@-8) ax >= ax 0 _Bool [sh&&->3206] - *(@-10) *sp - *(@-8) ax * ax 4 + stack ax + ax 0 == *ax 78 _Bool &&[3206] == ax 0 IF! "
+; Expanded expression: "(@-8) *(2) (@-10) *(2) sp *(2) - - 0 >= _Bool [sh&&->3011] stack (@-8) *(2) (@-10) *(2) sp *(2) - - 4 * + 0 + *(2) 78 == _Bool &&[3011] 0 == "
+; Fused expression:    "- *(@-10) *sp - *(@-8) ax >= ax 0 _Bool [sh&&->3011] - *(@-10) *sp - *(@-8) ax * ax 4 + stack ax + ax 0 == *ax 78 _Bool &&[3011] == ax 0 IF! "
     mov     ax, [bp-10]
     sub     ax, [_sp]
     mov     cx, ax
@@ -26720,11 +26873,11 @@ L3203:
     setge   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3206
+    je      L3011
     mov     ax, [bp-10]
     sub     ax, [_sp]
     mov     cx, ax
@@ -26741,24 +26894,24 @@ L3203:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3206:
+L3011:
     cmp     ax, 0
-    jne     L3204
-; RPN'ized expression: "( L3207 error ) "
-; Expanded expression: " L3207  error ()2 "
+    jne     L3009
+; RPN'ized expression: "( L3012 error ) "
+; Expanded expression: " L3012  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3207:
+L3012:
     db  "Error: exprval(): lvalue expected for '++' or '--'",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3207 , error )2 "
-    push    L3207
+; Fused expression:    "( L3012 , error )2 "
+    push    L3012
     call    _error
     sub     sp, -2
-L3204:
+L3009:
 ; RPN'ized expression: "opSize stack oldIdxRight oldSpRight sp - - + *u 1 + *u = "
 ; Expanded expression: "(@-22) stack (@-8) *(2) (@-10) *(2) sp *(2) - - 4 * + 2 + *(2) =(2) "
 ; Fused expression:    "- *(@-10) *sp - *(@-8) ax * ax 4 + stack ax + ax 2 =(34) *(@-22) *ax "
@@ -26795,7 +26948,7 @@ L3204:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 0
-    jge     L3209
+    jge     L3014
 ; RPN'ized expression: "incSize ( ExprTypeSynPtr *u -u GetDeclSize ) = "
 ; Expanded expression: "(@-16)  (@6) *(2) *(2) -u  GetDeclSize ()2 =(2) "
 ; Fused expression:    "( *(2) (@6) *(2) ax -u , GetDeclSize )2 =(34) *(@-16) ax "
@@ -26807,14 +26960,14 @@ L3204:
     call    _GetDeclSize
     sub     sp, -2
     mov     [bp-16], ax
-L3209:
+L3014:
 ; if
 ; RPN'ized expression: "incSize 1 == "
 ; Expanded expression: "(@-16) *(2) 1 == "
 ; Fused expression:    "== *(@-16) 1 IF! "
     mov     ax, [bp-16]
     cmp     ax, 1
-    jne     L3211
+    jne     L3016
 ; {
 ; RPN'ized expression: "stack oldIdxRight 1 + oldSpRight sp - - + *u 1 + *u opSize = "
 ; Expanded expression: "stack (@-8) *(2) 1 + (@-10) *(2) sp *(2) - - 4 * + 2 + (@-22) *(2) =(2) "
@@ -26836,8 +26989,8 @@ L3209:
     mov     ax, [bp-22]
     mov     [bx], ax
 ; }
-    jmp     L3212
-L3211:
+    jmp     L3017
+L3016:
 ; else
 ; {
 ; if
@@ -26847,7 +27000,7 @@ L3211:
     mov     ax, [bp-18]
 ; JumpIfZero
     test    ax, ax
-    jz      L3213
+    je      L3018
 ; {
 ; if
 ; RPN'ized expression: "post "
@@ -26856,7 +27009,7 @@ L3211:
     mov     ax, [bp-20]
 ; JumpIfZero
     test    ax, ax
-    jz      L3215
+    je      L3020
 ; RPN'ized expression: "stack oldIdxRight 1 + oldSpRight sp - - + *u 0 + *u 83 = "
 ; Expanded expression: "stack (@-8) *(2) 1 + (@-10) *(2) sp *(2) - - 4 * + 0 + 83 =(2) "
 ; Fused expression:    "+ *(@-8) 1 push-ax - *(@-10) *sp - *sp ax * ax 4 + stack ax + ax 0 =(34) *ax 83 "
@@ -26876,8 +27029,8 @@ L3211:
     mov     bx, ax
     mov     ax, 83
     mov     [bx], ax
-    jmp     L3216
-L3215:
+    jmp     L3021
+L3020:
 ; else
 ; RPN'ized expression: "stack oldIdxRight 1 + oldSpRight sp - - + *u 0 + *u 68 = "
 ; Expanded expression: "stack (@-8) *(2) 1 + (@-10) *(2) sp *(2) - - 4 * + 0 + 68 =(2) "
@@ -26898,10 +27051,10 @@ L3215:
     mov     bx, ax
     mov     ax, 68
     mov     [bx], ax
-L3216:
+L3021:
 ; }
-    jmp     L3214
-L3213:
+    jmp     L3019
+L3018:
 ; else
 ; {
 ; if
@@ -26911,7 +27064,7 @@ L3213:
     mov     ax, [bp-20]
 ; JumpIfZero
     test    ax, ax
-    jz      L3217
+    je      L3022
 ; RPN'ized expression: "stack oldIdxRight 1 + oldSpRight sp - - + *u 0 + *u 84 = "
 ; Expanded expression: "stack (@-8) *(2) 1 + (@-10) *(2) sp *(2) - - 4 * + 0 + 84 =(2) "
 ; Fused expression:    "+ *(@-8) 1 push-ax - *(@-10) *sp - *sp ax * ax 4 + stack ax + ax 0 =(34) *ax 84 "
@@ -26931,8 +27084,8 @@ L3213:
     mov     bx, ax
     mov     ax, 84
     mov     [bx], ax
-    jmp     L3218
-L3217:
+    jmp     L3023
+L3022:
 ; else
 ; RPN'ized expression: "stack oldIdxRight 1 + oldSpRight sp - - + *u 0 + *u 69 = "
 ; Expanded expression: "stack (@-8) *(2) 1 + (@-10) *(2) sp *(2) - - 4 * + 0 + 69 =(2) "
@@ -26953,9 +27106,9 @@ L3217:
     mov     bx, ax
     mov     ax, 69
     mov     [bx], ax
-L3218:
+L3023:
 ; }
-L3214:
+L3019:
 ; RPN'ized expression: "stack oldIdxRight 1 + oldSpRight sp - - + *u 1 + *u opSize = "
 ; Expanded expression: "stack (@-8) *(2) 1 + (@-10) *(2) sp *(2) - - 4 * + 2 + (@-22) *(2) =(2) "
 ; Fused expression:    "+ *(@-8) 1 push-ax - *(@-10) *sp - *sp ax * ax 4 + stack ax + ax 2 =(34) *ax *(@-22) "
@@ -26992,7 +27145,7 @@ L3214:
     call    _ins2
     sub     sp, -6
 ; }
-L3212:
+L3017:
 ; RPN'ized expression: "ConstExpr *u 0 = "
 ; Expanded expression: "(@8) *(2) 0 =(2) "
 ; Fused expression:    "*(2) (@8) =(34) *ax 0 "
@@ -27003,16 +27156,16 @@ L3212:
     sub     sp, -8
 ; }
 ; break
-    jmp     L3100
+    jmp     L2905
 ; case
 ; RPN'ized expression: "61 "
 ; Expanded expression: "61 "
 ; Expression value: 61
-    jmp     L3201
-L3200:
+    jmp     L3006
+L3005:
     cmp     ax, 61
-    jne     L3219
-L3201:
+    jne     L3024
+L3006:
 ; {
 ; loc             oldIdxLeft : (@-16): int
     sub     sp, 2
@@ -27082,8 +27235,8 @@ L3201:
     sub     sp, -4
 ; if
 ; RPN'ized expression: "oldIdxLeft oldSpLeft sp - - 0 >= stack oldIdxLeft oldSpLeft sp - - + *u 0 + *u 78 == && 0 == "
-; Expanded expression: "(@-16) *(2) (@-18) *(2) sp *(2) - - 0 >= _Bool [sh&&->3223] stack (@-16) *(2) (@-18) *(2) sp *(2) - - 4 * + 0 + *(2) 78 == _Bool &&[3223] 0 == "
-; Fused expression:    "- *(@-18) *sp - *(@-16) ax >= ax 0 _Bool [sh&&->3223] - *(@-18) *sp - *(@-16) ax * ax 4 + stack ax + ax 0 == *ax 78 _Bool &&[3223] == ax 0 IF! "
+; Expanded expression: "(@-16) *(2) (@-18) *(2) sp *(2) - - 0 >= _Bool [sh&&->3028] stack (@-16) *(2) (@-18) *(2) sp *(2) - - 4 * + 0 + *(2) 78 == _Bool &&[3028] 0 == "
+; Fused expression:    "- *(@-18) *sp - *(@-16) ax >= ax 0 _Bool [sh&&->3028] - *(@-18) *sp - *(@-16) ax * ax 4 + stack ax + ax 0 == *ax 78 _Bool &&[3028] == ax 0 IF! "
     mov     ax, [bp-18]
     sub     ax, [_sp]
     mov     cx, ax
@@ -27093,11 +27246,11 @@ L3201:
     setge   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3223
+    je      L3028
     mov     ax, [bp-18]
     sub     ax, [_sp]
     mov     cx, ax
@@ -27114,24 +27267,24 @@ L3201:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3223:
+L3028:
     cmp     ax, 0
-    jne     L3221
-; RPN'ized expression: "( L3224 error ) "
-; Expanded expression: " L3224  error ()2 "
+    jne     L3026
+; RPN'ized expression: "( L3029 error ) "
+; Expanded expression: " L3029  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3224:
+L3029:
     db  "Error: exprval(): lvalue expected before '='",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3224 , error )2 "
-    push    L3224
+; Fused expression:    "( L3029 , error )2 "
+    push    L3029
     call    _error
     sub     sp, -2
-L3221:
+L3026:
 ; RPN'ized expression: "opSize stack oldIdxLeft oldSpLeft sp - - + *u 1 + *u = "
 ; Expanded expression: "(@-20) stack (@-16) *(2) (@-18) *(2) sp *(2) - - 4 * + 2 + *(2) =(2) "
 ; Fused expression:    "- *(@-18) *sp - *(@-16) ax * ax 4 + stack ax + ax 2 =(34) *(@-20) *ax "
@@ -27189,34 +27342,34 @@ L3221:
     sub     sp, -6
 ; }
 ; break
-    jmp     L3100
+    jmp     L2905
 ; case
 ; RPN'ized expression: "126 "
 ; Expanded expression: "126 "
 ; Expression value: 126
-    jmp     L3220
-L3219:
+    jmp     L3025
+L3024:
     cmp     ax, 126
-    jne     L3226
-L3220:
+    jne     L3031
+L3025:
 ; case
 ; RPN'ized expression: "79 "
 ; Expanded expression: "79 "
 ; Expression value: 79
-    jmp     L3227
-L3226:
+    jmp     L3032
+L3031:
     cmp     ax, 79
-    jne     L3228
-L3227:
+    jne     L3033
+L3032:
 ; case
 ; RPN'ized expression: "80 "
 ; Expanded expression: "80 "
 ; Expression value: 80
-    jmp     L3229
-L3228:
+    jmp     L3034
+L3033:
     cmp     ax, 80
-    jne     L3230
-L3229:
+    jne     L3035
+L3034:
 ; RPN'ized expression: "s ( ConstExpr , ExprTypeSynPtr , idx exprval ) = "
 ; Expanded expression: "(@-4)  (@8) *(2)  (@6) *(2)  (@4) *(2)  exprval ()6 =(2) "
 ; Fused expression:    "( *(2) (@8) , *(2) (@6) , *(2) (@4) , exprval )6 =(34) *(@-4) ax "
@@ -27249,17 +27402,17 @@ L3229:
 ; Expanded expression: "(@-2) *(2) "
 ; Fused expression:    "*(2) (@-2) "
     mov     ax, [bp-2]
-    jmp     L3234
+    jmp     L3039
 ; {
 ; case
 ; RPN'ized expression: "126 "
 ; Expanded expression: "126 "
 ; Expression value: 126
-    jmp     L3235
-L3234:
+    jmp     L3040
+L3039:
     cmp     ax, 126
-    jne     L3236
-L3235:
+    jne     L3041
+L3040:
 ; RPN'ized expression: "s s ~ = "
 ; Expanded expression: "(@-4) (@-4) *(2) ~ =(2) "
 ; Fused expression:    "*(2) (@-4) ~ =(34) *(@-4) ax "
@@ -27267,32 +27420,32 @@ L3235:
     not     ax
     mov     [bp-4], ax
 ; break
-    jmp     L3232
+    jmp     L3037
 ; case
 ; RPN'ized expression: "79 "
 ; Expanded expression: "79 "
 ; Expression value: 79
-    jmp     L3237
-L3236:
+    jmp     L3042
+L3041:
     cmp     ax, 79
-    jne     L3238
-L3237:
+    jne     L3043
+L3042:
 ; RPN'ized expression: "s s +u = "
 ; Expanded expression: "(@-4) (@-4) *(2) +u =(2) "
 ; Fused expression:    "=(34) *(@-4) *(@-4) "
     mov     ax, [bp-4]
     mov     [bp-4], ax
 ; break
-    jmp     L3232
+    jmp     L3037
 ; case
 ; RPN'ized expression: "80 "
 ; Expanded expression: "80 "
 ; Expression value: 80
-    jmp     L3239
-L3238:
+    jmp     L3044
+L3043:
     cmp     ax, 80
-    jne     L3240
-L3239:
+    jne     L3045
+L3044:
 ; RPN'ized expression: "s s -u = "
 ; Expanded expression: "(@-4) (@-4) *(2) -u =(2) "
 ; Fused expression:    "*(2) (@-4) -u =(34) *(@-4) ax "
@@ -27300,11 +27453,11 @@ L3239:
     neg     ax
     mov     [bp-4], ax
 ; break
-    jmp     L3232
+    jmp     L3037
 ; }
-    jmp     L3232
-L3240:
-L3232:
+    jmp     L3037
+L3045:
+L3037:
 ; RPN'ized expression: "( ExprTypeSynPtr promoteType ) "
 ; Expanded expression: " (@6) *(2)  promoteType ()2 "
 ; Fused expression:    "( *(2) (@6) , promoteType )2 "
@@ -27335,79 +27488,79 @@ L3232:
     call    _simplifyConstExpr
     sub     sp, -8
 ; break
-    jmp     L3100
+    jmp     L2905
 ; case
 ; RPN'ized expression: "42 "
 ; Expanded expression: "42 "
 ; Expression value: 42
-    jmp     L3231
-L3230:
+    jmp     L3036
+L3035:
     cmp     ax, 42
-    jne     L3242
-L3231:
+    jne     L3047
+L3036:
 ; case
 ; RPN'ized expression: "47 "
 ; Expanded expression: "47 "
 ; Expression value: 47
-    jmp     L3243
-L3242:
+    jmp     L3048
+L3047:
     cmp     ax, 47
-    jne     L3244
-L3243:
+    jne     L3049
+L3048:
 ; case
 ; RPN'ized expression: "37 "
 ; Expanded expression: "37 "
 ; Expression value: 37
-    jmp     L3245
-L3244:
+    jmp     L3050
+L3049:
     cmp     ax, 37
-    jne     L3246
-L3245:
+    jne     L3051
+L3050:
 ; case
 ; RPN'ized expression: "4 "
 ; Expanded expression: "4 "
 ; Expression value: 4
-    jmp     L3247
-L3246:
+    jmp     L3052
+L3051:
     cmp     ax, 4
-    jne     L3248
-L3247:
+    jne     L3053
+L3052:
 ; case
 ; RPN'ized expression: "5 "
 ; Expanded expression: "5 "
 ; Expression value: 5
-    jmp     L3249
-L3248:
+    jmp     L3054
+L3053:
     cmp     ax, 5
-    jne     L3250
-L3249:
+    jne     L3055
+L3054:
 ; case
 ; RPN'ized expression: "38 "
 ; Expanded expression: "38 "
 ; Expression value: 38
-    jmp     L3251
-L3250:
+    jmp     L3056
+L3055:
     cmp     ax, 38
-    jne     L3252
-L3251:
+    jne     L3057
+L3056:
 ; case
 ; RPN'ized expression: "94 "
 ; Expanded expression: "94 "
 ; Expression value: 94
-    jmp     L3253
-L3252:
+    jmp     L3058
+L3057:
     cmp     ax, 94
-    jne     L3254
-L3253:
+    jne     L3059
+L3058:
 ; case
 ; RPN'ized expression: "124 "
 ; Expanded expression: "124 "
 ; Expression value: 124
-    jmp     L3255
-L3254:
+    jmp     L3060
+L3059:
     cmp     ax, 124
-    jne     L3256
-L3255:
+    jne     L3061
+L3060:
 ; {
 ; loc             oldIdxLeft : (@-16): int
     sub     sp, 2
@@ -27485,8 +27638,8 @@ L3255:
     call    _numericTypeCheck
     sub     sp, -4
 ; RPN'ized expression: "ConstExpr *u constExpr 0 + *u constExpr 1 + *u && = "
-; Expanded expression: "(@8) *(2) (@-14) 0 + *(2) _Bool [sh&&->3258] (@-14) 2 + *(2) _Bool &&[3258] =(2) "
-; Fused expression:    "*(2) (@8) push-ax + (@-14) 0 *(2) ax _Bool [sh&&->3258] + (@-14) 2 *(2) ax _Bool &&[3258] =(34) **sp ax "
+; Expanded expression: "(@8) *(2) (@-14) 0 + *(2) _Bool [sh&&->3063] (@-14) 2 + *(2) _Bool &&[3063] =(2) "
+; Fused expression:    "*(2) (@8) push-ax + (@-14) 0 *(2) ax _Bool [sh&&->3063] + (@-14) 2 *(2) ax _Bool &&[3063] =(34) **sp ax "
     mov     ax, [bp+8]
     push    ax
     lea     ax, [bp-14]
@@ -27494,19 +27647,19 @@ L3255:
     mov     bx, ax
     mov     ax, [bx]
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3258
+    je      L3063
     lea     ax, [bp-14]
     add     ax, 2
     mov     bx, ax
     mov     ax, [bx]
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3258:
+L3063:
     pop     bx
     mov     [bx], ax
 ; switch
@@ -27514,17 +27667,17 @@ L3258:
 ; Expanded expression: "(@-2) *(2) "
 ; Fused expression:    "*(2) (@-2) "
     mov     ax, [bp-2]
-    jmp     L3261
+    jmp     L3066
 ; {
 ; case
 ; RPN'ized expression: "47 "
 ; Expanded expression: "47 "
 ; Expression value: 47
-    jmp     L3262
-L3261:
+    jmp     L3067
+L3066:
     cmp     ax, 47
-    jne     L3263
-L3262:
+    jne     L3068
+L3067:
 ; if
 ; RPN'ized expression: "ConstExpr *u "
 ; Expanded expression: "(@8) *(2) *(2) "
@@ -27534,68 +27687,68 @@ L3262:
     mov     ax, [bx]
 ; JumpIfZero
     test    ax, ax
-    jz      L3265
+    je      L3070
 ; {
 ; if
 ; RPN'ized expression: "sr 0 == 32767 -u 32767 -u 1 - != sl 32767 -u 1 - == && sr 1 -u == && || "
-; Expanded expression: "(@-20) *(2) 0 == _Bool [sh||->3269] 1 [sh&&->3271] (@-22) *(2) -32768 == _Bool &&[3271] _Bool [sh&&->3270] (@-20) *(2) -1 == _Bool &&[3270] _Bool ||[3269] "
-; Fused expression:    "== *(@-20) 0 _Bool [sh||->3269] 1 [sh&&->3271] == *(@-22) -32768 _Bool &&[3271] _Bool [sh&&->3270] == *(@-20) -1 _Bool &&[3270] _Bool ||[3269] "
+; Expanded expression: "(@-20) *(2) 0 == _Bool [sh||->3074] 1 [sh&&->3076] (@-22) *(2) -32768 == _Bool &&[3076] _Bool [sh&&->3075] (@-20) *(2) -1 == _Bool &&[3075] _Bool ||[3074] "
+; Fused expression:    "== *(@-20) 0 _Bool [sh||->3074] 1 [sh&&->3076] == *(@-22) -32768 _Bool &&[3076] _Bool [sh&&->3075] == *(@-20) -1 _Bool &&[3075] _Bool ||[3074] "
     mov     ax, [bp-20]
     cmp     ax, 0
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L3269
+    jne     L3074
     mov     ax, 1
 ; JumpIfZero
     test    ax, ax
-    jz      L3271
+    je      L3076
     mov     ax, [bp-22]
     cmp     ax, -32768
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3271:
+L3076:
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3270
+    je      L3075
     mov     ax, [bp-20]
     cmp     ax, -1
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3270:
+L3075:
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3269:
+L3074:
 ; JumpIfZero
     test    ax, ax
-    jz      L3267
-; RPN'ized expression: "( L3272 error ) "
-; Expanded expression: " L3272  error ()2 "
+    je      L3072
+; RPN'ized expression: "( L3077 error ) "
+; Expanded expression: " L3077  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3272:
+L3077:
     db  "Error: exprval(): division overflow",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3272 , error )2 "
-    push    L3272
+; Fused expression:    "( L3077 , error )2 "
+    push    L3077
     call    _error
     sub     sp, -2
-L3267:
+L3072:
 ; RPN'ized expression: "sl sr /= "
 ; Expanded expression: "(@-22) (@-20) *(2) /=(2) "
 ; Fused expression:    "/=(34) *(@-22) *(@-20) "
@@ -27604,18 +27757,18 @@ L3267:
     idiv    word [bp-20]
     mov     [bp-22], ax
 ; }
-L3265:
+L3070:
 ; break
-    jmp     L3259
+    jmp     L3064
 ; case
 ; RPN'ized expression: "37 "
 ; Expanded expression: "37 "
 ; Expression value: 37
-    jmp     L3264
-L3263:
+    jmp     L3069
+L3068:
     cmp     ax, 37
-    jne     L3274
-L3264:
+    jne     L3079
+L3069:
 ; if
 ; RPN'ized expression: "ConstExpr *u "
 ; Expanded expression: "(@8) *(2) *(2) "
@@ -27625,68 +27778,68 @@ L3264:
     mov     ax, [bx]
 ; JumpIfZero
     test    ax, ax
-    jz      L3276
+    je      L3081
 ; {
 ; if
 ; RPN'ized expression: "sr 0 == 32767 -u 32767 -u 1 - != sl 32767 -u 1 - == && sr 1 -u == && || "
-; Expanded expression: "(@-20) *(2) 0 == _Bool [sh||->3280] 1 [sh&&->3282] (@-22) *(2) -32768 == _Bool &&[3282] _Bool [sh&&->3281] (@-20) *(2) -1 == _Bool &&[3281] _Bool ||[3280] "
-; Fused expression:    "== *(@-20) 0 _Bool [sh||->3280] 1 [sh&&->3282] == *(@-22) -32768 _Bool &&[3282] _Bool [sh&&->3281] == *(@-20) -1 _Bool &&[3281] _Bool ||[3280] "
+; Expanded expression: "(@-20) *(2) 0 == _Bool [sh||->3085] 1 [sh&&->3087] (@-22) *(2) -32768 == _Bool &&[3087] _Bool [sh&&->3086] (@-20) *(2) -1 == _Bool &&[3086] _Bool ||[3085] "
+; Fused expression:    "== *(@-20) 0 _Bool [sh||->3085] 1 [sh&&->3087] == *(@-22) -32768 _Bool &&[3087] _Bool [sh&&->3086] == *(@-20) -1 _Bool &&[3086] _Bool ||[3085] "
     mov     ax, [bp-20]
     cmp     ax, 0
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L3280
+    jne     L3085
     mov     ax, 1
 ; JumpIfZero
     test    ax, ax
-    jz      L3282
+    je      L3087
     mov     ax, [bp-22]
     cmp     ax, -32768
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3282:
+L3087:
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3281
+    je      L3086
     mov     ax, [bp-20]
     cmp     ax, -1
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3281:
+L3086:
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3280:
+L3085:
 ; JumpIfZero
     test    ax, ax
-    jz      L3278
-; RPN'ized expression: "( L3283 error ) "
-; Expanded expression: " L3283  error ()2 "
+    je      L3083
+; RPN'ized expression: "( L3088 error ) "
+; Expanded expression: " L3088  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3283:
+L3088:
     db  "Error: exprval(): division overflow",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3283 , error )2 "
-    push    L3283
+; Fused expression:    "( L3088 , error )2 "
+    push    L3088
     call    _error
     sub     sp, -2
-L3278:
+L3083:
 ; RPN'ized expression: "sl sr %= "
 ; Expanded expression: "(@-22) (@-20) *(2) %=(2) "
 ; Fused expression:    "%=(34) *(@-22) *(@-20) "
@@ -27696,18 +27849,18 @@ L3278:
     mov     ax, dx
     mov     [bp-22], ax
 ; }
-L3276:
+L3081:
 ; break
-    jmp     L3259
+    jmp     L3064
 ; case
 ; RPN'ized expression: "42 "
 ; Expanded expression: "42 "
 ; Expression value: 42
-    jmp     L3275
-L3274:
+    jmp     L3080
+L3079:
     cmp     ax, 42
-    jne     L3285
-L3275:
+    jne     L3090
+L3080:
 ; RPN'ized expression: "sl sr *= "
 ; Expanded expression: "(@-22) (@-20) *(2) *=(2) "
 ; Fused expression:    "*=(34) *(@-22) *(@-20) "
@@ -27715,16 +27868,16 @@ L3275:
     mul     word [bp-20]
     mov     [bp-22], ax
 ; break
-    jmp     L3259
+    jmp     L3064
 ; case
 ; RPN'ized expression: "4 "
 ; Expanded expression: "4 "
 ; Expression value: 4
-    jmp     L3286
-L3285:
+    jmp     L3091
+L3090:
     cmp     ax, 4
-    jne     L3287
-L3286:
+    jne     L3092
+L3091:
 ; RPN'ized expression: "sl sr <<= "
 ; Expanded expression: "(@-22) (@-20) *(2) <<=(2) "
 ; Fused expression:    "<<=(34) *(@-22) *(@-20) "
@@ -27733,16 +27886,16 @@ L3286:
     shl     ax, cl
     mov     [bp-22], ax
 ; break
-    jmp     L3259
+    jmp     L3064
 ; case
 ; RPN'ized expression: "5 "
 ; Expanded expression: "5 "
 ; Expression value: 5
-    jmp     L3288
-L3287:
+    jmp     L3093
+L3092:
     cmp     ax, 5
-    jne     L3289
-L3288:
+    jne     L3094
+L3093:
 ; RPN'ized expression: "sl sr >>= "
 ; Expanded expression: "(@-22) (@-20) *(2) >>=(2) "
 ; Fused expression:    ">>=(34) *(@-22) *(@-20) "
@@ -27751,16 +27904,16 @@ L3288:
     sar     ax, cl
     mov     [bp-22], ax
 ; break
-    jmp     L3259
+    jmp     L3064
 ; case
 ; RPN'ized expression: "38 "
 ; Expanded expression: "38 "
 ; Expression value: 38
-    jmp     L3290
-L3289:
+    jmp     L3095
+L3094:
     cmp     ax, 38
-    jne     L3291
-L3290:
+    jne     L3096
+L3095:
 ; RPN'ized expression: "sl sr &= "
 ; Expanded expression: "(@-22) (@-20) *(2) &=(2) "
 ; Fused expression:    "&=(34) *(@-22) *(@-20) "
@@ -27768,16 +27921,16 @@ L3290:
     and     ax, [bp-20]
     mov     [bp-22], ax
 ; break
-    jmp     L3259
+    jmp     L3064
 ; case
 ; RPN'ized expression: "94 "
 ; Expanded expression: "94 "
 ; Expression value: 94
-    jmp     L3292
-L3291:
+    jmp     L3097
+L3096:
     cmp     ax, 94
-    jne     L3293
-L3292:
+    jne     L3098
+L3097:
 ; RPN'ized expression: "sl sr ^= "
 ; Expanded expression: "(@-22) (@-20) *(2) ^=(2) "
 ; Fused expression:    "^=(34) *(@-22) *(@-20) "
@@ -27785,16 +27938,16 @@ L3292:
     xor     ax, [bp-20]
     mov     [bp-22], ax
 ; break
-    jmp     L3259
+    jmp     L3064
 ; case
 ; RPN'ized expression: "124 "
 ; Expanded expression: "124 "
 ; Expression value: 124
-    jmp     L3294
-L3293:
+    jmp     L3099
+L3098:
     cmp     ax, 124
-    jne     L3295
-L3294:
+    jne     L3100
+L3099:
 ; RPN'ized expression: "sl sr |= "
 ; Expanded expression: "(@-22) (@-20) *(2) |=(2) "
 ; Fused expression:    "|=(34) *(@-22) *(@-20) "
@@ -27802,11 +27955,11 @@ L3294:
     or      ax, [bp-20]
     mov     [bp-22], ax
 ; break
-    jmp     L3259
+    jmp     L3064
 ; }
-    jmp     L3259
-L3295:
-L3259:
+    jmp     L3064
+L3100:
+L3064:
 ; RPN'ized expression: "s sl = "
 ; Expanded expression: "(@-4) (@-22) *(2) =(2) "
 ; Fused expression:    "=(34) *(@-4) *(@-22) "
@@ -27844,61 +27997,61 @@ L3259:
     sub     sp, -8
 ; }
 ; break
-    jmp     L3100
+    jmp     L2905
 ; case
 ; RPN'ized expression: "60 "
 ; Expanded expression: "60 "
 ; Expression value: 60
-    jmp     L3257
-L3256:
+    jmp     L3062
+L3061:
     cmp     ax, 60
-    jne     L3297
-L3257:
+    jne     L3102
+L3062:
 ; case
 ; RPN'ized expression: "62 "
 ; Expanded expression: "62 "
 ; Expression value: 62
-    jmp     L3298
-L3297:
+    jmp     L3103
+L3102:
     cmp     ax, 62
-    jne     L3299
-L3298:
+    jne     L3104
+L3103:
 ; case
 ; RPN'ized expression: "10 "
 ; Expanded expression: "10 "
 ; Expression value: 10
-    jmp     L3300
-L3299:
+    jmp     L3105
+L3104:
     cmp     ax, 10
-    jne     L3301
-L3300:
+    jne     L3106
+L3105:
 ; case
 ; RPN'ized expression: "11 "
 ; Expanded expression: "11 "
 ; Expression value: 11
-    jmp     L3302
-L3301:
+    jmp     L3107
+L3106:
     cmp     ax, 11
-    jne     L3303
-L3302:
+    jne     L3108
+L3107:
 ; case
 ; RPN'ized expression: "8 "
 ; Expanded expression: "8 "
 ; Expression value: 8
-    jmp     L3304
-L3303:
+    jmp     L3109
+L3108:
     cmp     ax, 8
-    jne     L3305
-L3304:
+    jne     L3110
+L3109:
 ; case
 ; RPN'ized expression: "9 "
 ; Expanded expression: "9 "
 ; Expression value: 9
-    jmp     L3306
-L3305:
+    jmp     L3111
+L3110:
     cmp     ax, 9
-    jne     L3307
-L3306:
+    jne     L3112
+L3111:
 ; {
 ; loc             ptrmask : (@-16): int
     sub     sp, 2
@@ -27997,70 +28150,70 @@ L3306:
     mov     [bp-16], ax
 ; if
 ; RPN'ized expression: "ptrmask 1 >= ptrmask 2 <= && tok 8 != && tok 9 != && "
-; Expanded expression: "(@-16) *(2) 1 >= _Bool [sh&&->3313] (@-16) *(2) 2 <= _Bool &&[3313] _Bool [sh&&->3312] (@-2) *(2) 8 != _Bool &&[3312] _Bool [sh&&->3311] (@-2) *(2) 9 != _Bool &&[3311] "
-; Fused expression:    ">= *(@-16) 1 _Bool [sh&&->3313] <= *(@-16) 2 _Bool &&[3313] _Bool [sh&&->3312] != *(@-2) 8 _Bool &&[3312] _Bool [sh&&->3311] != *(@-2) 9 _Bool &&[3311] "
+; Expanded expression: "(@-16) *(2) 1 >= _Bool [sh&&->3118] (@-16) *(2) 2 <= _Bool &&[3118] _Bool [sh&&->3117] (@-2) *(2) 8 != _Bool &&[3117] _Bool [sh&&->3116] (@-2) *(2) 9 != _Bool &&[3116] "
+; Fused expression:    ">= *(@-16) 1 _Bool [sh&&->3118] <= *(@-16) 2 _Bool &&[3118] _Bool [sh&&->3117] != *(@-2) 8 _Bool &&[3117] _Bool [sh&&->3116] != *(@-2) 9 _Bool &&[3116] "
     mov     ax, [bp-16]
     cmp     ax, 1
     setge   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3313
+    je      L3118
     mov     ax, [bp-16]
     cmp     ax, 2
     setle   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3313:
+L3118:
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3312
+    je      L3117
     mov     ax, [bp-2]
     cmp     ax, 8
     setne   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3312:
+L3117:
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3311
+    je      L3116
     mov     ax, [bp-2]
     cmp     ax, 9
     setne   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3311:
+L3116:
 ; JumpIfZero
     test    ax, ax
-    jz      L3309
-; RPN'ized expression: "( L3314 error ) "
-; Expanded expression: " L3314  error ()2 "
+    je      L3114
+; RPN'ized expression: "( L3119 error ) "
+; Expanded expression: " L3119  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3314:
+L3119:
     db  "Error: exprval(): invalid/unsupported combination of compared operands",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3314 , error )2 "
-    push    L3314
+; Fused expression:    "( L3119 , error )2 "
+    push    L3119
     call    _error
     sub     sp, -2
-L3309:
+L3114:
 ; if
 ; RPN'ized expression: "ptrmask "
 ; Expanded expression: "(@-16) *(2) "
@@ -28068,7 +28221,7 @@ L3309:
     mov     ax, [bp-16]
 ; JumpIfZero
     test    ax, ax
-    jz      L3316
+    je      L3121
 ; {
 ; loc                 t : (@-26): int
     sub     sp, 2
@@ -28083,83 +28236,83 @@ L3309:
 ; Expanded expression: "(@-2) *(2) "
 ; Fused expression:    "*(2) (@-2) "
     mov     ax, [bp-2]
-    jmp     L3320
+    jmp     L3125
 ; {
 ; case
 ; RPN'ized expression: "60 "
 ; Expanded expression: "60 "
 ; Expression value: 60
-    jmp     L3321
-L3320:
+    jmp     L3126
+L3125:
     cmp     ax, 60
-    jne     L3322
-L3321:
+    jne     L3127
+L3126:
 ; RPN'ized expression: "t 85 = "
 ; Expanded expression: "(@-26) 85 =(2) "
 ; Fused expression:    "=(34) *(@-26) 85 "
     mov     ax, 85
     mov     [bp-26], ax
 ; break
-    jmp     L3318
+    jmp     L3123
 ; case
 ; RPN'ized expression: "62 "
 ; Expanded expression: "62 "
 ; Expression value: 62
-    jmp     L3323
-L3322:
+    jmp     L3128
+L3127:
     cmp     ax, 62
-    jne     L3324
-L3323:
+    jne     L3129
+L3128:
 ; RPN'ized expression: "t 86 = "
 ; Expanded expression: "(@-26) 86 =(2) "
 ; Fused expression:    "=(34) *(@-26) 86 "
     mov     ax, 86
     mov     [bp-26], ax
 ; break
-    jmp     L3318
+    jmp     L3123
 ; case
 ; RPN'ized expression: "10 "
 ; Expanded expression: "10 "
 ; Expression value: 10
-    jmp     L3325
-L3324:
+    jmp     L3130
+L3129:
     cmp     ax, 10
-    jne     L3326
-L3325:
+    jne     L3131
+L3130:
 ; RPN'ized expression: "t 87 = "
 ; Expanded expression: "(@-26) 87 =(2) "
 ; Fused expression:    "=(34) *(@-26) 87 "
     mov     ax, 87
     mov     [bp-26], ax
 ; break
-    jmp     L3318
+    jmp     L3123
 ; case
 ; RPN'ized expression: "11 "
 ; Expanded expression: "11 "
 ; Expression value: 11
-    jmp     L3327
-L3326:
+    jmp     L3132
+L3131:
     cmp     ax, 11
-    jne     L3328
-L3327:
+    jne     L3133
+L3132:
 ; RPN'ized expression: "t 88 = "
 ; Expanded expression: "(@-26) 88 =(2) "
 ; Fused expression:    "=(34) *(@-26) 88 "
     mov     ax, 88
     mov     [bp-26], ax
 ; break
-    jmp     L3318
+    jmp     L3123
 ; }
-    jmp     L3318
-L3328:
-L3318:
+    jmp     L3123
+L3133:
+L3123:
 ; if
 ; RPN'ized expression: "t tok != "
 ; Expanded expression: "(@-26) *(2) (@-2) *(2) != "
 ; Fused expression:    "!= *(@-26) *(@-2) IF! "
     mov     ax, [bp-26]
     cmp     ax, [bp-2]
-    je      L3330
+    je      L3135
 ; RPN'ized expression: "stack oldIdxRight 1 + oldSpRight sp - - + *u 0 + *u t = "
 ; Expanded expression: "stack (@-8) *(2) 1 + (@-10) *(2) sp *(2) - - 4 * + 0 + (@-26) *(2) =(2) "
 ; Fused expression:    "+ *(@-8) 1 push-ax - *(@-10) *sp - *sp ax * ax 4 + stack ax + ax 0 =(34) *ax *(@-26) "
@@ -28179,26 +28332,26 @@ L3318:
     mov     bx, ax
     mov     ax, [bp-26]
     mov     [bx], ax
-L3330:
+L3135:
     sub     sp, -2
 ; }
-L3316:
+L3121:
 ; switch
 ; RPN'ized expression: "tok "
 ; Expanded expression: "(@-2) *(2) "
 ; Fused expression:    "*(2) (@-2) "
     mov     ax, [bp-2]
-    jmp     L3334
+    jmp     L3139
 ; {
 ; case
 ; RPN'ized expression: "60 "
 ; Expanded expression: "60 "
 ; Expression value: 60
-    jmp     L3335
-L3334:
+    jmp     L3140
+L3139:
     cmp     ax, 60
-    jne     L3336
-L3335:
+    jne     L3141
+L3140:
 ; RPN'ized expression: "sl sl sr < = "
 ; Expanded expression: "(@-24) (@-24) *(2) (@-22) *(2) < =(2) "
 ; Fused expression:    "< *(@-24) *(@-22) =(34) *(@-24) ax "
@@ -28208,16 +28361,16 @@ L3335:
     cbw
     mov     [bp-24], ax
 ; break
-    jmp     L3332
+    jmp     L3137
 ; case
 ; RPN'ized expression: "62 "
 ; Expanded expression: "62 "
 ; Expression value: 62
-    jmp     L3337
-L3336:
+    jmp     L3142
+L3141:
     cmp     ax, 62
-    jne     L3338
-L3337:
+    jne     L3143
+L3142:
 ; RPN'ized expression: "sl sl sr > = "
 ; Expanded expression: "(@-24) (@-24) *(2) (@-22) *(2) > =(2) "
 ; Fused expression:    "> *(@-24) *(@-22) =(34) *(@-24) ax "
@@ -28227,16 +28380,16 @@ L3337:
     cbw
     mov     [bp-24], ax
 ; break
-    jmp     L3332
+    jmp     L3137
 ; case
 ; RPN'ized expression: "10 "
 ; Expanded expression: "10 "
 ; Expression value: 10
-    jmp     L3339
-L3338:
+    jmp     L3144
+L3143:
     cmp     ax, 10
-    jne     L3340
-L3339:
+    jne     L3145
+L3144:
 ; RPN'ized expression: "sl sl sr <= = "
 ; Expanded expression: "(@-24) (@-24) *(2) (@-22) *(2) <= =(2) "
 ; Fused expression:    "<= *(@-24) *(@-22) =(34) *(@-24) ax "
@@ -28246,16 +28399,16 @@ L3339:
     cbw
     mov     [bp-24], ax
 ; break
-    jmp     L3332
+    jmp     L3137
 ; case
 ; RPN'ized expression: "11 "
 ; Expanded expression: "11 "
 ; Expression value: 11
-    jmp     L3341
-L3340:
+    jmp     L3146
+L3145:
     cmp     ax, 11
-    jne     L3342
-L3341:
+    jne     L3147
+L3146:
 ; RPN'ized expression: "sl sl sr >= = "
 ; Expanded expression: "(@-24) (@-24) *(2) (@-22) *(2) >= =(2) "
 ; Fused expression:    ">= *(@-24) *(@-22) =(34) *(@-24) ax "
@@ -28265,16 +28418,16 @@ L3341:
     cbw
     mov     [bp-24], ax
 ; break
-    jmp     L3332
+    jmp     L3137
 ; case
 ; RPN'ized expression: "8 "
 ; Expanded expression: "8 "
 ; Expression value: 8
-    jmp     L3343
-L3342:
+    jmp     L3148
+L3147:
     cmp     ax, 8
-    jne     L3344
-L3343:
+    jne     L3149
+L3148:
 ; RPN'ized expression: "sl sl sr == = "
 ; Expanded expression: "(@-24) (@-24) *(2) (@-22) *(2) == =(2) "
 ; Fused expression:    "== *(@-24) *(@-22) =(34) *(@-24) ax "
@@ -28284,16 +28437,16 @@ L3343:
     cbw
     mov     [bp-24], ax
 ; break
-    jmp     L3332
+    jmp     L3137
 ; case
 ; RPN'ized expression: "9 "
 ; Expanded expression: "9 "
 ; Expression value: 9
-    jmp     L3345
-L3344:
+    jmp     L3150
+L3149:
     cmp     ax, 9
-    jne     L3346
-L3345:
+    jne     L3151
+L3150:
 ; RPN'ized expression: "sl sl sr != = "
 ; Expanded expression: "(@-24) (@-24) *(2) (@-22) *(2) != =(2) "
 ; Fused expression:    "!= *(@-24) *(@-22) =(34) *(@-24) ax "
@@ -28303,11 +28456,11 @@ L3345:
     cbw
     mov     [bp-24], ax
 ; break
-    jmp     L3332
+    jmp     L3137
 ; }
-    jmp     L3332
-L3346:
-L3332:
+    jmp     L3137
+L3151:
+L3137:
 ; RPN'ized expression: "s sl = "
 ; Expanded expression: "(@-4) (@-24) *(2) =(2) "
 ; Fused expression:    "=(34) *(@-4) *(@-24) "
@@ -28321,8 +28474,8 @@ L3332:
     mov     ax, 1
     mov     [bx], ax
 ; RPN'ized expression: "ConstExpr *u constExpr 0 + *u constExpr 1 + *u && = "
-; Expanded expression: "(@8) *(2) (@-14) 0 + *(2) _Bool [sh&&->3348] (@-14) 2 + *(2) _Bool &&[3348] =(2) "
-; Fused expression:    "*(2) (@8) push-ax + (@-14) 0 *(2) ax _Bool [sh&&->3348] + (@-14) 2 *(2) ax _Bool &&[3348] =(34) **sp ax "
+; Expanded expression: "(@8) *(2) (@-14) 0 + *(2) _Bool [sh&&->3153] (@-14) 2 + *(2) _Bool &&[3153] =(2) "
+; Fused expression:    "*(2) (@8) push-ax + (@-14) 0 *(2) ax _Bool [sh&&->3153] + (@-14) 2 *(2) ax _Bool &&[3153] =(34) **sp ax "
     mov     ax, [bp+8]
     push    ax
     lea     ax, [bp-14]
@@ -28330,19 +28483,19 @@ L3332:
     mov     bx, ax
     mov     ax, [bx]
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3348
+    je      L3153
     lea     ax, [bp-14]
     add     ax, 2
     mov     bx, ax
     mov     ax, [bx]
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3348:
+L3153:
     pop     bx
     mov     [bx], ax
 ; RPN'ized expression: "( idx *u 1 + , oldIdxRight 1 + oldSpRight sp - - , ConstExpr *u , s simplifyConstExpr ) "
@@ -28371,16 +28524,16 @@ L3348:
     sub     sp, -10
 ; }
 ; break
-    jmp     L3100
+    jmp     L2905
 ; case
 ; RPN'ized expression: "120 "
 ; Expanded expression: "120 "
 ; Expression value: 120
-    jmp     L3308
-L3307:
+    jmp     L3113
+L3112:
     cmp     ax, 120
-    jne     L3349
-L3308:
+    jne     L3154
+L3113:
 ; RPN'ized expression: "s ( ConstExpr , ExprTypeSynPtr , idx exprval ) 0 != = "
 ; Expanded expression: "(@-4)  (@8) *(2)  (@6) *(2)  (@4) *(2)  exprval ()6 0 != =(2) "
 ; Fused expression:    "( *(2) (@8) , *(2) (@6) , *(2) (@4) , exprval )6 != ax 0 =(34) *(@-4) ax "
@@ -28440,25 +28593,25 @@ L3308:
     call    _simplifyConstExpr
     sub     sp, -8
 ; break
-    jmp     L3100
+    jmp     L2905
 ; case
 ; RPN'ized expression: "6 "
 ; Expanded expression: "6 "
 ; Expression value: 6
-    jmp     L3350
-L3349:
+    jmp     L3155
+L3154:
     cmp     ax, 6
-    jne     L3351
-L3350:
+    jne     L3156
+L3155:
 ; case
 ; RPN'ized expression: "7 "
 ; Expanded expression: "7 "
 ; Expression value: 7
-    jmp     L3352
-L3351:
+    jmp     L3157
+L3156:
     cmp     ax, 7
-    jne     L3353
-L3352:
+    jne     L3158
+L3157:
 ; {
 ; loc             sr : (@-16): int
     sub     sp, 2
@@ -28517,7 +28670,7 @@ L3352:
 ; Fused expression:    "== *(@-2) 6 IF! "
     mov     ax, [bp-2]
     cmp     ax, 6
-    jne     L3355
+    jne     L3160
 ; RPN'ized expression: "( sc , 90 , idx *u ++ ins2 ) "
 ; Expanded expression: " (@-20) *(2)  90  (@4) *(2) ++(2)  ins2 ()6 "
 ; Fused expression:    "( *(2) (@-20) , 90 , *(2) (@4) ++(2) *ax , ins2 )6 "
@@ -28530,8 +28683,8 @@ L3352:
     push    ax
     call    _ins2
     sub     sp, -6
-    jmp     L3356
-L3355:
+    jmp     L3161
+L3160:
 ; else
 ; RPN'ized expression: "( sc -u , 90 , idx *u ++ ins2 ) "
 ; Expanded expression: " (@-20) *(2) -u  90  (@4) *(2) ++(2)  ins2 ()6 "
@@ -28547,7 +28700,7 @@ L3355:
     push    ax
     call    _ins2
     sub     sp, -6
-L3356:
+L3161:
 ; RPN'ized expression: "( 120 , idx *u ins ) "
 ; Expanded expression: " 120  (@4) *(2) *(2)  ins ()4 "
 ; Fused expression:    "( 120 , *(2) (@4) *(2) ax , ins )4 "
@@ -28574,43 +28727,43 @@ L3356:
 ; Fused expression:    "== *(@-2) 6 IF! "
     mov     ax, [bp-2]
     cmp     ax, 6
-    jne     L3357
+    jne     L3162
 ; RPN'ized expression: "sl sl sr && = "
-; Expanded expression: "(@-18) (@-18) *(2) _Bool [sh&&->3359] (@-16) *(2) _Bool &&[3359] =(2) "
-; Fused expression:    "*(2) (@-18) _Bool [sh&&->3359] *(2) (@-16) _Bool &&[3359] =(34) *(@-18) ax "
+; Expanded expression: "(@-18) (@-18) *(2) _Bool [sh&&->3164] (@-16) *(2) _Bool &&[3164] =(2) "
+; Fused expression:    "*(2) (@-18) _Bool [sh&&->3164] *(2) (@-16) _Bool &&[3164] =(34) *(@-18) ax "
     mov     ax, [bp-18]
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3359
+    je      L3164
     mov     ax, [bp-16]
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3359:
+L3164:
     mov     [bp-18], ax
-    jmp     L3358
-L3357:
+    jmp     L3163
+L3162:
 ; else
 ; RPN'ized expression: "sl sl sr || = "
-; Expanded expression: "(@-18) (@-18) *(2) _Bool [sh||->3360] (@-16) *(2) _Bool ||[3360] =(2) "
-; Fused expression:    "*(2) (@-18) _Bool [sh||->3360] *(2) (@-16) _Bool ||[3360] =(34) *(@-18) ax "
+; Expanded expression: "(@-18) (@-18) *(2) _Bool [sh||->3165] (@-16) *(2) _Bool ||[3165] =(2) "
+; Fused expression:    "*(2) (@-18) _Bool [sh||->3165] *(2) (@-16) _Bool ||[3165] =(34) *(@-18) ax "
     mov     ax, [bp-18]
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L3360
+    jne     L3165
     mov     ax, [bp-16]
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3360:
+L3165:
     mov     [bp-18], ax
-L3358:
+L3163:
 ; RPN'ized expression: "s sl = "
 ; Expanded expression: "(@-4) (@-18) *(2) =(2) "
 ; Fused expression:    "=(34) *(@-4) *(@-18) "
@@ -28624,8 +28777,8 @@ L3358:
     mov     ax, 1
     mov     [bx], ax
 ; RPN'ized expression: "ConstExpr *u constExpr 0 + *u constExpr 1 + *u && = "
-; Expanded expression: "(@8) *(2) (@-14) 0 + *(2) _Bool [sh&&->3361] (@-14) 2 + *(2) _Bool &&[3361] =(2) "
-; Fused expression:    "*(2) (@8) push-ax + (@-14) 0 *(2) ax _Bool [sh&&->3361] + (@-14) 2 *(2) ax _Bool &&[3361] =(34) **sp ax "
+; Expanded expression: "(@8) *(2) (@-14) 0 + *(2) _Bool [sh&&->3166] (@-14) 2 + *(2) _Bool &&[3166] =(2) "
+; Fused expression:    "*(2) (@8) push-ax + (@-14) 0 *(2) ax _Bool [sh&&->3166] + (@-14) 2 *(2) ax _Bool &&[3166] =(34) **sp ax "
     mov     ax, [bp+8]
     push    ax
     lea     ax, [bp-14]
@@ -28633,19 +28786,19 @@ L3358:
     mov     bx, ax
     mov     ax, [bx]
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3361
+    je      L3166
     lea     ax, [bp-14]
     add     ax, 2
     mov     bx, ax
     mov     ax, [bx]
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3361:
+L3166:
     pop     bx
     mov     [bx], ax
 ; RPN'ized expression: "( idx *u 1 + , oldIdxRight 1 + oldSpRight sp - - , ConstExpr *u , s simplifyConstExpr ) "
@@ -28674,16 +28827,16 @@ L3361:
     sub     sp, -6
 ; }
 ; break
-    jmp     L3100
+    jmp     L2905
 ; case
 ; RPN'ized expression: "41 "
 ; Expanded expression: "41 "
 ; Expression value: 41
-    jmp     L3354
-L3353:
+    jmp     L3159
+L3158:
     cmp     ax, 41
-    jne     L3362
-L3354:
+    jne     L3167
+L3159:
 ; {
 ; loc             tmpSynPtr : (@-16): int
     sub     sp, 2
@@ -28716,20 +28869,20 @@ L3354:
     call    _GetFxnInfo
     sub     sp, -8
     cmp     ax, 0
-    jne     L3364
-; RPN'ized expression: "( L3366 error ) "
-; Expanded expression: " L3366  error ()2 "
+    jne     L3169
+; RPN'ized expression: "( L3171 error ) "
+; Expanded expression: " L3171  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3366:
+L3171:
     db  "exprval(): function or function pointer expected",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3366 , error )2 "
-    push    L3366
+; Fused expression:    "( L3171 , error )2 "
+    push    L3171
     call    _error
     sub     sp, -2
-L3364:
+L3169:
 ; RPN'ized expression: "c 0 = "
 ; Expanded expression: "(@-18) 0 =(2) "
 ; Fused expression:    "=(34) *(@-18) 0 "
@@ -28738,7 +28891,7 @@ L3364:
 ; while
 ; RPN'ized expression: "stack idx *u + *u 0 + *u 40 != "
 ; Expanded expression: "stack (@4) *(2) *(2) 4 * + 0 + *(2) 40 != "
-L3368:
+L3173:
 ; Fused expression:    "*(2) (@4) * *ax 4 + stack ax + ax 0 != *ax 40 IF! "
     mov     ax, [bp+4]
     mov     bx, ax
@@ -28751,7 +28904,7 @@ L3368:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 40
-    je      L3369
+    je      L3174
 ; {
 ; if
 ; RPN'ized expression: "c 0 == "
@@ -28759,7 +28912,7 @@ L3368:
 ; Fused expression:    "== *(@-18) 0 IF! "
     mov     ax, [bp-18]
     cmp     ax, 0
-    jne     L3370
+    jne     L3175
 ; RPN'ized expression: "( 44 , idx *u 1 + ins ) "
 ; Expanded expression: " 44  (@4) *(2) *(2) 1 +  ins ()4 "
 ; Fused expression:    "( 44 , *(2) (@4) + *ax 1 , ins )4 "
@@ -28771,7 +28924,7 @@ L3368:
     push    ax
     call    _ins
     sub     sp, -4
-L3370:
+L3175:
 ; RPN'ized expression: "( ConstExpr , tmpSynPtr &u , idx exprval ) "
 ; Expanded expression: " (@8) *(2)  (@-16)  (@4) *(2)  exprval ()6 "
 ; Fused expression:    "( *(2) (@8) , (@-16) , *(2) (@4) , exprval )6 "
@@ -28783,18 +28936,18 @@ L3370:
     sub     sp, -6
 ; if
 ; RPN'ized expression: "tmpSynPtr 0 >= SyntaxStack tmpSynPtr + *u 0 + *u 17 == && "
-; Expanded expression: "(@-16) *(2) 0 >= _Bool [sh&&->3374] SyntaxStack (@-16) *(2) 4 * + 0 + *(2) 17 == _Bool &&[3374] "
-; Fused expression:    ">= *(@-16) 0 _Bool [sh&&->3374] * *(@-16) 4 + SyntaxStack ax + ax 0 == *ax 17 _Bool &&[3374] "
+; Expanded expression: "(@-16) *(2) 0 >= _Bool [sh&&->3179] SyntaxStack (@-16) *(2) 4 * + 0 + *(2) 17 == _Bool &&[3179] "
+; Fused expression:    ">= *(@-16) 0 _Bool [sh&&->3179] * *(@-16) 4 + SyntaxStack ax + ax 0 == *ax 17 _Bool &&[3179] "
     mov     ax, [bp-16]
     cmp     ax, 0
     setge   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3374
+    je      L3179
     mov     ax, [bp-16]
     imul    ax, ax, 4
     mov     cx, ax
@@ -28807,25 +28960,25 @@ L3370:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3374:
+L3179:
 ; JumpIfZero
     test    ax, ax
-    jz      L3372
-; RPN'ized expression: "( L3375 error ) "
-; Expanded expression: " L3375  error ()2 "
+    je      L3177
+; RPN'ized expression: "( L3180 error ) "
+; Expanded expression: " L3180  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3375:
+L3180:
     db  "exprval(): function parameters cannot be of type 'void'",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3375 , error )2 "
-    push    L3375
+; Fused expression:    "( L3180 , error )2 "
+    push    L3180
     call    _error
     sub     sp, -2
-L3372:
+L3177:
 ; if
 ; RPN'ized expression: "c ++ maxParams > "
 ; Expanded expression: "(@-18) ++(2) (@-22) *(2) > "
@@ -28833,20 +28986,20 @@ L3372:
     inc     word [bp-18]
     mov     ax, [bp-18]
     cmp     ax, [bp-22]
-    jle     L3377
-; RPN'ized expression: "( L3379 error ) "
-; Expanded expression: " L3379  error ()2 "
+    jle     L3182
+; RPN'ized expression: "( L3184 error ) "
+; Expanded expression: " L3184  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3379:
+L3184:
     db  "exprval(): too many function parameters",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3379 , error )2 "
-    push    L3379
+; Fused expression:    "( L3184 , error )2 "
+    push    L3184
     call    _error
     sub     sp, -2
-L3377:
+L3182:
 ; if
 ; RPN'ized expression: "stack idx *u + *u 0 + *u 44 == "
 ; Expanded expression: "stack (@4) *(2) *(2) 4 * + 0 + *(2) 44 == "
@@ -28862,7 +29015,7 @@ L3377:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 44
-    jne     L3381
+    jne     L3186
 ; RPN'ized expression: "idx *u -- "
 ; Expanded expression: "(@4) *(2) --(2) "
 ; Fused expression:    "*(2) (@4) --(2) *ax "
@@ -28870,10 +29023,10 @@ L3377:
     mov     bx, ax
     dec     word [bx]
     mov     ax, [bx]
-L3381:
+L3186:
 ; }
-    jmp     L3368
-L3369:
+    jmp     L3173
+L3174:
 ; RPN'ized expression: "idx *u -- "
 ; Expanded expression: "(@4) *(2) --(2) "
 ; Fused expression:    "*(2) (@4) --(2) *ax "
@@ -28887,20 +29040,20 @@ L3369:
 ; Fused expression:    "< *(@-18) *(@-20) IF! "
     mov     ax, [bp-18]
     cmp     ax, [bp-20]
-    jge     L3383
-; RPN'ized expression: "( L3385 error ) "
-; Expanded expression: " L3385  error ()2 "
+    jge     L3188
+; RPN'ized expression: "( L3190 error ) "
+; Expanded expression: " L3190  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3385:
+L3190:
     db  "exprval(): too few function parameters",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3385 , error )2 "
-    push    L3385
+; Fused expression:    "( L3190 , error )2 "
+    push    L3190
     call    _error
     sub     sp, -2
-L3383:
+L3188:
 ; RPN'ized expression: "stack oldIdxRight 1 + oldSpRight sp - - + *u 1 + *u c SizeOfWord * = "
 ; Expanded expression: "stack (@-8) *(2) 1 + (@-10) *(2) sp *(2) - - 4 * + 2 + (@-18) *(2) SizeOfWord *(2) * =(2) "
 ; Fused expression:    "+ *(@-8) 1 push-ax - *(@-10) *sp - *sp ax * ax 4 + stack ax + ax 2 push-ax * *(@-18) *SizeOfWord =(34) **sp ax "
@@ -28932,97 +29085,97 @@ L3383:
     sub     sp, -8
 ; }
 ; break
-    jmp     L3100
+    jmp     L2905
 ; case
 ; RPN'ized expression: "65 "
 ; Expanded expression: "65 "
 ; Expression value: 65
-    jmp     L3363
-L3362:
+    jmp     L3168
+L3167:
     cmp     ax, 65
-    jne     L3387
-L3363:
+    jne     L3192
+L3168:
 ; case
 ; RPN'ized expression: "66 "
 ; Expanded expression: "66 "
 ; Expression value: 66
-    jmp     L3388
-L3387:
+    jmp     L3193
+L3192:
     cmp     ax, 66
-    jne     L3389
-L3388:
+    jne     L3194
+L3193:
 ; case
 ; RPN'ized expression: "67 "
 ; Expanded expression: "67 "
 ; Expression value: 67
-    jmp     L3390
-L3389:
+    jmp     L3195
+L3194:
     cmp     ax, 67
-    jne     L3391
-L3390:
+    jne     L3196
+L3195:
 ; case
 ; RPN'ized expression: "68 "
 ; Expanded expression: "68 "
 ; Expression value: 68
-    jmp     L3392
-L3391:
+    jmp     L3197
+L3196:
     cmp     ax, 68
-    jne     L3393
-L3392:
+    jne     L3198
+L3197:
 ; case
 ; RPN'ized expression: "69 "
 ; Expanded expression: "69 "
 ; Expression value: 69
-    jmp     L3394
-L3393:
+    jmp     L3199
+L3198:
     cmp     ax, 69
-    jne     L3395
-L3394:
+    jne     L3200
+L3199:
 ; case
 ; RPN'ized expression: "70 "
 ; Expanded expression: "70 "
 ; Expression value: 70
-    jmp     L3396
-L3395:
+    jmp     L3201
+L3200:
     cmp     ax, 70
-    jne     L3397
-L3396:
+    jne     L3202
+L3201:
 ; case
 ; RPN'ized expression: "71 "
 ; Expanded expression: "71 "
 ; Expression value: 71
-    jmp     L3398
-L3397:
+    jmp     L3203
+L3202:
     cmp     ax, 71
-    jne     L3399
-L3398:
+    jne     L3204
+L3203:
 ; case
 ; RPN'ized expression: "72 "
 ; Expanded expression: "72 "
 ; Expression value: 72
-    jmp     L3400
-L3399:
+    jmp     L3205
+L3204:
     cmp     ax, 72
-    jne     L3401
-L3400:
+    jne     L3206
+L3205:
 ; case
 ; RPN'ized expression: "73 "
 ; Expanded expression: "73 "
 ; Expression value: 73
-    jmp     L3402
-L3401:
+    jmp     L3207
+L3206:
     cmp     ax, 73
-    jne     L3403
-L3402:
+    jne     L3208
+L3207:
 ; case
 ; RPN'ized expression: "74 "
 ; Expanded expression: "74 "
 ; Expression value: 74
-    jmp     L3404
-L3403:
+    jmp     L3209
+L3208:
     cmp     ax, 74
-    jne     L3405
-L3404:
+    jne     L3210
+L3209:
 ; {
 ; loc             ptrmask : (@-16): int
     sub     sp, 2
@@ -29100,8 +29253,8 @@ L3404:
     sub     sp, -4
 ; if
 ; RPN'ized expression: "oldIdxLeft oldSpLeft sp - - 0 >= stack oldIdxLeft oldSpLeft sp - - + *u 0 + *u 78 == && 0 == "
-; Expanded expression: "(@-18) *(2) (@-20) *(2) sp *(2) - - 0 >= _Bool [sh&&->3409] stack (@-18) *(2) (@-20) *(2) sp *(2) - - 4 * + 0 + *(2) 78 == _Bool &&[3409] 0 == "
-; Fused expression:    "- *(@-20) *sp - *(@-18) ax >= ax 0 _Bool [sh&&->3409] - *(@-20) *sp - *(@-18) ax * ax 4 + stack ax + ax 0 == *ax 78 _Bool &&[3409] == ax 0 IF! "
+; Expanded expression: "(@-18) *(2) (@-20) *(2) sp *(2) - - 0 >= _Bool [sh&&->3214] stack (@-18) *(2) (@-20) *(2) sp *(2) - - 4 * + 0 + *(2) 78 == _Bool &&[3214] 0 == "
+; Fused expression:    "- *(@-20) *sp - *(@-18) ax >= ax 0 _Bool [sh&&->3214] - *(@-20) *sp - *(@-18) ax * ax 4 + stack ax + ax 0 == *ax 78 _Bool &&[3214] == ax 0 IF! "
     mov     ax, [bp-20]
     sub     ax, [_sp]
     mov     cx, ax
@@ -29111,11 +29264,11 @@ L3404:
     setge   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3409
+    je      L3214
     mov     ax, [bp-20]
     sub     ax, [_sp]
     mov     cx, ax
@@ -29132,28 +29285,28 @@ L3404:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3409:
+L3214:
     cmp     ax, 0
-    jne     L3407
-; RPN'ized expression: "( ( tok GetTokenName ) , L3410 error ) "
-; Expanded expression: "  (@-2) *(2)  GetTokenName ()2  L3410  error ()4 "
+    jne     L3212
+; RPN'ized expression: "( ( tok GetTokenName ) , L3215 error ) "
+; Expanded expression: "  (@-2) *(2)  GetTokenName ()2  L3215  error ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3410:
+L3215:
     db  "Error: exprval(): lvalue expected before %s",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( ( *(2) (@-2) , GetTokenName )2 , L3410 , error )4 "
+; Fused expression:    "( ( *(2) (@-2) , GetTokenName )2 , L3215 , error )4 "
     push    word [bp-2]
     call    _GetTokenName
     sub     sp, -2
     push    ax
-    push    L3410
+    push    L3215
     call    _error
     sub     sp, -4
-L3407:
+L3212:
 ; RPN'ized expression: "opSize stack oldIdxLeft oldSpLeft sp - - + *u 1 + *u = "
 ; Expanded expression: "(@-24) stack (@-18) *(2) (@-20) *(2) sp *(2) - - 4 * + 2 + *(2) =(2) "
 ; Fused expression:    "- *(@-20) *sp - *(@-18) ax * ax 4 + stack ax + ax 2 =(34) *(@-24) *ax "
@@ -29222,29 +29375,29 @@ L3407:
     mov     [bp-16], ax
 ; if
 ; RPN'ized expression: "tok 68 != tok 69 != && "
-; Expanded expression: "(@-2) *(2) 68 != _Bool [sh&&->3414] (@-2) *(2) 69 != _Bool &&[3414] "
-; Fused expression:    "!= *(@-2) 68 _Bool [sh&&->3414] != *(@-2) 69 _Bool &&[3414] "
+; Expanded expression: "(@-2) *(2) 68 != _Bool [sh&&->3219] (@-2) *(2) 69 != _Bool &&[3219] "
+; Fused expression:    "!= *(@-2) 68 _Bool [sh&&->3219] != *(@-2) 69 _Bool &&[3219] "
     mov     ax, [bp-2]
     cmp     ax, 68
     setne   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3414
+    je      L3219
     mov     ax, [bp-2]
     cmp     ax, 69
     setne   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3414:
+L3219:
 ; JumpIfZero
     test    ax, ax
-    jz      L3412
+    je      L3217
 ; {
 ; if
 ; RPN'ized expression: "ptrmask "
@@ -29253,27 +29406,27 @@ L3414:
     mov     ax, [bp-16]
 ; JumpIfZero
     test    ax, ax
-    jz      L3415
-; RPN'ized expression: "( ( tok GetTokenName ) , L3417 error ) "
-; Expanded expression: "  (@-2) *(2)  GetTokenName ()2  L3417  error ()4 "
+    je      L3220
+; RPN'ized expression: "( ( tok GetTokenName ) , L3222 error ) "
+; Expanded expression: "  (@-2) *(2)  GetTokenName ()2  L3222  error ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3417:
+L3222:
     db  "Error: exprval(): invalid combination of operands for %s",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( ( *(2) (@-2) , GetTokenName )2 , L3417 , error )4 "
+; Fused expression:    "( ( *(2) (@-2) , GetTokenName )2 , L3222 , error )4 "
     push    word [bp-2]
     call    _GetTokenName
     sub     sp, -2
     push    ax
-    push    L3417
+    push    L3222
     call    _error
     sub     sp, -4
-L3415:
+L3220:
 ; }
-    jmp     L3413
-L3412:
+    jmp     L3218
+L3217:
 ; else
 ; {
 ; if
@@ -29284,33 +29437,33 @@ L3412:
     and     ax, 1
 ; JumpIfZero
     test    ax, ax
-    jz      L3419
-; RPN'ized expression: "( ( tok GetTokenName ) , L3421 error ) "
-; Expanded expression: "  (@-2) *(2)  GetTokenName ()2  L3421  error ()4 "
+    je      L3224
+; RPN'ized expression: "( ( tok GetTokenName ) , L3226 error ) "
+; Expanded expression: "  (@-2) *(2)  GetTokenName ()2  L3226  error ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3421:
+L3226:
     db  "Error: exprval(): invalid combination of operands for %s",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( ( *(2) (@-2) , GetTokenName )2 , L3421 , error )4 "
+; Fused expression:    "( ( *(2) (@-2) , GetTokenName )2 , L3226 , error )4 "
     push    word [bp-2]
     call    _GetTokenName
     sub     sp, -2
     push    ax
-    push    L3421
+    push    L3226
     call    _error
     sub     sp, -4
-L3419:
+L3224:
 ; }
-L3413:
+L3218:
 ; if
 ; RPN'ized expression: "ptrmask 2 == "
 ; Expanded expression: "(@-16) *(2) 2 == "
 ; Fused expression:    "== *(@-16) 2 IF! "
     mov     ax, [bp-16]
     cmp     ax, 2
-    jne     L3423
+    jne     L3228
 ; {
 ; RPN'ized expression: "incSize ( ExprTypeSynPtr *u -u GetDeclSize ) = "
 ; Expanded expression: "(@-22)  (@6) *(2) *(2) -u  GetDeclSize ()2 =(2) "
@@ -29333,7 +29486,7 @@ L3413:
     mov     ax, [bx]
 ; JumpIfZero
     test    ax, ax
-    jz      L3425
+    je      L3230
 ; {
 ; RPN'ized expression: "stack oldIdxRight oldSpRight sp - - + *u 1 + *u incSize *= "
 ; Expanded expression: "stack (@-8) *(2) (@-10) *(2) sp *(2) - - 4 * + 2 + (@-22) *(2) *=(2) "
@@ -29353,8 +29506,8 @@ L3413:
     mul     word [bp-22]
     mov     [bx], ax
 ; }
-    jmp     L3426
-L3425:
+    jmp     L3231
+L3230:
 ; else
 ; if
 ; RPN'ized expression: "incSize 1 != "
@@ -29362,7 +29515,7 @@ L3425:
 ; Fused expression:    "!= *(@-22) 1 IF! "
     mov     ax, [bp-22]
     cmp     ax, 1
-    je      L3427
+    je      L3232
 ; {
 ; RPN'ized expression: "( incSize , 1 , oldIdxRight 1 + oldSpRight sp - - ins2 ) "
 ; Expanded expression: " (@-22) *(2)  1  (@-8) *(2) 1 + (@-10) *(2) sp *(2) - -  ins2 ()6 "
@@ -29396,10 +29549,10 @@ L3425:
     call    _ins
     sub     sp, -4
 ; }
-L3427:
-L3426:
+L3232:
+L3231:
 ; }
-L3423:
+L3228:
 ; RPN'ized expression: "ConstExpr *u 0 = "
 ; Expanded expression: "(@8) *(2) 0 =(2) "
 ; Fused expression:    "*(2) (@8) =(34) *ax 0 "
@@ -29410,37 +29563,37 @@ L3423:
     sub     sp, -10
 ; }
 ; break
-    jmp     L3100
+    jmp     L2905
 ; default
-L3101:
-; RPN'ized expression: "( ( tok GetTokenName ) , L3429 error ) "
-; Expanded expression: "  (@-2) *(2)  GetTokenName ()2  L3429  error ()4 "
+L2906:
+; RPN'ized expression: "( ( tok GetTokenName ) , L3234 error ) "
+; Expanded expression: "  (@-2) *(2)  GetTokenName ()2  L3234  error ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3429:
+L3234:
     db  "exprval(): Unexpected token %s",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( ( *(2) (@-2) , GetTokenName )2 , L3429 , error )4 "
+; Fused expression:    "( ( *(2) (@-2) , GetTokenName )2 , L3234 , error )4 "
     push    word [bp-2]
     call    _GetTokenName
     sub     sp, -2
     push    ax
-    push    L3429
+    push    L3234
     call    _error
     sub     sp, -4
 ; }
-    jmp     L3100
-L3405:
-    jmp     L3101
-L3100:
+    jmp     L2905
+L3210:
+    jmp     L2906
+L2905:
 ; return
 ; RPN'ized expression: "s "
 ; Expanded expression: "(@-4) *(2) "
 ; Fused expression:    "*(2) (@-4) "
     mov     ax, [bp-4]
-    jmp     L3095
-L3095:
+    jmp     L2900
+L2900:
     leave
     ret
 ; SEGMENT _TEXT
@@ -29488,7 +29641,7 @@ _ParseExpr:
     mov     ax, [_ExprLevel]
     inc     word [_ExprLevel]
     cmp     ax, 0
-    jne     L3432
+    jne     L3237
 ; {
 ; RPN'ized expression: "opsp sp 0 = = "
 ; Expanded expression: "opsp sp 0 =(2) =(2) "
@@ -29501,7 +29654,7 @@ _ParseExpr:
 ; Fused expression:    "( PurgeStringTable )0 "
     call    _PurgeStringTable
 ; }
-L3432:
+L3237:
 ; RPN'ized expression: "tok ( GotUnary , tok expr ) = "
 ; Expanded expression: "(@4)  (@6) *(2)  (@4) *(2)  expr ()4 =(2) "
 ; Fused expression:    "( *(2) (@6) , *(2) (@4) , expr )4 =(34) *(@4) ax "
@@ -29511,56 +29664,56 @@ L3432:
     sub     sp, -4
     mov     [bp+4], ax
 ; if
-; RPN'ized expression: "tok 0 == ( tok , L3436 strchr ) 0 == || "
-; Expanded expression: "(@4) *(2) 0 == _Bool [sh||->3438]  (@4) *(2)  L3436  strchr ()4 0 == _Bool ||[3438] "
+; RPN'ized expression: "tok 0 == ( tok , L3241 strchr ) 0 == || "
+; Expanded expression: "(@4) *(2) 0 == _Bool [sh||->3243]  (@4) *(2)  L3241  strchr ()4 0 == _Bool ||[3243] "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3436:
+L3241:
     db  ",;:)]",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "== *(@4) 0 _Bool [sh||->3438] ( *(2) (@4) , L3436 , strchr )4 == ax 0 _Bool ||[3438] "
+; Fused expression:    "== *(@4) 0 _Bool [sh||->3243] ( *(2) (@4) , L3241 , strchr )4 == ax 0 _Bool ||[3243] "
     mov     ax, [bp+4]
     cmp     ax, 0
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L3438
+    jne     L3243
     push    word [bp+4]
-    push    L3436
+    push    L3241
     call    _strchr
     sub     sp, -4
     cmp     ax, 0
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3438:
+L3243:
 ; JumpIfZero
     test    ax, ax
-    jz      L3434
-; RPN'ized expression: "( ( tok GetTokenName ) , L3439 error ) "
-; Expanded expression: "  (@4) *(2)  GetTokenName ()2  L3439  error ()4 "
+    je      L3239
+; RPN'ized expression: "( ( tok GetTokenName ) , L3244 error ) "
+; Expanded expression: "  (@4) *(2)  GetTokenName ()2  L3244  error ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3439:
+L3244:
     db  "Error: ParseExpr(): Unexpected token %s",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( ( *(2) (@4) , GetTokenName )2 , L3439 , error )4 "
+; Fused expression:    "( ( *(2) (@4) , GetTokenName )2 , L3244 , error )4 "
     push    word [bp+4]
     call    _GetTokenName
     sub     sp, -2
     push    ax
-    push    L3439
+    push    L3244
     call    _error
     sub     sp, -4
-L3434:
+L3239:
 ; if
 ; RPN'ized expression: "GotUnary *u "
 ; Expanded expression: "(@6) *(2) *(2) "
@@ -29570,7 +29723,7 @@ L3434:
     mov     ax, [bx]
 ; JumpIfZero
     test    ax, ax
-    jz      L3441
+    je      L3246
 ; {
 ; loc         j : (@-4): int
     sub     sp, 2
@@ -29580,22 +29733,22 @@ L3434:
 ; Fused expression:    "=(34) *(@-4) 0 "
     mov     ax, 0
     mov     [bp-4], ax
-L3443:
+L3248:
 ; RPN'ized expression: "j 2 < "
 ; Expanded expression: "(@-4) *(2) 2 < "
 ; Fused expression:    "< *(@-4) 2 IF! "
     mov     ax, [bp-4]
     cmp     ax, 2
-    jge     L3446
-    jmp     L3445
-L3444:
+    jge     L3251
+    jmp     L3250
+L3249:
 ; RPN'ized expression: "j ++p "
 ; Expanded expression: "(@-4) ++p(2) "
 ; Fused expression:    "++p(2) *(@-4) "
     mov     ax, [bp-4]
     inc     word [bp-4]
-    jmp     L3443
-L3445:
+    jmp     L3248
+L3250:
 ; {
 ; if
 ; RPN'ized expression: "j "
@@ -29604,45 +29757,45 @@ L3445:
     mov     ax, [bp-4]
 ; JumpIfZero
     test    ax, ax
-    jz      L3447
-; RPN'ized expression: "( L3449 printf ) "
-; Expanded expression: " L3449  printf ()2 "
+    je      L3252
+; RPN'ized expression: "( L3254 printf ) "
+; Expanded expression: " L3254  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3449:
+L3254:
     db  "; Expanded",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3449 , printf )2 "
-    push    L3449
+; Fused expression:    "( L3254 , printf )2 "
+    push    L3254
     call    _printf
     sub     sp, -2
-    jmp     L3448
-L3447:
+    jmp     L3253
+L3252:
 ; else
-; RPN'ized expression: "( L3451 printf ) "
-; Expanded expression: " L3451  printf ()2 "
+; RPN'ized expression: "( L3256 printf ) "
+; Expanded expression: " L3256  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3451:
+L3256:
     db  "; RPN'ized",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3451 , printf )2 "
-    push    L3451
+; Fused expression:    "( L3256 , printf )2 "
+    push    L3256
     call    _printf
     sub     sp, -2
-L3448:
-; RPN'ized expression: "( L3453 printf ) "
-; Expanded expression: " L3453  printf ()2 "
+L3253:
+; RPN'ized expression: "( L3258 printf ) "
+; Expanded expression: " L3258  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3453:
+L3258:
     db  " expression: ",34,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3453 , printf )2 "
-    push    L3453
+; Fused expression:    "( L3258 , printf )2 "
+    push    L3258
     call    _printf
     sub     sp, -2
 ; for
@@ -29651,22 +29804,22 @@ SEGMENT _TEXT
 ; Fused expression:    "=(34) *(@-2) 0 "
     mov     ax, 0
     mov     [bp-2], ax
-L3455:
+L3260:
 ; RPN'ized expression: "i sp < "
 ; Expanded expression: "(@-2) *(2) sp *(2) < "
 ; Fused expression:    "< *(@-2) *sp IF! "
     mov     ax, [bp-2]
     cmp     ax, [_sp]
-    jge     L3458
-    jmp     L3457
-L3456:
+    jge     L3263
+    jmp     L3262
+L3261:
 ; RPN'ized expression: "i ++p "
 ; Expanded expression: "(@-2) ++p(2) "
 ; Fused expression:    "++p(2) *(@-2) "
     mov     ax, [bp-2]
     inc     word [bp-2]
-    jmp     L3455
-L3457:
+    jmp     L3260
+L3262:
 ; {
 ; loc                 tok : (@-6): int
     sub     sp, 2
@@ -29688,35 +29841,35 @@ L3457:
 ; Expanded expression: "(@-6) *(2) "
 ; Fused expression:    "*(2) (@-6) "
     mov     ax, [bp-6]
-    jmp     L3461
+    jmp     L3266
 ; {
 ; case
 ; RPN'ized expression: "1 "
 ; Expanded expression: "1 "
 ; Expression value: 1
-    jmp     L3462
-L3461:
+    jmp     L3267
+L3266:
     cmp     ax, 1
-    jne     L3463
-L3462:
+    jne     L3268
+L3267:
 ; case
 ; RPN'ized expression: "2 "
 ; Expanded expression: "2 "
 ; Expression value: 2
-    jmp     L3464
-L3463:
+    jmp     L3269
+L3268:
     cmp     ax, 2
-    jne     L3465
-L3464:
-; RPN'ized expression: "( stack i + *u 1 + *u , L3467 printf ) "
-; Expanded expression: " stack (@-2) *(2) 4 * + 2 + *(2)  L3467  printf ()4 "
+    jne     L3270
+L3269:
+; RPN'ized expression: "( stack i + *u 1 + *u , L3272 printf ) "
+; Expanded expression: " stack (@-2) *(2) 4 * + 2 + *(2)  L3272  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3467:
+L3272:
     db  "%d",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( * *(@-2) 4 + stack ax + ax 2 *(2) ax , L3467 , printf )4 "
+; Fused expression:    "( * *(@-2) 4 + stack ax + ax 2 *(2) ax , L3272 , printf )4 "
     mov     ax, [bp-2]
     imul    ax, ax, 4
     mov     cx, ax
@@ -29725,20 +29878,20 @@ SEGMENT _TEXT
     add     ax, 2
     mov     bx, ax
     push    word [bx]
-    push    L3467
+    push    L3272
     call    _printf
     sub     sp, -4
 ; break
-    jmp     L3459
+    jmp     L3264
 ; case
 ; RPN'ized expression: "16 "
 ; Expanded expression: "16 "
 ; Expression value: 16
-    jmp     L3466
-L3465:
+    jmp     L3271
+L3270:
     cmp     ax, 16
-    jne     L3469
-L3466:
+    jne     L3274
+L3271:
 ; {
 ; loc                         p : (@-8): * char
     sub     sp, 2
@@ -29770,46 +29923,46 @@ L3466:
     sub     sp, -2
 ; JumpIfZero
     test    ax, ax
-    jz      L3471
-; RPN'ized expression: "( L3473 printf ) "
-; Expanded expression: " L3473  printf ()2 "
+    je      L3276
+; RPN'ized expression: "( L3278 printf ) "
+; Expanded expression: " L3278  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3473:
+L3278:
     db  "L",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3473 , printf )2 "
-    push    L3473
+; Fused expression:    "( L3278 , printf )2 "
+    push    L3278
     call    _printf
     sub     sp, -2
-L3471:
-; RPN'ized expression: "( p , L3475 printf ) "
-; Expanded expression: " (@-8) *(2)  L3475  printf ()4 "
+L3276:
+; RPN'ized expression: "( p , L3280 printf ) "
+; Expanded expression: " (@-8) *(2)  L3280  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3475:
+L3280:
     db  "%s",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( *(2) (@-8) , L3475 , printf )4 "
+; Fused expression:    "( *(2) (@-8) , L3280 , printf )4 "
     push    word [bp-8]
-    push    L3475
+    push    L3280
     call    _printf
     sub     sp, -4
     sub     sp, -2
 ; }
 ; break
-    jmp     L3459
+    jmp     L3264
 ; case
 ; RPN'ized expression: "90 "
 ; Expanded expression: "90 "
 ; Expression value: 90
-    jmp     L3470
-L3469:
+    jmp     L3275
+L3274:
     cmp     ax, 90
-    jne     L3477
-L3470:
+    jne     L3282
+L3275:
 ; if
 ; RPN'ized expression: "stack i + *u 1 + *u 0 >= "
 ; Expanded expression: "stack (@-2) *(2) 4 * + 2 + *(2) 0 >= "
@@ -29823,16 +29976,16 @@ L3470:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 0
-    jl      L3479
-; RPN'ized expression: "( stack i + *u 1 + *u , L3481 printf ) "
-; Expanded expression: " stack (@-2) *(2) 4 * + 2 + *(2)  L3481  printf ()4 "
+    jl      L3284
+; RPN'ized expression: "( stack i + *u 1 + *u , L3286 printf ) "
+; Expanded expression: " stack (@-2) *(2) 4 * + 2 + *(2)  L3286  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3481:
+L3286:
     db  "[sh&&->%d]",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( * *(@-2) 4 + stack ax + ax 2 *(2) ax , L3481 , printf )4 "
+; Fused expression:    "( * *(@-2) 4 + stack ax + ax 2 *(2) ax , L3286 , printf )4 "
     mov     ax, [bp-2]
     imul    ax, ax, 4
     mov     cx, ax
@@ -29841,21 +29994,21 @@ SEGMENT _TEXT
     add     ax, 2
     mov     bx, ax
     push    word [bx]
-    push    L3481
+    push    L3286
     call    _printf
     sub     sp, -4
-    jmp     L3480
-L3479:
+    jmp     L3285
+L3284:
 ; else
-; RPN'ized expression: "( stack i + *u 1 + *u -u , L3483 printf ) "
-; Expanded expression: " stack (@-2) *(2) 4 * + 2 + *(2) -u  L3483  printf ()4 "
+; RPN'ized expression: "( stack i + *u 1 + *u -u , L3288 printf ) "
+; Expanded expression: " stack (@-2) *(2) 4 * + 2 + *(2) -u  L3288  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3483:
+L3288:
     db  "[sh||->%d]",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( * *(@-2) 4 + stack ax + ax 2 *(2) ax -u , L3483 , printf )4 "
+; Fused expression:    "( * *(@-2) 4 + stack ax + ax 2 *(2) ax -u , L3288 , printf )4 "
     mov     ax, [bp-2]
     imul    ax, ax, 4
     mov     cx, ax
@@ -29866,30 +30019,30 @@ SEGMENT _TEXT
     mov     ax, [bx]
     neg     ax
     push    ax
-    push    L3483
+    push    L3288
     call    _printf
     sub     sp, -4
-L3480:
+L3285:
 ; break
-    jmp     L3459
+    jmp     L3264
 ; case
 ; RPN'ized expression: "89 "
 ; Expanded expression: "89 "
 ; Expression value: 89
-    jmp     L3478
-L3477:
+    jmp     L3283
+L3282:
     cmp     ax, 89
-    jne     L3485
-L3478:
-; RPN'ized expression: "( stack i + *u 1 + *u , L3487 printf ) "
-; Expanded expression: " stack (@-2) *(2) 4 * + 2 + *(2)  L3487  printf ()4 "
+    jne     L3290
+L3283:
+; RPN'ized expression: "( stack i + *u 1 + *u , L3292 printf ) "
+; Expanded expression: " stack (@-2) *(2) 4 * + 2 + *(2)  L3292  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3487:
+L3292:
     db  "(@%d)",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( * *(@-2) 4 + stack ax + ax 2 *(2) ax , L3487 , printf )4 "
+; Fused expression:    "( * *(@-2) 4 + stack ax + ax 2 *(2) ax , L3292 , printf )4 "
     mov     ax, [bp-2]
     imul    ax, ax, 4
     mov     cx, ax
@@ -29898,20 +30051,20 @@ SEGMENT _TEXT
     add     ax, 2
     mov     bx, ax
     push    word [bx]
-    push    L3487
+    push    L3292
     call    _printf
     sub     sp, -4
 ; break
-    jmp     L3459
+    jmp     L3264
 ; case
 ; RPN'ized expression: "78 "
 ; Expanded expression: "78 "
 ; Expression value: 78
-    jmp     L3486
-L3485:
+    jmp     L3291
+L3290:
     cmp     ax, 78
-    jne     L3489
-L3486:
+    jne     L3294
+L3291:
 ; if
 ; RPN'ized expression: "j "
 ; Expanded expression: "(@-4) *(2) "
@@ -29919,16 +30072,16 @@ L3486:
     mov     ax, [bp-4]
 ; JumpIfZero
     test    ax, ax
-    jz      L3491
-; RPN'ized expression: "( stack i + *u 1 + *u , L3493 printf ) "
-; Expanded expression: " stack (@-2) *(2) 4 * + 2 + *(2)  L3493  printf ()4 "
+    je      L3296
+; RPN'ized expression: "( stack i + *u 1 + *u , L3298 printf ) "
+; Expanded expression: " stack (@-2) *(2) 4 * + 2 + *(2)  L3298  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3493:
+L3298:
     db  "*(%d)",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( * *(@-2) 4 + stack ax + ax 2 *(2) ax , L3493 , printf )4 "
+; Fused expression:    "( * *(@-2) 4 + stack ax + ax 2 *(2) ax , L3298 , printf )4 "
     mov     ax, [bp-2]
     imul    ax, ax, 4
     mov     cx, ax
@@ -29937,77 +30090,77 @@ SEGMENT _TEXT
     add     ax, 2
     mov     bx, ax
     push    word [bx]
-    push    L3493
+    push    L3298
     call    _printf
     sub     sp, -4
-    jmp     L3492
-L3491:
+    jmp     L3297
+L3296:
 ; else
-; RPN'ized expression: "( L3495 printf ) "
-; Expanded expression: " L3495  printf ()2 "
+; RPN'ized expression: "( L3300 printf ) "
+; Expanded expression: " L3300  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3495:
+L3300:
     db  "*u",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3495 , printf )2 "
-    push    L3495
+; Fused expression:    "( L3300 , printf )2 "
+    push    L3300
     call    _printf
     sub     sp, -2
-L3492:
+L3297:
 ; break
-    jmp     L3459
+    jmp     L3264
 ; case
 ; RPN'ized expression: "40 "
 ; Expanded expression: "40 "
 ; Expression value: 40
-    jmp     L3490
-L3489:
+    jmp     L3295
+L3294:
     cmp     ax, 40
-    jne     L3497
-L3490:
+    jne     L3302
+L3295:
 ; case
 ; RPN'ized expression: "44 "
 ; Expanded expression: "44 "
 ; Expression value: 44
-    jmp     L3498
-L3497:
+    jmp     L3303
+L3302:
     cmp     ax, 44
-    jne     L3499
-L3498:
+    jne     L3304
+L3303:
 ; if
 ; RPN'ized expression: "j 0 == "
 ; Expanded expression: "(@-4) *(2) 0 == "
 ; Fused expression:    "== *(@-4) 0 IF! "
     mov     ax, [bp-4]
     cmp     ax, 0
-    jne     L3501
-; RPN'ized expression: "( tok , L3503 printf ) "
-; Expanded expression: " (@-6) *(2)  L3503  printf ()4 "
+    jne     L3306
+; RPN'ized expression: "( tok , L3308 printf ) "
+; Expanded expression: " (@-6) *(2)  L3308  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3503:
+L3308:
     db  "%c",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( *(2) (@-6) , L3503 , printf )4 "
+; Fused expression:    "( *(2) (@-6) , L3308 , printf )4 "
     push    word [bp-6]
-    push    L3503
+    push    L3308
     call    _printf
     sub     sp, -4
-L3501:
+L3306:
 ; break
-    jmp     L3459
+    jmp     L3264
 ; case
 ; RPN'ized expression: "41 "
 ; Expanded expression: "41 "
 ; Expression value: 41
-    jmp     L3500
-L3499:
+    jmp     L3305
+L3304:
     cmp     ax, 41
-    jne     L3505
-L3500:
+    jne     L3310
+L3305:
 ; if
 ; RPN'ized expression: "j "
 ; Expanded expression: "(@-4) *(2) "
@@ -30015,31 +30168,31 @@ L3500:
     mov     ax, [bp-4]
 ; JumpIfZero
     test    ax, ax
-    jz      L3507
-; RPN'ized expression: "( L3509 printf ) "
-; Expanded expression: " L3509  printf ()2 "
+    je      L3312
+; RPN'ized expression: "( L3314 printf ) "
+; Expanded expression: " L3314  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3509:
+L3314:
     db  "(",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3509 , printf )2 "
-    push    L3509
+; Fused expression:    "( L3314 , printf )2 "
+    push    L3314
     call    _printf
     sub     sp, -2
-L3507:
-; RPN'ized expression: "( tok , L3511 printf ) "
-; Expanded expression: " (@-6) *(2)  L3511  printf ()4 "
+L3312:
+; RPN'ized expression: "( tok , L3316 printf ) "
+; Expanded expression: " (@-6) *(2)  L3316  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3511:
+L3316:
     db  "%c",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( *(2) (@-6) , L3511 , printf )4 "
+; Fused expression:    "( *(2) (@-6) , L3316 , printf )4 "
     push    word [bp-6]
-    push    L3511
+    push    L3316
     call    _printf
     sub     sp, -4
 ; if
@@ -30049,16 +30202,16 @@ SEGMENT _TEXT
     mov     ax, [bp-4]
 ; JumpIfZero
     test    ax, ax
-    jz      L3513
-; RPN'ized expression: "( stack i + *u 1 + *u , L3515 printf ) "
-; Expanded expression: " stack (@-2) *(2) 4 * + 2 + *(2)  L3515  printf ()4 "
+    je      L3318
+; RPN'ized expression: "( stack i + *u 1 + *u , L3320 printf ) "
+; Expanded expression: " stack (@-2) *(2) 4 * + 2 + *(2)  L3320  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3515:
+L3320:
     db  "%d",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( * *(@-2) 4 + stack ax + ax 2 *(2) ax , L3515 , printf )4 "
+; Fused expression:    "( * *(@-2) 4 + stack ax + ax 2 *(2) ax , L3320 , printf )4 "
     mov     ax, [bp-2]
     imul    ax, ax, 4
     mov     cx, ax
@@ -30067,28 +30220,28 @@ SEGMENT _TEXT
     add     ax, 2
     mov     bx, ax
     push    word [bx]
-    push    L3515
+    push    L3320
     call    _printf
     sub     sp, -4
-L3513:
+L3318:
 ; break
-    jmp     L3459
+    jmp     L3264
 ; default
-L3460:
-; RPN'ized expression: "( ( tok GetTokenName ) , L3517 printf ) "
-; Expanded expression: "  (@-6) *(2)  GetTokenName ()2  L3517  printf ()4 "
+L3265:
+; RPN'ized expression: "( ( tok GetTokenName ) , L3322 printf ) "
+; Expanded expression: "  (@-6) *(2)  GetTokenName ()2  L3322  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3517:
+L3322:
     db  "%s",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( ( *(2) (@-6) , GetTokenName )2 , L3517 , printf )4 "
+; Fused expression:    "( ( *(2) (@-6) , GetTokenName )2 , L3322 , printf )4 "
     push    word [bp-6]
     call    _GetTokenName
     sub     sp, -2
     push    ax
-    push    L3517
+    push    L3322
     call    _printf
     sub     sp, -4
 ; if
@@ -30098,42 +30251,42 @@ SEGMENT _TEXT
     mov     ax, [bp-4]
 ; JumpIfZero
     test    ax, ax
-    jz      L3519
+    je      L3324
 ; {
 ; switch
 ; RPN'ized expression: "tok "
 ; Expanded expression: "(@-6) *(2) "
 ; Fused expression:    "*(2) (@-6) "
     mov     ax, [bp-6]
-    jmp     L3523
+    jmp     L3328
 ; {
 ; case
 ; RPN'ized expression: "7 "
 ; Expanded expression: "7 "
 ; Expression value: 7
-    jmp     L3524
-L3523:
+    jmp     L3329
+L3328:
     cmp     ax, 7
-    jne     L3525
-L3524:
+    jne     L3330
+L3329:
 ; case
 ; RPN'ized expression: "6 "
 ; Expanded expression: "6 "
 ; Expression value: 6
-    jmp     L3526
-L3525:
+    jmp     L3331
+L3330:
     cmp     ax, 6
-    jne     L3527
-L3526:
-; RPN'ized expression: "( stack i + *u 1 + *u , L3529 printf ) "
-; Expanded expression: " stack (@-2) *(2) 4 * + 2 + *(2)  L3529  printf ()4 "
+    jne     L3332
+L3331:
+; RPN'ized expression: "( stack i + *u 1 + *u , L3334 printf ) "
+; Expanded expression: " stack (@-2) *(2) 4 * + 2 + *(2)  L3334  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3529:
+L3334:
     db  "[%d]",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( * *(@-2) 4 + stack ax + ax 2 *(2) ax , L3529 , printf )4 "
+; Fused expression:    "( * *(@-2) 4 + stack ax + ax 2 *(2) ax , L3334 , printf )4 "
     mov     ax, [bp-2]
     imul    ax, ax, 4
     mov     cx, ax
@@ -30142,173 +30295,173 @@ SEGMENT _TEXT
     add     ax, 2
     mov     bx, ax
     push    word [bx]
-    push    L3529
+    push    L3334
     call    _printf
     sub     sp, -4
 ; break
-    jmp     L3521
+    jmp     L3326
 ; case
 ; RPN'ized expression: "61 "
 ; Expanded expression: "61 "
 ; Expression value: 61
-    jmp     L3528
-L3527:
+    jmp     L3333
+L3332:
     cmp     ax, 61
-    jne     L3531
-L3528:
+    jne     L3336
+L3333:
 ; case
 ; RPN'ized expression: "12 "
 ; Expanded expression: "12 "
 ; Expression value: 12
-    jmp     L3532
-L3531:
+    jmp     L3337
+L3336:
     cmp     ax, 12
-    jne     L3533
-L3532:
+    jne     L3338
+L3337:
 ; case
 ; RPN'ized expression: "13 "
 ; Expanded expression: "13 "
 ; Expression value: 13
-    jmp     L3534
-L3533:
+    jmp     L3339
+L3338:
     cmp     ax, 13
-    jne     L3535
-L3534:
+    jne     L3340
+L3339:
 ; case
 ; RPN'ized expression: "81 "
 ; Expanded expression: "81 "
 ; Expression value: 81
-    jmp     L3536
-L3535:
+    jmp     L3341
+L3340:
     cmp     ax, 81
-    jne     L3537
-L3536:
+    jne     L3342
+L3341:
 ; case
 ; RPN'ized expression: "82 "
 ; Expanded expression: "82 "
 ; Expression value: 82
-    jmp     L3538
-L3537:
+    jmp     L3343
+L3342:
     cmp     ax, 82
-    jne     L3539
-L3538:
+    jne     L3344
+L3343:
 ; case
 ; RPN'ized expression: "68 "
 ; Expanded expression: "68 "
 ; Expression value: 68
-    jmp     L3540
-L3539:
+    jmp     L3345
+L3344:
     cmp     ax, 68
-    jne     L3541
-L3540:
+    jne     L3346
+L3345:
 ; case
 ; RPN'ized expression: "69 "
 ; Expanded expression: "69 "
 ; Expression value: 69
-    jmp     L3542
-L3541:
+    jmp     L3347
+L3346:
     cmp     ax, 69
-    jne     L3543
-L3542:
+    jne     L3348
+L3347:
 ; case
 ; RPN'ized expression: "83 "
 ; Expanded expression: "83 "
 ; Expression value: 83
-    jmp     L3544
-L3543:
+    jmp     L3349
+L3348:
     cmp     ax, 83
-    jne     L3545
-L3544:
+    jne     L3350
+L3349:
 ; case
 ; RPN'ized expression: "84 "
 ; Expanded expression: "84 "
 ; Expression value: 84
-    jmp     L3546
-L3545:
+    jmp     L3351
+L3350:
     cmp     ax, 84
-    jne     L3547
-L3546:
+    jne     L3352
+L3351:
 ; case
 ; RPN'ized expression: "65 "
 ; Expanded expression: "65 "
 ; Expression value: 65
-    jmp     L3548
-L3547:
+    jmp     L3353
+L3352:
     cmp     ax, 65
-    jne     L3549
-L3548:
+    jne     L3354
+L3353:
 ; case
 ; RPN'ized expression: "66 "
 ; Expanded expression: "66 "
 ; Expression value: 66
-    jmp     L3550
-L3549:
+    jmp     L3355
+L3354:
     cmp     ax, 66
-    jne     L3551
-L3550:
+    jne     L3356
+L3355:
 ; case
 ; RPN'ized expression: "67 "
 ; Expanded expression: "67 "
 ; Expression value: 67
-    jmp     L3552
-L3551:
+    jmp     L3357
+L3356:
     cmp     ax, 67
-    jne     L3553
-L3552:
+    jne     L3358
+L3357:
 ; case
 ; RPN'ized expression: "70 "
 ; Expanded expression: "70 "
 ; Expression value: 70
-    jmp     L3554
-L3553:
+    jmp     L3359
+L3358:
     cmp     ax, 70
-    jne     L3555
-L3554:
+    jne     L3360
+L3359:
 ; case
 ; RPN'ized expression: "71 "
 ; Expanded expression: "71 "
 ; Expression value: 71
-    jmp     L3556
-L3555:
+    jmp     L3361
+L3360:
     cmp     ax, 71
-    jne     L3557
-L3556:
+    jne     L3362
+L3361:
 ; case
 ; RPN'ized expression: "72 "
 ; Expanded expression: "72 "
 ; Expression value: 72
-    jmp     L3558
-L3557:
+    jmp     L3363
+L3362:
     cmp     ax, 72
-    jne     L3559
-L3558:
+    jne     L3364
+L3363:
 ; case
 ; RPN'ized expression: "73 "
 ; Expanded expression: "73 "
 ; Expression value: 73
-    jmp     L3560
-L3559:
+    jmp     L3365
+L3364:
     cmp     ax, 73
-    jne     L3561
-L3560:
+    jne     L3366
+L3365:
 ; case
 ; RPN'ized expression: "74 "
 ; Expanded expression: "74 "
 ; Expression value: 74
-    jmp     L3562
-L3561:
+    jmp     L3367
+L3366:
     cmp     ax, 74
-    jne     L3563
-L3562:
-; RPN'ized expression: "( stack i + *u 1 + *u , L3565 printf ) "
-; Expanded expression: " stack (@-2) *(2) 4 * + 2 + *(2)  L3565  printf ()4 "
+    jne     L3368
+L3367:
+; RPN'ized expression: "( stack i + *u 1 + *u , L3370 printf ) "
+; Expanded expression: " stack (@-2) *(2) 4 * + 2 + *(2)  L3370  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3565:
+L3370:
     db  "(%d)",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( * *(@-2) 4 + stack ax + ax 2 *(2) ax , L3565 , printf )4 "
+; Fused expression:    "( * *(@-2) 4 + stack ax + ax 2 *(2) ax , L3370 , printf )4 "
     mov     ax, [bp-2]
     imul    ax, ax, 4
     mov     cx, ax
@@ -30317,50 +30470,50 @@ SEGMENT _TEXT
     add     ax, 2
     mov     bx, ax
     push    word [bx]
-    push    L3565
+    push    L3370
     call    _printf
     sub     sp, -4
 ; break
-    jmp     L3521
+    jmp     L3326
 ; }
-    jmp     L3521
-L3563:
-L3521:
+    jmp     L3326
+L3368:
+L3326:
 ; }
-L3519:
+L3324:
 ; break
-    jmp     L3459
+    jmp     L3264
 ; }
-    jmp     L3459
-L3505:
-    jmp     L3460
-L3459:
-; RPN'ized expression: "( L3567 printf ) "
-; Expanded expression: " L3567  printf ()2 "
+    jmp     L3264
+L3310:
+    jmp     L3265
+L3264:
+; RPN'ized expression: "( L3372 printf ) "
+; Expanded expression: " L3372  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3567:
+L3372:
     db  " ",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3567 , printf )2 "
-    push    L3567
+; Fused expression:    "( L3372 , printf )2 "
+    push    L3372
     call    _printf
     sub     sp, -2
     sub     sp, -2
 ; }
-    jmp     L3456
-L3458:
-; RPN'ized expression: "( L3569 printf ) "
-; Expanded expression: " L3569  printf ()2 "
+    jmp     L3261
+L3263:
+; RPN'ized expression: "( L3374 printf ) "
+; Expanded expression: " L3374  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3569:
+L3374:
     db  34,10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3569 , printf )2 "
-    push    L3569
+; Fused expression:    "( L3374 , printf )2 "
+    push    L3374
     call    _printf
     sub     sp, -2
 ; if
@@ -30369,7 +30522,7 @@ SEGMENT _TEXT
 ; Fused expression:    "== *(@-4) 0 IF! "
     mov     ax, [bp-4]
     cmp     ax, 0
-    jne     L3571
+    jne     L3376
 ; {
 ; loc                 idx : (@-6): int
     sub     sp, 2
@@ -30395,8 +30548,8 @@ SEGMENT _TEXT
     mov     [bx], ax
     sub     sp, -2
 ; }
-    jmp     L3572
-L3571:
+    jmp     L3377
+L3376:
 ; else
 ; if
 ; RPN'ized expression: "ConstExpr *u "
@@ -30407,30 +30560,30 @@ L3571:
     mov     ax, [bx]
 ; JumpIfZero
     test    ax, ax
-    jz      L3573
-; RPN'ized expression: "( ConstVal *u , L3575 printf ) "
-; Expanded expression: " (@12) *(2) *(2)  L3575  printf ()4 "
+    je      L3378
+; RPN'ized expression: "( ConstVal *u , L3380 printf ) "
+; Expanded expression: " (@12) *(2) *(2)  L3380  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3575:
+L3380:
     db  "; Expression value: %d",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( *(2) (@12) *(2) ax , L3575 , printf )4 "
+; Fused expression:    "( *(2) (@12) *(2) ax , L3380 , printf )4 "
     mov     ax, [bp+12]
     mov     bx, ax
     push    word [bx]
-    push    L3575
+    push    L3380
     call    _printf
     sub     sp, -4
-L3573:
-L3572:
+L3378:
+L3377:
 ; }
-    jmp     L3444
-L3446:
+    jmp     L3249
+L3251:
     sub     sp, -2
 ; }
-L3441:
+L3246:
 ; RPN'ized expression: "ExprLevel --p "
 ; Expanded expression: "ExprLevel --p(2) "
 ; Fused expression:    "--p(2) *ExprLevel "
@@ -30441,8 +30594,8 @@ L3441:
 ; Expanded expression: "(@4) *(2) "
 ; Fused expression:    "*(2) (@4) "
     mov     ax, [bp+4]
-    jmp     L3431
-L3431:
+    jmp     L3236
+L3236:
     leave
     ret
 ; SEGMENT _TEXT
@@ -30456,16 +30609,16 @@ _error:
     push    bp
     mov     bp, sp
 ; loc     format : (@4): * char
-; RPN'ized expression: "( L3578 printf ) "
-; Expanded expression: " L3578  printf ()2 "
+; RPN'ized expression: "( L3383 printf ) "
+; Expanded expression: " L3383  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3578:
+L3383:
     db  10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3578 , printf )2 "
-    push    L3578
+; Fused expression:    "( L3383 , printf )2 "
+    push    L3383
     call    _printf
     sub     sp, -2
 ; RPN'ized expression: "( DumpSynDecls ) "
@@ -30480,32 +30633,32 @@ SEGMENT _TEXT
 ; Expanded expression: " DumpIdentTable ()0 "
 ; Fused expression:    "( DumpIdentTable )0 "
     call    _DumpIdentTable
-; RPN'ized expression: "( LinePos , LineNo , CurFileName , L3580 printf ) "
-; Expanded expression: " LinePos *(2)  LineNo *(2)  CurFileName *(2)  L3580  printf ()8 "
+; RPN'ized expression: "( LinePos , LineNo , CurFileName , L3385 printf ) "
+; Expanded expression: " LinePos *(2)  LineNo *(2)  CurFileName *(2)  L3385  printf ()8 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3580:
+L3385:
     db  "Error in ",34,"%s",34," (%d:%d)",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( *(2) LinePos , *(2) LineNo , *(2) CurFileName , L3580 , printf )8 "
+; Fused expression:    "( *(2) LinePos , *(2) LineNo , *(2) CurFileName , L3385 , printf )8 "
     push    word [_LinePos]
     push    word [_LineNo]
     push    word [_CurFileName]
-    push    L3580
+    push    L3385
     call    _printf
     sub     sp, -8
-; RPN'ized expression: "( format , L3582 printf ) "
-; Expanded expression: " (@4) *(2)  L3582  printf ()4 "
+; RPN'ized expression: "( format , L3387 printf ) "
+; Expanded expression: " (@4) *(2)  L3387  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3582:
+L3387:
     db  "%s",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( *(2) (@4) , L3582 , printf )4 "
+; Fused expression:    "( *(2) (@4) , L3387 , printf )4 "
     push    word [bp+4]
-    push    L3582
+    push    L3387
     call    _printf
     sub     sp, -4
 ; RPN'ized expression: "( 1 -u exit ) "
@@ -30514,7 +30667,7 @@ SEGMENT _TEXT
     push    -1
     call    _exit
     sub     sp, -2
-L3577:
+L3382:
     leave
     ret
 ; SEGMENT _TEXT
@@ -30531,70 +30684,70 @@ _TokenStartsDeclaration:
 ; loc     params : (@6): int
 ; return
 ; RPN'ized expression: "t 17 == t 18 == || t 19 == || params 0 == t 108 == && || "
-; Expanded expression: "(@4) *(2) 17 == _Bool [sh||->3588] (@4) *(2) 18 == _Bool ||[3588] _Bool [sh||->3587] (@4) *(2) 19 == _Bool ||[3587] _Bool [sh||->3585] (@6) *(2) 0 == _Bool [sh&&->3586] (@4) *(2) 108 == _Bool &&[3586] _Bool ||[3585] "
-; Fused expression:    "== *(@4) 17 _Bool [sh||->3588] == *(@4) 18 _Bool ||[3588] _Bool [sh||->3587] == *(@4) 19 _Bool ||[3587] _Bool [sh||->3585] == *(@6) 0 _Bool [sh&&->3586] == *(@4) 108 _Bool &&[3586] _Bool ||[3585] "
+; Expanded expression: "(@4) *(2) 17 == _Bool [sh||->3393] (@4) *(2) 18 == _Bool ||[3393] _Bool [sh||->3392] (@4) *(2) 19 == _Bool ||[3392] _Bool [sh||->3390] (@6) *(2) 0 == _Bool [sh&&->3391] (@4) *(2) 108 == _Bool &&[3391] _Bool ||[3390] "
+; Fused expression:    "== *(@4) 17 _Bool [sh||->3393] == *(@4) 18 _Bool ||[3393] _Bool [sh||->3392] == *(@4) 19 _Bool ||[3392] _Bool [sh||->3390] == *(@6) 0 _Bool [sh&&->3391] == *(@4) 108 _Bool &&[3391] _Bool ||[3390] "
     mov     ax, [bp+4]
     cmp     ax, 17
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L3588
+    jne     L3393
     mov     ax, [bp+4]
     cmp     ax, 18
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3588:
+L3393:
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L3587
+    jne     L3392
     mov     ax, [bp+4]
     cmp     ax, 19
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3587:
+L3392:
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L3585
+    jne     L3390
     mov     ax, [bp+6]
     cmp     ax, 0
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3586
+    je      L3391
     mov     ax, [bp+4]
     cmp     ax, 108
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3586:
+L3391:
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3585:
-    jmp     L3584
-L3584:
+L3390:
+    jmp     L3389
+L3389:
     leave
     ret
 ; SEGMENT _TEXT
@@ -30615,20 +30768,20 @@ _PushSyntax2:
 ; Fused expression:    ">= *SyntaxStackCnt 2048 IF! "
     mov     ax, [_SyntaxStackCnt]
     cmp     ax, 2048
-    jl      L3590
-; RPN'ized expression: "( L3592 error ) "
-; Expanded expression: " L3592  error ()2 "
+    jl      L3395
+; RPN'ized expression: "( L3397 error ) "
+; Expanded expression: " L3397  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3592:
+L3397:
     db  "Internal error: Too many declarations",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3592 , error )2 "
-    push    L3592
+; Fused expression:    "( L3397 , error )2 "
+    push    L3397
     call    _error
     sub     sp, -2
-L3590:
+L3395:
 ; RPN'ized expression: "SyntaxStack SyntaxStackCnt + *u 0 + *u t = "
 ; Expanded expression: "SyntaxStack SyntaxStackCnt *(2) 4 * + 0 + (@4) *(2) =(2) "
 ; Fused expression:    "* *SyntaxStackCnt 4 + SyntaxStack ax + ax 0 =(34) *ax *(@4) "
@@ -30654,7 +30807,7 @@ L3590:
     mov     bx, ax
     mov     ax, [bp+6]
     mov     [bx], ax
-L3589:
+L3394:
     leave
     ret
 ; SEGMENT _TEXT
@@ -30674,7 +30827,7 @@ _PushSyntax:
     push    word [bp+4]
     call    _PushSyntax2
     sub     sp, -4
-L3594:
+L3399:
     leave
     ret
 ; SEGMENT _TEXT
@@ -30697,20 +30850,20 @@ _InsertSyntax2:
 ; Fused expression:    ">= *SyntaxStackCnt 2048 IF! "
     mov     ax, [_SyntaxStackCnt]
     cmp     ax, 2048
-    jl      L3596
-; RPN'ized expression: "( L3598 error ) "
-; Expanded expression: " L3598  error ()2 "
+    jl      L3401
+; RPN'ized expression: "( L3403 error ) "
+; Expanded expression: " L3403  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3598:
+L3403:
     db  "Internal error: Too many declarations",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3598 , error )2 "
-    push    L3598
+; Fused expression:    "( L3403 , error )2 "
+    push    L3403
     call    _error
     sub     sp, -2
-L3596:
+L3401:
 ; RPN'ized expression: "( SyntaxStack 0 + *u sizeof SyntaxStackCnt pos - * , SyntaxStack pos + *u , SyntaxStack pos 1 + + *u memmove ) "
 ; Expanded expression: " 4 SyntaxStackCnt *(2) (@4) *(2) - *  SyntaxStack (@4) *(2) 4 * +  SyntaxStack (@4) *(2) 1 + 4 * +  memmove ()6 "
 ; Fused expression:    "( - *SyntaxStackCnt *(@4) * 4 ax , * *(@4) 4 + SyntaxStack ax , + *(@4) 1 * ax 4 + SyntaxStack ax , memmove )6 "
@@ -30764,7 +30917,7 @@ L3596:
 ; Fused expression:    "++p(2) *SyntaxStackCnt "
     mov     ax, [_SyntaxStackCnt]
     inc     word [_SyntaxStackCnt]
-L3595:
+L3400:
     leave
     ret
 ; SEGMENT _TEXT
@@ -30787,7 +30940,7 @@ _InsertSyntax:
     push    word [bp+4]
     call    _InsertSyntax2
     sub     sp, -6
-L3600:
+L3405:
     leave
     ret
 ; SEGMENT _TEXT
@@ -30835,7 +30988,7 @@ _DeleteSyntax:
     mov     ax, [_SyntaxStackCnt]
     sub     ax, [bp+6]
     mov     [_SyntaxStackCnt], ax
-L3601:
+L3406:
     leave
     ret
 ; SEGMENT _TEXT
@@ -30857,27 +31010,27 @@ _FindSymbol:
     mov     ax, [_SyntaxStackCnt]
     sub     ax, 1
     mov     [bp-2], ax
-L3603:
+L3408:
 ; RPN'ized expression: "i 0 >= "
 ; Expanded expression: "(@-2) *(2) 0 >= "
 ; Fused expression:    ">= *(@-2) 0 IF! "
     mov     ax, [bp-2]
     cmp     ax, 0
-    jl      L3606
-    jmp     L3605
-L3604:
+    jl      L3411
+    jmp     L3410
+L3409:
 ; RPN'ized expression: "i --p "
 ; Expanded expression: "(@-2) --p(2) "
 ; Fused expression:    "--p(2) *(@-2) "
     mov     ax, [bp-2]
     dec     word [bp-2]
-    jmp     L3603
-L3605:
+    jmp     L3408
+L3410:
 ; {
 ; if
 ; RPN'ized expression: "SyntaxStack i + *u 0 + *u 16 == ( s , IdentTable SyntaxStack i + *u 1 + *u + strcmp ) 0 == && "
-; Expanded expression: "SyntaxStack (@-2) *(2) 4 * + 0 + *(2) 16 == _Bool [sh&&->3609]  (@4) *(2)  IdentTable SyntaxStack (@-2) *(2) 4 * + 2 + *(2) +  strcmp ()4 0 == _Bool &&[3609] "
-; Fused expression:    "* *(@-2) 4 + SyntaxStack ax + ax 0 == *ax 16 _Bool [sh&&->3609] ( *(2) (@4) , * *(@-2) 4 + SyntaxStack ax + ax 2 + IdentTable *ax , strcmp )4 == ax 0 _Bool &&[3609] "
+; Expanded expression: "SyntaxStack (@-2) *(2) 4 * + 0 + *(2) 16 == _Bool [sh&&->3414]  (@4) *(2)  IdentTable SyntaxStack (@-2) *(2) 4 * + 2 + *(2) +  strcmp ()4 0 == _Bool &&[3414] "
+; Fused expression:    "* *(@-2) 4 + SyntaxStack ax + ax 0 == *ax 16 _Bool [sh&&->3414] ( *(2) (@4) , * *(@-2) 4 + SyntaxStack ax + ax 2 + IdentTable *ax , strcmp )4 == ax 0 _Bool &&[3414] "
     mov     ax, [bp-2]
     imul    ax, ax, 4
     mov     cx, ax
@@ -30890,11 +31043,11 @@ L3605:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3609
+    je      L3414
     push    word [bp+4]
     mov     ax, [bp-2]
     imul    ax, ax, 4
@@ -30913,22 +31066,22 @@ L3605:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3609:
+L3414:
 ; JumpIfZero
     test    ax, ax
-    jz      L3607
+    je      L3412
 ; {
 ; return
 ; RPN'ized expression: "i "
 ; Expanded expression: "(@-2) *(2) "
 ; Fused expression:    "*(2) (@-2) "
     mov     ax, [bp-2]
-    jmp     L3602
+    jmp     L3407
 ; }
-    jmp     L3608
-L3607:
+    jmp     L3413
+L3412:
 ; else
 ; if
 ; RPN'ized expression: "SyntaxStack i + *u 0 + *u 41 == "
@@ -30943,7 +31096,7 @@ L3607:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 41
-    jne     L3610
+    jne     L3415
 ; {
 ; loc             c : (@-4): int
     sub     sp, 2
@@ -30957,12 +31110,12 @@ L3607:
 ; while
 ; RPN'ized expression: "c "
 ; Expanded expression: "(@-4) *(2) "
-L3612:
+L3417:
 ; Fused expression:    "*(2) (@-4) "
     mov     ax, [bp-4]
 ; JumpIfZero
     test    ax, ax
-    jz      L3613
+    je      L3418
 ; {
 ; loc                 t : (@-6): int
     sub     sp, 2
@@ -31001,23 +31154,23 @@ L3612:
     mov     [bp-4], ax
     sub     sp, -2
 ; }
-    jmp     L3612
-L3613:
+    jmp     L3417
+L3418:
     sub     sp, -2
 ; }
-L3610:
-L3608:
+L3415:
+L3413:
 ; }
-    jmp     L3604
-L3606:
+    jmp     L3409
+L3411:
 ; return
 ; RPN'ized expression: "1 -u "
 ; Expanded expression: "-1 "
 ; Expression value: -1
 ; Fused expression:    "-1 "
     mov     ax, -1
-    jmp     L3602
-L3602:
+    jmp     L3407
+L3407:
     leave
     ret
 ; SEGMENT _TEXT
@@ -31052,13 +31205,13 @@ _SymType:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 16
-    jne     L3615
+    jne     L3420
 ; RPN'ized expression: "SynPtr ++p "
 ; Expanded expression: "(@4) ++p(2) "
 ; Fused expression:    "++p(2) *(@4) "
     mov     ax, [bp+4]
     inc     word [bp+4]
-L3615:
+L3420:
 ; if
 ; RPN'ized expression: "local SyntaxStack SynPtr + *u 0 + *u 89 == = 0 != "
 ; Expanded expression: "(@-2) SyntaxStack (@4) *(2) 4 * + 0 + *(2) 89 == =(2) 0 != "
@@ -31076,13 +31229,13 @@ L3615:
     cbw
     mov     [bp-2], ax
     cmp     ax, 0
-    je      L3617
+    je      L3422
 ; RPN'ized expression: "SynPtr ++p "
 ; Expanded expression: "(@4) ++p(2) "
 ; Fused expression:    "++p(2) *(@4) "
     mov     ax, [bp+4]
     inc     word [bp+4]
-L3617:
+L3422:
 ; switch
 ; RPN'ized expression: "SyntaxStack SynPtr + *u 0 + *u "
 ; Expanded expression: "SyntaxStack (@4) *(2) 4 * + 0 + *(2) "
@@ -31095,33 +31248,33 @@ L3617:
     add     ax, 0
     mov     bx, ax
     mov     ax, [bx]
-    jmp     L3621
+    jmp     L3426
 ; {
 ; case
 ; RPN'ized expression: "40 "
 ; Expanded expression: "40 "
 ; Expression value: 40
-    jmp     L3622
-L3621:
+    jmp     L3427
+L3426:
     cmp     ax, 40
-    jne     L3623
-L3622:
+    jne     L3428
+L3427:
 ; return
 ; RPN'ized expression: "1 "
 ; Expanded expression: "1 "
 ; Expression value: 1
 ; Fused expression:    "1 "
     mov     ax, 1
-    jmp     L3614
+    jmp     L3419
 ; case
 ; RPN'ized expression: "91 "
 ; Expanded expression: "91 "
 ; Expression value: 91
-    jmp     L3624
-L3623:
+    jmp     L3429
+L3428:
     cmp     ax, 91
-    jne     L3625
-L3624:
+    jne     L3430
+L3429:
 ; if
 ; RPN'ized expression: "local "
 ; Expanded expression: "(@-2) *(2) "
@@ -31129,24 +31282,24 @@ L3624:
     mov     ax, [bp-2]
 ; JumpIfZero
     test    ax, ax
-    jz      L3627
+    je      L3432
 ; return
 ; RPN'ized expression: "5 "
 ; Expanded expression: "5 "
 ; Expression value: 5
 ; Fused expression:    "5 "
     mov     ax, 5
-    jmp     L3614
-L3627:
+    jmp     L3419
+L3432:
 ; return
 ; RPN'ized expression: "3 "
 ; Expanded expression: "3 "
 ; Expression value: 3
 ; Fused expression:    "3 "
     mov     ax, 3
-    jmp     L3614
+    jmp     L3419
 ; default
-L3620:
+L3425:
 ; if
 ; RPN'ized expression: "local "
 ; Expanded expression: "(@-2) *(2) "
@@ -31154,28 +31307,28 @@ L3620:
     mov     ax, [bp-2]
 ; JumpIfZero
     test    ax, ax
-    jz      L3629
+    je      L3434
 ; return
 ; RPN'ized expression: "4 "
 ; Expanded expression: "4 "
 ; Expression value: 4
 ; Fused expression:    "4 "
     mov     ax, 4
-    jmp     L3614
-L3629:
+    jmp     L3419
+L3434:
 ; return
 ; RPN'ized expression: "2 "
 ; Expanded expression: "2 "
 ; Expression value: 2
 ; Fused expression:    "2 "
     mov     ax, 2
-    jmp     L3614
+    jmp     L3419
 ; }
-    jmp     L3619
-L3625:
-    jmp     L3620
-L3619:
-L3614:
+    jmp     L3424
+L3430:
+    jmp     L3425
+L3424:
+L3419:
     leave
     ret
 ; SEGMENT _TEXT
@@ -31205,37 +31358,37 @@ _GetDeclSize:
 ; Fused expression:    "< *(@4) 0 IF! "
     mov     ax, [bp+4]
     cmp     ax, 0
-    jge     L3632
+    jge     L3437
 ; return
 ; RPN'ized expression: "1 -u "
 ; Expanded expression: "-1 "
 ; Expression value: -1
 ; Fused expression:    "-1 "
     mov     ax, -1
-    jmp     L3631
-L3632:
+    jmp     L3436
+L3437:
 ; for
 ; RPN'ized expression: "i SyntaxPtr = "
 ; Expanded expression: "(@-2) (@4) *(2) =(2) "
 ; Fused expression:    "=(34) *(@-2) *(@4) "
     mov     ax, [bp+4]
     mov     [bp-2], ax
-L3634:
+L3439:
 ; RPN'ized expression: "i SyntaxStackCnt < "
 ; Expanded expression: "(@-2) *(2) SyntaxStackCnt *(2) < "
 ; Fused expression:    "< *(@-2) *SyntaxStackCnt IF! "
     mov     ax, [bp-2]
     cmp     ax, [_SyntaxStackCnt]
-    jge     L3637
-    jmp     L3636
-L3635:
+    jge     L3442
+    jmp     L3441
+L3440:
 ; RPN'ized expression: "i ++p "
 ; Expanded expression: "(@-2) ++p(2) "
 ; Fused expression:    "++p(2) *(@-2) "
     mov     ax, [bp-2]
     inc     word [bp-2]
-    jmp     L3634
-L3636:
+    jmp     L3439
+L3441:
 ; {
 ; loc         tok : (@-6): int
     sub     sp, 2
@@ -31257,100 +31410,100 @@ L3636:
 ; Expanded expression: "(@-6) *(2) "
 ; Fused expression:    "*(2) (@-6) "
     mov     ax, [bp-6]
-    jmp     L3640
+    jmp     L3445
 ; {
 ; case
 ; RPN'ized expression: "16 "
 ; Expanded expression: "16 "
 ; Expression value: 16
-    jmp     L3641
-L3640:
+    jmp     L3446
+L3445:
     cmp     ax, 16
-    jne     L3642
-L3641:
+    jne     L3447
+L3446:
 ; case
 ; RPN'ized expression: "89 "
 ; Expanded expression: "89 "
 ; Expression value: 89
-    jmp     L3643
-L3642:
+    jmp     L3448
+L3447:
     cmp     ax, 89
-    jne     L3644
-L3643:
+    jne     L3449
+L3448:
 ; break
-    jmp     L3638
+    jmp     L3443
 ; case
 ; RPN'ized expression: "18 "
 ; Expanded expression: "18 "
 ; Expression value: 18
-    jmp     L3645
-L3644:
+    jmp     L3450
+L3449:
     cmp     ax, 18
-    jne     L3646
-L3645:
+    jne     L3451
+L3450:
 ; return
 ; RPN'ized expression: "size "
 ; Expanded expression: "(@-4) *(2) "
 ; Fused expression:    "*(2) (@-4) "
     mov     ax, [bp-4]
-    jmp     L3631
+    jmp     L3436
 ; case
 ; RPN'ized expression: "19 "
 ; Expanded expression: "19 "
 ; Expression value: 19
-    jmp     L3647
-L3646:
+    jmp     L3452
+L3451:
     cmp     ax, 19
-    jne     L3648
-L3647:
+    jne     L3453
+L3452:
 ; return
 ; RPN'ized expression: "size SizeOfWord * "
 ; Expanded expression: "(@-4) *(2) SizeOfWord *(2) * "
 ; Fused expression:    "* *(@-4) *SizeOfWord "
     mov     ax, [bp-4]
     mul     word [_SizeOfWord]
-    jmp     L3631
+    jmp     L3436
 ; case
 ; RPN'ized expression: "42 "
 ; Expanded expression: "42 "
 ; Expression value: 42
-    jmp     L3649
-L3648:
+    jmp     L3454
+L3453:
     cmp     ax, 42
-    jne     L3650
-L3649:
+    jne     L3455
+L3454:
 ; return
 ; RPN'ized expression: "size SizeOfWord * "
 ; Expanded expression: "(@-4) *(2) SizeOfWord *(2) * "
 ; Fused expression:    "* *(@-4) *SizeOfWord "
     mov     ax, [bp-4]
     mul     word [_SizeOfWord]
-    jmp     L3631
+    jmp     L3436
 ; case
 ; RPN'ized expression: "40 "
 ; Expanded expression: "40 "
 ; Expression value: 40
-    jmp     L3651
-L3650:
+    jmp     L3456
+L3455:
     cmp     ax, 40
-    jne     L3652
-L3651:
+    jne     L3457
+L3456:
 ; return
 ; RPN'ized expression: "size SizeOfWord * "
 ; Expanded expression: "(@-4) *(2) SizeOfWord *(2) * "
 ; Fused expression:    "* *(@-4) *SizeOfWord "
     mov     ax, [bp-4]
     mul     word [_SizeOfWord]
-    jmp     L3631
+    jmp     L3436
 ; case
 ; RPN'ized expression: "91 "
 ; Expanded expression: "91 "
 ; Expression value: 91
-    jmp     L3653
-L3652:
+    jmp     L3458
+L3457:
     cmp     ax, 91
-    jne     L3654
-L3653:
+    jne     L3459
+L3458:
 ; if
 ; RPN'ized expression: "SyntaxStack i 1 + + *u 0 + *u 1 != "
 ; Expanded expression: "SyntaxStack (@-2) *(2) 1 + 4 * + 0 + *(2) 1 != "
@@ -31365,15 +31518,15 @@ L3653:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 1
-    je      L3656
+    je      L3461
 ; return
 ; RPN'ized expression: "1 -u "
 ; Expanded expression: "-1 "
 ; Expression value: -1
 ; Fused expression:    "-1 "
     mov     ax, -1
-    jmp     L3631
-L3656:
+    jmp     L3436
+L3461:
 ; RPN'ized expression: "size SyntaxStack i 1 + + *u 1 + *u *= "
 ; Expanded expression: "(@-4) SyntaxStack (@-2) *(2) 1 + 4 * + 2 + *(2) *=(2) "
 ; Fused expression:    "+ *(@-2) 1 * ax 4 + SyntaxStack ax + ax 2 *=(34) *(@-4) *ax "
@@ -31396,33 +31549,33 @@ L3656:
     add     ax, 2
     mov     [bp-2], ax
 ; break
-    jmp     L3638
+    jmp     L3443
 ; default
-L3639:
+L3444:
 ; return
 ; RPN'ized expression: "1 -u "
 ; Expanded expression: "-1 "
 ; Expression value: -1
 ; Fused expression:    "-1 "
     mov     ax, -1
-    jmp     L3631
+    jmp     L3436
 ; }
-    jmp     L3638
-L3654:
-    jmp     L3639
-L3638:
+    jmp     L3443
+L3459:
+    jmp     L3444
+L3443:
     sub     sp, -2
 ; }
-    jmp     L3635
-L3637:
+    jmp     L3440
+L3442:
 ; return
 ; RPN'ized expression: "1 -u "
 ; Expanded expression: "-1 "
 ; Expression value: -1
 ; Fused expression:    "-1 "
     mov     ax, -1
-    jmp     L3631
-L3631:
+    jmp     L3436
+L3436:
     leave
     ret
 ; SEGMENT _TEXT
@@ -31454,32 +31607,32 @@ _ShowDecl:
 ; Fused expression:    "< *(@4) 0 IF! "
     mov     ax, [bp+4]
     cmp     ax, 0
-    jge     L3659
+    jge     L3464
 ; return
-    jmp     L3658
-L3659:
+    jmp     L3463
+L3464:
 ; for
 ; RPN'ized expression: "i SyntaxPtr = "
 ; Expanded expression: "(@-2) (@4) *(2) =(2) "
 ; Fused expression:    "=(34) *(@-2) *(@4) "
     mov     ax, [bp+4]
     mov     [bp-2], ax
-L3661:
+L3466:
 ; RPN'ized expression: "i SyntaxStackCnt < "
 ; Expanded expression: "(@-2) *(2) SyntaxStackCnt *(2) < "
 ; Fused expression:    "< *(@-2) *SyntaxStackCnt IF! "
     mov     ax, [bp-2]
     cmp     ax, [_SyntaxStackCnt]
-    jge     L3664
-    jmp     L3663
-L3662:
+    jge     L3469
+    jmp     L3468
+L3467:
 ; RPN'ized expression: "i ++p "
 ; Expanded expression: "(@-2) ++p(2) "
 ; Fused expression:    "++p(2) *(@-2) "
     mov     ax, [bp-2]
     inc     word [bp-2]
-    jmp     L3661
-L3663:
+    jmp     L3466
+L3468:
 ; {
 ; loc         tok : (@-6): int
     sub     sp, 2
@@ -31516,80 +31669,80 @@ L3663:
 ; Expanded expression: "(@-6) *(2) "
 ; Fused expression:    "*(2) (@-6) "
     mov     ax, [bp-6]
-    jmp     L3667
+    jmp     L3472
 ; {
 ; case
 ; RPN'ized expression: "89 "
 ; Expanded expression: "89 "
 ; Expression value: 89
-    jmp     L3668
-L3667:
+    jmp     L3473
+L3472:
     cmp     ax, 89
-    jne     L3669
-L3668:
-; RPN'ized expression: "( v , L3671 printf ) "
-; Expanded expression: " (@-8) *(2)  L3671  printf ()4 "
+    jne     L3474
+L3473:
+; RPN'ized expression: "( v , L3476 printf ) "
+; Expanded expression: " (@-8) *(2)  L3476  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3671:
+L3476:
     db  "(@%d): ",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( *(2) (@-8) , L3671 , printf )4 "
+; Fused expression:    "( *(2) (@-8) , L3476 , printf )4 "
     push    word [bp-8]
-    push    L3671
+    push    L3476
     call    _printf
     sub     sp, -4
 ; break
-    jmp     L3665
+    jmp     L3470
 ; case
 ; RPN'ized expression: "16 "
 ; Expanded expression: "16 "
 ; Expression value: 16
-    jmp     L3670
-L3669:
+    jmp     L3475
+L3474:
     cmp     ax, 16
-    jne     L3673
-L3670:
+    jne     L3478
+L3475:
 ; if
 ; RPN'ized expression: "icnt ++ 1 > IsParam 0 == && "
-; Expanded expression: "(@-4) ++(2) 1 > _Bool [sh&&->3677] (@6) *(2) 0 == _Bool &&[3677] "
-; Fused expression:    "++(2) *(@-4) > ax 1 _Bool [sh&&->3677] == *(@6) 0 _Bool &&[3677] "
+; Expanded expression: "(@-4) ++(2) 1 > _Bool [sh&&->3482] (@6) *(2) 0 == _Bool &&[3482] "
+; Fused expression:    "++(2) *(@-4) > ax 1 _Bool [sh&&->3482] == *(@6) 0 _Bool &&[3482] "
     inc     word [bp-4]
     mov     ax, [bp-4]
     cmp     ax, 1
     setg    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3677
+    je      L3482
     mov     ax, [bp+6]
     cmp     ax, 0
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3677:
+L3482:
 ; JumpIfZero
     test    ax, ax
-    jz      L3675
+    je      L3480
 ; return
-    jmp     L3658
-L3675:
-; RPN'ized expression: "( L3678 printf ) "
-; Expanded expression: " L3678  printf ()2 "
+    jmp     L3463
+L3480:
+; RPN'ized expression: "( L3483 printf ) "
+; Expanded expression: " L3483  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3678:
+L3483:
     db  "; ",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3678 , printf )2 "
-    push    L3678
+; Fused expression:    "( L3483 , printf )2 "
+    push    L3483
     call    _printf
     sub     sp, -2
 ; if
@@ -31598,21 +31751,21 @@ SEGMENT _TEXT
 ; Fused expression:    "== *ParseLevel 0 IF! "
     mov     ax, [_ParseLevel]
     cmp     ax, 0
-    jne     L3680
-; RPN'ized expression: "( L3682 printf ) "
-; Expanded expression: " L3682  printf ()2 "
+    jne     L3485
+; RPN'ized expression: "( L3487 printf ) "
+; Expanded expression: " L3487  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3682:
+L3487:
     db  "glb ",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3682 , printf )2 "
-    push    L3682
+; Fused expression:    "( L3487 , printf )2 "
+    push    L3487
     call    _printf
     sub     sp, -2
-    jmp     L3681
-L3680:
+    jmp     L3486
+L3485:
 ; else
 ; if
 ; RPN'ized expression: "IsParam "
@@ -31621,36 +31774,36 @@ L3680:
     mov     ax, [bp+6]
 ; JumpIfZero
     test    ax, ax
-    jz      L3684
-; RPN'ized expression: "( L3686 printf ) "
-; Expanded expression: " L3686  printf ()2 "
+    je      L3489
+; RPN'ized expression: "( L3491 printf ) "
+; Expanded expression: " L3491  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3686:
+L3491:
     db  "prm ",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3686 , printf )2 "
-    push    L3686
+; Fused expression:    "( L3491 , printf )2 "
+    push    L3491
     call    _printf
     sub     sp, -2
-    jmp     L3685
-L3684:
+    jmp     L3490
+L3489:
 ; else
-; RPN'ized expression: "( L3688 printf ) "
-; Expanded expression: " L3688  printf ()2 "
+; RPN'ized expression: "( L3493 printf ) "
+; Expanded expression: " L3493  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3688:
+L3493:
     db  "loc ",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3688 , printf )2 "
-    push    L3688
+; Fused expression:    "( L3493 , printf )2 "
+    push    L3493
     call    _printf
     sub     sp, -2
-L3685:
-L3681:
+L3490:
+L3486:
 ; {
 ; loc                 j : (@-10): int
     sub     sp, 2
@@ -31660,7 +31813,7 @@ L3681:
 ; Fused expression:    "=(34) *(@-10) 0 "
     mov     ax, 0
     mov     [bp-10], ax
-L3690:
+L3495:
 ; RPN'ized expression: "j ParseLevel 4 * < "
 ; Expanded expression: "(@-10) *(2) ParseLevel *(2) 4 * < "
 ; Fused expression:    "* *ParseLevel 4 < *(@-10) ax IF! "
@@ -31669,50 +31822,50 @@ L3690:
     mov     cx, ax
     mov     ax, [bp-10]
     cmp     ax, cx
-    jge     L3693
-    jmp     L3692
-L3691:
+    jge     L3498
+    jmp     L3497
+L3496:
 ; RPN'ized expression: "j ++p "
 ; Expanded expression: "(@-10) ++p(2) "
 ; Fused expression:    "++p(2) *(@-10) "
     mov     ax, [bp-10]
     inc     word [bp-10]
-    jmp     L3690
-L3692:
-; RPN'ized expression: "( L3694 printf ) "
-; Expanded expression: " L3694  printf ()2 "
+    jmp     L3495
+L3497:
+; RPN'ized expression: "( L3499 printf ) "
+; Expanded expression: " L3499  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3694:
+L3499:
     db  " ",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3694 , printf )2 "
-    push    L3694
+; Fused expression:    "( L3499 , printf )2 "
+    push    L3499
     call    _printf
     sub     sp, -2
-    jmp     L3691
-L3693:
+    jmp     L3496
+L3498:
     sub     sp, -2
 ; }
 ; if
-; RPN'ized expression: "IsParam ( L3698 , IdentTable v + strcmp ) 0 == && i 1 + SyntaxStackCnt < && "
-; Expanded expression: "(@6) *(2) _Bool [sh&&->3701]  L3698  IdentTable (@-8) *(2) +  strcmp ()4 0 == _Bool &&[3701] _Bool [sh&&->3700] (@-2) *(2) 1 + SyntaxStackCnt *(2) < _Bool &&[3700] "
+; RPN'ized expression: "IsParam ( L3503 , IdentTable v + strcmp ) 0 == && i 1 + SyntaxStackCnt < && "
+; Expanded expression: "(@6) *(2) _Bool [sh&&->3506]  L3503  IdentTable (@-8) *(2) +  strcmp ()4 0 == _Bool &&[3506] _Bool [sh&&->3505] (@-2) *(2) 1 + SyntaxStackCnt *(2) < _Bool &&[3505] "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3698:
+L3503:
     db  "<something>",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "*(2) (@6) _Bool [sh&&->3701] ( L3698 , + IdentTable *(@-8) , strcmp )4 == ax 0 _Bool &&[3701] _Bool [sh&&->3700] + *(@-2) 1 < ax *SyntaxStackCnt _Bool &&[3700] "
+; Fused expression:    "*(2) (@6) _Bool [sh&&->3506] ( L3503 , + IdentTable *(@-8) , strcmp )4 == ax 0 _Bool &&[3506] _Bool [sh&&->3505] + *(@-2) 1 < ax *SyntaxStackCnt _Bool &&[3505] "
     mov     ax, [bp+6]
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3701
-    push    L3698
+    je      L3506
+    push    L3503
     mov     ax, _IdentTable
     add     ax, [bp-8]
     push    ax
@@ -31722,27 +31875,27 @@ SEGMENT _TEXT
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3701:
+L3506:
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3700
+    je      L3505
     mov     ax, [bp-2]
     add     ax, 1
     cmp     ax, [_SyntaxStackCnt]
     setl    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3700:
+L3505:
 ; JumpIfZero
     test    ax, ax
-    jz      L3696
+    je      L3501
 ; {
 ; if
 ; RPN'ized expression: "SyntaxStack i 1 + + *u 0 + *u 15 == "
@@ -31758,109 +31911,109 @@ L3700:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 15
-    jne     L3702
+    jne     L3507
 ; continue
     sub     sp, -4
-    jmp     L3662
-L3702:
+    jmp     L3467
+L3507:
 ; }
-L3696:
-; RPN'ized expression: "( IdentTable v + , L3704 printf ) "
-; Expanded expression: " IdentTable (@-8) *(2) +  L3704  printf ()4 "
+L3501:
+; RPN'ized expression: "( IdentTable v + , L3509 printf ) "
+; Expanded expression: " IdentTable (@-8) *(2) +  L3509  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3704:
+L3509:
     db  "%s : ",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( + IdentTable *(@-8) , L3704 , printf )4 "
+; Fused expression:    "( + IdentTable *(@-8) , L3509 , printf )4 "
     mov     ax, _IdentTable
     add     ax, [bp-8]
     push    ax
-    push    L3704
+    push    L3509
     call    _printf
     sub     sp, -4
 ; break
-    jmp     L3665
+    jmp     L3470
 ; case
 ; RPN'ized expression: "91 "
 ; Expanded expression: "91 "
 ; Expression value: 91
-    jmp     L3674
-L3673:
+    jmp     L3479
+L3478:
     cmp     ax, 91
-    jne     L3706
-L3674:
-; RPN'ized expression: "( L3708 printf ) "
-; Expanded expression: " L3708  printf ()2 "
+    jne     L3511
+L3479:
+; RPN'ized expression: "( L3513 printf ) "
+; Expanded expression: " L3513  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3708:
+L3513:
     db  "[",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3708 , printf )2 "
-    push    L3708
+; Fused expression:    "( L3513 , printf )2 "
+    push    L3513
     call    _printf
     sub     sp, -2
 ; break
-    jmp     L3665
+    jmp     L3470
 ; case
 ; RPN'ized expression: "1 "
 ; Expanded expression: "1 "
 ; Expression value: 1
-    jmp     L3707
-L3706:
+    jmp     L3512
+L3511:
     cmp     ax, 1
-    jne     L3710
-L3707:
-; RPN'ized expression: "( v , L3712 printf ) "
-; Expanded expression: " (@-8) *(2)  L3712  printf ()4 "
+    jne     L3515
+L3512:
+; RPN'ized expression: "( v , L3517 printf ) "
+; Expanded expression: " (@-8) *(2)  L3517  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3712:
+L3517:
     db  "%d",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( *(2) (@-8) , L3712 , printf )4 "
+; Fused expression:    "( *(2) (@-8) , L3517 , printf )4 "
     push    word [bp-8]
-    push    L3712
+    push    L3517
     call    _printf
     sub     sp, -4
 ; break
-    jmp     L3665
+    jmp     L3470
 ; case
 ; RPN'ized expression: "93 "
 ; Expanded expression: "93 "
 ; Expression value: 93
-    jmp     L3711
-L3710:
+    jmp     L3516
+L3515:
     cmp     ax, 93
-    jne     L3714
-L3711:
-; RPN'ized expression: "( L3716 printf ) "
-; Expanded expression: " L3716  printf ()2 "
+    jne     L3519
+L3516:
+; RPN'ized expression: "( L3521 printf ) "
+; Expanded expression: " L3521  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3716:
+L3521:
     db  "] ",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3716 , printf )2 "
-    push    L3716
+; Fused expression:    "( L3521 , printf )2 "
+    push    L3521
     call    _printf
     sub     sp, -2
 ; break
-    jmp     L3665
+    jmp     L3470
 ; case
 ; RPN'ized expression: "40 "
 ; Expanded expression: "40 "
 ; Expression value: 40
-    jmp     L3715
-L3714:
+    jmp     L3520
+L3519:
     cmp     ax, 40
-    jne     L3718
-L3715:
+    jne     L3523
+L3520:
 ; {
 ; loc                 noparams : (@-10): int
     sub     sp, 2
@@ -31885,12 +32038,12 @@ L3715:
 ; while
 ; RPN'ized expression: "c "
 ; Expanded expression: "(@-14) *(2) "
-L3720:
+L3525:
 ; Fused expression:    "*(2) (@-14) "
     mov     ax, [bp-14]
 ; JumpIfZero
     test    ax, ax
-    jz      L3721
+    je      L3526
 ; {
 ; loc                     t : (@-16): int
     sub     sp, 2
@@ -31929,22 +32082,22 @@ L3720:
     mov     [bp-14], ax
     sub     sp, -2
 ; }
-    jmp     L3720
-L3721:
+    jmp     L3525
+L3526:
 ; RPN'ized expression: "noparams i 1 + j == SyntaxStack i 1 + + *u 0 + *u 17 == || = "
-; Expanded expression: "(@-10) (@-2) *(2) 1 + (@-12) *(2) == _Bool [sh||->3722] SyntaxStack (@-2) *(2) 1 + 4 * + 0 + *(2) 17 == _Bool ||[3722] =(2) "
-; Fused expression:    "+ *(@-2) 1 == ax *(@-12) _Bool [sh||->3722] + *(@-2) 1 * ax 4 + SyntaxStack ax + ax 0 == *ax 17 _Bool ||[3722] =(34) *(@-10) ax "
+; Expanded expression: "(@-10) (@-2) *(2) 1 + (@-12) *(2) == _Bool [sh||->3527] SyntaxStack (@-2) *(2) 1 + 4 * + 0 + *(2) 17 == _Bool ||[3527] =(2) "
+; Fused expression:    "+ *(@-2) 1 == ax *(@-12) _Bool [sh||->3527] + *(@-2) 1 * ax 4 + SyntaxStack ax + ax 0 == *ax 17 _Bool ||[3527] =(34) *(@-10) ax "
     mov     ax, [bp-2]
     add     ax, 1
     cmp     ax, [bp-12]
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L3722
+    jne     L3527
     mov     ax, [bp-2]
     add     ax, 1
     imul    ax, ax, 4
@@ -31958,20 +32111,20 @@ L3721:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3722:
+L3527:
     mov     [bp-10], ax
-; RPN'ized expression: "( L3723 printf ) "
-; Expanded expression: " L3723  printf ()2 "
+; RPN'ized expression: "( L3528 printf ) "
+; Expanded expression: " L3528  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3723:
+L3528:
     db  "(",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3723 , printf )2 "
-    push    L3723
+; Fused expression:    "( L3528 , printf )2 "
+    push    L3528
     call    _printf
     sub     sp, -2
 ; if
@@ -31981,7 +32134,7 @@ SEGMENT _TEXT
     mov     ax, [bp-10]
 ; JumpIfZero
     test    ax, ax
-    jz      L3725
+    je      L3530
 ; {
 ; if
 ; RPN'ized expression: "i 1 + j != "
@@ -31990,35 +32143,35 @@ SEGMENT _TEXT
     mov     ax, [bp-2]
     add     ax, 1
     cmp     ax, [bp-12]
-    je      L3727
-; RPN'ized expression: "( L3729 printf ) "
-; Expanded expression: " L3729  printf ()2 "
+    je      L3532
+; RPN'ized expression: "( L3534 printf ) "
+; Expanded expression: " L3534  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3729:
+L3534:
     db  "void",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3729 , printf )2 "
-    push    L3729
+; Fused expression:    "( L3534 , printf )2 "
+    push    L3534
     call    _printf
     sub     sp, -2
-L3727:
+L3532:
 ; }
-    jmp     L3726
-L3725:
+    jmp     L3531
+L3530:
 ; else
 ; {
-; RPN'ized expression: "( L3731 printf ) "
-; Expanded expression: " L3731  printf ()2 "
+; RPN'ized expression: "( L3536 printf ) "
+; Expanded expression: " L3536  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3731:
+L3536:
     db  10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3731 , printf )2 "
-    push    L3731
+; Fused expression:    "( L3536 , printf )2 "
+    push    L3536
     call    _printf
     sub     sp, -2
 ; RPN'ized expression: "ParseLevel ++p "
@@ -32039,7 +32192,7 @@ SEGMENT _TEXT
     mov     ax, [_ParseLevel]
     dec     word [_ParseLevel]
 ; }
-L3726:
+L3531:
 ; RPN'ized expression: "i j 1 - = "
 ; Expanded expression: "(@-2) (@-12) *(2) 1 - =(2) "
 ; Fused expression:    "- *(@-12) 1 =(34) *(@-2) ax "
@@ -32052,30 +32205,30 @@ L3726:
 ; Fused expression:    "== *(@-10) 0 IF! "
     mov     ax, [bp-10]
     cmp     ax, 0
-    jne     L3733
+    jne     L3538
 ; {
-; RPN'ized expression: "( L3735 printf ) "
-; Expanded expression: " L3735  printf ()2 "
+; RPN'ized expression: "( L3540 printf ) "
+; Expanded expression: " L3540  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3735:
+L3540:
     db  "; ",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3735 , printf )2 "
-    push    L3735
+; Fused expression:    "( L3540 , printf )2 "
+    push    L3540
     call    _printf
     sub     sp, -2
-; RPN'ized expression: "( L3737 printf ) "
-; Expanded expression: " L3737  printf ()2 "
+; RPN'ized expression: "( L3542 printf ) "
+; Expanded expression: " L3542  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3737:
+L3542:
     db  "    ",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3737 , printf )2 "
-    push    L3737
+; Fused expression:    "( L3542 , printf )2 "
+    push    L3542
     call    _printf
     sub     sp, -2
 ; {
@@ -32087,7 +32240,7 @@ SEGMENT _TEXT
 ; Fused expression:    "=(34) *(@-16) 0 "
     mov     ax, 0
     mov     [bp-16], ax
-L3739:
+L3544:
 ; RPN'ized expression: "j ParseLevel 4 * < "
 ; Expanded expression: "(@-16) *(2) ParseLevel *(2) 4 * < "
 ; Fused expression:    "* *ParseLevel 4 < *(@-16) ax IF! "
@@ -32096,161 +32249,161 @@ L3739:
     mov     cx, ax
     mov     ax, [bp-16]
     cmp     ax, cx
-    jge     L3742
-    jmp     L3741
-L3740:
+    jge     L3547
+    jmp     L3546
+L3545:
 ; RPN'ized expression: "j ++p "
 ; Expanded expression: "(@-16) ++p(2) "
 ; Fused expression:    "++p(2) *(@-16) "
     mov     ax, [bp-16]
     inc     word [bp-16]
-    jmp     L3739
-L3741:
-; RPN'ized expression: "( L3743 printf ) "
-; Expanded expression: " L3743  printf ()2 "
+    jmp     L3544
+L3546:
+; RPN'ized expression: "( L3548 printf ) "
+; Expanded expression: " L3548  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3743:
+L3548:
     db  " ",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3743 , printf )2 "
-    push    L3743
+; Fused expression:    "( L3548 , printf )2 "
+    push    L3548
     call    _printf
     sub     sp, -2
-    jmp     L3740
-L3742:
+    jmp     L3545
+L3547:
     sub     sp, -2
 ; }
 ; }
-L3733:
-; RPN'ized expression: "( L3745 printf ) "
-; Expanded expression: " L3745  printf ()2 "
+L3538:
+; RPN'ized expression: "( L3550 printf ) "
+; Expanded expression: " L3550  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3745:
+L3550:
     db  ") ",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3745 , printf )2 "
-    push    L3745
+; Fused expression:    "( L3550 , printf )2 "
+    push    L3550
     call    _printf
     sub     sp, -2
     sub     sp, -6
 ; }
 ; break
-    jmp     L3665
+    jmp     L3470
 ; case
 ; RPN'ized expression: "41 "
 ; Expanded expression: "41 "
 ; Expression value: 41
-    jmp     L3719
-L3718:
+    jmp     L3524
+L3523:
     cmp     ax, 41
-    jne     L3747
-L3719:
+    jne     L3552
+L3524:
 ; return
-    jmp     L3658
+    jmp     L3463
 ; default
-L3666:
+L3471:
 ; switch
 ; RPN'ized expression: "tok "
 ; Expanded expression: "(@-6) *(2) "
 ; Fused expression:    "*(2) (@-6) "
     mov     ax, [bp-6]
-    jmp     L3751
+    jmp     L3556
 ; {
 ; case
 ; RPN'ized expression: "17 "
 ; Expanded expression: "17 "
 ; Expression value: 17
-    jmp     L3752
-L3751:
+    jmp     L3557
+L3556:
     cmp     ax, 17
-    jne     L3753
-L3752:
+    jne     L3558
+L3557:
 ; case
 ; RPN'ized expression: "18 "
 ; Expanded expression: "18 "
 ; Expression value: 18
-    jmp     L3754
-L3753:
+    jmp     L3559
+L3558:
     cmp     ax, 18
-    jne     L3755
-L3754:
+    jne     L3560
+L3559:
 ; case
 ; RPN'ized expression: "19 "
 ; Expanded expression: "19 "
 ; Expression value: 19
-    jmp     L3756
-L3755:
+    jmp     L3561
+L3560:
     cmp     ax, 19
-    jne     L3757
-L3756:
+    jne     L3562
+L3561:
 ; case
 ; RPN'ized expression: "15 "
 ; Expanded expression: "15 "
 ; Expression value: 15
-    jmp     L3758
-L3757:
+    jmp     L3563
+L3562:
     cmp     ax, 15
-    jne     L3759
-L3758:
-; RPN'ized expression: "( ( tok GetTokenName ) , L3761 printf ) "
-; Expanded expression: "  (@-6) *(2)  GetTokenName ()2  L3761  printf ()4 "
+    jne     L3564
+L3563:
+; RPN'ized expression: "( ( tok GetTokenName ) , L3566 printf ) "
+; Expanded expression: "  (@-6) *(2)  GetTokenName ()2  L3566  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3761:
+L3566:
     db  "%s",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( ( *(2) (@-6) , GetTokenName )2 , L3761 , printf )4 "
+; Fused expression:    "( ( *(2) (@-6) , GetTokenName )2 , L3566 , printf )4 "
     push    word [bp-6]
     call    _GetTokenName
     sub     sp, -2
     push    ax
-    push    L3761
+    push    L3566
     call    _printf
     sub     sp, -4
 ; break
-    jmp     L3749
+    jmp     L3554
 ; default
-L3750:
-; RPN'ized expression: "( ( tok GetTokenName ) , L3763 printf ) "
-; Expanded expression: "  (@-6) *(2)  GetTokenName ()2  L3763  printf ()4 "
+L3555:
+; RPN'ized expression: "( ( tok GetTokenName ) , L3568 printf ) "
+; Expanded expression: "  (@-6) *(2)  GetTokenName ()2  L3568  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3763:
+L3568:
     db  "%s ",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( ( *(2) (@-6) , GetTokenName )2 , L3763 , printf )4 "
+; Fused expression:    "( ( *(2) (@-6) , GetTokenName )2 , L3568 , printf )4 "
     push    word [bp-6]
     call    _GetTokenName
     sub     sp, -2
     push    ax
-    push    L3763
+    push    L3568
     call    _printf
     sub     sp, -4
 ; break
-    jmp     L3749
+    jmp     L3554
 ; }
-    jmp     L3749
-L3759:
-    jmp     L3750
-L3749:
+    jmp     L3554
+L3564:
+    jmp     L3555
+L3554:
 ; break
-    jmp     L3665
+    jmp     L3470
 ; }
-    jmp     L3665
-L3747:
-    jmp     L3666
-L3665:
+    jmp     L3470
+L3552:
+    jmp     L3471
+L3470:
     sub     sp, -4
 ; }
-    jmp     L3662
-L3664:
-L3658:
+    jmp     L3467
+L3469:
+L3463:
     leave
     ret
 ; SEGMENT _TEXT
@@ -32260,35 +32413,35 @@ SEGMENT _TEXT
 _DumpSynDecls:
     push    bp
     mov     bp, sp
-; RPN'ized expression: "( L3766 printf ) "
-; Expanded expression: " L3766  printf ()2 "
+; RPN'ized expression: "( L3571 printf ) "
+; Expanded expression: " L3571  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3766:
+L3571:
     db  10,"; Syntax/declaration table/stack:",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3766 , printf )2 "
-    push    L3766
+; Fused expression:    "( L3571 , printf )2 "
+    push    L3571
     call    _printf
     sub     sp, -2
-; RPN'ized expression: "( 2048 SyntaxStack 0 + *u sizeof * , SyntaxStackCnt SyntaxStack 0 + *u sizeof * , L3768 printf ) "
-; Expanded expression: " 8192  SyntaxStackCnt *(2) 4 *  L3768  printf ()6 "
+; RPN'ized expression: "( 2048 SyntaxStack 0 + *u sizeof * , SyntaxStackCnt SyntaxStack 0 + *u sizeof * , L3573 printf ) "
+; Expanded expression: " 8192  SyntaxStackCnt *(2) 4 *  L3573  printf ()6 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3768:
+L3573:
     db  "; Bytes used: %d/%d",10,10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( 8192 , * *SyntaxStackCnt 4 , L3768 , printf )6 "
+; Fused expression:    "( 8192 , * *SyntaxStackCnt 4 , L3573 , printf )6 "
     push    8192
     mov     ax, [_SyntaxStackCnt]
     imul    ax, ax, 4
     push    ax
-    push    L3768
+    push    L3573
     call    _printf
     sub     sp, -6
-L3765:
+L3570:
     leave
     ret
 ; SEGMENT _TEXT
@@ -32370,64 +32523,64 @@ _ParseArrayDimension:
 ; Fused expression:    "!= *(@-2) 93 IF! "
     mov     ax, [bp-2]
     cmp     ax, 93
-    je      L3771
-; RPN'ized expression: "( ( tok GetTokenName ) , L3773 error ) "
-; Expanded expression: "  (@-2) *(2)  GetTokenName ()2  L3773  error ()4 "
+    je      L3576
+; RPN'ized expression: "( ( tok GetTokenName ) , L3578 error ) "
+; Expanded expression: "  (@-2) *(2)  GetTokenName ()2  L3578  error ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3773:
+L3578:
     db  "Error: ParseArrayDimension(): Unsupported or invalid array dimension (token %s)",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( ( *(2) (@-2) , GetTokenName )2 , L3773 , error )4 "
+; Fused expression:    "( ( *(2) (@-2) , GetTokenName )2 , L3578 , error )4 "
     push    word [bp-2]
     call    _GetTokenName
     sub     sp, -2
     push    ax
-    push    L3773
+    push    L3578
     call    _error
     sub     sp, -4
-L3771:
+L3576:
 ; if
 ; RPN'ized expression: "constExpr 0 == "
 ; Expanded expression: "(@-8) *(2) 0 == "
 ; Fused expression:    "== *(@-8) 0 IF! "
     mov     ax, [bp-8]
     cmp     ax, 0
-    jne     L3775
-; RPN'ized expression: "( L3777 error ) "
-; Expanded expression: " L3777  error ()2 "
+    jne     L3580
+; RPN'ized expression: "( L3582 error ) "
+; Expanded expression: " L3582  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3777:
+L3582:
     db  "Error: ParseArrayDimension(): non-constant array dimension",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3777 , error )2 "
-    push    L3777
+; Fused expression:    "( L3582 , error )2 "
+    push    L3582
     call    _error
     sub     sp, -2
-L3775:
+L3580:
 ; if
 ; RPN'ized expression: "exprVal 1 < "
 ; Expanded expression: "(@-10) *(2) 1 < "
 ; Fused expression:    "< *(@-10) 1 IF! "
     mov     ax, [bp-10]
     cmp     ax, 1
-    jge     L3779
-; RPN'ized expression: "( L3781 error ) "
-; Expanded expression: " L3781  error ()2 "
+    jge     L3584
+; RPN'ized expression: "( L3586 error ) "
+; Expanded expression: " L3586  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3781:
+L3586:
     db  "Error: ParseArrayDimension(): array dimension less than 1",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3781 , error )2 "
-    push    L3781
+; Fused expression:    "( L3586 , error )2 "
+    push    L3586
     call    _error
     sub     sp, -2
-L3779:
+L3584:
 ; RPN'ized expression: "( exprVal , 1 PushSyntax2 ) "
 ; Expanded expression: " (@-10) *(2)  1  PushSyntax2 ()4 "
 ; Fused expression:    "( *(2) (@-10) , 1 , PushSyntax2 )4 "
@@ -32440,8 +32593,8 @@ L3779:
 ; Expanded expression: "(@-2) *(2) "
 ; Fused expression:    "*(2) (@-2) "
     mov     ax, [bp-2]
-    jmp     L3770
-L3770:
+    jmp     L3575
+L3575:
     leave
     ret
 ; SEGMENT _TEXT
@@ -32484,26 +32637,26 @@ _ParseDerived:
 ; while
 ; RPN'ized expression: "tok ( GetToken ) = 42 == "
 ; Expanded expression: "(@-2)  GetToken ()0 =(2) 42 == "
-L3784:
+L3589:
 ; Fused expression:    "( GetToken )0 =(34) *(@-2) ax == ax 42 IF! "
     call    _GetToken
     mov     [bp-2], ax
     cmp     ax, 42
-    jne     L3785
+    jne     L3590
 ; RPN'ized expression: "stars ++p "
 ; Expanded expression: "(@-4) ++p(2) "
 ; Fused expression:    "++p(2) *(@-4) "
     mov     ax, [bp-4]
     inc     word [bp-4]
-    jmp     L3784
-L3785:
+    jmp     L3589
+L3590:
 ; if
 ; RPN'ized expression: "tok 40 == "
 ; Expanded expression: "(@-2) *(2) 40 == "
 ; Fused expression:    "== *(@-2) 40 IF! "
     mov     ax, [bp-2]
     cmp     ax, 40
-    jne     L3786
+    jne     L3591
 ; {
 ; RPN'ized expression: "tok ( ParseDerived ) = "
 ; Expanded expression: "(@-2)  ParseDerived ()0 =(2) "
@@ -32516,28 +32669,28 @@ L3785:
 ; Fused expression:    "!= *(@-2) 41 IF! "
     mov     ax, [bp-2]
     cmp     ax, 41
-    je      L3788
-; RPN'ized expression: "( L3790 error ) "
-; Expanded expression: " L3790  error ()2 "
+    je      L3593
+; RPN'ized expression: "( L3595 error ) "
+; Expanded expression: " L3595  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3790:
+L3595:
     db  "Error: ParseDerived(): ')' expected",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3790 , error )2 "
-    push    L3790
+; Fused expression:    "( L3595 , error )2 "
+    push    L3595
     call    _error
     sub     sp, -2
-L3788:
+L3593:
 ; RPN'ized expression: "tok ( GetToken ) = "
 ; Expanded expression: "(@-2)  GetToken ()0 =(2) "
 ; Fused expression:    "( GetToken )0 =(34) *(@-2) ax "
     call    _GetToken
     mov     [bp-2], ax
 ; }
-    jmp     L3787
-L3786:
+    jmp     L3592
+L3591:
 ; else
 ; if
 ; RPN'ized expression: "tok 16 == "
@@ -32545,7 +32698,7 @@ L3786:
 ; Fused expression:    "== *(@-2) 16 IF! "
     mov     ax, [bp-2]
     cmp     ax, 16
-    jne     L3792
+    jne     L3597
 ; {
 ; RPN'ized expression: "( ( ( GetTokenIdentName ) AddIdent ) , tok PushSyntax2 ) "
 ; Expanded expression: "   GetTokenIdentName ()0  AddIdent ()2  (@-2) *(2)  PushSyntax2 ()4 "
@@ -32564,20 +32717,20 @@ L3786:
     call    _GetToken
     mov     [bp-2], ax
 ; }
-    jmp     L3793
-L3792:
+    jmp     L3598
+L3597:
 ; else
 ; {
-; RPN'ized expression: "( ( L3794 AddIdent ) , 16 PushSyntax2 ) "
-; Expanded expression: "  L3794  AddIdent ()2  16  PushSyntax2 ()4 "
+; RPN'ized expression: "( ( L3599 AddIdent ) , 16 PushSyntax2 ) "
+; Expanded expression: "  L3599  AddIdent ()2  16  PushSyntax2 ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3794:
+L3599:
     db  "<something>",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( ( L3794 , AddIdent )2 , 16 , PushSyntax2 )4 "
-    push    L3794
+; Fused expression:    "( ( L3599 , AddIdent )2 , 16 , PushSyntax2 )4 "
+    push    L3599
     call    _AddIdent
     sub     sp, -2
     push    ax
@@ -32585,24 +32738,24 @@ SEGMENT _TEXT
     call    _PushSyntax2
     sub     sp, -4
 ; }
-L3793:
-L3787:
+L3598:
+L3592:
 ; if
 ; RPN'ized expression: "tok 91 == "
 ; Expanded expression: "(@-2) *(2) 91 == "
 ; Fused expression:    "== *(@-2) 91 IF! "
     mov     ax, [bp-2]
     cmp     ax, 91
-    jne     L3796
+    jne     L3601
 ; {
 ; while
 ; RPN'ized expression: "tok 91 == "
 ; Expanded expression: "(@-2) *(2) 91 == "
-L3798:
+L3603:
 ; Fused expression:    "== *(@-2) 91 IF! "
     mov     ax, [bp-2]
     cmp     ax, 91
-    jne     L3799
+    jne     L3604
 ; {
 ; loc             oldsp : (@-8): int
     sub     sp, 2
@@ -32635,20 +32788,20 @@ L3798:
 ; Fused expression:    "!= *(@-2) 93 IF! "
     mov     ax, [bp-2]
     cmp     ax, 93
-    je      L3800
-; RPN'ized expression: "( L3802 error ) "
-; Expanded expression: " L3802  error ()2 "
+    je      L3605
+; RPN'ized expression: "( L3607 error ) "
+; Expanded expression: " L3607  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3802:
+L3607:
     db  "Error: ParseDerived(): ']' expected",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3802 , error )2 "
-    push    L3802
+; Fused expression:    "( L3607 , error )2 "
+    push    L3607
     call    _error
     sub     sp, -2
-L3800:
+L3605:
 ; RPN'ized expression: "( 93 PushSyntax ) "
 ; Expanded expression: " 93  PushSyntax ()2 "
 ; Fused expression:    "( 93 , PushSyntax )2 "
@@ -32669,11 +32822,11 @@ L3800:
     sub     sp, -4
     sub     sp, -2
 ; }
-    jmp     L3798
-L3799:
+    jmp     L3603
+L3604:
 ; }
-    jmp     L3797
-L3796:
+    jmp     L3602
+L3601:
 ; else
 ; if
 ; RPN'ized expression: "tok 40 == "
@@ -32681,7 +32834,7 @@ L3796:
 ; Fused expression:    "== *(@-2) 40 IF! "
     mov     ax, [bp-2]
     cmp     ax, 40
-    jne     L3804
+    jne     L3609
 ; {
 ; RPN'ized expression: "( tok PushSyntax ) "
 ; Expanded expression: " (@-2) *(2)  PushSyntax ()2 "
@@ -32715,65 +32868,65 @@ L3796:
     call    _GetToken
     mov     [bp-2], ax
 ; }
-L3804:
-L3797:
+L3609:
+L3602:
 ; while
 ; RPN'ized expression: "stars --p "
 ; Expanded expression: "(@-4) --p(2) "
-L3806:
+L3611:
 ; Fused expression:    "--p(2) *(@-4) "
     mov     ax, [bp-4]
     dec     word [bp-4]
 ; JumpIfZero
     test    ax, ax
-    jz      L3807
+    je      L3612
 ; RPN'ized expression: "( 42 PushSyntax ) "
 ; Expanded expression: " 42  PushSyntax ()2 "
 ; Fused expression:    "( 42 , PushSyntax )2 "
     push    42
     call    _PushSyntax
     sub     sp, -2
-    jmp     L3806
-L3807:
+    jmp     L3611
+L3612:
 ; if
 ; RPN'ized expression: "tok 41 == "
 ; Expanded expression: "(@-2) *(2) 41 == "
 ; Fused expression:    "== *(@-2) 41 IF! "
     mov     ax, [bp-2]
     cmp     ax, 41
-    jne     L3808
+    jne     L3613
 ; return
 ; RPN'ized expression: "tok "
 ; Expanded expression: "(@-2) *(2) "
 ; Fused expression:    "*(2) (@-2) "
     mov     ax, [bp-2]
-    jmp     L3783
-L3808:
+    jmp     L3588
+L3613:
 ; if
 ; RPN'ized expression: "tok 123 == "
 ; Expanded expression: "(@-2) *(2) 123 == "
 ; Fused expression:    "== *(@-2) 123 IF! "
     mov     ax, [bp-2]
     cmp     ax, 123
-    jne     L3810
+    jne     L3615
 ; {
 ; loc         fxn : (@-8): int
     sub     sp, 2
 ; =
 ; RPN'ized expression: "lastSyntaxPtr 1 + SyntaxStackCnt < SyntaxStack lastSyntaxPtr 1 + + *u 0 + *u 40 == && "
-; Expanded expression: "(@-6) *(2) 1 + SyntaxStackCnt *(2) < _Bool [sh&&->3812] SyntaxStack (@-6) *(2) 1 + 4 * + 0 + *(2) 40 == _Bool &&[3812] "
-; Fused expression:    "+ *(@-6) 1 < ax *SyntaxStackCnt _Bool [sh&&->3812] + *(@-6) 1 * ax 4 + SyntaxStack ax + ax 0 == *ax 40 _Bool &&[3812] =(34) *(@-8) ax "
+; Expanded expression: "(@-6) *(2) 1 + SyntaxStackCnt *(2) < _Bool [sh&&->3617] SyntaxStack (@-6) *(2) 1 + 4 * + 0 + *(2) 40 == _Bool &&[3617] "
+; Fused expression:    "+ *(@-6) 1 < ax *SyntaxStackCnt _Bool [sh&&->3617] + *(@-6) 1 * ax 4 + SyntaxStack ax + ax 0 == *ax 40 _Bool &&[3617] =(34) *(@-8) ax "
     mov     ax, [bp-6]
     add     ax, 1
     cmp     ax, [_SyntaxStackCnt]
     setl    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3812
+    je      L3617
     mov     ax, [bp-6]
     add     ax, 1
     imul    ax, ax, 4
@@ -32787,45 +32940,45 @@ L3808:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3812:
+L3617:
     mov     [bp-8], ax
 ; if
 ; RPN'ized expression: "fxn 0 == ExprLevel || "
-; Expanded expression: "(@-8) *(2) 0 == _Bool [sh||->3815] ExprLevel *(2) _Bool ||[3815] "
-; Fused expression:    "== *(@-8) 0 _Bool [sh||->3815] *(2) ExprLevel _Bool ||[3815] "
+; Expanded expression: "(@-8) *(2) 0 == _Bool [sh||->3620] ExprLevel *(2) _Bool ||[3620] "
+; Fused expression:    "== *(@-8) 0 _Bool [sh||->3620] *(2) ExprLevel _Bool ||[3620] "
     mov     ax, [bp-8]
     cmp     ax, 0
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L3815
+    jne     L3620
     mov     ax, [_ExprLevel]
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3815:
+L3620:
 ; JumpIfZero
     test    ax, ax
-    jz      L3813
-; RPN'ized expression: "( L3816 error ) "
-; Expanded expression: " L3816  error ()2 "
+    je      L3618
+; RPN'ized expression: "( L3621 error ) "
+; Expanded expression: " L3621  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3816:
+L3621:
     db  "Error: ParseDerived(): '{' unexpected",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3816 , error )2 "
-    push    L3816
+; Fused expression:    "( L3621 , error )2 "
+    push    L3621
     call    _error
     sub     sp, -2
-L3813:
+L3618:
 ; if
 ; RPN'ized expression: "ParseLevel "
 ; Expanded expression: "ParseLevel *(2) "
@@ -32833,81 +32986,81 @@ L3813:
     mov     ax, [_ParseLevel]
 ; JumpIfZero
     test    ax, ax
-    jz      L3818
-; RPN'ized expression: "( L3820 error ) "
-; Expanded expression: " L3820  error ()2 "
+    je      L3623
+; RPN'ized expression: "( L3625 error ) "
+; Expanded expression: " L3625  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3820:
+L3625:
     db  "Error: ParseDerived(): Cannot define a nested function",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3820 , error )2 "
-    push    L3820
+; Fused expression:    "( L3625 , error )2 "
+    push    L3625
     call    _error
     sub     sp, -2
-L3818:
+L3623:
     sub     sp, -2
 ; }
-L3810:
+L3615:
 ; if
-; RPN'ized expression: "tok 0 == ( tok , L3824 strchr ) 0 == || "
-; Expanded expression: "(@-2) *(2) 0 == _Bool [sh||->3826]  (@-2) *(2)  L3824  strchr ()4 0 == _Bool ||[3826] "
+; RPN'ized expression: "tok 0 == ( tok , L3629 strchr ) 0 == || "
+; Expanded expression: "(@-2) *(2) 0 == _Bool [sh||->3631]  (@-2) *(2)  L3629  strchr ()4 0 == _Bool ||[3631] "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3824:
+L3629:
     db  ",;{=",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "== *(@-2) 0 _Bool [sh||->3826] ( *(2) (@-2) , L3824 , strchr )4 == ax 0 _Bool ||[3826] "
+; Fused expression:    "== *(@-2) 0 _Bool [sh||->3631] ( *(2) (@-2) , L3629 , strchr )4 == ax 0 _Bool ||[3631] "
     mov     ax, [bp-2]
     cmp     ax, 0
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L3826
+    jne     L3631
     push    word [bp-2]
-    push    L3824
+    push    L3629
     call    _strchr
     sub     sp, -4
     cmp     ax, 0
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3826:
+L3631:
 ; JumpIfZero
     test    ax, ax
-    jz      L3822
-; RPN'ized expression: "( ( tok GetTokenName ) , L3827 error ) "
-; Expanded expression: "  (@-2) *(2)  GetTokenName ()2  L3827  error ()4 "
+    je      L3627
+; RPN'ized expression: "( ( tok GetTokenName ) , L3632 error ) "
+; Expanded expression: "  (@-2) *(2)  GetTokenName ()2  L3632  error ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3827:
+L3632:
     db  "Error: ParseDerived(): unexpected token %s",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( ( *(2) (@-2) , GetTokenName )2 , L3827 , error )4 "
+; Fused expression:    "( ( *(2) (@-2) , GetTokenName )2 , L3632 , error )4 "
     push    word [bp-2]
     call    _GetTokenName
     sub     sp, -2
     push    ax
-    push    L3827
+    push    L3632
     call    _error
     sub     sp, -4
-L3822:
+L3627:
 ; return
 ; RPN'ized expression: "tok "
 ; Expanded expression: "(@-2) *(2) "
 ; Fused expression:    "*(2) (@-2) "
     mov     ax, [bp-2]
-    jmp     L3783
-L3783:
+    jmp     L3588
+L3588:
     leave
     ret
 ; SEGMENT _TEXT
@@ -32942,7 +33095,7 @@ _ParseDecl:
     mov     ax, [bp-6]
 ; JumpIfZero
     test    ax, ax
-    jz      L3830
+    je      L3635
 ; {
 ; RPN'ized expression: "tok ( GetToken ) = "
 ; Expanded expression: "(@4)  GetToken ()0 =(2) "
@@ -32958,37 +33111,37 @@ _ParseDecl:
     call    _TokenStartsDeclaration
     sub     sp, -4
     cmp     ax, 0
-    jne     L3832
-; RPN'ized expression: "( ( tok GetTokenName ) , L3834 error ) "
-; Expanded expression: "  (@4) *(2)  GetTokenName ()2  L3834  error ()4 "
+    jne     L3637
+; RPN'ized expression: "( ( tok GetTokenName ) , L3639 error ) "
+; Expanded expression: "  (@4) *(2)  GetTokenName ()2  L3639  error ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3834:
+L3639:
     db  "Error: ParseDecl(): unexpected token %s",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( ( *(2) (@4) , GetTokenName )2 , L3834 , error )4 "
+; Fused expression:    "( ( *(2) (@4) , GetTokenName )2 , L3639 , error )4 "
     push    word [bp+4]
     call    _GetTokenName
     sub     sp, -2
     push    ax
-    push    L3834
+    push    L3639
     call    _error
     sub     sp, -4
-L3832:
+L3637:
 ; }
-L3830:
+L3635:
 ; RPN'ized expression: "base tok = "
 ; Expanded expression: "(@-2) (@4) *(2) =(2) "
 ; Fused expression:    "=(34) *(@-2) *(@4) "
     mov     ax, [bp+4]
     mov     [bp-2], ax
 ; for
-L3836:
-    jmp     L3838
-L3837:
-    jmp     L3836
-L3838:
+L3641:
+    jmp     L3643
+L3642:
+    jmp     L3641
+L3643:
 ; {
 ; RPN'ized expression: "lastSyntaxPtr SyntaxStackCnt = "
 ; Expanded expression: "(@-4) SyntaxStackCnt *(2) =(2) "
@@ -33007,58 +33160,58 @@ L3838:
     call    _PushSyntax
     sub     sp, -2
 ; if
-; RPN'ized expression: "tok ( tok , L3842 strchr ) && tok 41 == ExprLevel && || "
-; Expanded expression: "(@4) *(2) _Bool [sh&&->3846]  (@4) *(2)  L3842  strchr ()4 _Bool &&[3846] _Bool [sh||->3844] (@4) *(2) 41 == _Bool [sh&&->3845] ExprLevel *(2) _Bool &&[3845] _Bool ||[3844] "
+; RPN'ized expression: "tok ( tok , L3647 strchr ) && tok 41 == ExprLevel && || "
+; Expanded expression: "(@4) *(2) _Bool [sh&&->3651]  (@4) *(2)  L3647  strchr ()4 _Bool &&[3651] _Bool [sh||->3649] (@4) *(2) 41 == _Bool [sh&&->3650] ExprLevel *(2) _Bool &&[3650] _Bool ||[3649] "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3842:
+L3647:
     db  ",;{=",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "*(2) (@4) _Bool [sh&&->3846] ( *(2) (@4) , L3842 , strchr )4 _Bool &&[3846] _Bool [sh||->3844] == *(@4) 41 _Bool [sh&&->3845] *(2) ExprLevel _Bool &&[3845] _Bool ||[3844] "
+; Fused expression:    "*(2) (@4) _Bool [sh&&->3651] ( *(2) (@4) , L3647 , strchr )4 _Bool &&[3651] _Bool [sh||->3649] == *(@4) 41 _Bool [sh&&->3650] *(2) ExprLevel _Bool &&[3650] _Bool ||[3649] "
     mov     ax, [bp+4]
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3846
+    je      L3651
     push    word [bp+4]
-    push    L3842
+    push    L3647
     call    _strchr
     sub     sp, -4
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3846:
+L3651:
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L3844
+    jne     L3649
     mov     ax, [bp+4]
     cmp     ax, 41
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3845
+    je      L3650
     mov     ax, [_ExprLevel]
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3845:
+L3650:
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3844:
+L3649:
 ; JumpIfZero
     test    ax, ax
-    jz      L3840
+    je      L3645
 ; {
 ; loc             localAllocSize : (@-8): int
     sub     sp, 2
@@ -33084,7 +33237,7 @@ L3844:
 ; Fused expression:    "== *(@-2) 17 IF! "
     mov     ax, [bp-2]
     cmp     ax, 17
-    jne     L3847
+    jne     L3652
 ; {
 ; loc                 t : (@-12): int
     sub     sp, 2
@@ -33104,38 +33257,38 @@ L3844:
     mov     [bp-12], ax
 ; if
 ; RPN'ized expression: "t 42 != t 41 != && "
-; Expanded expression: "(@-12) *(2) 42 != _Bool [sh&&->3851] (@-12) *(2) 41 != _Bool &&[3851] "
-; Fused expression:    "!= *(@-12) 42 _Bool [sh&&->3851] != *(@-12) 41 _Bool &&[3851] "
+; Expanded expression: "(@-12) *(2) 42 != _Bool [sh&&->3656] (@-12) *(2) 41 != _Bool &&[3656] "
+; Fused expression:    "!= *(@-12) 42 _Bool [sh&&->3656] != *(@-12) 41 _Bool &&[3656] "
     mov     ax, [bp-12]
     cmp     ax, 42
     setne   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3851
+    je      L3656
     mov     ax, [bp-12]
     cmp     ax, 41
     setne   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3851:
+L3656:
 ; JumpIfZero
     test    ax, ax
-    jz      L3849
-; RPN'ized expression: "( IdentTable SyntaxStack lastSyntaxPtr + *u 1 + *u + , L3852 error ) "
-; Expanded expression: " IdentTable SyntaxStack (@-4) *(2) 4 * + 2 + *(2) +  L3852  error ()4 "
+    je      L3654
+; RPN'ized expression: "( IdentTable SyntaxStack lastSyntaxPtr + *u 1 + *u + , L3657 error ) "
+; Expanded expression: " IdentTable SyntaxStack (@-4) *(2) 4 * + 2 + *(2) +  L3657  error ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3852:
+L3657:
     db  "Error: ParseDecl(): Cannot declare a variable ('%s') of type 'void'",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( * *(@-4) 4 + SyntaxStack ax + ax 2 + IdentTable *ax , L3852 , error )4 "
+; Fused expression:    "( * *(@-4) 4 + SyntaxStack ax + ax 2 + IdentTable *ax , L3657 , error )4 "
     mov     ax, [bp-4]
     imul    ax, ax, 4
     mov     cx, ax
@@ -33147,13 +33300,13 @@ SEGMENT _TEXT
     mov     ax, _IdentTable
     add     ax, cx
     push    ax
-    push    L3852
+    push    L3657
     call    _error
     sub     sp, -4
-L3849:
+L3654:
     sub     sp, -2
 ; }
-L3847:
+L3652:
 ; if
 ; RPN'ized expression: "SyntaxStack lastSyntaxPtr 1 + + *u 0 + *u 40 != "
 ; Expanded expression: "SyntaxStack (@-4) *(2) 1 + 4 * + 0 + *(2) 40 != "
@@ -33168,7 +33321,7 @@ L3847:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 40
-    je      L3854
+    je      L3659
 ; {
 ; loc                 sz : (@-12): int
     sub     sp, 2
@@ -33186,56 +33339,56 @@ L3847:
 ; Fused expression:    "<= *(@-12) 0 IF! "
     mov     ax, [bp-12]
     cmp     ax, 0
-    jg      L3856
-; RPN'ized expression: "( L3858 error ) "
-; Expanded expression: " L3858  error ()2 "
+    jg      L3661
+; RPN'ized expression: "( L3663 error ) "
+; Expanded expression: " L3663  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3858:
+L3663:
     db  "Error: ParseDecl(): GetDeclSize() <= 0 (incomplete types aren't supported)",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3858 , error )2 "
-    push    L3858
+; Fused expression:    "( L3663 , error )2 "
+    push    L3663
     call    _error
     sub     sp, -2
-L3856:
+L3661:
 ; if
 ; RPN'ized expression: "ParseLevel external 0 == && ExprLevel 0 == && "
-; Expanded expression: "ParseLevel *(2) _Bool [sh&&->3863] (@-6) *(2) 0 == _Bool &&[3863] _Bool [sh&&->3862] ExprLevel *(2) 0 == _Bool &&[3862] "
-; Fused expression:    "*(2) ParseLevel _Bool [sh&&->3863] == *(@-6) 0 _Bool &&[3863] _Bool [sh&&->3862] == *ExprLevel 0 _Bool &&[3862] "
+; Expanded expression: "ParseLevel *(2) _Bool [sh&&->3668] (@-6) *(2) 0 == _Bool &&[3668] _Bool [sh&&->3667] ExprLevel *(2) 0 == _Bool &&[3667] "
+; Fused expression:    "*(2) ParseLevel _Bool [sh&&->3668] == *(@-6) 0 _Bool &&[3668] _Bool [sh&&->3667] == *ExprLevel 0 _Bool &&[3667] "
     mov     ax, [_ParseLevel]
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3863
+    je      L3668
     mov     ax, [bp-6]
     cmp     ax, 0
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3863:
+L3668:
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3862
+    je      L3667
     mov     ax, [_ExprLevel]
     cmp     ax, 0
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3862:
+L3667:
 ; JumpIfZero
     test    ax, ax
-    jz      L3860
+    je      L3665
 ; {
 ; loc                     oldOfs : (@-14): int
     sub     sp, 2
@@ -33280,8 +33433,8 @@ L3862:
     mov     [bp-8], ax
     sub     sp, -2
 ; }
-    jmp     L3861
-L3860:
+    jmp     L3666
+L3665:
 ; else
 ; {
 ; RPN'ized expression: "globalAllocSize sz = "
@@ -33290,21 +33443,21 @@ L3860:
     mov     ax, [bp-12]
     mov     [bp-10], ax
 ; }
-L3861:
+L3666:
     sub     sp, -2
 ; }
-L3854:
+L3659:
 ; if
-; RPN'ized expression: "( L3866 , IdentTable SyntaxStack lastSyntaxPtr + *u 1 + *u + strcmp ) 0 == "
-; Expanded expression: " L3866  IdentTable SyntaxStack (@-4) *(2) 4 * + 2 + *(2) +  strcmp ()4 0 == "
+; RPN'ized expression: "( L3671 , IdentTable SyntaxStack lastSyntaxPtr + *u 1 + *u + strcmp ) 0 == "
+; Expanded expression: " L3671  IdentTable SyntaxStack (@-4) *(2) 4 * + 2 + *(2) +  strcmp ()4 0 == "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3866:
+L3671:
     db  "<something>",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3866 , * *(@-4) 4 + SyntaxStack ax + ax 2 + IdentTable *ax , strcmp )4 == ax 0 IF! "
-    push    L3866
+; Fused expression:    "( L3671 , * *(@-4) 4 + SyntaxStack ax + ax 2 + IdentTable *ax , strcmp )4 == ax 0 IF! "
+    push    L3671
     mov     ax, [bp-4]
     imul    ax, ax, 4
     mov     cx, ax
@@ -33319,7 +33472,7 @@ SEGMENT _TEXT
     call    _strcmp
     sub     sp, -4
     cmp     ax, 0
-    jne     L3864
+    jne     L3669
 ; {
 ; if
 ; RPN'ized expression: "ExprLevel 0 == "
@@ -33327,23 +33480,23 @@ SEGMENT _TEXT
 ; Fused expression:    "== *ExprLevel 0 IF! "
     mov     ax, [_ExprLevel]
     cmp     ax, 0
-    jne     L3868
-; RPN'ized expression: "( L3870 error ) "
-; Expanded expression: " L3870  error ()2 "
+    jne     L3673
+; RPN'ized expression: "( L3675 error ) "
+; Expanded expression: " L3675  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3870:
+L3675:
     db  "Error: ParseDecl(): Identifier name expected",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3870 , error )2 "
-    push    L3870
+; Fused expression:    "( L3675 , error )2 "
+    push    L3675
     call    _error
     sub     sp, -2
-L3868:
+L3673:
 ; }
-    jmp     L3865
-L3864:
+    jmp     L3670
+L3669:
 ; else
 ; {
 ; if
@@ -33353,22 +33506,22 @@ L3864:
     mov     ax, [_ExprLevel]
 ; JumpIfZero
     test    ax, ax
-    jz      L3872
-; RPN'ized expression: "( L3874 error ) "
-; Expanded expression: " L3874  error ()2 "
+    je      L3677
+; RPN'ized expression: "( L3679 error ) "
+; Expanded expression: " L3679  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3874:
+L3679:
     db  "Error: ParseDecl(): Identifier name unexpected",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3874 , error )2 "
-    push    L3874
+; Fused expression:    "( L3679 , error )2 "
+    push    L3679
     call    _error
     sub     sp, -2
-L3872:
+L3677:
 ; }
-L3865:
+L3670:
 ; RPN'ized expression: "( 0 , lastSyntaxPtr ShowDecl ) "
 ; Expanded expression: " 0  (@-4) *(2)  ShowDecl ()4 "
 ; Fused expression:    "( 0 , *(2) (@-4) , ShowDecl )4 "
@@ -33383,14 +33536,14 @@ L3865:
     mov     ax, [_ExprLevel]
 ; JumpIfZero
     test    ax, ax
-    jz      L3876
+    je      L3681
 ; return
 ; RPN'ized expression: "tok "
 ; Expanded expression: "(@4) *(2) "
 ; Fused expression:    "*(2) (@4) "
     mov     ax, [bp+4]
-    jmp     L3829
-L3876:
+    jmp     L3634
+L3681:
 ; if
 ; RPN'ized expression: "localAllocSize "
 ; Expanded expression: "(@-8) *(2) "
@@ -33398,36 +33551,36 @@ L3876:
     mov     ax, [bp-8]
 ; JumpIfZero
     test    ax, ax
-    jz      L3878
+    je      L3683
 ; RPN'ized expression: "( localAllocSize GenLocalAlloc ) "
 ; Expanded expression: " (@-8) *(2)  GenLocalAlloc ()2 "
 ; Fused expression:    "( *(2) (@-8) , GenLocalAlloc )2 "
     push    word [bp-8]
     call    _GenLocalAlloc
     sub     sp, -2
-L3878:
+L3683:
 ; if
 ; RPN'ized expression: "globalAllocSize external 0 == && "
-; Expanded expression: "(@-10) *(2) _Bool [sh&&->3882] (@-6) *(2) 0 == _Bool &&[3882] "
-; Fused expression:    "*(2) (@-10) _Bool [sh&&->3882] == *(@-6) 0 _Bool &&[3882] "
+; Expanded expression: "(@-10) *(2) _Bool [sh&&->3687] (@-6) *(2) 0 == _Bool &&[3687] "
+; Fused expression:    "*(2) (@-10) _Bool [sh&&->3687] == *(@-6) 0 _Bool &&[3687] "
     mov     ax, [bp-10]
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3882
+    je      L3687
     mov     ax, [bp-6]
     cmp     ax, 0
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3882:
+L3687:
 ; JumpIfZero
     test    ax, ax
-    jz      L3880
+    je      L3685
 ; {
 ; if
 ; RPN'ized expression: "OutputFormat 0 != "
@@ -33435,14 +33588,14 @@ L3882:
 ; Fused expression:    "!= *OutputFormat 0 IF! "
     mov     ax, [_OutputFormat]
     cmp     ax, 0
-    je      L3883
+    je      L3688
 ; RPN'ized expression: "( DataHeader printf ) "
 ; Expanded expression: " DataHeader *(2)  printf ()2 "
 ; Fused expression:    "( *(2) DataHeader , printf )2 "
     push    word [_DataHeader]
     call    _printf
     sub     sp, -2
-L3883:
+L3688:
 ; RPN'ized expression: "( IdentTable SyntaxStack lastSyntaxPtr + *u 1 + *u + GenLabel ) "
 ; Expanded expression: " IdentTable SyntaxStack (@-4) *(2) 4 * + 2 + *(2) +  GenLabel ()2 "
 ; Fused expression:    "( * *(@-4) 4 + SyntaxStack ax + ax 2 + IdentTable *ax , GenLabel )2 "
@@ -33460,7 +33613,7 @@ L3883:
     call    _GenLabel
     sub     sp, -2
 ; }
-L3880:
+L3685:
 ; if
 ; RPN'ized expression: "external "
 ; Expanded expression: "(@-6) *(2) "
@@ -33468,7 +33621,7 @@ L3880:
     mov     ax, [bp-6]
 ; JumpIfZero
     test    ax, ax
-    jz      L3885
+    je      L3690
 ; {
 ; RPN'ized expression: "( IdentTable SyntaxStack lastSyntaxPtr + *u 1 + *u + GenExtern ) "
 ; Expanded expression: " IdentTable SyntaxStack (@-4) *(2) 4 * + 2 + *(2) +  GenExtern ()2 "
@@ -33487,8 +33640,8 @@ L3880:
     call    _GenExtern
     sub     sp, -2
 ; }
-    jmp     L3886
-L3885:
+    jmp     L3691
+L3690:
 ; else
 ; if
 ; RPN'ized expression: "tok 61 == "
@@ -33496,7 +33649,7 @@ L3885:
 ; Fused expression:    "== *(@4) 61 IF! "
     mov     ax, [bp+4]
     cmp     ax, 61
-    jne     L3887
+    jne     L3692
 ; {
 ; loc                 gotUnary : (@-12): int
     sub     sp, 2
@@ -33512,16 +33665,16 @@ L3885:
     sub     sp, 2
 ; loc                 undoIdents : (@-24): int
     sub     sp, 2
-; RPN'ized expression: "( L3889 printf ) "
-; Expanded expression: " L3889  printf ()2 "
+; RPN'ized expression: "( L3694 printf ) "
+; Expanded expression: " L3694  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3889:
+L3694:
     db  "; =",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3889 , printf )2 "
-    push    L3889
+; Fused expression:    "( L3694 , printf )2 "
+    push    L3694
     call    _printf
     sub     sp, -2
 ; RPN'ized expression: "p lastSyntaxPtr = "
@@ -33531,9 +33684,9 @@ SEGMENT _TEXT
     mov     [bp-20], ax
 ; while
 ; RPN'ized expression: "SyntaxStack p + *u 0 + *u 16 == SyntaxStack p + *u 0 + *u 89 == || "
-; Expanded expression: "SyntaxStack (@-20) *(2) 4 * + 0 + *(2) 16 == _Bool [sh||->3893] SyntaxStack (@-20) *(2) 4 * + 0 + *(2) 89 == _Bool ||[3893] "
-L3891:
-; Fused expression:    "* *(@-20) 4 + SyntaxStack ax + ax 0 == *ax 16 _Bool [sh||->3893] * *(@-20) 4 + SyntaxStack ax + ax 0 == *ax 89 _Bool ||[3893] "
+; Expanded expression: "SyntaxStack (@-20) *(2) 4 * + 0 + *(2) 16 == _Bool [sh||->3698] SyntaxStack (@-20) *(2) 4 * + 0 + *(2) 89 == _Bool ||[3698] "
+L3696:
+; Fused expression:    "* *(@-20) 4 + SyntaxStack ax + ax 0 == *ax 16 _Bool [sh||->3698] * *(@-20) 4 + SyntaxStack ax + ax 0 == *ax 89 _Bool ||[3698] "
     mov     ax, [bp-20]
     imul    ax, ax, 4
     mov     cx, ax
@@ -33546,11 +33699,11 @@ L3891:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L3893
+    jne     L3698
     mov     ax, [bp-20]
     imul    ax, ax, 4
     mov     cx, ax
@@ -33563,19 +33716,19 @@ L3891:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3893:
+L3698:
 ; JumpIfZero
     test    ax, ax
-    jz      L3892
+    je      L3697
 ; RPN'ized expression: "p ++p "
 ; Expanded expression: "(@-20) ++p(2) "
 ; Fused expression:    "++p(2) *(@-20) "
     mov     ax, [bp-20]
     inc     word [bp-20]
-    jmp     L3891
-L3892:
+    jmp     L3696
+L3697:
 ; RPN'ized expression: "oldssp SyntaxStackCnt = "
 ; Expanded expression: "(@-22) SyntaxStackCnt *(2) =(2) "
 ; Fused expression:    "=(34) *(@-22) *SyntaxStackCnt "
@@ -33587,15 +33740,15 @@ L3892:
     mov     ax, [_IdentTableLen]
     mov     [bp-24], ax
 ; if
-; RPN'ized expression: "( SyntaxStack p + *u 0 + *u , L3896 strchr ) "
-; Expanded expression: " SyntaxStack (@-20) *(2) 4 * + 0 + *(2)  L3896  strchr ()4 "
+; RPN'ized expression: "( SyntaxStack p + *u 0 + *u , L3701 strchr ) "
+; Expanded expression: " SyntaxStack (@-20) *(2) 4 * + 0 + *(2)  L3701  strchr ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3896:
+L3701:
     db  "([",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( * *(@-20) 4 + SyntaxStack ax + ax 0 *(2) ax , L3896 , strchr )4 "
+; Fused expression:    "( * *(@-20) 4 + SyntaxStack ax + ax 0 *(2) ax , L3701 , strchr )4 "
     mov     ax, [bp-20]
     imul    ax, ax, 4
     mov     cx, ax
@@ -33604,25 +33757,25 @@ SEGMENT _TEXT
     add     ax, 0
     mov     bx, ax
     push    word [bx]
-    push    L3896
+    push    L3701
     call    _strchr
     sub     sp, -4
 ; JumpIfZero
     test    ax, ax
-    jz      L3894
-; RPN'ized expression: "( L3898 error ) "
-; Expanded expression: " L3898  error ()2 "
+    je      L3699
+; RPN'ized expression: "( L3703 error ) "
+; Expanded expression: " L3703  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3898:
+L3703:
     db  "Error: ParseDecl(): invalid/unsupported initialization of array or function",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3898 , error )2 "
-    push    L3898
+; Fused expression:    "( L3703 , error )2 "
+    push    L3703
     call    _error
     sub     sp, -2
-L3894:
+L3699:
 ; RPN'ized expression: "tok ( GetToken ) = "
 ; Expanded expression: "(@4)  GetToken ()0 =(2) "
 ; Fused expression:    "( GetToken )0 =(34) *(@4) ax "
@@ -33644,83 +33797,83 @@ L3894:
     sub     sp, -10
     mov     [bp+4], ax
 ; if
-; RPN'ized expression: "tok 0 == ( tok , L3902 strchr ) 0 == || "
-; Expanded expression: "(@4) *(2) 0 == _Bool [sh||->3904]  (@4) *(2)  L3902  strchr ()4 0 == _Bool ||[3904] "
+; RPN'ized expression: "tok 0 == ( tok , L3707 strchr ) 0 == || "
+; Expanded expression: "(@4) *(2) 0 == _Bool [sh||->3709]  (@4) *(2)  L3707  strchr ()4 0 == _Bool ||[3709] "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3902:
+L3707:
     db  ",;",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "== *(@4) 0 _Bool [sh||->3904] ( *(2) (@4) , L3902 , strchr )4 == ax 0 _Bool ||[3904] "
+; Fused expression:    "== *(@4) 0 _Bool [sh||->3709] ( *(2) (@4) , L3707 , strchr )4 == ax 0 _Bool ||[3709] "
     mov     ax, [bp+4]
     cmp     ax, 0
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L3904
+    jne     L3709
     push    word [bp+4]
-    push    L3902
+    push    L3707
     call    _strchr
     sub     sp, -4
     cmp     ax, 0
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3904:
+L3709:
 ; JumpIfZero
     test    ax, ax
-    jz      L3900
-; RPN'ized expression: "( ( tok GetTokenName ) , L3905 error ) "
-; Expanded expression: "  (@4) *(2)  GetTokenName ()2  L3905  error ()4 "
+    je      L3705
+; RPN'ized expression: "( ( tok GetTokenName ) , L3710 error ) "
+; Expanded expression: "  (@4) *(2)  GetTokenName ()2  L3710  error ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3905:
+L3710:
     db  "Error: ParseDecl(): unexpected token %s after '='",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( ( *(2) (@4) , GetTokenName )2 , L3905 , error )4 "
+; Fused expression:    "( ( *(2) (@4) , GetTokenName )2 , L3710 , error )4 "
     push    word [bp+4]
     call    _GetTokenName
     sub     sp, -2
     push    ax
-    push    L3905
+    push    L3710
     call    _error
     sub     sp, -4
-L3900:
+L3705:
 ; if
 ; RPN'ized expression: "gotUnary 0 == "
 ; Expanded expression: "(@-12) *(2) 0 == "
 ; Fused expression:    "== *(@-12) 0 IF! "
     mov     ax, [bp-12]
     cmp     ax, 0
-    jne     L3907
-; RPN'ized expression: "( L3909 error ) "
-; Expanded expression: " L3909  error ()2 "
+    jne     L3712
+; RPN'ized expression: "( L3714 error ) "
+; Expanded expression: " L3714  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3909:
+L3714:
     db  "Error: ParseDecl(): missing initialization expression after '='",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3909 , error )2 "
-    push    L3909
+; Fused expression:    "( L3714 , error )2 "
+    push    L3714
     call    _error
     sub     sp, -2
-L3907:
+L3712:
 ; if
 ; RPN'ized expression: "ParseLevel 0 == "
 ; Expanded expression: "ParseLevel *(2) 0 == "
 ; Fused expression:    "== *ParseLevel 0 IF! "
     mov     ax, [_ParseLevel]
     cmp     ax, 0
-    jne     L3911
+    jne     L3716
 ; {
 ; if
 ; RPN'ized expression: "constExpr "
@@ -33729,7 +33882,7 @@ L3907:
     mov     ax, [bp-16]
 ; JumpIfZero
     test    ax, ax
-    jz      L3913
+    je      L3718
 ; {
 ; RPN'ized expression: "( exprVal , globalAllocSize GenIntData ) "
 ; Expanded expression: " (@-18) *(2)  (@-10) *(2)  GenIntData ()4 "
@@ -33744,32 +33897,32 @@ L3907:
 ; Fused expression:    "!= *OutputFormat 0 IF! "
     mov     ax, [_OutputFormat]
     cmp     ax, 0
-    je      L3915
+    je      L3720
 ; RPN'ized expression: "( DataFooter printf ) "
 ; Expanded expression: " DataFooter *(2)  printf ()2 "
 ; Fused expression:    "( *(2) DataFooter , printf )2 "
     push    word [_DataFooter]
     call    _printf
     sub     sp, -2
-L3915:
+L3720:
 ; }
-    jmp     L3914
-L3913:
+    jmp     L3719
+L3718:
 ; else
 ; if
 ; RPN'ized expression: "globalAllocSize SizeOfWord == stack sp 1 - + *u 0 + *u 16 == && "
-; Expanded expression: "(@-10) *(2) SizeOfWord *(2) == _Bool [sh&&->3919] stack sp *(2) 1 - 4 * + 0 + *(2) 16 == _Bool &&[3919] "
-; Fused expression:    "== *(@-10) *SizeOfWord _Bool [sh&&->3919] - *sp 1 * ax 4 + stack ax + ax 0 == *ax 16 _Bool &&[3919] "
+; Expanded expression: "(@-10) *(2) SizeOfWord *(2) == _Bool [sh&&->3724] stack sp *(2) 1 - 4 * + 0 + *(2) 16 == _Bool &&[3724] "
+; Fused expression:    "== *(@-10) *SizeOfWord _Bool [sh&&->3724] - *sp 1 * ax 4 + stack ax + ax 0 == *ax 16 _Bool &&[3724] "
     mov     ax, [bp-10]
     cmp     ax, [_SizeOfWord]
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3919
+    je      L3724
     mov     ax, [_sp]
     sub     ax, 1
     imul    ax, ax, 4
@@ -33783,12 +33936,12 @@ L3913:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3919:
+L3724:
 ; JumpIfZero
     test    ax, ax
-    jz      L3917
+    je      L3722
 ; {
 ; loc                         p : (@-26): * char
     sub     sp, 2
@@ -33821,14 +33974,14 @@ L3919:
 ; Fused expression:    "!= *OutputFormat 0 IF! "
     mov     ax, [_OutputFormat]
     cmp     ax, 0
-    je      L3920
+    je      L3725
 ; RPN'ized expression: "( DataFooter printf ) "
 ; Expanded expression: " DataFooter *(2)  printf ()2 "
 ; Fused expression:    "( *(2) DataFooter , printf )2 "
     push    word [_DataFooter]
     call    _printf
     sub     sp, -2
-L3920:
+L3725:
 ; if
 ; RPN'ized expression: "( p *u isdigit ) "
 ; Expanded expression: " (@-26) *(2) *(1)  isdigit ()2 "
@@ -33842,52 +33995,52 @@ L3920:
     sub     sp, -2
 ; JumpIfZero
     test    ax, ax
-    jz      L3922
+    je      L3727
 ; RPN'ized expression: "( 0 GenStrData ) "
 ; Expanded expression: " 0  GenStrData ()2 "
 ; Fused expression:    "( 0 , GenStrData )2 "
     push    0
     call    _GenStrData
     sub     sp, -2
-L3922:
+L3727:
     sub     sp, -2
 ; }
-    jmp     L3918
-L3917:
+    jmp     L3723
+L3722:
 ; else
-; RPN'ized expression: "( L3924 error ) "
-; Expanded expression: " L3924  error ()2 "
+; RPN'ized expression: "( L3729 error ) "
+; Expanded expression: " L3729  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3924:
+L3729:
     db  "Error: ParseDecl(): cannot initialize a global variable with a non-constant expression",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3924 , error )2 "
-    push    L3924
+; Fused expression:    "( L3729 , error )2 "
+    push    L3729
     call    _error
     sub     sp, -2
-L3918:
-L3914:
+L3723:
+L3719:
 ; }
-    jmp     L3912
-L3911:
+    jmp     L3717
+L3716:
 ; else
 ; {
 ; if
 ; RPN'ized expression: "synPtr 0 >= SyntaxStack synPtr + *u 0 + *u 17 == && "
-; Expanded expression: "(@-14) *(2) 0 >= _Bool [sh&&->3928] SyntaxStack (@-14) *(2) 4 * + 0 + *(2) 17 == _Bool &&[3928] "
-; Fused expression:    ">= *(@-14) 0 _Bool [sh&&->3928] * *(@-14) 4 + SyntaxStack ax + ax 0 == *ax 17 _Bool &&[3928] "
+; Expanded expression: "(@-14) *(2) 0 >= _Bool [sh&&->3733] SyntaxStack (@-14) *(2) 4 * + 0 + *(2) 17 == _Bool &&[3733] "
+; Fused expression:    ">= *(@-14) 0 _Bool [sh&&->3733] * *(@-14) 4 + SyntaxStack ax + ax 0 == *ax 17 _Bool &&[3733] "
     mov     ax, [bp-14]
     cmp     ax, 0
     setge   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3928
+    je      L3733
     mov     ax, [bp-14]
     imul    ax, ax, 4
     mov     cx, ax
@@ -33900,25 +34053,25 @@ L3911:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3928:
+L3733:
 ; JumpIfZero
     test    ax, ax
-    jz      L3926
-; RPN'ized expression: "( L3929 error ) "
-; Expanded expression: " L3929  error ()2 "
+    je      L3731
+; RPN'ized expression: "( L3734 error ) "
+; Expanded expression: " L3734  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3929:
+L3734:
     db  "Error: ParseDecl(): cannot initialize a variable with a 'void' expression",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3929 , error )2 "
-    push    L3929
+; Fused expression:    "( L3734 , error )2 "
+    push    L3734
     call    _error
     sub     sp, -2
-L3926:
+L3731:
 ; RPN'ized expression: "( SyntaxStack lastSyntaxPtr 1 + + *u 1 + *u , 89 , 0 ins2 ) "
 ; Expanded expression: " SyntaxStack (@-4) *(2) 1 + 4 * + 2 + *(2)  89  0  ins2 ()6 "
 ; Fused expression:    "( + *(@-4) 1 * ax 4 + SyntaxStack ax + ax 2 *(2) ax , 89 , 0 , ins2 )6 "
@@ -33947,7 +34100,7 @@ L3926:
 ; Fused expression:    "( GenExpr )0 "
     call    _GenExpr
 ; }
-L3912:
+L3717:
 ; RPN'ized expression: "IdentTableLen undoIdents = "
 ; Expanded expression: "IdentTableLen (@-24) *(2) =(2) "
 ; Fused expression:    "=(34) *IdentTableLen *(@-24) "
@@ -33960,8 +34113,8 @@ L3912:
     mov     [_SyntaxStackCnt], ax
     sub     sp, -14
 ; }
-    jmp     L3888
-L3887:
+    jmp     L3693
+L3692:
 ; else
 ; if
 ; RPN'ized expression: "globalAllocSize "
@@ -33970,7 +34123,7 @@ L3887:
     mov     ax, [bp-10]
 ; JumpIfZero
     test    ax, ax
-    jz      L3931
+    je      L3736
 ; {
 ; RPN'ized expression: "( globalAllocSize GenZeroData ) "
 ; Expanded expression: " (@-10) *(2)  GenZeroData ()2 "
@@ -33984,17 +34137,17 @@ L3887:
 ; Fused expression:    "!= *OutputFormat 0 IF! "
     mov     ax, [_OutputFormat]
     cmp     ax, 0
-    je      L3933
+    je      L3738
 ; RPN'ized expression: "( DataFooter printf ) "
 ; Expanded expression: " DataFooter *(2)  printf ()2 "
 ; Fused expression:    "( *(2) DataFooter , printf )2 "
     push    word [_DataFooter]
     call    _printf
     sub     sp, -2
-L3933:
+L3738:
 ; }
-    jmp     L3932
-L3931:
+    jmp     L3737
+L3736:
 ; else
 ; if
 ; RPN'ized expression: "tok 123 == "
@@ -34002,7 +34155,7 @@ L3931:
 ; Fused expression:    "== *(@4) 123 IF! "
     mov     ax, [bp+4]
     cmp     ax, 123
-    jne     L3935
+    jne     L3740
 ; {
 ; loc                 undoSymbolsPtr : (@-12): int
     sub     sp, 2
@@ -34044,14 +34197,14 @@ L3931:
 ; Fused expression:    "!= *OutputFormat 0 IF! "
     mov     ax, [_OutputFormat]
     cmp     ax, 0
-    je      L3937
+    je      L3742
 ; RPN'ized expression: "( CodeHeader printf ) "
 ; Expanded expression: " CodeHeader *(2)  printf ()2 "
 ; Fused expression:    "( *(2) CodeHeader , printf )2 "
     push    word [_CodeHeader]
     call    _printf
     sub     sp, -2
-L3937:
+L3742:
 ; RPN'ized expression: "( IdentTable SyntaxStack lastSyntaxPtr + *u 1 + *u + GenLabel ) "
 ; Expanded expression: " IdentTable SyntaxStack (@-4) *(2) 4 * + 2 + *(2) +  GenLabel ()2 "
 ; Fused expression:    "( * *(@-4) 4 + SyntaxStack ax + ax 2 + IdentTable *ax , GenLabel )2 "
@@ -34103,20 +34256,20 @@ L3937:
 ; Fused expression:    "!= *(@4) 125 IF! "
     mov     ax, [bp+4]
     cmp     ax, 125
-    je      L3939
-; RPN'ized expression: "( L3941 error ) "
-; Expanded expression: " L3941  error ()2 "
+    je      L3744
+; RPN'ized expression: "( L3746 error ) "
+; Expanded expression: " L3746  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3941:
+L3746:
     db  "Error: ParseDecl(): '}' expected",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3941 , error )2 "
-    push    L3941
+; Fused expression:    "( L3746 , error )2 "
+    push    L3746
     call    _error
     sub     sp, -2
-L3939:
+L3744:
 ; RPN'ized expression: "IdentTableLen undoIdents = "
 ; Expanded expression: "IdentTableLen (@-14) *(2) =(2) "
 ; Fused expression:    "=(34) *IdentTableLen *(@-14) "
@@ -34143,74 +34296,74 @@ L3939:
 ; Fused expression:    "!= *OutputFormat 0 IF! "
     mov     ax, [_OutputFormat]
     cmp     ax, 0
-    je      L3943
+    je      L3748
 ; RPN'ized expression: "( CodeFooter printf ) "
 ; Expanded expression: " CodeFooter *(2)  printf ()2 "
 ; Fused expression:    "( *(2) CodeFooter , printf )2 "
     push    word [_CodeFooter]
     call    _printf
     sub     sp, -2
-L3943:
+L3748:
     sub     sp, -6
 ; }
-L3935:
-L3932:
-L3888:
-L3886:
+L3740:
+L3737:
+L3693:
+L3691:
 ; if
 ; RPN'ized expression: "tok 59 == tok 125 == || "
-; Expanded expression: "(@4) *(2) 59 == _Bool [sh||->3947] (@4) *(2) 125 == _Bool ||[3947] "
-; Fused expression:    "== *(@4) 59 _Bool [sh||->3947] == *(@4) 125 _Bool ||[3947] "
+; Expanded expression: "(@4) *(2) 59 == _Bool [sh||->3752] (@4) *(2) 125 == _Bool ||[3752] "
+; Fused expression:    "== *(@4) 59 _Bool [sh||->3752] == *(@4) 125 _Bool ||[3752] "
     mov     ax, [bp+4]
     cmp     ax, 59
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L3947
+    jne     L3752
     mov     ax, [bp+4]
     cmp     ax, 125
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3947:
+L3752:
 ; JumpIfZero
     test    ax, ax
-    jz      L3945
+    je      L3750
 ; break
     sub     sp, -4
-    jmp     L3839
-L3945:
+    jmp     L3644
+L3750:
 ; continue
     sub     sp, -4
-    jmp     L3837
+    jmp     L3642
     sub     sp, -4
 ; }
-L3840:
-; RPN'ized expression: "( ( tok GetTokenName ) , L3948 error ) "
-; Expanded expression: "  (@4) *(2)  GetTokenName ()2  L3948  error ()4 "
+L3645:
+; RPN'ized expression: "( ( tok GetTokenName ) , L3753 error ) "
+; Expanded expression: "  (@4) *(2)  GetTokenName ()2  L3753  error ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3948:
+L3753:
     db  "Error: ParseDecl(): unexpected token %s",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( ( *(2) (@4) , GetTokenName )2 , L3948 , error )4 "
+; Fused expression:    "( ( *(2) (@4) , GetTokenName )2 , L3753 , error )4 "
     push    word [bp+4]
     call    _GetTokenName
     sub     sp, -2
     push    ax
-    push    L3948
+    push    L3753
     call    _error
     sub     sp, -4
 ; }
-    jmp     L3837
-L3839:
+    jmp     L3642
+L3644:
 ; RPN'ized expression: "tok ( GetToken ) = "
 ; Expanded expression: "(@4)  GetToken ()0 =(2) "
 ; Fused expression:    "( GetToken )0 =(34) *(@4) ax "
@@ -34221,8 +34374,8 @@ L3839:
 ; Expanded expression: "(@4) *(2) "
 ; Fused expression:    "*(2) (@4) "
     mov     ax, [bp+4]
-    jmp     L3829
-L3829:
+    jmp     L3634
+L3634:
     leave
     ret
 ; SEGMENT _TEXT
@@ -34257,11 +34410,11 @@ _ParseFxnParams:
     mov     ax, 0
     mov     [bp-10], ax
 ; for
-L3951:
-    jmp     L3953
-L3952:
-    jmp     L3951
-L3953:
+L3756:
+    jmp     L3758
+L3757:
+    jmp     L3756
+L3758:
 ; {
 ; RPN'ized expression: "lastSyntaxPtr SyntaxStackCnt = "
 ; Expanded expression: "(@-6) SyntaxStackCnt *(2) =(2) "
@@ -34280,10 +34433,10 @@ L3953:
 ; Fused expression:    "== *(@-2) 41 IF! "
     mov     ax, [bp-2]
     cmp     ax, 41
-    jne     L3955
+    jne     L3760
 ; break
-    jmp     L3954
-L3955:
+    jmp     L3759
+L3760:
 ; if
 ; RPN'ized expression: "( 1 , tok TokenStartsDeclaration ) 0 == "
 ; Expanded expression: " 1  (@-2) *(2)  TokenStartsDeclaration ()4 0 == "
@@ -34293,7 +34446,7 @@ L3955:
     call    _TokenStartsDeclaration
     sub     sp, -4
     cmp     ax, 0
-    jne     L3957
+    jne     L3762
 ; {
 ; if
 ; RPN'ized expression: "tok 15 == "
@@ -34301,72 +34454,72 @@ L3955:
 ; Fused expression:    "== *(@-2) 15 IF! "
     mov     ax, [bp-2]
     cmp     ax, 15
-    jne     L3959
+    jne     L3764
 ; {
 ; if
 ; RPN'ized expression: "cnt 0 == ellCnt || "
-; Expanded expression: "(@-8) *(2) 0 == _Bool [sh||->3963] (@-10) *(2) _Bool ||[3963] "
-; Fused expression:    "== *(@-8) 0 _Bool [sh||->3963] *(2) (@-10) _Bool ||[3963] "
+; Expanded expression: "(@-8) *(2) 0 == _Bool [sh||->3768] (@-10) *(2) _Bool ||[3768] "
+; Fused expression:    "== *(@-8) 0 _Bool [sh||->3768] *(2) (@-10) _Bool ||[3768] "
     mov     ax, [bp-8]
     cmp     ax, 0
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L3963
+    jne     L3768
     mov     ax, [bp-10]
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3963:
+L3768:
 ; JumpIfZero
     test    ax, ax
-    jz      L3961
-; RPN'ized expression: "( L3964 error ) "
-; Expanded expression: " L3964  error ()2 "
+    je      L3766
+; RPN'ized expression: "( L3769 error ) "
+; Expanded expression: " L3769  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3964:
+L3769:
     db  "Error: ParseFxnParams(): '...' unexpected here",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3964 , error )2 "
-    push    L3964
+; Fused expression:    "( L3769 , error )2 "
+    push    L3769
     call    _error
     sub     sp, -2
-L3961:
+L3766:
 ; RPN'ized expression: "ellCnt ++p "
 ; Expanded expression: "(@-10) ++p(2) "
 ; Fused expression:    "++p(2) *(@-10) "
     mov     ax, [bp-10]
     inc     word [bp-10]
 ; }
-    jmp     L3960
-L3959:
+    jmp     L3765
+L3764:
 ; else
-; RPN'ized expression: "( ( tok GetTokenName ) , L3966 error ) "
-; Expanded expression: "  (@-2) *(2)  GetTokenName ()2  L3966  error ()4 "
+; RPN'ized expression: "( ( tok GetTokenName ) , L3771 error ) "
+; Expanded expression: "  (@-2) *(2)  GetTokenName ()2  L3771  error ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3966:
+L3771:
     db  "Error: ParseFxnParams(): Unexpected token %s",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( ( *(2) (@-2) , GetTokenName )2 , L3966 , error )4 "
+; Fused expression:    "( ( *(2) (@-2) , GetTokenName )2 , L3771 , error )4 "
     push    word [bp-2]
     call    _GetTokenName
     sub     sp, -2
     push    ax
-    push    L3966
+    push    L3771
     call    _error
     sub     sp, -4
-L3960:
+L3765:
 ; }
-    jmp     L3958
-L3957:
+    jmp     L3763
+L3762:
 ; else
 ; if
 ; RPN'ized expression: "ellCnt "
@@ -34375,21 +34528,21 @@ L3957:
     mov     ax, [bp-10]
 ; JumpIfZero
     test    ax, ax
-    jz      L3968
-; RPN'ized expression: "( L3970 error ) "
-; Expanded expression: " L3970  error ()2 "
+    je      L3773
+; RPN'ized expression: "( L3775 error ) "
+; Expanded expression: " L3775  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3970:
+L3775:
     db  "Error: ParseFxnParams(): '...' must be the last in the parameter list",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L3970 , error )2 "
-    push    L3970
+; Fused expression:    "( L3775 , error )2 "
+    push    L3775
     call    _error
     sub     sp, -2
-L3968:
-L3958:
+L3773:
+L3763:
 ; RPN'ized expression: "tok ( ParseDerived ) = "
 ; Expanded expression: "(@-2)  ParseDerived ()0 =(2) "
 ; Fused expression:    "( ParseDerived )0 =(34) *(@-2) ax "
@@ -34419,7 +34572,7 @@ L3958:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 91
-    jne     L3972
+    jne     L3777
 ; {
 ; RPN'ized expression: "( 1 , lastSyntaxPtr DeleteSyntax ) "
 ; Expanded expression: " 1  (@-6) *(2)  DeleteSyntax ()4 "
@@ -34441,7 +34594,7 @@ L3958:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 1
-    jne     L3974
+    jne     L3779
 ; RPN'ized expression: "( 1 , lastSyntaxPtr DeleteSyntax ) "
 ; Expanded expression: " 1  (@-6) *(2)  DeleteSyntax ()4 "
 ; Fused expression:    "( 1 , *(2) (@-6) , DeleteSyntax )4 "
@@ -34449,7 +34602,7 @@ L3958:
     push    word [bp-6]
     call    _DeleteSyntax
     sub     sp, -4
-L3974:
+L3779:
 ; RPN'ized expression: "SyntaxStack lastSyntaxPtr + *u 0 + *u 42 = "
 ; Expanded expression: "SyntaxStack (@-6) *(2) 4 * + 0 + 42 =(2) "
 ; Fused expression:    "* *(@-6) 4 + SyntaxStack ax + ax 0 =(34) *ax 42 "
@@ -34463,8 +34616,8 @@ L3974:
     mov     ax, 42
     mov     [bx], ax
 ; }
-    jmp     L3973
-L3972:
+    jmp     L3778
+L3777:
 ; else
 ; if
 ; RPN'ized expression: "SyntaxStack lastSyntaxPtr + *u 0 + *u 40 == "
@@ -34479,7 +34632,7 @@ L3972:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 40
-    jne     L3976
+    jne     L3781
 ; {
 ; RPN'ized expression: "( 42 , lastSyntaxPtr InsertSyntax ) "
 ; Expanded expression: " 42  (@-6) *(2)  InsertSyntax ()4 "
@@ -34489,8 +34642,8 @@ L3972:
     call    _InsertSyntax
     sub     sp, -4
 ; }
-L3976:
-L3973:
+L3781:
+L3778:
 ; RPN'ized expression: "lastSyntaxPtr --p "
 ; Expanded expression: "(@-6) --p(2) "
 ; Fused expression:    "--p(2) *(@-6) "
@@ -34503,29 +34656,29 @@ L3973:
     inc     word [bp-8]
 ; if
 ; RPN'ized expression: "tok 41 == tok 44 == || "
-; Expanded expression: "(@-2) *(2) 41 == _Bool [sh||->3980] (@-2) *(2) 44 == _Bool ||[3980] "
-; Fused expression:    "== *(@-2) 41 _Bool [sh||->3980] == *(@-2) 44 _Bool ||[3980] "
+; Expanded expression: "(@-2) *(2) 41 == _Bool [sh||->3785] (@-2) *(2) 44 == _Bool ||[3785] "
+; Fused expression:    "== *(@-2) 41 _Bool [sh||->3785] == *(@-2) 44 _Bool ||[3785] "
     mov     ax, [bp-2]
     cmp     ax, 41
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L3980
+    jne     L3785
     mov     ax, [bp-2]
     cmp     ax, 44
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3980:
+L3785:
 ; JumpIfZero
     test    ax, ax
-    jz      L3978
+    je      L3783
 ; {
 ; if
 ; RPN'ized expression: "base 17 == "
@@ -34533,7 +34686,7 @@ L3980:
 ; Fused expression:    "== *(@-4) 17 IF! "
     mov     ax, [bp-4]
     cmp     ax, 17
-    jne     L3981
+    jne     L3786
 ; {
 ; loc                 t : (@-12): int
     sub     sp, 2
@@ -34552,64 +34705,64 @@ L3980:
     mov     ax, [bx]
     mov     [bp-12], ax
 ; if
-; RPN'ized expression: "t 42 != t 41 != && cnt 1 == tok 41 == && ( L3985 , IdentTable SyntaxStack lastSyntaxPtr + *u 1 + *u + strcmp ) 0 == && 0 == && "
-; Expanded expression: "(@-12) *(2) 42 != _Bool [sh&&->3990] (@-12) *(2) 41 != _Bool &&[3990] _Bool [sh&&->3987] (@-8) *(2) 1 == _Bool [sh&&->3989] (@-2) *(2) 41 == _Bool &&[3989] _Bool [sh&&->3988]  L3985  IdentTable SyntaxStack (@-6) *(2) 4 * + 2 + *(2) +  strcmp ()4 0 == _Bool &&[3988] 0 == _Bool &&[3987] "
+; RPN'ized expression: "t 42 != t 41 != && cnt 1 == tok 41 == && ( L3790 , IdentTable SyntaxStack lastSyntaxPtr + *u 1 + *u + strcmp ) 0 == && 0 == && "
+; Expanded expression: "(@-12) *(2) 42 != _Bool [sh&&->3795] (@-12) *(2) 41 != _Bool &&[3795] _Bool [sh&&->3792] (@-8) *(2) 1 == _Bool [sh&&->3794] (@-2) *(2) 41 == _Bool &&[3794] _Bool [sh&&->3793]  L3790  IdentTable SyntaxStack (@-6) *(2) 4 * + 2 + *(2) +  strcmp ()4 0 == _Bool &&[3793] 0 == _Bool &&[3792] "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3985:
+L3790:
     db  "<something>",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "!= *(@-12) 42 _Bool [sh&&->3990] != *(@-12) 41 _Bool &&[3990] _Bool [sh&&->3987] == *(@-8) 1 _Bool [sh&&->3989] == *(@-2) 41 _Bool &&[3989] _Bool [sh&&->3988] ( L3985 , * *(@-6) 4 + SyntaxStack ax + ax 2 + IdentTable *ax , strcmp )4 == ax 0 _Bool &&[3988] == ax 0 _Bool &&[3987] "
+; Fused expression:    "!= *(@-12) 42 _Bool [sh&&->3795] != *(@-12) 41 _Bool &&[3795] _Bool [sh&&->3792] == *(@-8) 1 _Bool [sh&&->3794] == *(@-2) 41 _Bool &&[3794] _Bool [sh&&->3793] ( L3790 , * *(@-6) 4 + SyntaxStack ax + ax 2 + IdentTable *ax , strcmp )4 == ax 0 _Bool &&[3793] == ax 0 _Bool &&[3792] "
     mov     ax, [bp-12]
     cmp     ax, 42
     setne   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3990
+    je      L3795
     mov     ax, [bp-12]
     cmp     ax, 41
     setne   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3990:
+L3795:
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3987
+    je      L3792
     mov     ax, [bp-8]
     cmp     ax, 1
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3989
+    je      L3794
     mov     ax, [bp-2]
     cmp     ax, 41
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3989:
+L3794:
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3988
-    push    L3985
+    je      L3793
+    push    L3790
     mov     ax, [bp-6]
     imul    ax, ax, 4
     mov     cx, ax
@@ -34627,28 +34780,28 @@ L3989:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3988:
+L3793:
     cmp     ax, 0
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L3987:
+L3792:
 ; JumpIfZero
     test    ax, ax
-    jz      L3983
-; RPN'ized expression: "( IdentTable SyntaxStack lastSyntaxPtr + *u 1 + *u + , L3991 error ) "
-; Expanded expression: " IdentTable SyntaxStack (@-6) *(2) 4 * + 2 + *(2) +  L3991  error ()4 "
+    je      L3788
+; RPN'ized expression: "( IdentTable SyntaxStack lastSyntaxPtr + *u 1 + *u + , L3796 error ) "
+; Expanded expression: " IdentTable SyntaxStack (@-6) *(2) 4 * + 2 + *(2) +  L3796  error ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3991:
+L3796:
     db  "Error: ParseFxnParams(): Cannot declare a variable ('%s') of type 'void'",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( * *(@-6) 4 + SyntaxStack ax + ax 2 + IdentTable *ax , L3991 , error )4 "
+; Fused expression:    "( * *(@-6) 4 + SyntaxStack ax + ax 2 + IdentTable *ax , L3796 , error )4 "
     mov     ax, [bp-6]
     imul    ax, ax, 4
     mov     cx, ax
@@ -34660,47 +34813,47 @@ SEGMENT _TEXT
     mov     ax, _IdentTable
     add     ax, cx
     push    ax
-    push    L3991
+    push    L3796
     call    _error
     sub     sp, -4
-L3983:
+L3788:
     sub     sp, -2
 ; }
-L3981:
+L3786:
 ; if
 ; RPN'ized expression: "tok 41 == "
 ; Expanded expression: "(@-2) *(2) 41 == "
 ; Fused expression:    "== *(@-2) 41 IF! "
     mov     ax, [bp-2]
     cmp     ax, 41
-    jne     L3993
+    jne     L3798
 ; break
-    jmp     L3954
-L3993:
+    jmp     L3759
+L3798:
 ; continue
-    jmp     L3952
+    jmp     L3757
 ; }
-L3978:
-; RPN'ized expression: "( ( tok GetTokenName ) , L3995 error ) "
-; Expanded expression: "  (@-2) *(2)  GetTokenName ()2  L3995  error ()4 "
+L3783:
+; RPN'ized expression: "( ( tok GetTokenName ) , L3800 error ) "
+; Expanded expression: "  (@-2) *(2)  GetTokenName ()2  L3800  error ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L3995:
+L3800:
     db  "Error: ParseFxnParams(): Unexpected token %s",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( ( *(2) (@-2) , GetTokenName )2 , L3995 , error )4 "
+; Fused expression:    "( ( *(2) (@-2) , GetTokenName )2 , L3800 , error )4 "
     push    word [bp-2]
     call    _GetTokenName
     sub     sp, -2
     push    ax
-    push    L3995
+    push    L3800
     call    _error
     sub     sp, -4
 ; }
-    jmp     L3952
-L3954:
-L3950:
+    jmp     L3757
+L3759:
+L3755:
     leave
     ret
 ; SEGMENT _TEXT
@@ -34717,18 +34870,18 @@ _AddFxnParamSymbols:
     sub     sp, 2
 ; if
 ; RPN'ized expression: "SyntaxPtr 0 < SyntaxPtr SyntaxStackCnt 3 - > || SyntaxStack SyntaxPtr + *u 0 + *u 16 != || SyntaxStack SyntaxPtr 1 + + *u 0 + *u 40 != || "
-; Expanded expression: "(@4) *(2) 0 < _Bool [sh||->4002] (@4) *(2) SyntaxStackCnt *(2) 3 - > _Bool ||[4002] _Bool [sh||->4001] SyntaxStack (@4) *(2) 4 * + 0 + *(2) 16 != _Bool ||[4001] _Bool [sh||->4000] SyntaxStack (@4) *(2) 1 + 4 * + 0 + *(2) 40 != _Bool ||[4000] "
-; Fused expression:    "< *(@4) 0 _Bool [sh||->4002] - *SyntaxStackCnt 3 > *(@4) ax _Bool ||[4002] _Bool [sh||->4001] * *(@4) 4 + SyntaxStack ax + ax 0 != *ax 16 _Bool ||[4001] _Bool [sh||->4000] + *(@4) 1 * ax 4 + SyntaxStack ax + ax 0 != *ax 40 _Bool ||[4000] "
+; Expanded expression: "(@4) *(2) 0 < _Bool [sh||->3807] (@4) *(2) SyntaxStackCnt *(2) 3 - > _Bool ||[3807] _Bool [sh||->3806] SyntaxStack (@4) *(2) 4 * + 0 + *(2) 16 != _Bool ||[3806] _Bool [sh||->3805] SyntaxStack (@4) *(2) 1 + 4 * + 0 + *(2) 40 != _Bool ||[3805] "
+; Fused expression:    "< *(@4) 0 _Bool [sh||->3807] - *SyntaxStackCnt 3 > *(@4) ax _Bool ||[3807] _Bool [sh||->3806] * *(@4) 4 + SyntaxStack ax + ax 0 != *ax 16 _Bool ||[3806] _Bool [sh||->3805] + *(@4) 1 * ax 4 + SyntaxStack ax + ax 0 != *ax 40 _Bool ||[3805] "
     mov     ax, [bp+4]
     cmp     ax, 0
     setl    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L4002
+    jne     L3807
     mov     ax, [_SyntaxStackCnt]
     sub     ax, 3
     mov     cx, ax
@@ -34737,15 +34890,15 @@ _AddFxnParamSymbols:
     setg    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L4002:
+L3807:
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L4001
+    jne     L3806
     mov     ax, [bp+4]
     imul    ax, ax, 4
     mov     cx, ax
@@ -34758,15 +34911,15 @@ L4002:
     setne   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L4001:
+L3806:
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L4000
+    jne     L3805
     mov     ax, [bp+4]
     add     ax, 1
     imul    ax, ax, 4
@@ -34780,25 +34933,25 @@ L4001:
     setne   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L4000:
+L3805:
 ; JumpIfZero
     test    ax, ax
-    jz      L3998
-; RPN'ized expression: "( L4003 error ) "
-; Expanded expression: " L4003  error ()2 "
+    je      L3803
+; RPN'ized expression: "( L3808 error ) "
+; Expanded expression: " L3808  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4003:
+L3808:
     db  "Internal error: AddFxnParamSymbols(): Invalid input",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4003 , error )2 "
-    push    L4003
+; Fused expression:    "( L3808 , error )2 "
+    push    L3808
     call    _error
     sub     sp, -2
-L3998:
+L3803:
 ; RPN'ized expression: "CurFxnSyntaxPtr SyntaxPtr = "
 ; Expanded expression: "CurFxnSyntaxPtr (@4) *(2) =(2) "
 ; Fused expression:    "=(34) *CurFxnSyntaxPtr *(@4) "
@@ -34832,22 +34985,22 @@ L3998:
 ; Fused expression:    "=(34) *(@-2) *(@4) "
     mov     ax, [bp+4]
     mov     [bp-2], ax
-L4005:
+L3810:
 ; RPN'ized expression: "i SyntaxStackCnt < "
 ; Expanded expression: "(@-2) *(2) SyntaxStackCnt *(2) < "
 ; Fused expression:    "< *(@-2) *SyntaxStackCnt IF! "
     mov     ax, [bp-2]
     cmp     ax, [_SyntaxStackCnt]
-    jge     L4008
-    jmp     L4007
-L4006:
+    jge     L3813
+    jmp     L3812
+L3811:
 ; RPN'ized expression: "i ++p "
 ; Expanded expression: "(@-2) ++p(2) "
 ; Fused expression:    "++p(2) *(@-2) "
     mov     ax, [bp-2]
     inc     word [bp-2]
-    jmp     L4005
-L4007:
+    jmp     L3810
+L3812:
 ; {
 ; loc         tok : (@-4): int
     sub     sp, 2
@@ -34870,7 +35023,7 @@ L4007:
 ; Fused expression:    "== *(@-4) 16 IF! "
     mov     ax, [bp-4]
     cmp     ax, 16
-    jne     L4009
+    jne     L3814
 ; {
 ; loc             sz : (@-6): int
     sub     sp, 2
@@ -34883,20 +35036,20 @@ L4007:
     mov     ax, [bp-2]
     add     ax, 1
     cmp     ax, [_SyntaxStackCnt]
-    jl      L4011
-; RPN'ized expression: "( L4013 error ) "
-; Expanded expression: " L4013  error ()2 "
+    jl      L3816
+; RPN'ized expression: "( L3818 error ) "
+; Expanded expression: " L3818  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4013:
+L3818:
     db  "Internal error: AddFxnParamSymbols(): Invalid input",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4013 , error )2 "
-    push    L4013
+; Fused expression:    "( L3818 , error )2 "
+    push    L3818
     call    _error
     sub     sp, -2
-L4011:
+L3816:
 ; if
 ; RPN'ized expression: "SyntaxStack i 1 + + *u 0 + *u 17 == "
 ; Expanded expression: "SyntaxStack (@-2) *(2) 1 + 4 * + 0 + *(2) 17 == "
@@ -34911,11 +35064,11 @@ L4011:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 17
-    jne     L4015
+    jne     L3820
 ; break
     sub     sp, -6
-    jmp     L4008
-L4015:
+    jmp     L3813
+L3820:
 ; if
 ; RPN'ized expression: "SyntaxStack i 1 + + *u 0 + *u 15 == "
 ; Expanded expression: "SyntaxStack (@-2) *(2) 1 + 4 * + 0 + *(2) 15 == "
@@ -34930,11 +35083,11 @@ L4015:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 15
-    jne     L4017
+    jne     L3822
 ; break
     sub     sp, -6
-    jmp     L4008
-L4017:
+    jmp     L3813
+L3822:
 ; RPN'ized expression: "sz ( i GetDeclSize ) = "
 ; Expanded expression: "(@-6)  (@-2) *(2)  GetDeclSize ()2 =(2) "
 ; Fused expression:    "( *(2) (@-2) , GetDeclSize )2 =(34) *(@-6) ax "
@@ -34948,20 +35101,20 @@ L4017:
 ; Fused expression:    "<= *(@-6) 0 IF! "
     mov     ax, [bp-6]
     cmp     ax, 0
-    jg      L4019
-; RPN'ized expression: "( L4021 error ) "
-; Expanded expression: " L4021  error ()2 "
+    jg      L3824
+; RPN'ized expression: "( L3826 error ) "
+; Expanded expression: " L3826  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4021:
+L3826:
     db  "Internal error: AddFxnParamSymbols(): GetDeclSize()",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4021 , error )2 "
-    push    L4021
+; Fused expression:    "( L3826 , error )2 "
+    push    L3826
     call    _error
     sub     sp, -2
-L4019:
+L3824:
 ; RPN'ized expression: "CurFxnParamOfs CurFxnParamOfs SizeOfWord + 1 - SizeOfWord / SizeOfWord * = "
 ; Expanded expression: "CurFxnParamOfs CurFxnParamOfs *(2) SizeOfWord *(2) + 1 - SizeOfWord *(2) / SizeOfWord *(2) * =(2) "
 ; Fused expression:    "+ *CurFxnParamOfs *SizeOfWord - ax 1 / ax *SizeOfWord * ax *SizeOfWord =(34) *CurFxnParamOfs ax "
@@ -35019,11 +35172,11 @@ L4019:
 ; while
 ; RPN'ized expression: "i SyntaxStackCnt < "
 ; Expanded expression: "(@-2) *(2) SyntaxStackCnt *(2) < "
-L4023:
+L3828:
 ; Fused expression:    "< *(@-2) *SyntaxStackCnt IF! "
     mov     ax, [bp-2]
     cmp     ax, [_SyntaxStackCnt]
-    jge     L4024
+    jge     L3829
 ; {
 ; RPN'ized expression: "tok SyntaxStack i + *u 0 + *u = "
 ; Expanded expression: "(@-4) SyntaxStack (@-2) *(2) 4 * + 0 + *(2) =(2) "
@@ -35039,29 +35192,29 @@ L4023:
     mov     [bp-4], ax
 ; if
 ; RPN'ized expression: "tok 16 == tok 41 == || "
-; Expanded expression: "(@-4) *(2) 16 == _Bool [sh||->4027] (@-4) *(2) 41 == _Bool ||[4027] "
-; Fused expression:    "== *(@-4) 16 _Bool [sh||->4027] == *(@-4) 41 _Bool ||[4027] "
+; Expanded expression: "(@-4) *(2) 16 == _Bool [sh||->3832] (@-4) *(2) 41 == _Bool ||[3832] "
+; Fused expression:    "== *(@-4) 16 _Bool [sh||->3832] == *(@-4) 41 _Bool ||[3832] "
     mov     ax, [bp-4]
     cmp     ax, 16
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L4027
+    jne     L3832
     mov     ax, [bp-4]
     cmp     ax, 41
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L4027:
+L3832:
 ; JumpIfZero
     test    ax, ax
-    jz      L4025
+    je      L3830
 ; {
 ; RPN'ized expression: "CurFxnParamCnt ++p "
 ; Expanded expression: "CurFxnParamCnt ++p(2) "
@@ -35081,10 +35234,10 @@ L4027:
     mov     ax, [bp-2]
     dec     word [bp-2]
 ; break
-    jmp     L4024
+    jmp     L3829
 ; }
-    jmp     L4026
-L4025:
+    jmp     L3831
+L3830:
 ; else
 ; if
 ; RPN'ized expression: "tok 40 == "
@@ -35092,7 +35245,7 @@ L4025:
 ; Fused expression:    "== *(@-4) 40 IF! "
     mov     ax, [bp-4]
     cmp     ax, 40
-    jne     L4028
+    jne     L3833
 ; {
 ; loc                     c : (@-10): int
     sub     sp, 2
@@ -35116,27 +35269,27 @@ L4025:
     sub     sp, -2
 ; while
 ; RPN'ized expression: "c i SyntaxStackCnt < && "
-; Expanded expression: "(@-10) *(2) _Bool [sh&&->4032] (@-2) *(2) SyntaxStackCnt *(2) < _Bool &&[4032] "
-L4030:
-; Fused expression:    "*(2) (@-10) _Bool [sh&&->4032] < *(@-2) *SyntaxStackCnt _Bool &&[4032] "
+; Expanded expression: "(@-10) *(2) _Bool [sh&&->3837] (@-2) *(2) SyntaxStackCnt *(2) < _Bool &&[3837] "
+L3835:
+; Fused expression:    "*(2) (@-10) _Bool [sh&&->3837] < *(@-2) *SyntaxStackCnt _Bool &&[3837] "
     mov     ax, [bp-10]
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L4032
+    je      L3837
     mov     ax, [bp-2]
     cmp     ax, [_SyntaxStackCnt]
     setl    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L4032:
+L3837:
 ; JumpIfZero
     test    ax, ax
-    jz      L4031
+    je      L3836
 ; {
 ; RPN'ized expression: "tok SyntaxStack i + *u 0 + *u = "
 ; Expanded expression: "(@-4) SyntaxStack (@-2) *(2) 4 * + 0 + *(2) =(2) "
@@ -35196,12 +35349,12 @@ L4032:
     mov     ax, [bp-2]
     inc     word [bp-2]
 ; }
-    jmp     L4030
-L4031:
+    jmp     L3835
+L3836:
     sub     sp, -2
 ; }
-    jmp     L4029
-L4028:
+    jmp     L3834
+L3833:
 ; else
 ; {
 ; RPN'ized expression: "( SyntaxStack i + *u 1 + *u , SyntaxStack i + *u 0 + *u PushSyntax2 ) "
@@ -35231,15 +35384,15 @@ L4028:
     mov     ax, [bp-2]
     inc     word [bp-2]
 ; }
-L4029:
-L4026:
+L3834:
+L3831:
 ; }
-    jmp     L4023
-L4024:
+    jmp     L3828
+L3829:
     sub     sp, -4
 ; }
-    jmp     L4010
-L4009:
+    jmp     L3815
+L3814:
 ; else
 ; if
 ; RPN'ized expression: "tok 41 == "
@@ -35247,36 +35400,36 @@ L4009:
 ; Fused expression:    "== *(@-4) 41 IF! "
     mov     ax, [bp-4]
     cmp     ax, 41
-    jne     L4033
+    jne     L3838
 ; break
     sub     sp, -2
-    jmp     L4008
-    jmp     L4034
-L4033:
+    jmp     L3813
+    jmp     L3839
+L3838:
 ; else
-; RPN'ized expression: "( ( tok GetTokenName ) , L4035 error ) "
-; Expanded expression: "  (@-4) *(2)  GetTokenName ()2  L4035  error ()4 "
+; RPN'ized expression: "( ( tok GetTokenName ) , L3840 error ) "
+; Expanded expression: "  (@-4) *(2)  GetTokenName ()2  L3840  error ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4035:
+L3840:
     db  "Internal error: AddFxnParamSymbols(): Unexpected token %s",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( ( *(2) (@-4) , GetTokenName )2 , L4035 , error )4 "
+; Fused expression:    "( ( *(2) (@-4) , GetTokenName )2 , L3840 , error )4 "
     push    word [bp-4]
     call    _GetTokenName
     sub     sp, -2
     push    ax
-    push    L4035
+    push    L3840
     call    _error
     sub     sp, -4
-L4034:
-L4010:
+L3839:
+L3815:
     sub     sp, -2
 ; }
-    jmp     L4006
-L4008:
-L3997:
+    jmp     L3811
+L3813:
+L3802:
     leave
     ret
 ; SEGMENT _TEXT
@@ -35315,7 +35468,7 @@ _ParseStatement:
 ; Fused expression:    "== *(@4) 59 IF! "
     mov     ax, [bp+4]
     cmp     ax, 59
-    jne     L4038
+    jne     L3843
 ; {
 ; RPN'ized expression: "tok ( GetToken ) = "
 ; Expanded expression: "(@4)  GetToken ()0 =(2) "
@@ -35323,8 +35476,8 @@ _ParseStatement:
     call    _GetToken
     mov     [bp+4], ax
 ; }
-    jmp     L4039
-L4038:
+    jmp     L3844
+L3843:
 ; else
 ; if
 ; RPN'ized expression: "tok 123 == "
@@ -35332,7 +35485,7 @@ L4038:
 ; Fused expression:    "== *(@4) 123 IF! "
     mov     ax, [bp+4]
     cmp     ax, 123
-    jne     L4040
+    jne     L3845
 ; {
 ; loc         undoSymbolsPtr : (@-22): int
     sub     sp, 2
@@ -35358,16 +35511,16 @@ L4038:
 ; Fused expression:    "=(34) *(@-26) *IdentTableLen "
     mov     ax, [_IdentTableLen]
     mov     [bp-26], ax
-; RPN'ized expression: "( L4042 printf ) "
-; Expanded expression: " L4042  printf ()2 "
+; RPN'ized expression: "( L3847 printf ) "
+; Expanded expression: " L3847  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4042:
+L3847:
     db  "; {",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4042 , printf )2 "
-    push    L4042
+; Fused expression:    "( L3847 , printf )2 "
+    push    L3847
     call    _printf
     sub     sp, -2
 ; RPN'ized expression: "ParseLevel ++p "
@@ -35398,24 +35551,24 @@ SEGMENT _TEXT
 ; Fused expression:    "!= *(@4) 125 IF! "
     mov     ax, [bp+4]
     cmp     ax, 125
-    je      L4044
-; RPN'ized expression: "( ( tok GetTokenName ) , L4046 error ) "
-; Expanded expression: "  (@4) *(2)  GetTokenName ()2  L4046  error ()4 "
+    je      L3849
+; RPN'ized expression: "( ( tok GetTokenName ) , L3851 error ) "
+; Expanded expression: "  (@4) *(2)  GetTokenName ()2  L3851  error ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4046:
+L3851:
     db  "Error: ParseStatement(): '}' expected. Unexpected token %s",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( ( *(2) (@4) , GetTokenName )2 , L4046 , error )4 "
+; Fused expression:    "( ( *(2) (@4) , GetTokenName )2 , L3851 , error )4 "
     push    word [bp+4]
     call    _GetTokenName
     sub     sp, -2
     push    ax
-    push    L4046
+    push    L3851
     call    _error
     sub     sp, -4
-L4044:
+L3849:
 ; RPN'ized expression: "IdentTableLen undoIdents = "
 ; Expanded expression: "IdentTableLen (@-26) *(2) =(2) "
 ; Fused expression:    "=(34) *IdentTableLen *(@-26) "
@@ -35432,7 +35585,7 @@ L4044:
 ; Fused expression:    "!= *CurFxnLocalOfs *(@-24) IF! "
     mov     ax, [_CurFxnLocalOfs]
     cmp     ax, [bp-24]
-    je      L4048
+    je      L3853
 ; RPN'ized expression: "( CurFxnLocalOfs undoLocalOfs - GenLocalAlloc ) "
 ; Expanded expression: " CurFxnLocalOfs *(2) (@-24) *(2) -  GenLocalAlloc ()2 "
 ; Fused expression:    "( - *CurFxnLocalOfs *(@-24) , GenLocalAlloc )2 "
@@ -35441,22 +35594,22 @@ L4044:
     push    ax
     call    _GenLocalAlloc
     sub     sp, -2
-L4048:
+L3853:
 ; RPN'ized expression: "CurFxnLocalOfs undoLocalOfs = "
 ; Expanded expression: "CurFxnLocalOfs (@-24) *(2) =(2) "
 ; Fused expression:    "=(34) *CurFxnLocalOfs *(@-24) "
     mov     ax, [bp-24]
     mov     [_CurFxnLocalOfs], ax
-; RPN'ized expression: "( L4050 printf ) "
-; Expanded expression: " L4050  printf ()2 "
+; RPN'ized expression: "( L3855 printf ) "
+; Expanded expression: " L3855  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4050:
+L3855:
     db  "; }",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4050 , printf )2 "
-    push    L4050
+; Fused expression:    "( L3855 , printf )2 "
+    push    L3855
     call    _printf
     sub     sp, -2
 ; RPN'ized expression: "tok ( GetToken ) = "
@@ -35466,8 +35619,8 @@ SEGMENT _TEXT
     mov     [bp+4], ax
     sub     sp, -6
 ; }
-    jmp     L4041
-L4040:
+    jmp     L3846
+L3845:
 ; else
 ; if
 ; RPN'ized expression: "tok 20 == "
@@ -35475,18 +35628,18 @@ L4040:
 ; Fused expression:    "== *(@4) 20 IF! "
     mov     ax, [bp+4]
     cmp     ax, 20
-    jne     L4052
+    jne     L3857
 ; {
-; RPN'ized expression: "( L4054 printf ) "
-; Expanded expression: " L4054  printf ()2 "
+; RPN'ized expression: "( L3859 printf ) "
+; Expanded expression: " L3859  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4054:
+L3859:
     db  "; return",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4054 , printf )2 "
-    push    L4054
+; Fused expression:    "( L3859 , printf )2 "
+    push    L3859
     call    _printf
     sub     sp, -2
 ; RPN'ized expression: "tok ( GetToken ) = "
@@ -35510,34 +35663,34 @@ SEGMENT _TEXT
     call    _ParseExpr
     sub     sp, -10
     cmp     ax, 59
-    je      L4056
-; RPN'ized expression: "( L4058 error ) "
-; Expanded expression: " L4058  error ()2 "
+    je      L3861
+; RPN'ized expression: "( L3863 error ) "
+; Expanded expression: " L3863  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4058:
+L3863:
     db  "Error: ParseStatement(): ';' expected",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4058 , error )2 "
-    push    L4058
+; Fused expression:    "( L3863 , error )2 "
+    push    L3863
     call    _error
     sub     sp, -2
-L4056:
+L3861:
 ; if
 ; RPN'ized expression: "CurFxnReturnExprTypeSynPtr 0 >= SyntaxStack CurFxnReturnExprTypeSynPtr + *u 0 + *u 17 == && "
-; Expanded expression: "CurFxnReturnExprTypeSynPtr *(2) 0 >= _Bool [sh&&->4062] SyntaxStack CurFxnReturnExprTypeSynPtr *(2) 4 * + 0 + *(2) 17 == _Bool &&[4062] "
-; Fused expression:    ">= *CurFxnReturnExprTypeSynPtr 0 _Bool [sh&&->4062] * *CurFxnReturnExprTypeSynPtr 4 + SyntaxStack ax + ax 0 == *ax 17 _Bool &&[4062] "
+; Expanded expression: "CurFxnReturnExprTypeSynPtr *(2) 0 >= _Bool [sh&&->3867] SyntaxStack CurFxnReturnExprTypeSynPtr *(2) 4 * + 0 + *(2) 17 == _Bool &&[3867] "
+; Fused expression:    ">= *CurFxnReturnExprTypeSynPtr 0 _Bool [sh&&->3867] * *CurFxnReturnExprTypeSynPtr 4 + SyntaxStack ax + ax 0 == *ax 17 _Bool &&[3867] "
     mov     ax, [_CurFxnReturnExprTypeSynPtr]
     cmp     ax, 0
     setge   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L4062
+    je      L3867
     mov     ax, [_CurFxnReturnExprTypeSynPtr]
     imul    ax, ax, 4
     mov     cx, ax
@@ -35550,12 +35703,12 @@ L4056:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L4062:
+L3867:
 ; JumpIfZero
     test    ax, ax
-    jz      L4060
+    je      L3865
 ; {
 ; if
 ; RPN'ized expression: "gotUnary "
@@ -35564,23 +35717,23 @@ L4062:
     mov     ax, [bp-2]
 ; JumpIfZero
     test    ax, ax
-    jz      L4063
-; RPN'ized expression: "( L4065 error ) "
-; Expanded expression: " L4065  error ()2 "
+    je      L3868
+; RPN'ized expression: "( L3870 error ) "
+; Expanded expression: " L3870  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4065:
+L3870:
     db  "Error: ParseStatement(): cannot return a value from a function returning 'void'",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4065 , error )2 "
-    push    L4065
+; Fused expression:    "( L3870 , error )2 "
+    push    L3870
     call    _error
     sub     sp, -2
-L4063:
+L3868:
 ; }
-    jmp     L4061
-L4060:
+    jmp     L3866
+L3865:
 ; else
 ; {
 ; if
@@ -35589,22 +35742,22 @@ L4060:
 ; Fused expression:    "== *(@-2) 0 IF! "
     mov     ax, [bp-2]
     cmp     ax, 0
-    jne     L4067
-; RPN'ized expression: "( L4069 error ) "
-; Expanded expression: " L4069  error ()2 "
+    jne     L3872
+; RPN'ized expression: "( L3874 error ) "
+; Expanded expression: " L3874  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4069:
+L3874:
     db  "Error: ParseStatement(): missing return value",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4069 , error )2 "
-    push    L4069
+; Fused expression:    "( L3874 , error )2 "
+    push    L3874
     call    _error
     sub     sp, -2
-L4067:
+L3872:
 ; }
-L4061:
+L3866:
 ; if
 ; RPN'ized expression: "gotUnary "
 ; Expanded expression: "(@-2) *(2) "
@@ -35612,12 +35765,12 @@ L4061:
     mov     ax, [bp-2]
 ; JumpIfZero
     test    ax, ax
-    jz      L4071
+    je      L3876
 ; RPN'ized expression: "( GenExpr ) "
 ; Expanded expression: " GenExpr ()0 "
 ; Fused expression:    "( GenExpr )0 "
     call    _GenExpr
-L4071:
+L3876:
 ; RPN'ized expression: "( CurFxnEpilogLabel GenJumpUncond ) "
 ; Expanded expression: " CurFxnEpilogLabel *(2)  GenJumpUncond ()2 "
 ; Fused expression:    "( *(2) CurFxnEpilogLabel , GenJumpUncond )2 "
@@ -35630,8 +35783,8 @@ L4071:
     call    _GetToken
     mov     [bp+4], ax
 ; }
-    jmp     L4053
-L4052:
+    jmp     L3858
+L3857:
 ; else
 ; if
 ; RPN'ized expression: "tok 24 == "
@@ -35639,7 +35792,7 @@ L4052:
 ; Fused expression:    "== *(@4) 24 IF! "
     mov     ax, [bp+4]
     cmp     ax, 24
-    jne     L4073
+    jne     L3878
 ; {
 ; loc         labelBefore : (@-22): int
     sub     sp, 2
@@ -35659,16 +35812,16 @@ L4052:
     mov     ax, [_LabelCnt]
     inc     word [_LabelCnt]
     mov     [bp-24], ax
-; RPN'ized expression: "( L4075 printf ) "
-; Expanded expression: " L4075  printf ()2 "
+; RPN'ized expression: "( L3880 printf ) "
+; Expanded expression: " L3880  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4075:
+L3880:
     db  "; while",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4075 , printf )2 "
-    push    L4075
+; Fused expression:    "( L3880 , printf )2 "
+    push    L3880
     call    _printf
     sub     sp, -2
 ; RPN'ized expression: "tok ( GetToken ) = "
@@ -35682,20 +35835,20 @@ SEGMENT _TEXT
 ; Fused expression:    "!= *(@4) 40 IF! "
     mov     ax, [bp+4]
     cmp     ax, 40
-    je      L4077
-; RPN'ized expression: "( L4079 error ) "
-; Expanded expression: " L4079  error ()2 "
+    je      L3882
+; RPN'ized expression: "( L3884 error ) "
+; Expanded expression: " L3884  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4079:
+L3884:
     db  "Error: ParseStatement(): '(' expected after 'while'",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4079 , error )2 "
-    push    L4079
+; Fused expression:    "( L3884 , error )2 "
+    push    L3884
     call    _error
     sub     sp, -2
-L4077:
+L3882:
 ; RPN'ized expression: "tok ( GetToken ) = "
 ; Expanded expression: "(@4)  GetToken ()0 =(2) "
 ; Fused expression:    "( GetToken )0 =(34) *(@4) ax "
@@ -35717,54 +35870,54 @@ L4077:
     call    _ParseExpr
     sub     sp, -10
     cmp     ax, 41
-    je      L4081
-; RPN'ized expression: "( L4083 error ) "
-; Expanded expression: " L4083  error ()2 "
+    je      L3886
+; RPN'ized expression: "( L3888 error ) "
+; Expanded expression: " L3888  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4083:
+L3888:
     db  "Error: ParseStatement(): ')' expected after 'while ( expression'",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4083 , error )2 "
-    push    L4083
+; Fused expression:    "( L3888 , error )2 "
+    push    L3888
     call    _error
     sub     sp, -2
-L4081:
+L3886:
 ; if
 ; RPN'ized expression: "gotUnary 0 == "
 ; Expanded expression: "(@-2) *(2) 0 == "
 ; Fused expression:    "== *(@-2) 0 IF! "
     mov     ax, [bp-2]
     cmp     ax, 0
-    jne     L4085
-; RPN'ized expression: "( L4087 error ) "
-; Expanded expression: " L4087  error ()2 "
+    jne     L3890
+; RPN'ized expression: "( L3892 error ) "
+; Expanded expression: " L3892  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4087:
+L3892:
     db  "Error: ParseStatement(): expression expected in 'while ( expression )'",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4087 , error )2 "
-    push    L4087
+; Fused expression:    "( L3892 , error )2 "
+    push    L3892
     call    _error
     sub     sp, -2
-L4085:
+L3890:
 ; if
 ; RPN'ized expression: "synPtr 0 >= SyntaxStack synPtr + *u 0 + *u 17 == && "
-; Expanded expression: "(@-4) *(2) 0 >= _Bool [sh&&->4091] SyntaxStack (@-4) *(2) 4 * + 0 + *(2) 17 == _Bool &&[4091] "
-; Fused expression:    ">= *(@-4) 0 _Bool [sh&&->4091] * *(@-4) 4 + SyntaxStack ax + ax 0 == *ax 17 _Bool &&[4091] "
+; Expanded expression: "(@-4) *(2) 0 >= _Bool [sh&&->3896] SyntaxStack (@-4) *(2) 4 * + 0 + *(2) 17 == _Bool &&[3896] "
+; Fused expression:    ">= *(@-4) 0 _Bool [sh&&->3896] * *(@-4) 4 + SyntaxStack ax + ax 0 == *ax 17 _Bool &&[3896] "
     mov     ax, [bp-4]
     cmp     ax, 0
     setge   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L4091
+    je      L3896
     mov     ax, [bp-4]
     imul    ax, ax, 4
     mov     cx, ax
@@ -35777,25 +35930,25 @@ L4085:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L4091:
+L3896:
 ; JumpIfZero
     test    ax, ax
-    jz      L4089
-; RPN'ized expression: "( L4092 error ) "
-; Expanded expression: " L4092  error ()2 "
+    je      L3894
+; RPN'ized expression: "( L3897 error ) "
+; Expanded expression: " L3897  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4092:
+L3897:
     db  "Error: ParseStatement(): unexpected 'void' expression in 'while ( expression )'",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4092 , error )2 "
-    push    L4092
+; Fused expression:    "( L3897 , error )2 "
+    push    L3897
     call    _error
     sub     sp, -2
-L4089:
+L3894:
 ; RPN'ized expression: "( labelBefore GenNumLabel ) "
 ; Expanded expression: " (@-22) *(2)  GenNumLabel ()2 "
 ; Fused expression:    "( *(2) (@-22) , GenNumLabel )2 "
@@ -35815,98 +35968,98 @@ L4089:
     add     ax, 0
     mov     bx, ax
     mov     ax, [bx]
-    jmp     L4096
+    jmp     L3901
 ; {
 ; case
 ; RPN'ized expression: "60 "
 ; Expanded expression: "60 "
 ; Expression value: 60
-    jmp     L4097
-L4096:
+    jmp     L3902
+L3901:
     cmp     ax, 60
-    jne     L4098
-L4097:
+    jne     L3903
+L3902:
 ; case
 ; RPN'ized expression: "62 "
 ; Expanded expression: "62 "
 ; Expression value: 62
-    jmp     L4099
-L4098:
+    jmp     L3904
+L3903:
     cmp     ax, 62
-    jne     L4100
-L4099:
+    jne     L3905
+L3904:
 ; case
 ; RPN'ized expression: "8 "
 ; Expanded expression: "8 "
 ; Expression value: 8
-    jmp     L4101
-L4100:
+    jmp     L3906
+L3905:
     cmp     ax, 8
-    jne     L4102
-L4101:
+    jne     L3907
+L3906:
 ; case
 ; RPN'ized expression: "9 "
 ; Expanded expression: "9 "
 ; Expression value: 9
-    jmp     L4103
-L4102:
+    jmp     L3908
+L3907:
     cmp     ax, 9
-    jne     L4104
-L4103:
+    jne     L3909
+L3908:
 ; case
 ; RPN'ized expression: "10 "
 ; Expanded expression: "10 "
 ; Expression value: 10
-    jmp     L4105
-L4104:
+    jmp     L3910
+L3909:
     cmp     ax, 10
-    jne     L4106
-L4105:
+    jne     L3911
+L3910:
 ; case
 ; RPN'ized expression: "11 "
 ; Expanded expression: "11 "
 ; Expression value: 11
-    jmp     L4107
-L4106:
+    jmp     L3912
+L3911:
     cmp     ax, 11
-    jne     L4108
-L4107:
+    jne     L3913
+L3912:
 ; case
 ; RPN'ized expression: "85 "
 ; Expanded expression: "85 "
 ; Expression value: 85
-    jmp     L4109
-L4108:
+    jmp     L3914
+L3913:
     cmp     ax, 85
-    jne     L4110
-L4109:
+    jne     L3915
+L3914:
 ; case
 ; RPN'ized expression: "86 "
 ; Expanded expression: "86 "
 ; Expression value: 86
-    jmp     L4111
-L4110:
+    jmp     L3916
+L3915:
     cmp     ax, 86
-    jne     L4112
-L4111:
+    jne     L3917
+L3916:
 ; case
 ; RPN'ized expression: "87 "
 ; Expanded expression: "87 "
 ; Expression value: 87
-    jmp     L4113
-L4112:
+    jmp     L3918
+L3917:
     cmp     ax, 87
-    jne     L4114
-L4113:
+    jne     L3919
+L3918:
 ; case
 ; RPN'ized expression: "88 "
 ; Expanded expression: "88 "
 ; Expression value: 88
-    jmp     L4115
-L4114:
+    jmp     L3920
+L3919:
     cmp     ax, 88
-    jne     L4116
-L4115:
+    jne     L3921
+L3920:
 ; RPN'ized expression: "( labelAfter , 76 push2 ) "
 ; Expanded expression: " (@-24) *(2)  76  push2 ()4 "
 ; Fused expression:    "( *(2) (@-24) , 76 , push2 )4 "
@@ -35919,9 +36072,9 @@ L4115:
 ; Fused expression:    "( GenExpr )0 "
     call    _GenExpr
 ; break
-    jmp     L4094
+    jmp     L3899
 ; default
-L4095:
+L3900:
 ; RPN'ized expression: "( GenExpr ) "
 ; Expanded expression: " GenExpr ()0 "
 ; Fused expression:    "( GenExpr )0 "
@@ -35933,12 +36086,12 @@ L4095:
     call    _GenJumpIfZero
     sub     sp, -2
 ; break
-    jmp     L4094
+    jmp     L3899
 ; }
-    jmp     L4094
-L4116:
-    jmp     L4095
-L4094:
+    jmp     L3899
+L3921:
+    jmp     L3900
+L3899:
 ; RPN'ized expression: "tok ( GetToken ) = "
 ; Expanded expression: "(@4)  GetToken ()0 =(2) "
 ; Fused expression:    "( GetToken )0 =(34) *(@4) ax "
@@ -36000,8 +36153,8 @@ L4094:
     sub     sp, -2
     sub     sp, -4
 ; }
-    jmp     L4074
-L4073:
+    jmp     L3879
+L3878:
 ; else
 ; if
 ; RPN'ized expression: "tok 115 == "
@@ -36009,7 +36162,7 @@ L4073:
 ; Fused expression:    "== *(@4) 115 IF! "
     mov     ax, [bp+4]
     cmp     ax, 115
-    jne     L4118
+    jne     L3923
 ; {
 ; loc         labelBefore : (@-22): int
     sub     sp, 2
@@ -36038,16 +36191,16 @@ L4073:
     mov     ax, [_LabelCnt]
     inc     word [_LabelCnt]
     mov     [bp-26], ax
-; RPN'ized expression: "( L4120 printf ) "
-; Expanded expression: " L4120  printf ()2 "
+; RPN'ized expression: "( L3925 printf ) "
+; Expanded expression: " L3925  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4120:
+L3925:
     db  "; do",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4120 , printf )2 "
-    push    L4120
+; Fused expression:    "( L3925 , printf )2 "
+    push    L3925
     call    _printf
     sub     sp, -2
 ; RPN'ized expression: "( labelBefore GenNumLabel ) "
@@ -36109,30 +36262,30 @@ SEGMENT _TEXT
 ; Fused expression:    "!= *(@4) 24 IF! "
     mov     ax, [bp+4]
     cmp     ax, 24
-    je      L4122
-; RPN'ized expression: "( L4124 error ) "
-; Expanded expression: " L4124  error ()2 "
+    je      L3927
+; RPN'ized expression: "( L3929 error ) "
+; Expanded expression: " L3929  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4124:
+L3929:
     db  "Error: ParseStatement(): 'while' expected after 'do statement'",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4124 , error )2 "
-    push    L4124
+; Fused expression:    "( L3929 , error )2 "
+    push    L3929
     call    _error
     sub     sp, -2
-L4122:
-; RPN'ized expression: "( L4126 printf ) "
-; Expanded expression: " L4126  printf ()2 "
+L3927:
+; RPN'ized expression: "( L3931 printf ) "
+; Expanded expression: " L3931  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4126:
+L3931:
     db  "; while",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4126 , printf )2 "
-    push    L4126
+; Fused expression:    "( L3931 , printf )2 "
+    push    L3931
     call    _printf
     sub     sp, -2
 ; RPN'ized expression: "tok ( GetToken ) = "
@@ -36146,20 +36299,20 @@ SEGMENT _TEXT
 ; Fused expression:    "!= *(@4) 40 IF! "
     mov     ax, [bp+4]
     cmp     ax, 40
-    je      L4128
-; RPN'ized expression: "( L4130 error ) "
-; Expanded expression: " L4130  error ()2 "
+    je      L3933
+; RPN'ized expression: "( L3935 error ) "
+; Expanded expression: " L3935  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4130:
+L3935:
     db  "Error: ParseStatement(): '(' expected after 'while'",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4130 , error )2 "
-    push    L4130
+; Fused expression:    "( L3935 , error )2 "
+    push    L3935
     call    _error
     sub     sp, -2
-L4128:
+L3933:
 ; RPN'ized expression: "tok ( GetToken ) = "
 ; Expanded expression: "(@4)  GetToken ()0 =(2) "
 ; Fused expression:    "( GetToken )0 =(34) *(@4) ax "
@@ -36181,40 +36334,40 @@ L4128:
     call    _ParseExpr
     sub     sp, -10
     cmp     ax, 41
-    je      L4132
-; RPN'ized expression: "( L4134 error ) "
-; Expanded expression: " L4134  error ()2 "
+    je      L3937
+; RPN'ized expression: "( L3939 error ) "
+; Expanded expression: " L3939  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4134:
+L3939:
     db  "Error: ParseStatement(): ')' expected after 'while ( expression'",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4134 , error )2 "
-    push    L4134
+; Fused expression:    "( L3939 , error )2 "
+    push    L3939
     call    _error
     sub     sp, -2
-L4132:
+L3937:
 ; if
 ; RPN'ized expression: "gotUnary 0 == "
 ; Expanded expression: "(@-2) *(2) 0 == "
 ; Fused expression:    "== *(@-2) 0 IF! "
     mov     ax, [bp-2]
     cmp     ax, 0
-    jne     L4136
-; RPN'ized expression: "( L4138 error ) "
-; Expanded expression: " L4138  error ()2 "
+    jne     L3941
+; RPN'ized expression: "( L3943 error ) "
+; Expanded expression: " L3943  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4138:
+L3943:
     db  "Error: ParseStatement(): expression expected in 'while ( expression )'",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4138 , error )2 "
-    push    L4138
+; Fused expression:    "( L3943 , error )2 "
+    push    L3943
     call    _error
     sub     sp, -2
-L4136:
+L3941:
 ; RPN'ized expression: "tok ( GetToken ) = "
 ; Expanded expression: "(@4)  GetToken ()0 =(2) "
 ; Fused expression:    "( GetToken )0 =(34) *(@4) ax "
@@ -36226,34 +36379,34 @@ L4136:
 ; Fused expression:    "!= *(@4) 59 IF! "
     mov     ax, [bp+4]
     cmp     ax, 59
-    je      L4140
-; RPN'ized expression: "( L4142 error ) "
-; Expanded expression: " L4142  error ()2 "
+    je      L3945
+; RPN'ized expression: "( L3947 error ) "
+; Expanded expression: " L3947  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4142:
+L3947:
     db  "Error: ParseStatement(): ';' expected after 'do statement while ( expression )'",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4142 , error )2 "
-    push    L4142
+; Fused expression:    "( L3947 , error )2 "
+    push    L3947
     call    _error
     sub     sp, -2
-L4140:
+L3945:
 ; if
 ; RPN'ized expression: "synPtr 0 >= SyntaxStack synPtr + *u 0 + *u 17 == && "
-; Expanded expression: "(@-4) *(2) 0 >= _Bool [sh&&->4146] SyntaxStack (@-4) *(2) 4 * + 0 + *(2) 17 == _Bool &&[4146] "
-; Fused expression:    ">= *(@-4) 0 _Bool [sh&&->4146] * *(@-4) 4 + SyntaxStack ax + ax 0 == *ax 17 _Bool &&[4146] "
+; Expanded expression: "(@-4) *(2) 0 >= _Bool [sh&&->3951] SyntaxStack (@-4) *(2) 4 * + 0 + *(2) 17 == _Bool &&[3951] "
+; Fused expression:    ">= *(@-4) 0 _Bool [sh&&->3951] * *(@-4) 4 + SyntaxStack ax + ax 0 == *ax 17 _Bool &&[3951] "
     mov     ax, [bp-4]
     cmp     ax, 0
     setge   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L4146
+    je      L3951
     mov     ax, [bp-4]
     imul    ax, ax, 4
     mov     cx, ax
@@ -36266,25 +36419,25 @@ L4140:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L4146:
+L3951:
 ; JumpIfZero
     test    ax, ax
-    jz      L4144
-; RPN'ized expression: "( L4147 error ) "
-; Expanded expression: " L4147  error ()2 "
+    je      L3949
+; RPN'ized expression: "( L3952 error ) "
+; Expanded expression: " L3952  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4147:
+L3952:
     db  "Error: ParseStatement(): unexpected 'void' expression in 'while ( expression )'",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4147 , error )2 "
-    push    L4147
+; Fused expression:    "( L3952 , error )2 "
+    push    L3952
     call    _error
     sub     sp, -2
-L4144:
+L3949:
 ; RPN'ized expression: "( labelWhile GenNumLabel ) "
 ; Expanded expression: " (@-24) *(2)  GenNumLabel ()2 "
 ; Fused expression:    "( *(2) (@-24) , GenNumLabel )2 "
@@ -36304,98 +36457,98 @@ L4144:
     add     ax, 0
     mov     bx, ax
     mov     ax, [bx]
-    jmp     L4151
+    jmp     L3956
 ; {
 ; case
 ; RPN'ized expression: "60 "
 ; Expanded expression: "60 "
 ; Expression value: 60
-    jmp     L4152
-L4151:
+    jmp     L3957
+L3956:
     cmp     ax, 60
-    jne     L4153
-L4152:
+    jne     L3958
+L3957:
 ; case
 ; RPN'ized expression: "62 "
 ; Expanded expression: "62 "
 ; Expression value: 62
-    jmp     L4154
-L4153:
+    jmp     L3959
+L3958:
     cmp     ax, 62
-    jne     L4155
-L4154:
+    jne     L3960
+L3959:
 ; case
 ; RPN'ized expression: "8 "
 ; Expanded expression: "8 "
 ; Expression value: 8
-    jmp     L4156
-L4155:
+    jmp     L3961
+L3960:
     cmp     ax, 8
-    jne     L4157
-L4156:
+    jne     L3962
+L3961:
 ; case
 ; RPN'ized expression: "9 "
 ; Expanded expression: "9 "
 ; Expression value: 9
-    jmp     L4158
-L4157:
+    jmp     L3963
+L3962:
     cmp     ax, 9
-    jne     L4159
-L4158:
+    jne     L3964
+L3963:
 ; case
 ; RPN'ized expression: "10 "
 ; Expanded expression: "10 "
 ; Expression value: 10
-    jmp     L4160
-L4159:
+    jmp     L3965
+L3964:
     cmp     ax, 10
-    jne     L4161
-L4160:
+    jne     L3966
+L3965:
 ; case
 ; RPN'ized expression: "11 "
 ; Expanded expression: "11 "
 ; Expression value: 11
-    jmp     L4162
-L4161:
+    jmp     L3967
+L3966:
     cmp     ax, 11
-    jne     L4163
-L4162:
+    jne     L3968
+L3967:
 ; case
 ; RPN'ized expression: "85 "
 ; Expanded expression: "85 "
 ; Expression value: 85
-    jmp     L4164
-L4163:
+    jmp     L3969
+L3968:
     cmp     ax, 85
-    jne     L4165
-L4164:
+    jne     L3970
+L3969:
 ; case
 ; RPN'ized expression: "86 "
 ; Expanded expression: "86 "
 ; Expression value: 86
-    jmp     L4166
-L4165:
+    jmp     L3971
+L3970:
     cmp     ax, 86
-    jne     L4167
-L4166:
+    jne     L3972
+L3971:
 ; case
 ; RPN'ized expression: "87 "
 ; Expanded expression: "87 "
 ; Expression value: 87
-    jmp     L4168
-L4167:
+    jmp     L3973
+L3972:
     cmp     ax, 87
-    jne     L4169
-L4168:
+    jne     L3974
+L3973:
 ; case
 ; RPN'ized expression: "88 "
 ; Expanded expression: "88 "
 ; Expression value: 88
-    jmp     L4170
-L4169:
+    jmp     L3975
+L3974:
     cmp     ax, 88
-    jne     L4171
-L4170:
+    jne     L3976
+L3975:
 ; RPN'ized expression: "( labelBefore , 22 push2 ) "
 ; Expanded expression: " (@-22) *(2)  22  push2 ()4 "
 ; Fused expression:    "( *(2) (@-22) , 22 , push2 )4 "
@@ -36408,9 +36561,9 @@ L4170:
 ; Fused expression:    "( GenExpr )0 "
     call    _GenExpr
 ; break
-    jmp     L4149
+    jmp     L3954
 ; default
-L4150:
+L3955:
 ; RPN'ized expression: "( GenExpr ) "
 ; Expanded expression: " GenExpr ()0 "
 ; Fused expression:    "( GenExpr )0 "
@@ -36422,12 +36575,12 @@ L4150:
     call    _GenJumpIfNotZero
     sub     sp, -2
 ; break
-    jmp     L4149
+    jmp     L3954
 ; }
-    jmp     L4149
-L4171:
-    jmp     L4150
-L4149:
+    jmp     L3954
+L3976:
+    jmp     L3955
+L3954:
 ; RPN'ized expression: "( labelAfter GenNumLabel ) "
 ; Expanded expression: " (@-26) *(2)  GenNumLabel ()2 "
 ; Fused expression:    "( *(2) (@-26) , GenNumLabel )2 "
@@ -36441,8 +36594,8 @@ L4149:
     mov     [bp+4], ax
     sub     sp, -6
 ; }
-    jmp     L4119
-L4118:
+    jmp     L3924
+L3923:
 ; else
 ; if
 ; RPN'ized expression: "tok 22 == "
@@ -36450,7 +36603,7 @@ L4118:
 ; Fused expression:    "== *(@4) 22 IF! "
     mov     ax, [bp+4]
     cmp     ax, 22
-    jne     L4173
+    jne     L3978
 ; {
 ; loc         labelAfterIf : (@-22): int
     sub     sp, 2
@@ -36470,16 +36623,16 @@ L4118:
     mov     ax, [_LabelCnt]
     inc     word [_LabelCnt]
     mov     [bp-24], ax
-; RPN'ized expression: "( L4175 printf ) "
-; Expanded expression: " L4175  printf ()2 "
+; RPN'ized expression: "( L3980 printf ) "
+; Expanded expression: " L3980  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4175:
+L3980:
     db  "; if",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4175 , printf )2 "
-    push    L4175
+; Fused expression:    "( L3980 , printf )2 "
+    push    L3980
     call    _printf
     sub     sp, -2
 ; RPN'ized expression: "tok ( GetToken ) = "
@@ -36493,20 +36646,20 @@ SEGMENT _TEXT
 ; Fused expression:    "!= *(@4) 40 IF! "
     mov     ax, [bp+4]
     cmp     ax, 40
-    je      L4177
-; RPN'ized expression: "( L4179 error ) "
-; Expanded expression: " L4179  error ()2 "
+    je      L3982
+; RPN'ized expression: "( L3984 error ) "
+; Expanded expression: " L3984  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4179:
+L3984:
     db  "Error: ParseStatement(): '(' expected after 'if'",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4179 , error )2 "
-    push    L4179
+; Fused expression:    "( L3984 , error )2 "
+    push    L3984
     call    _error
     sub     sp, -2
-L4177:
+L3982:
 ; RPN'ized expression: "tok ( GetToken ) = "
 ; Expanded expression: "(@4)  GetToken ()0 =(2) "
 ; Fused expression:    "( GetToken )0 =(34) *(@4) ax "
@@ -36528,54 +36681,54 @@ L4177:
     call    _ParseExpr
     sub     sp, -10
     cmp     ax, 41
-    je      L4181
-; RPN'ized expression: "( L4183 error ) "
-; Expanded expression: " L4183  error ()2 "
+    je      L3986
+; RPN'ized expression: "( L3988 error ) "
+; Expanded expression: " L3988  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4183:
+L3988:
     db  "Error: ParseStatement(): ')' expected after 'if ( expression'",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4183 , error )2 "
-    push    L4183
+; Fused expression:    "( L3988 , error )2 "
+    push    L3988
     call    _error
     sub     sp, -2
-L4181:
+L3986:
 ; if
 ; RPN'ized expression: "gotUnary 0 == "
 ; Expanded expression: "(@-2) *(2) 0 == "
 ; Fused expression:    "== *(@-2) 0 IF! "
     mov     ax, [bp-2]
     cmp     ax, 0
-    jne     L4185
-; RPN'ized expression: "( L4187 error ) "
-; Expanded expression: " L4187  error ()2 "
+    jne     L3990
+; RPN'ized expression: "( L3992 error ) "
+; Expanded expression: " L3992  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4187:
+L3992:
     db  "Error: ParseStatement(): expression expected in 'if ( expression )'",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4187 , error )2 "
-    push    L4187
+; Fused expression:    "( L3992 , error )2 "
+    push    L3992
     call    _error
     sub     sp, -2
-L4185:
+L3990:
 ; if
 ; RPN'ized expression: "synPtr 0 >= SyntaxStack synPtr + *u 0 + *u 17 == && "
-; Expanded expression: "(@-4) *(2) 0 >= _Bool [sh&&->4191] SyntaxStack (@-4) *(2) 4 * + 0 + *(2) 17 == _Bool &&[4191] "
-; Fused expression:    ">= *(@-4) 0 _Bool [sh&&->4191] * *(@-4) 4 + SyntaxStack ax + ax 0 == *ax 17 _Bool &&[4191] "
+; Expanded expression: "(@-4) *(2) 0 >= _Bool [sh&&->3996] SyntaxStack (@-4) *(2) 4 * + 0 + *(2) 17 == _Bool &&[3996] "
+; Fused expression:    ">= *(@-4) 0 _Bool [sh&&->3996] * *(@-4) 4 + SyntaxStack ax + ax 0 == *ax 17 _Bool &&[3996] "
     mov     ax, [bp-4]
     cmp     ax, 0
     setge   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L4191
+    je      L3996
     mov     ax, [bp-4]
     imul    ax, ax, 4
     mov     cx, ax
@@ -36588,25 +36741,25 @@ L4185:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L4191:
+L3996:
 ; JumpIfZero
     test    ax, ax
-    jz      L4189
-; RPN'ized expression: "( L4192 error ) "
-; Expanded expression: " L4192  error ()2 "
+    je      L3994
+; RPN'ized expression: "( L3997 error ) "
+; Expanded expression: " L3997  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4192:
+L3997:
     db  "Error: ParseStatement(): unexpected 'void' expression in 'if ( expression )'",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4192 , error )2 "
-    push    L4192
+; Fused expression:    "( L3997 , error )2 "
+    push    L3997
     call    _error
     sub     sp, -2
-L4189:
+L3994:
 ; switch
 ; RPN'ized expression: "stack sp 1 - + *u 0 + *u "
 ; Expanded expression: "stack sp *(2) 1 - 4 * + 0 + *(2) "
@@ -36620,98 +36773,98 @@ L4189:
     add     ax, 0
     mov     bx, ax
     mov     ax, [bx]
-    jmp     L4196
+    jmp     L4001
 ; {
 ; case
 ; RPN'ized expression: "60 "
 ; Expanded expression: "60 "
 ; Expression value: 60
-    jmp     L4197
-L4196:
+    jmp     L4002
+L4001:
     cmp     ax, 60
-    jne     L4198
-L4197:
+    jne     L4003
+L4002:
 ; case
 ; RPN'ized expression: "62 "
 ; Expanded expression: "62 "
 ; Expression value: 62
-    jmp     L4199
-L4198:
+    jmp     L4004
+L4003:
     cmp     ax, 62
-    jne     L4200
-L4199:
+    jne     L4005
+L4004:
 ; case
 ; RPN'ized expression: "8 "
 ; Expanded expression: "8 "
 ; Expression value: 8
-    jmp     L4201
-L4200:
+    jmp     L4006
+L4005:
     cmp     ax, 8
-    jne     L4202
-L4201:
+    jne     L4007
+L4006:
 ; case
 ; RPN'ized expression: "9 "
 ; Expanded expression: "9 "
 ; Expression value: 9
-    jmp     L4203
-L4202:
+    jmp     L4008
+L4007:
     cmp     ax, 9
-    jne     L4204
-L4203:
+    jne     L4009
+L4008:
 ; case
 ; RPN'ized expression: "10 "
 ; Expanded expression: "10 "
 ; Expression value: 10
-    jmp     L4205
-L4204:
+    jmp     L4010
+L4009:
     cmp     ax, 10
-    jne     L4206
-L4205:
+    jne     L4011
+L4010:
 ; case
 ; RPN'ized expression: "11 "
 ; Expanded expression: "11 "
 ; Expression value: 11
-    jmp     L4207
-L4206:
+    jmp     L4012
+L4011:
     cmp     ax, 11
-    jne     L4208
-L4207:
+    jne     L4013
+L4012:
 ; case
 ; RPN'ized expression: "85 "
 ; Expanded expression: "85 "
 ; Expression value: 85
-    jmp     L4209
-L4208:
+    jmp     L4014
+L4013:
     cmp     ax, 85
-    jne     L4210
-L4209:
+    jne     L4015
+L4014:
 ; case
 ; RPN'ized expression: "86 "
 ; Expanded expression: "86 "
 ; Expression value: 86
-    jmp     L4211
-L4210:
+    jmp     L4016
+L4015:
     cmp     ax, 86
-    jne     L4212
-L4211:
+    jne     L4017
+L4016:
 ; case
 ; RPN'ized expression: "87 "
 ; Expanded expression: "87 "
 ; Expression value: 87
-    jmp     L4213
-L4212:
+    jmp     L4018
+L4017:
     cmp     ax, 87
-    jne     L4214
-L4213:
+    jne     L4019
+L4018:
 ; case
 ; RPN'ized expression: "88 "
 ; Expanded expression: "88 "
 ; Expression value: 88
-    jmp     L4215
-L4214:
+    jmp     L4020
+L4019:
     cmp     ax, 88
-    jne     L4216
-L4215:
+    jne     L4021
+L4020:
 ; RPN'ized expression: "( labelAfterIf , 76 push2 ) "
 ; Expanded expression: " (@-22) *(2)  76  push2 ()4 "
 ; Fused expression:    "( *(2) (@-22) , 76 , push2 )4 "
@@ -36724,9 +36877,9 @@ L4215:
 ; Fused expression:    "( GenExpr )0 "
     call    _GenExpr
 ; break
-    jmp     L4194
+    jmp     L3999
 ; default
-L4195:
+L4000:
 ; RPN'ized expression: "( GenExpr ) "
 ; Expanded expression: " GenExpr ()0 "
 ; Fused expression:    "( GenExpr )0 "
@@ -36738,12 +36891,12 @@ L4195:
     call    _GenJumpIfZero
     sub     sp, -2
 ; break
-    jmp     L4194
+    jmp     L3999
 ; }
-    jmp     L4194
-L4216:
-    jmp     L4195
-L4194:
+    jmp     L3999
+L4021:
+    jmp     L4000
+L3999:
 ; RPN'ized expression: "tok ( GetToken ) = "
 ; Expanded expression: "(@4)  GetToken ()0 =(2) "
 ; Fused expression:    "( GetToken )0 =(34) *(@4) ax "
@@ -36764,7 +36917,7 @@ L4194:
 ; Fused expression:    "== *(@4) 23 IF! "
     mov     ax, [bp+4]
     cmp     ax, 23
-    jne     L4218
+    jne     L4023
 ; {
 ; RPN'ized expression: "( labelAfterElse GenJumpUncond ) "
 ; Expanded expression: " (@-24) *(2)  GenJumpUncond ()2 "
@@ -36778,16 +36931,16 @@ L4194:
     push    word [bp-22]
     call    _GenNumLabel
     sub     sp, -2
-; RPN'ized expression: "( L4220 printf ) "
-; Expanded expression: " L4220  printf ()2 "
+; RPN'ized expression: "( L4025 printf ) "
+; Expanded expression: " L4025  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4220:
+L4025:
     db  "; else",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4220 , printf )2 "
-    push    L4220
+; Fused expression:    "( L4025 , printf )2 "
+    push    L4025
     call    _printf
     sub     sp, -2
 ; RPN'ized expression: "tok ( GetToken ) = "
@@ -36811,8 +36964,8 @@ SEGMENT _TEXT
     call    _GenNumLabel
     sub     sp, -2
 ; }
-    jmp     L4219
-L4218:
+    jmp     L4024
+L4023:
 ; else
 ; {
 ; RPN'ized expression: "( labelAfterIf GenNumLabel ) "
@@ -36822,11 +36975,11 @@ L4218:
     call    _GenNumLabel
     sub     sp, -2
 ; }
-L4219:
+L4024:
     sub     sp, -4
 ; }
-    jmp     L4174
-L4173:
+    jmp     L3979
+L3978:
 ; else
 ; if
 ; RPN'ized expression: "tok 116 == "
@@ -36834,7 +36987,7 @@ L4173:
 ; Fused expression:    "== *(@4) 116 IF! "
     mov     ax, [bp+4]
     cmp     ax, 116
-    jne     L4222
+    jne     L4027
 ; {
 ; loc         labelBefore : (@-22): int
     sub     sp, 2
@@ -36872,16 +37025,16 @@ L4173:
     mov     ax, [_LabelCnt]
     inc     word [_LabelCnt]
     mov     [bp-28], ax
-; RPN'ized expression: "( L4224 printf ) "
-; Expanded expression: " L4224  printf ()2 "
+; RPN'ized expression: "( L4029 printf ) "
+; Expanded expression: " L4029  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4224:
+L4029:
     db  "; for",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4224 , printf )2 "
-    push    L4224
+; Fused expression:    "( L4029 , printf )2 "
+    push    L4029
     call    _printf
     sub     sp, -2
 ; RPN'ized expression: "tok ( GetToken ) = "
@@ -36895,20 +37048,20 @@ SEGMENT _TEXT
 ; Fused expression:    "!= *(@4) 40 IF! "
     mov     ax, [bp+4]
     cmp     ax, 40
-    je      L4226
-; RPN'ized expression: "( L4228 error ) "
-; Expanded expression: " L4228  error ()2 "
+    je      L4031
+; RPN'ized expression: "( L4033 error ) "
+; Expanded expression: " L4033  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4228:
+L4033:
     db  "Error: ParseStatement(): '(' expected after 'for'",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4228 , error )2 "
-    push    L4228
+; Fused expression:    "( L4033 , error )2 "
+    push    L4033
     call    _error
     sub     sp, -2
-L4226:
+L4031:
 ; RPN'ized expression: "tok ( GetToken ) = "
 ; Expanded expression: "(@4)  GetToken ()0 =(2) "
 ; Fused expression:    "( GetToken )0 =(34) *(@4) ax "
@@ -36930,20 +37083,20 @@ L4226:
     call    _ParseExpr
     sub     sp, -10
     cmp     ax, 59
-    je      L4230
-; RPN'ized expression: "( L4232 error ) "
-; Expanded expression: " L4232  error ()2 "
+    je      L4035
+; RPN'ized expression: "( L4037 error ) "
+; Expanded expression: " L4037  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4232:
+L4037:
     db  "Error: ParseStatement(): ';' expected after 'for ( expression'",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4232 , error )2 "
-    push    L4232
+; Fused expression:    "( L4037 , error )2 "
+    push    L4037
     call    _error
     sub     sp, -2
-L4230:
+L4035:
 ; if
 ; RPN'ized expression: "gotUnary "
 ; Expanded expression: "(@-2) *(2) "
@@ -36951,14 +37104,14 @@ L4230:
     mov     ax, [bp-2]
 ; JumpIfZero
     test    ax, ax
-    jz      L4234
+    je      L4039
 ; {
 ; RPN'ized expression: "( GenExpr ) "
 ; Expanded expression: " GenExpr ()0 "
 ; Fused expression:    "( GenExpr )0 "
     call    _GenExpr
 ; }
-L4234:
+L4039:
 ; RPN'ized expression: "( labelBefore GenNumLabel ) "
 ; Expanded expression: " (@-22) *(2)  GenNumLabel ()2 "
 ; Fused expression:    "( *(2) (@-22) , GenNumLabel )2 "
@@ -36986,20 +37139,20 @@ L4234:
     call    _ParseExpr
     sub     sp, -10
     cmp     ax, 59
-    je      L4236
-; RPN'ized expression: "( L4238 error ) "
-; Expanded expression: " L4238  error ()2 "
+    je      L4041
+; RPN'ized expression: "( L4043 error ) "
+; Expanded expression: " L4043  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4238:
+L4043:
     db  "Error: ParseStatement(): ';' expected after 'for ( expression ; expression'",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4238 , error )2 "
-    push    L4238
+; Fused expression:    "( L4043 , error )2 "
+    push    L4043
     call    _error
     sub     sp, -2
-L4236:
+L4041:
 ; if
 ; RPN'ized expression: "gotUnary "
 ; Expanded expression: "(@-2) *(2) "
@@ -37007,22 +37160,22 @@ L4236:
     mov     ax, [bp-2]
 ; JumpIfZero
     test    ax, ax
-    jz      L4240
+    je      L4045
 ; {
 ; if
 ; RPN'ized expression: "synPtr 0 >= SyntaxStack synPtr + *u 0 + *u 17 == && "
-; Expanded expression: "(@-4) *(2) 0 >= _Bool [sh&&->4244] SyntaxStack (@-4) *(2) 4 * + 0 + *(2) 17 == _Bool &&[4244] "
-; Fused expression:    ">= *(@-4) 0 _Bool [sh&&->4244] * *(@-4) 4 + SyntaxStack ax + ax 0 == *ax 17 _Bool &&[4244] "
+; Expanded expression: "(@-4) *(2) 0 >= _Bool [sh&&->4049] SyntaxStack (@-4) *(2) 4 * + 0 + *(2) 17 == _Bool &&[4049] "
+; Fused expression:    ">= *(@-4) 0 _Bool [sh&&->4049] * *(@-4) 4 + SyntaxStack ax + ax 0 == *ax 17 _Bool &&[4049] "
     mov     ax, [bp-4]
     cmp     ax, 0
     setge   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L4244
+    je      L4049
     mov     ax, [bp-4]
     imul    ax, ax, 4
     mov     cx, ax
@@ -37035,25 +37188,25 @@ L4236:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L4244:
+L4049:
 ; JumpIfZero
     test    ax, ax
-    jz      L4242
-; RPN'ized expression: "( L4245 error ) "
-; Expanded expression: " L4245  error ()2 "
+    je      L4047
+; RPN'ized expression: "( L4050 error ) "
+; Expanded expression: " L4050  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4245:
+L4050:
     db  "Error: ParseStatement(): unexpected 'void' expression in 'for ( ; expression ; )'",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4245 , error )2 "
-    push    L4245
+; Fused expression:    "( L4050 , error )2 "
+    push    L4050
     call    _error
     sub     sp, -2
-L4242:
+L4047:
 ; switch
 ; RPN'ized expression: "stack sp 1 - + *u 0 + *u "
 ; Expanded expression: "stack sp *(2) 1 - 4 * + 0 + *(2) "
@@ -37067,98 +37220,98 @@ L4242:
     add     ax, 0
     mov     bx, ax
     mov     ax, [bx]
-    jmp     L4249
+    jmp     L4054
 ; {
 ; case
 ; RPN'ized expression: "60 "
 ; Expanded expression: "60 "
 ; Expression value: 60
-    jmp     L4250
-L4249:
+    jmp     L4055
+L4054:
     cmp     ax, 60
-    jne     L4251
-L4250:
+    jne     L4056
+L4055:
 ; case
 ; RPN'ized expression: "62 "
 ; Expanded expression: "62 "
 ; Expression value: 62
-    jmp     L4252
-L4251:
+    jmp     L4057
+L4056:
     cmp     ax, 62
-    jne     L4253
-L4252:
+    jne     L4058
+L4057:
 ; case
 ; RPN'ized expression: "8 "
 ; Expanded expression: "8 "
 ; Expression value: 8
-    jmp     L4254
-L4253:
+    jmp     L4059
+L4058:
     cmp     ax, 8
-    jne     L4255
-L4254:
+    jne     L4060
+L4059:
 ; case
 ; RPN'ized expression: "9 "
 ; Expanded expression: "9 "
 ; Expression value: 9
-    jmp     L4256
-L4255:
+    jmp     L4061
+L4060:
     cmp     ax, 9
-    jne     L4257
-L4256:
+    jne     L4062
+L4061:
 ; case
 ; RPN'ized expression: "10 "
 ; Expanded expression: "10 "
 ; Expression value: 10
-    jmp     L4258
-L4257:
+    jmp     L4063
+L4062:
     cmp     ax, 10
-    jne     L4259
-L4258:
+    jne     L4064
+L4063:
 ; case
 ; RPN'ized expression: "11 "
 ; Expanded expression: "11 "
 ; Expression value: 11
-    jmp     L4260
-L4259:
+    jmp     L4065
+L4064:
     cmp     ax, 11
-    jne     L4261
-L4260:
+    jne     L4066
+L4065:
 ; case
 ; RPN'ized expression: "85 "
 ; Expanded expression: "85 "
 ; Expression value: 85
-    jmp     L4262
-L4261:
+    jmp     L4067
+L4066:
     cmp     ax, 85
-    jne     L4263
-L4262:
+    jne     L4068
+L4067:
 ; case
 ; RPN'ized expression: "86 "
 ; Expanded expression: "86 "
 ; Expression value: 86
-    jmp     L4264
-L4263:
+    jmp     L4069
+L4068:
     cmp     ax, 86
-    jne     L4265
-L4264:
+    jne     L4070
+L4069:
 ; case
 ; RPN'ized expression: "87 "
 ; Expanded expression: "87 "
 ; Expression value: 87
-    jmp     L4266
-L4265:
+    jmp     L4071
+L4070:
     cmp     ax, 87
-    jne     L4267
-L4266:
+    jne     L4072
+L4071:
 ; case
 ; RPN'ized expression: "88 "
 ; Expanded expression: "88 "
 ; Expression value: 88
-    jmp     L4268
-L4267:
+    jmp     L4073
+L4072:
     cmp     ax, 88
-    jne     L4269
-L4268:
+    jne     L4074
+L4073:
 ; RPN'ized expression: "( labelAfter , 76 push2 ) "
 ; Expanded expression: " (@-28) *(2)  76  push2 ()4 "
 ; Fused expression:    "( *(2) (@-28) , 76 , push2 )4 "
@@ -37171,9 +37324,9 @@ L4268:
 ; Fused expression:    "( GenExpr )0 "
     call    _GenExpr
 ; break
-    jmp     L4247
+    jmp     L4052
 ; default
-L4248:
+L4053:
 ; RPN'ized expression: "( GenExpr ) "
 ; Expanded expression: " GenExpr ()0 "
 ; Fused expression:    "( GenExpr )0 "
@@ -37185,14 +37338,14 @@ L4248:
     call    _GenJumpIfZero
     sub     sp, -2
 ; break
-    jmp     L4247
+    jmp     L4052
 ; }
-    jmp     L4247
-L4269:
-    jmp     L4248
-L4247:
+    jmp     L4052
+L4074:
+    jmp     L4053
+L4052:
 ; }
-L4240:
+L4045:
 ; RPN'ized expression: "( labelBody GenJumpUncond ) "
 ; Expanded expression: " (@-26) *(2)  GenJumpUncond ()2 "
 ; Fused expression:    "( *(2) (@-26) , GenJumpUncond )2 "
@@ -37226,20 +37379,20 @@ L4240:
     call    _ParseExpr
     sub     sp, -10
     cmp     ax, 41
-    je      L4271
-; RPN'ized expression: "( L4273 error ) "
-; Expanded expression: " L4273  error ()2 "
+    je      L4076
+; RPN'ized expression: "( L4078 error ) "
+; Expanded expression: " L4078  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4273:
+L4078:
     db  "Error: ParseStatement(): ')' expected after 'for ( expression ; expression ; expression'",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4273 , error )2 "
-    push    L4273
+; Fused expression:    "( L4078 , error )2 "
+    push    L4078
     call    _error
     sub     sp, -2
-L4271:
+L4076:
 ; if
 ; RPN'ized expression: "gotUnary "
 ; Expanded expression: "(@-2) *(2) "
@@ -37247,14 +37400,14 @@ L4271:
     mov     ax, [bp-2]
 ; JumpIfZero
     test    ax, ax
-    jz      L4275
+    je      L4080
 ; {
 ; RPN'ized expression: "( GenExpr ) "
 ; Expanded expression: " GenExpr ()0 "
 ; Fused expression:    "( GenExpr )0 "
     call    _GenExpr
 ; }
-L4275:
+L4080:
 ; RPN'ized expression: "( labelBefore GenJumpUncond ) "
 ; Expanded expression: " (@-22) *(2)  GenJumpUncond ()2 "
 ; Fused expression:    "( *(2) (@-22) , GenJumpUncond )2 "
@@ -37328,8 +37481,8 @@ L4275:
     sub     sp, -2
     sub     sp, -8
 ; }
-    jmp     L4223
-L4222:
+    jmp     L4028
+L4027:
 ; else
 ; if
 ; RPN'ized expression: "tok 26 == "
@@ -37337,18 +37490,18 @@ L4222:
 ; Fused expression:    "== *(@4) 26 IF! "
     mov     ax, [bp+4]
     cmp     ax, 26
-    jne     L4277
+    jne     L4082
 ; {
-; RPN'ized expression: "( L4279 printf ) "
-; Expanded expression: " L4279  printf ()2 "
+; RPN'ized expression: "( L4084 printf ) "
+; Expanded expression: " L4084  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4279:
+L4084:
     db  "; break",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4279 , printf )2 "
-    push    L4279
+; Fused expression:    "( L4084 , printf )2 "
+    push    L4084
     call    _printf
     sub     sp, -2
 ; if
@@ -37357,20 +37510,20 @@ SEGMENT _TEXT
 ; Fused expression:    "( GetToken )0 != ax 59 IF! "
     call    _GetToken
     cmp     ax, 59
-    je      L4281
-; RPN'ized expression: "( L4283 error ) "
-; Expanded expression: " L4283  error ()2 "
+    je      L4086
+; RPN'ized expression: "( L4088 error ) "
+; Expanded expression: " L4088  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4283:
+L4088:
     db  "Error: ParseStatement(): ';' expected",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4283 , error )2 "
-    push    L4283
+; Fused expression:    "( L4088 , error )2 "
+    push    L4088
     call    _error
     sub     sp, -2
-L4281:
+L4086:
 ; RPN'ized expression: "tok ( GetToken ) = "
 ; Expanded expression: "(@4)  GetToken ()0 =(2) "
 ; Fused expression:    "( GetToken )0 =(34) *(@4) ax "
@@ -37382,20 +37535,20 @@ L4281:
 ; Fused expression:    "== *(@6) 0 IF! "
     mov     ax, [bp+6]
     cmp     ax, 0
-    jne     L4285
-; RPN'ized expression: "( L4287 error ) "
-; Expanded expression: " L4287  error ()2 "
+    jne     L4090
+; RPN'ized expression: "( L4092 error ) "
+; Expanded expression: " L4092  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4287:
+L4092:
     db  "Error: ParseStatement(): 'break' must be within 'while', 'for' or 'switch' statement",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4287 , error )2 "
-    push    L4287
+; Fused expression:    "( L4092 , error )2 "
+    push    L4092
     call    _error
     sub     sp, -2
-L4285:
+L4090:
 ; if
 ; RPN'ized expression: "BrkCntSwchTarget 2 + *u CurFxnLocalOfs != "
 ; Expanded expression: "(@6) *(2) 4 + *(2) CurFxnLocalOfs *(2) != "
@@ -37405,7 +37558,7 @@ L4285:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, [_CurFxnLocalOfs]
-    je      L4289
+    je      L4094
 ; RPN'ized expression: "( CurFxnLocalOfs BrkCntSwchTarget 2 + *u - GenLocalAlloc ) "
 ; Expanded expression: " CurFxnLocalOfs *(2) (@6) *(2) 4 + *(2) -  GenLocalAlloc ()2 "
 ; Fused expression:    "( + *(@6) 4 - *CurFxnLocalOfs *ax , GenLocalAlloc )2 "
@@ -37418,7 +37571,7 @@ L4285:
     push    ax
     call    _GenLocalAlloc
     sub     sp, -2
-L4289:
+L4094:
 ; RPN'ized expression: "( BrkCntSwchTarget 0 + *u GenJumpUncond ) "
 ; Expanded expression: " (@6) *(2) 0 + *(2)  GenJumpUncond ()2 "
 ; Fused expression:    "( + *(@6) 0 *(2) ax , GenJumpUncond )2 "
@@ -37429,8 +37582,8 @@ L4289:
     call    _GenJumpUncond
     sub     sp, -2
 ; }
-    jmp     L4278
-L4277:
+    jmp     L4083
+L4082:
 ; else
 ; if
 ; RPN'ized expression: "tok 25 == "
@@ -37438,18 +37591,18 @@ L4277:
 ; Fused expression:    "== *(@4) 25 IF! "
     mov     ax, [bp+4]
     cmp     ax, 25
-    jne     L4291
+    jne     L4096
 ; {
-; RPN'ized expression: "( L4293 printf ) "
-; Expanded expression: " L4293  printf ()2 "
+; RPN'ized expression: "( L4098 printf ) "
+; Expanded expression: " L4098  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4293:
+L4098:
     db  "; continue",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4293 , printf )2 "
-    push    L4293
+; Fused expression:    "( L4098 , printf )2 "
+    push    L4098
     call    _printf
     sub     sp, -2
 ; if
@@ -37458,20 +37611,20 @@ SEGMENT _TEXT
 ; Fused expression:    "( GetToken )0 != ax 59 IF! "
     call    _GetToken
     cmp     ax, 59
-    je      L4295
-; RPN'ized expression: "( L4297 error ) "
-; Expanded expression: " L4297  error ()2 "
+    je      L4100
+; RPN'ized expression: "( L4102 error ) "
+; Expanded expression: " L4102  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4297:
+L4102:
     db  "Error: ParseStatement(): ';' expected",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4297 , error )2 "
-    push    L4297
+; Fused expression:    "( L4102 , error )2 "
+    push    L4102
     call    _error
     sub     sp, -2
-L4295:
+L4100:
 ; RPN'ized expression: "tok ( GetToken ) = "
 ; Expanded expression: "(@4)  GetToken ()0 =(2) "
 ; Fused expression:    "( GetToken )0 =(34) *(@4) ax "
@@ -37479,18 +37632,18 @@ L4295:
     mov     [bp+4], ax
 ; if
 ; RPN'ized expression: "BrkCntSwchTarget 0 == BrkCntSwchTarget 1 + *u 0 == || "
-; Expanded expression: "(@6) *(2) 0 == _Bool [sh||->4301] (@6) *(2) 2 + *(2) 0 == _Bool ||[4301] "
-; Fused expression:    "== *(@6) 0 _Bool [sh||->4301] + *(@6) 2 == *ax 0 _Bool ||[4301] "
+; Expanded expression: "(@6) *(2) 0 == _Bool [sh||->4106] (@6) *(2) 2 + *(2) 0 == _Bool ||[4106] "
+; Fused expression:    "== *(@6) 0 _Bool [sh||->4106] + *(@6) 2 == *ax 0 _Bool ||[4106] "
     mov     ax, [bp+6]
     cmp     ax, 0
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L4301
+    jne     L4106
     mov     ax, [bp+6]
     add     ax, 2
     mov     bx, ax
@@ -37499,25 +37652,25 @@ L4295:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L4301:
+L4106:
 ; JumpIfZero
     test    ax, ax
-    jz      L4299
-; RPN'ized expression: "( L4302 error ) "
-; Expanded expression: " L4302  error ()2 "
+    je      L4104
+; RPN'ized expression: "( L4107 error ) "
+; Expanded expression: " L4107  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4302:
+L4107:
     db  "Error: ParseStatement(): 'continue' must be within 'while' or 'for' statement",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4302 , error )2 "
-    push    L4302
+; Fused expression:    "( L4107 , error )2 "
+    push    L4107
     call    _error
     sub     sp, -2
-L4299:
+L4104:
 ; if
 ; RPN'ized expression: "BrkCntSwchTarget 3 + *u CurFxnLocalOfs != "
 ; Expanded expression: "(@6) *(2) 6 + *(2) CurFxnLocalOfs *(2) != "
@@ -37527,7 +37680,7 @@ L4299:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, [_CurFxnLocalOfs]
-    je      L4304
+    je      L4109
 ; RPN'ized expression: "( CurFxnLocalOfs BrkCntSwchTarget 3 + *u - GenLocalAlloc ) "
 ; Expanded expression: " CurFxnLocalOfs *(2) (@6) *(2) 6 + *(2) -  GenLocalAlloc ()2 "
 ; Fused expression:    "( + *(@6) 6 - *CurFxnLocalOfs *ax , GenLocalAlloc )2 "
@@ -37540,7 +37693,7 @@ L4299:
     push    ax
     call    _GenLocalAlloc
     sub     sp, -2
-L4304:
+L4109:
 ; RPN'ized expression: "( BrkCntSwchTarget 1 + *u GenJumpUncond ) "
 ; Expanded expression: " (@6) *(2) 2 + *(2)  GenJumpUncond ()2 "
 ; Fused expression:    "( + *(@6) 2 *(2) ax , GenJumpUncond )2 "
@@ -37551,8 +37704,8 @@ L4304:
     call    _GenJumpUncond
     sub     sp, -2
 ; }
-    jmp     L4292
-L4291:
+    jmp     L4097
+L4096:
 ; else
 ; if
 ; RPN'ized expression: "tok 117 == "
@@ -37560,18 +37713,18 @@ L4291:
 ; Fused expression:    "== *(@4) 117 IF! "
     mov     ax, [bp+4]
     cmp     ax, 117
-    jne     L4306
+    jne     L4111
 ; {
-; RPN'ized expression: "( L4308 printf ) "
-; Expanded expression: " L4308  printf ()2 "
+; RPN'ized expression: "( L4113 printf ) "
+; Expanded expression: " L4113  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4308:
+L4113:
     db  "; switch",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4308 , printf )2 "
-    push    L4308
+; Fused expression:    "( L4113 , printf )2 "
+    push    L4113
     call    _printf
     sub     sp, -2
 ; RPN'ized expression: "tok ( GetToken ) = "
@@ -37585,20 +37738,20 @@ SEGMENT _TEXT
 ; Fused expression:    "!= *(@4) 40 IF! "
     mov     ax, [bp+4]
     cmp     ax, 40
-    je      L4310
-; RPN'ized expression: "( L4312 error ) "
-; Expanded expression: " L4312  error ()2 "
+    je      L4115
+; RPN'ized expression: "( L4117 error ) "
+; Expanded expression: " L4117  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4312:
+L4117:
     db  "Error: ParseStatement(): '(' expected after 'switch'",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4312 , error )2 "
-    push    L4312
+; Fused expression:    "( L4117 , error )2 "
+    push    L4117
     call    _error
     sub     sp, -2
-L4310:
+L4115:
 ; RPN'ized expression: "tok ( GetToken ) = "
 ; Expanded expression: "(@4)  GetToken ()0 =(2) "
 ; Fused expression:    "( GetToken )0 =(34) *(@4) ax "
@@ -37620,54 +37773,54 @@ L4310:
     call    _ParseExpr
     sub     sp, -10
     cmp     ax, 41
-    je      L4314
-; RPN'ized expression: "( L4316 error ) "
-; Expanded expression: " L4316  error ()2 "
+    je      L4119
+; RPN'ized expression: "( L4121 error ) "
+; Expanded expression: " L4121  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4316:
+L4121:
     db  "Error: ParseStatement(): ')' expected after 'switch ( expression'",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4316 , error )2 "
-    push    L4316
+; Fused expression:    "( L4121 , error )2 "
+    push    L4121
     call    _error
     sub     sp, -2
-L4314:
+L4119:
 ; if
 ; RPN'ized expression: "gotUnary 0 == "
 ; Expanded expression: "(@-2) *(2) 0 == "
 ; Fused expression:    "== *(@-2) 0 IF! "
     mov     ax, [bp-2]
     cmp     ax, 0
-    jne     L4318
-; RPN'ized expression: "( L4320 error ) "
-; Expanded expression: " L4320  error ()2 "
+    jne     L4123
+; RPN'ized expression: "( L4125 error ) "
+; Expanded expression: " L4125  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4320:
+L4125:
     db  "Error: ParseStatement(): expression expected in 'switch ( expression )'",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4320 , error )2 "
-    push    L4320
+; Fused expression:    "( L4125 , error )2 "
+    push    L4125
     call    _error
     sub     sp, -2
-L4318:
+L4123:
 ; if
 ; RPN'ized expression: "synPtr 0 >= SyntaxStack synPtr + *u 0 + *u 17 == && "
-; Expanded expression: "(@-4) *(2) 0 >= _Bool [sh&&->4324] SyntaxStack (@-4) *(2) 4 * + 0 + *(2) 17 == _Bool &&[4324] "
-; Fused expression:    ">= *(@-4) 0 _Bool [sh&&->4324] * *(@-4) 4 + SyntaxStack ax + ax 0 == *ax 17 _Bool &&[4324] "
+; Expanded expression: "(@-4) *(2) 0 >= _Bool [sh&&->4129] SyntaxStack (@-4) *(2) 4 * + 0 + *(2) 17 == _Bool &&[4129] "
+; Fused expression:    ">= *(@-4) 0 _Bool [sh&&->4129] * *(@-4) 4 + SyntaxStack ax + ax 0 == *ax 17 _Bool &&[4129] "
     mov     ax, [bp-4]
     cmp     ax, 0
     setge   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L4324
+    je      L4129
     mov     ax, [bp-4]
     imul    ax, ax, 4
     mov     cx, ax
@@ -37680,25 +37833,25 @@ L4318:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L4324:
+L4129:
 ; JumpIfZero
     test    ax, ax
-    jz      L4322
-; RPN'ized expression: "( L4325 error ) "
-; Expanded expression: " L4325  error ()2 "
+    je      L4127
+; RPN'ized expression: "( L4130 error ) "
+; Expanded expression: " L4130  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4325:
+L4130:
     db  "Error: ParseStatement(): unexpected 'void' expression in 'switch ( expression )'",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4325 , error )2 "
-    push    L4325
+; Fused expression:    "( L4130 , error )2 "
+    push    L4130
     call    _error
     sub     sp, -2
-L4322:
+L4127:
 ; RPN'ized expression: "( GenExpr ) "
 ; Expanded expression: " GenExpr ()0 "
 ; Fused expression:    "( GenExpr )0 "
@@ -37714,20 +37867,20 @@ L4322:
 ; Fused expression:    "!= *(@4) 123 IF! "
     mov     ax, [bp+4]
     cmp     ax, 123
-    je      L4327
-; RPN'ized expression: "( L4329 error ) "
-; Expanded expression: " L4329  error ()2 "
+    je      L4132
+; RPN'ized expression: "( L4134 error ) "
+; Expanded expression: " L4134  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4329:
+L4134:
     db  "Error: ParseStatement(): '{' expected after 'switch ( expression )'",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4329 , error )2 "
-    push    L4329
+; Fused expression:    "( L4134 , error )2 "
+    push    L4134
     call    _error
     sub     sp, -2
-L4327:
+L4132:
 ; RPN'ized expression: "brkCntSwchTarget 0 + *u LabelCnt ++p = "
 ; Expanded expression: "(@-20) 0 + LabelCnt ++p(2) =(2) "
 ; Fused expression:    "+ (@-20) 0 push-ax ++p(2) *LabelCnt =(34) **sp ax "
@@ -37768,7 +37921,7 @@ L4327:
 ; Fused expression:    "!= *(@6) 0 IF! "
     mov     ax, [bp+6]
     cmp     ax, 0
-    je      L4331
+    je      L4136
 ; {
 ; RPN'ized expression: "brkCntSwchTarget 1 + *u BrkCntSwchTarget 1 + *u = "
 ; Expanded expression: "(@-20) 2 + (@6) *(2) 2 + *(2) =(2) "
@@ -37795,7 +37948,7 @@ L4327:
     pop     bx
     mov     [bx], ax
 ; }
-L4331:
+L4136:
 ; RPN'ized expression: "brkCntSwchTarget 4 + *u LabelCnt ++p = "
 ; Expanded expression: "(@-20) 8 + LabelCnt ++p(2) =(2) "
 ; Fused expression:    "+ (@-20) 8 push-ax ++p(2) *LabelCnt =(34) **sp ax "
@@ -37864,7 +38017,7 @@ L4331:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 0
-    jge     L4333
+    jge     L4138
 ; RPN'ized expression: "( brkCntSwchTarget 4 + *u -u GenJumpUncond ) "
 ; Expanded expression: " (@-20) 8 + *(2) -u  GenJumpUncond ()2 "
 ; Fused expression:    "( + (@-20) 8 *(2) ax -u , GenJumpUncond )2 "
@@ -37876,7 +38029,7 @@ L4331:
     push    ax
     call    _GenJumpUncond
     sub     sp, -2
-L4333:
+L4138:
 ; RPN'ized expression: "( brkCntSwchTarget 0 + *u GenNumLabel ) "
 ; Expanded expression: " (@-20) 0 + *(2)  GenNumLabel ()2 "
 ; Fused expression:    "( + (@-20) 0 *(2) ax , GenNumLabel )2 "
@@ -37887,8 +38040,8 @@ L4333:
     call    _GenNumLabel
     sub     sp, -2
 ; }
-    jmp     L4307
-L4306:
+    jmp     L4112
+L4111:
 ; else
 ; if
 ; RPN'ized expression: "tok 118 == "
@@ -37896,20 +38049,20 @@ L4306:
 ; Fused expression:    "== *(@4) 118 IF! "
     mov     ax, [bp+4]
     cmp     ax, 118
-    jne     L4335
+    jne     L4140
 ; {
 ; loc         lnext : (@-22): int
     sub     sp, 2
-; RPN'ized expression: "( L4337 printf ) "
-; Expanded expression: " L4337  printf ()2 "
+; RPN'ized expression: "( L4142 printf ) "
+; Expanded expression: " L4142  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4337:
+L4142:
     db  "; case",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4337 , printf )2 "
-    push    L4337
+; Fused expression:    "( L4142 , printf )2 "
+    push    L4142
     call    _printf
     sub     sp, -2
 ; if
@@ -37918,20 +38071,20 @@ SEGMENT _TEXT
 ; Fused expression:    "== *(@8) 0 IF! "
     mov     ax, [bp+8]
     cmp     ax, 0
-    jne     L4339
-; RPN'ized expression: "( L4341 error ) "
-; Expanded expression: " L4341  error ()2 "
+    jne     L4144
+; RPN'ized expression: "( L4146 error ) "
+; Expanded expression: " L4146  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4341:
+L4146:
     db  "Error: ParseStatement(): 'case' must be within 'switch' statement",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4341 , error )2 "
-    push    L4341
+; Fused expression:    "( L4146 , error )2 "
+    push    L4146
     call    _error
     sub     sp, -2
-L4339:
+L4144:
 ; RPN'ized expression: "tok ( GetToken ) = "
 ; Expanded expression: "(@4)  GetToken ()0 =(2) "
 ; Fused expression:    "( GetToken )0 =(34) *(@4) ax "
@@ -37953,58 +38106,58 @@ L4339:
     call    _ParseExpr
     sub     sp, -10
     cmp     ax, 58
-    je      L4343
-; RPN'ized expression: "( L4345 error ) "
-; Expanded expression: " L4345  error ()2 "
+    je      L4148
+; RPN'ized expression: "( L4150 error ) "
+; Expanded expression: " L4150  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4345:
+L4150:
     db  "Error: ParseStatement(): ':' expected after 'case expression'",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4345 , error )2 "
-    push    L4345
+; Fused expression:    "( L4150 , error )2 "
+    push    L4150
     call    _error
     sub     sp, -2
-L4343:
+L4148:
 ; if
 ; RPN'ized expression: "gotUnary 0 == constExpr 0 == || synPtr 0 >= SyntaxStack synPtr + *u 0 + *u 17 == && || "
-; Expanded expression: "(@-2) *(2) 0 == _Bool [sh||->4351] (@-6) *(2) 0 == _Bool ||[4351] _Bool [sh||->4349] (@-4) *(2) 0 >= _Bool [sh&&->4350] SyntaxStack (@-4) *(2) 4 * + 0 + *(2) 17 == _Bool &&[4350] _Bool ||[4349] "
-; Fused expression:    "== *(@-2) 0 _Bool [sh||->4351] == *(@-6) 0 _Bool ||[4351] _Bool [sh||->4349] >= *(@-4) 0 _Bool [sh&&->4350] * *(@-4) 4 + SyntaxStack ax + ax 0 == *ax 17 _Bool &&[4350] _Bool ||[4349] "
+; Expanded expression: "(@-2) *(2) 0 == _Bool [sh||->4156] (@-6) *(2) 0 == _Bool ||[4156] _Bool [sh||->4154] (@-4) *(2) 0 >= _Bool [sh&&->4155] SyntaxStack (@-4) *(2) 4 * + 0 + *(2) 17 == _Bool &&[4155] _Bool ||[4154] "
+; Fused expression:    "== *(@-2) 0 _Bool [sh||->4156] == *(@-6) 0 _Bool ||[4156] _Bool [sh||->4154] >= *(@-4) 0 _Bool [sh&&->4155] * *(@-4) 4 + SyntaxStack ax + ax 0 == *ax 17 _Bool &&[4155] _Bool ||[4154] "
     mov     ax, [bp-2]
     cmp     ax, 0
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L4351
+    jne     L4156
     mov     ax, [bp-6]
     cmp     ax, 0
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L4351:
+L4156:
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L4349
+    jne     L4154
     mov     ax, [bp-4]
     cmp     ax, 0
     setge   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L4350
+    je      L4155
     mov     ax, [bp-4]
     imul    ax, ax, 4
     mov     cx, ax
@@ -38017,29 +38170,29 @@ L4351:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L4350:
+L4155:
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L4349:
+L4154:
 ; JumpIfZero
     test    ax, ax
-    jz      L4347
-; RPN'ized expression: "( L4352 error ) "
-; Expanded expression: " L4352  error ()2 "
+    je      L4152
+; RPN'ized expression: "( L4157 error ) "
+; Expanded expression: " L4157  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4352:
+L4157:
     db  "Error: ParseStatement(): constant integer expression expected in 'case expression :'",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4352 , error )2 "
-    push    L4352
+; Fused expression:    "( L4157 , error )2 "
+    push    L4157
     call    _error
     sub     sp, -2
-L4347:
+L4152:
 ; RPN'ized expression: "tok ( GetToken ) = "
 ; Expanded expression: "(@4)  GetToken ()0 =(2) "
 ; Fused expression:    "( GetToken )0 =(34) *(@4) ax "
@@ -38101,8 +38254,8 @@ L4347:
     mov     [bx], ax
     sub     sp, -2
 ; }
-    jmp     L4336
-L4335:
+    jmp     L4141
+L4140:
 ; else
 ; if
 ; RPN'ized expression: "tok 119 == "
@@ -38110,18 +38263,18 @@ L4335:
 ; Fused expression:    "== *(@4) 119 IF! "
     mov     ax, [bp+4]
     cmp     ax, 119
-    jne     L4354
+    jne     L4159
 ; {
-; RPN'ized expression: "( L4356 printf ) "
-; Expanded expression: " L4356  printf ()2 "
+; RPN'ized expression: "( L4161 printf ) "
+; Expanded expression: " L4161  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4356:
+L4161:
     db  "; default",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4356 , printf )2 "
-    push    L4356
+; Fused expression:    "( L4161 , printf )2 "
+    push    L4161
     call    _printf
     sub     sp, -2
 ; if
@@ -38130,20 +38283,20 @@ SEGMENT _TEXT
 ; Fused expression:    "== *(@8) 0 IF! "
     mov     ax, [bp+8]
     cmp     ax, 0
-    jne     L4358
-; RPN'ized expression: "( L4360 error ) "
-; Expanded expression: " L4360  error ()2 "
+    jne     L4163
+; RPN'ized expression: "( L4165 error ) "
+; Expanded expression: " L4165  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4360:
+L4165:
     db  "Error: ParseStatement(): 'default' must be within 'switch' statement",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4360 , error )2 "
-    push    L4360
+; Fused expression:    "( L4165 , error )2 "
+    push    L4165
     call    _error
     sub     sp, -2
-L4358:
+L4163:
 ; RPN'ized expression: "tok ( GetToken ) = "
 ; Expanded expression: "(@4)  GetToken ()0 =(2) "
 ; Fused expression:    "( GetToken )0 =(34) *(@4) ax "
@@ -38155,20 +38308,20 @@ L4358:
 ; Fused expression:    "!= *(@4) 58 IF! "
     mov     ax, [bp+4]
     cmp     ax, 58
-    je      L4362
-; RPN'ized expression: "( L4364 error ) "
-; Expanded expression: " L4364  error ()2 "
+    je      L4167
+; RPN'ized expression: "( L4169 error ) "
+; Expanded expression: " L4169  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4364:
+L4169:
     db  "Error: ParseStatement(): ':' expected after 'default'",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4364 , error )2 "
-    push    L4364
+; Fused expression:    "( L4169 , error )2 "
+    push    L4169
     call    _error
     sub     sp, -2
-L4362:
+L4167:
 ; if
 ; RPN'ized expression: "BrkCntSwchTarget 4 + *u 0 < "
 ; Expanded expression: "(@6) *(2) 8 + *(2) 0 < "
@@ -38178,20 +38331,20 @@ L4362:
     mov     bx, ax
     mov     ax, [bx]
     cmp     ax, 0
-    jge     L4366
-; RPN'ized expression: "( L4368 error ) "
-; Expanded expression: " L4368  error ()2 "
+    jge     L4171
+; RPN'ized expression: "( L4173 error ) "
+; Expanded expression: " L4173  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4368:
+L4173:
     db  "Error: ParseStatement(): only one 'default' allowed in 'switch'",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4368 , error )2 "
-    push    L4368
+; Fused expression:    "( L4173 , error )2 "
+    push    L4173
     call    _error
     sub     sp, -2
-L4366:
+L4171:
 ; RPN'ized expression: "tok ( GetToken ) = "
 ; Expanded expression: "(@4)  GetToken ()0 =(2) "
 ; Fused expression:    "( GetToken )0 =(34) *(@4) ax "
@@ -38216,8 +38369,8 @@ L4366:
     imul    ax, ax, -1
     mov     [bx], ax
 ; }
-    jmp     L4355
-L4354:
+    jmp     L4160
+L4159:
 ; else
 ; {
 ; if
@@ -38236,20 +38389,20 @@ L4354:
     call    _ParseExpr
     sub     sp, -10
     cmp     ax, 59
-    je      L4370
-; RPN'ized expression: "( L4372 error ) "
-; Expanded expression: " L4372  error ()2 "
+    je      L4175
+; RPN'ized expression: "( L4177 error ) "
+; Expanded expression: " L4177  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4372:
+L4177:
     db  "Error: ParseStatement(): ';' expected",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4372 , error )2 "
-    push    L4372
+; Fused expression:    "( L4177 , error )2 "
+    push    L4177
     call    _error
     sub     sp, -2
-L4370:
+L4175:
 ; if
 ; RPN'ized expression: "gotUnary "
 ; Expanded expression: "(@-2) *(2) "
@@ -38257,39 +38410,39 @@ L4370:
     mov     ax, [bp-2]
 ; JumpIfZero
     test    ax, ax
-    jz      L4374
+    je      L4179
 ; {
 ; RPN'ized expression: "( GenExpr ) "
 ; Expanded expression: " GenExpr ()0 "
 ; Fused expression:    "( GenExpr )0 "
     call    _GenExpr
 ; }
-L4374:
+L4179:
 ; RPN'ized expression: "tok ( GetToken ) = "
 ; Expanded expression: "(@4)  GetToken ()0 =(2) "
 ; Fused expression:    "( GetToken )0 =(34) *(@4) ax "
     call    _GetToken
     mov     [bp+4], ax
 ; }
-L4355:
-L4336:
-L4307:
-L4292:
-L4278:
-L4223:
-L4174:
-L4119:
-L4074:
-L4053:
-L4041:
-L4039:
+L4160:
+L4141:
+L4112:
+L4097:
+L4083:
+L4028:
+L3979:
+L3924:
+L3879:
+L3858:
+L3846:
+L3844:
 ; return
 ; RPN'ized expression: "tok "
 ; Expanded expression: "(@4) *(2) "
 ; Fused expression:    "*(2) (@4) "
     mov     ax, [bp+4]
-    jmp     L4037
-L4037:
+    jmp     L3842
+L3842:
     leave
     ret
 ; SEGMENT _TEXT
@@ -38316,11 +38469,11 @@ _ParseBlock:
     call    _GetToken
     mov     [bp-2], ax
 ; for
-L4377:
-    jmp     L4379
-L4378:
-    jmp     L4377
-L4379:
+L4182:
+    jmp     L4184
+L4183:
+    jmp     L4182
+L4184:
 ; {
 ; if
 ; RPN'ized expression: "tok 0 == "
@@ -38328,46 +38481,46 @@ L4379:
 ; Fused expression:    "== *(@-2) 0 IF! "
     mov     ax, [bp-2]
     cmp     ax, 0
-    jne     L4381
+    jne     L4186
 ; return
 ; RPN'ized expression: "tok "
 ; Expanded expression: "(@-2) *(2) "
 ; Fused expression:    "*(2) (@-2) "
     mov     ax, [bp-2]
-    jmp     L4376
-L4381:
+    jmp     L4181
+L4186:
 ; if
 ; RPN'ized expression: "tok 125 == ParseLevel 0 > && "
-; Expanded expression: "(@-2) *(2) 125 == _Bool [sh&&->4385] ParseLevel *(2) 0 > _Bool &&[4385] "
-; Fused expression:    "== *(@-2) 125 _Bool [sh&&->4385] > *ParseLevel 0 _Bool &&[4385] "
+; Expanded expression: "(@-2) *(2) 125 == _Bool [sh&&->4190] ParseLevel *(2) 0 > _Bool &&[4190] "
+; Fused expression:    "== *(@-2) 125 _Bool [sh&&->4190] > *ParseLevel 0 _Bool &&[4190] "
     mov     ax, [bp-2]
     cmp     ax, 125
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L4385
+    je      L4190
     mov     ax, [_ParseLevel]
     cmp     ax, 0
     setg    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
-L4385:
+L4190:
 ; JumpIfZero
     test    ax, ax
-    jz      L4383
+    je      L4188
 ; return
 ; RPN'ized expression: "tok "
 ; Expanded expression: "(@-2) *(2) "
 ; Fused expression:    "*(2) (@-2) "
     mov     ax, [bp-2]
-    jmp     L4376
-L4383:
+    jmp     L4181
+L4188:
 ; if
 ; RPN'ized expression: "( 0 , tok TokenStartsDeclaration ) "
 ; Expanded expression: " 0  (@-2) *(2)  TokenStartsDeclaration ()4 "
@@ -38378,7 +38531,7 @@ L4383:
     sub     sp, -4
 ; JumpIfZero
     test    ax, ax
-    jz      L4386
+    je      L4191
 ; {
 ; if
 ; RPN'ized expression: "switchBody "
@@ -38387,20 +38540,20 @@ L4383:
     mov     ax, [bp+6]
 ; JumpIfZero
     test    ax, ax
-    jz      L4388
-; RPN'ized expression: "( L4390 error ) "
-; Expanded expression: " L4390  error ()2 "
+    je      L4193
+; RPN'ized expression: "( L4195 error ) "
+; Expanded expression: " L4195  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4390:
+L4195:
     db  "Error: ParseBlock(): Declarations aren't supported in 'switch' body",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4390 , error )2 "
-    push    L4390
+; Fused expression:    "( L4195 , error )2 "
+    push    L4195
     call    _error
     sub     sp, -2
-L4388:
+L4193:
 ; RPN'ized expression: "tok ( tok ParseDecl ) = "
 ; Expanded expression: "(@-2)  (@-2) *(2)  ParseDecl ()2 =(2) "
 ; Fused expression:    "( *(2) (@-2) , ParseDecl )2 =(34) *(@-2) ax "
@@ -38409,8 +38562,8 @@ L4388:
     sub     sp, -2
     mov     [bp-2], ax
 ; }
-    jmp     L4387
-L4386:
+    jmp     L4192
+L4191:
 ; else
 ; if
 ; RPN'ized expression: "ParseLevel 0 > "
@@ -38418,7 +38571,7 @@ L4386:
 ; Fused expression:    "> *ParseLevel 0 IF! "
     mov     ax, [_ParseLevel]
     cmp     ax, 0
-    jle     L4392
+    jle     L4197
 ; {
 ; RPN'ized expression: "tok ( switchBody , BrkCntSwchTarget , tok ParseStatement ) = "
 ; Expanded expression: "(@-2)  (@6) *(2)  (@4) *(2)  (@-2) *(2)  ParseStatement ()6 =(2) "
@@ -38430,31 +38583,31 @@ L4386:
     sub     sp, -6
     mov     [bp-2], ax
 ; }
-    jmp     L4393
-L4392:
+    jmp     L4198
+L4197:
 ; else
-; RPN'ized expression: "( ( tok GetTokenName ) , L4394 error ) "
-; Expanded expression: "  (@-2) *(2)  GetTokenName ()2  L4394  error ()4 "
+; RPN'ized expression: "( ( tok GetTokenName ) , L4199 error ) "
+; Expanded expression: "  (@-2) *(2)  GetTokenName ()2  L4199  error ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4394:
+L4199:
     db  "Error: ParseBlock(): Unexpected token %s",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( ( *(2) (@-2) , GetTokenName )2 , L4394 , error )4 "
+; Fused expression:    "( ( *(2) (@-2) , GetTokenName )2 , L4199 , error )4 "
     push    word [bp-2]
     call    _GetTokenName
     sub     sp, -2
     push    ax
-    push    L4394
+    push    L4199
     call    _error
     sub     sp, -4
-L4393:
-L4387:
+L4198:
+L4192:
 ; }
-    jmp     L4378
-L4380:
-L4376:
+    jmp     L4183
+L4185:
+L4181:
     leave
     ret
 ; SEGMENT _TEXT
@@ -38475,33 +38628,33 @@ _main:
 ; Fused expression:    "!= *(@4) 2 IF! "
     mov     ax, [bp+4]
     cmp     ax, 2
-    je      L4397
+    je      L4202
 ; {
-; RPN'ized expression: "CurFileName L4399 = "
-; Expanded expression: "CurFileName L4399 =(2) "
+; RPN'ized expression: "CurFileName L4204 = "
+; Expanded expression: "CurFileName L4204 =(2) "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4399:
+L4204:
     db  0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "=(34) *CurFileName L4399 "
-    mov     ax, L4399
+; Fused expression:    "=(34) *CurFileName L4204 "
+    mov     ax, L4204
     mov     [_CurFileName], ax
-; RPN'ized expression: "( L4401 error ) "
-; Expanded expression: " L4401  error ()2 "
+; RPN'ized expression: "( L4206 error ) "
+; Expanded expression: " L4206  error ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4401:
+L4206:
     db  "Error: Wrong command line parameters, just a filename expected",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L4401 , error )2 "
-    push    L4401
+; Fused expression:    "( L4206 , error )2 "
+    push    L4206
     call    _error
     sub     sp, -2
 ; }
-L4397:
+L4202:
 ; RPN'ized expression: "CurFileName argv 1 + *u = "
 ; Expanded expression: "CurFileName (@6) *(2) 2 + *(2) =(2) "
 ; Fused expression:    "+ *(@6) 2 =(34) *CurFileName *ax "
@@ -38566,81 +38719,81 @@ L4397:
 ; Fused expression:    "== *OutputFormat 1 IF! "
     mov     ax, [_OutputFormat]
     cmp     ax, 1
-    jne     L4403
+    jne     L4208
 ; {
-; RPN'ized expression: "FileHeader L4405 = "
-; Expanded expression: "FileHeader L4405 =(2) "
+; RPN'ized expression: "FileHeader L4210 = "
+; Expanded expression: "FileHeader L4210 =(2) "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4405:
+L4210:
     db  "SEGMENT _TEXT PUBLIC CLASS=CODE USE16",10,"SEGMENT _DATA PUBLIC CLASS=DATA",10,10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "=(34) *FileHeader L4405 "
-    mov     ax, L4405
+; Fused expression:    "=(34) *FileHeader L4210 "
+    mov     ax, L4210
     mov     [_FileHeader], ax
-; RPN'ized expression: "CodeHeader L4407 = "
-; Expanded expression: "CodeHeader L4407 =(2) "
+; RPN'ized expression: "CodeHeader L4212 = "
+; Expanded expression: "CodeHeader L4212 =(2) "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4407:
+L4212:
     db  "SEGMENT _TEXT",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "=(34) *CodeHeader L4407 "
-    mov     ax, L4407
+; Fused expression:    "=(34) *CodeHeader L4212 "
+    mov     ax, L4212
     mov     [_CodeHeader], ax
-; RPN'ized expression: "CodeFooter L4409 = "
-; Expanded expression: "CodeFooter L4409 =(2) "
+; RPN'ized expression: "CodeFooter L4214 = "
+; Expanded expression: "CodeFooter L4214 =(2) "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4409:
+L4214:
     db  "; SEGMENT _TEXT",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "=(34) *CodeFooter L4409 "
-    mov     ax, L4409
+; Fused expression:    "=(34) *CodeFooter L4214 "
+    mov     ax, L4214
     mov     [_CodeFooter], ax
-; RPN'ized expression: "DataHeader L4411 = "
-; Expanded expression: "DataHeader L4411 =(2) "
+; RPN'ized expression: "DataHeader L4216 = "
+; Expanded expression: "DataHeader L4216 =(2) "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4411:
+L4216:
     db  "SEGMENT _DATA",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "=(34) *DataHeader L4411 "
-    mov     ax, L4411
+; Fused expression:    "=(34) *DataHeader L4216 "
+    mov     ax, L4216
     mov     [_DataHeader], ax
-; RPN'ized expression: "DataFooter L4413 = "
-; Expanded expression: "DataFooter L4413 =(2) "
+; RPN'ized expression: "DataFooter L4218 = "
+; Expanded expression: "DataFooter L4218 =(2) "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4413:
+L4218:
     db  "; SEGMENT _DATA",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "=(34) *DataFooter L4413 "
-    mov     ax, L4413
+; Fused expression:    "=(34) *DataFooter L4218 "
+    mov     ax, L4218
     mov     [_DataFooter], ax
 ; }
-    jmp     L4404
-L4403:
+    jmp     L4209
+L4208:
 ; else
 ; {
-; RPN'ized expression: "FileHeader L4415 = "
-; Expanded expression: "FileHeader L4415 =(2) "
+; RPN'ized expression: "FileHeader L4220 = "
+; Expanded expression: "FileHeader L4220 =(2) "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L4415:
+L4220:
     db  "BITS 16",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "=(34) *FileHeader L4415 "
-    mov     ax, L4415
+; Fused expression:    "=(34) *FileHeader L4220 "
+    mov     ax, L4220
     mov     [_FileHeader], ax
 ; }
-L4404:
+L4209:
 ; RPN'ized expression: "( ShiftChar ) "
 ; Expanded expression: " ShiftChar ()0 "
 ; Fused expression:    "( ShiftChar )0 "
@@ -38676,14 +38829,14 @@ L4404:
 ; Expression value: 0
 ; Fused expression:    "0 "
     mov     ax, 0
-    jmp     L4396
-L4396:
+    jmp     L4201
+L4201:
     leave
     ret
 ; SEGMENT _TEXT
 
 ; Syntax/declaration table/stack:
-; Bytes used: 11680/16384
+; Bytes used: 12584/16384
 
 
 ; Macro table:
@@ -38793,6 +38946,64 @@ L4396:
 ; Macro SymLocalVar = `4`
 ; Macro SymLocalArr = `5`
 ; Macro OPERATOR_STACK_SIZE = `100`
+; Macro X86InstrMov = `0x00`
+; Macro X86InstrMovSx = `0x01`
+; Macro X86InstrMovZx = `0x02`
+; Macro X86InstrXchg = `0x03`
+; Macro X86InstrLea = `0x04`
+; Macro X86InstrPush = `0x05`
+; Macro X86InstrPop = `0x06`
+; Macro X86InstrInc = `0x07`
+; Macro X86InstrDec = `0x08`
+; Macro X86InstrAdd = `0x09`
+; Macro X86InstrSub = `0x0A`
+; Macro X86InstrAnd = `0x0B`
+; Macro X86InstrXor = `0x0C`
+; Macro X86InstrOr = `0x0D`
+; Macro X86InstrCmp = `0x0E`
+; Macro X86InstrTest = `0x0F`
+; Macro X86InstrMul = `0x10`
+; Macro X86InstrImul = `0x11`
+; Macro X86InstrIdiv = `0x12`
+; Macro X86InstrShl = `0x13`
+; Macro X86InstrSar = `0x14`
+; Macro X86InstrNeg = `0x15`
+; Macro X86InstrNot = `0x16`
+; Macro X86InstrCbw = `0x17`
+; Macro X86InstrCwd = `0x18`
+; Macro X86InstrSetCc = `0x19`
+; Macro X86InstrJcc = `0x1A`
+; Macro X86InstrJNotCc = `0x1B`
+; Macro X86InstrLeave = `0x1C`
+; Macro X86InstrCall = `0x1D`
+; Macro X86InstrRet = `0x1E`
+; Macro X86InstrJmp = `0x1F`
+; Macro X86OpRegAByte = `0x00`
+; Macro X86OpRegAByteHigh = `0x01`
+; Macro X86OpRegCByte = `0x02`
+; Macro X86OpRegAWord = `0x03`
+; Macro X86OpRegBWord = `0x04`
+; Macro X86OpRegCWord = `0x05`
+; Macro X86OpRegDWord = `0x06`
+; Macro X86OpRegBpWord = `0x07`
+; Macro X86OpRegSpWord = `0x08`
+; Macro X86OpRegAByteOrWord = `0x09`
+; Macro X86OpRegCByteOrWord = `0x0A`
+; Macro X86OpConst = `0x0B`
+; Macro X86OpLabel = `0x0C`
+; Macro X86OpNumLabel = `0x0D`
+; Macro X86OpIndLabel = `0x0E`
+; Macro X86OpIndLabelExplicitByte = `0x0F`
+; Macro X86OpIndLabelExplicitWord = `0x10`
+; Macro X86OpIndLabelExplicitByteOrWord = `0x11`
+; Macro X86OpIndLocal = `0x12`
+; Macro X86OpIndLocalExplicitByte = `0x13`
+; Macro X86OpIndLocalExplicitWord = `0x14`
+; Macro X86OpIndLocalExplicitByteOrWord = `0x15`
+; Macro X86OpIndRegB = `0x16`
+; Macro X86OpIndRegBExplicitByte = `0x17`
+; Macro X86OpIndRegBExplicitWord = `0x18`
+; Macro X86OpIndRegBExplicitByteOrWord = `0x19`
 ; Macro tokOpNum = `0x100`
 ; Macro tokOpIdent = `0x101`
 ; Macro tokOpLocalOfs = `0x102`
@@ -38803,7 +39014,7 @@ L4396:
 ; Macro tokOpStack = `0x107`
 ; Macro tokOpIndStack = `0x108`
 ; Macro tokPushAcc = `0x200`
-; Bytes used: 1790/4096
+; Bytes used: 3036/4096
 
 
 ; Identifier table:
@@ -38962,12 +39173,37 @@ L4396:
 ; Ident SkipNewLines
 ; Ident GetIdent
 ; Ident GenPrintLabel
-; Ident GenExtendAlAx
+; Ident GenPrintNumLabel
+; Ident GenPrintInstr
+; Ident instr
+; Ident GenSelectByteOrWord
+; Ident op
+; Ident opSz
+; Ident GenPrintOperand
+; Ident GenPrintOperandSeparator
+; Ident GenPrintNewLine
+; Ident GenPrintInstrNoOperand
+; Ident GenPrintInstr1Operand
+; Ident instrval
+; Ident operand
+; Ident operandval
+; Ident GenPrintInstr2Operands
+; Ident operand1
+; Ident operand1val
+; Ident operand2
+; Ident operand2val
+; Ident GenPrintInstr3Operands
+; Ident operand3
+; Ident operand3val
+; Ident GenExtendRegAIfNeeded
+; Ident size
 ; Ident GenReadIdent
-; Ident OpSz
 ; Ident GenReadLocal
-; Ident Ofs
+; Ident ofs
 ; Ident GenReadIndirect
+; Ident GenReadCRegIdent
+; Ident GenReadCRegLocal
+; Ident GenReadCRegIndirect
 ; Ident GenIncDecIdent
 ; Ident GenIncDecLocal
 ; Ident GenIncDecIndirect
@@ -38980,7 +39216,6 @@ L4396:
 ; Ident GetOperandInfo
 ; Ident idx
 ; Ident lvalSize
-; Ident size
 ; Ident delDeref
 ; Ident GenFuse
 ; Ident GenGetBinaryOperatorInstr
@@ -39029,5 +39264,5 @@ L4396:
 ; Ident main
 ; Ident argc
 ; Ident argv
-; Bytes used: 2571/4096
+; Bytes used: 2956/4096
 

@@ -165,7 +165,7 @@ L2:
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L3
+    je      L3
     jmp     L2
 L3:
 ; return
@@ -208,7 +208,7 @@ L5:
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L6
+    je      L6
 ; RPN'ized expression: "l ++ "
 ; Expanded expression: "(@-2) ++(2) "
 ; Fused expression:    "++(2) *(@-2) "
@@ -302,7 +302,7 @@ L14:
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L15
+    je      L15
 ; RPN'ized expression: "( s ++p *u putchar ) "
 ; Expanded expression: " (@4) ++p(2) *(1)  putchar ()2 "
 ; Fused expression:    "( ++p(2) *(@4) *(1) ax , putchar )2 "
@@ -351,73 +351,73 @@ _isspace:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L21
+    jne     L21
     mov     ax, [bp+4]
     cmp     ax, 12
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 L21:
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L20
+    jne     L20
     mov     ax, [bp+4]
     cmp     ax, 10
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 L20:
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L19
+    jne     L19
     mov     ax, [bp+4]
     cmp     ax, 13
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 L19:
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L18
+    jne     L18
     mov     ax, [bp+4]
     cmp     ax, 9
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 L18:
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L17
+    jne     L17
     mov     ax, [bp+4]
     cmp     ax, 11
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 L17:
     jmp     L16
@@ -443,17 +443,17 @@ _isdigit:
     setge   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
-    jz      L23
+    je      L23
     mov     ax, [bp+4]
     cmp     ax, 57
     setle   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 L23:
     jmp     L22
@@ -569,11 +569,11 @@ L29:
     setne   al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L33
+    jne     L33
     mov     ax, [bp-6]
     add     ax, 1
     mov     bx, ax
@@ -583,12 +583,12 @@ L29:
     sete    al
     cbw
     test    ax, ax
-    setnz   al
+    setne   al
     cbw
 L33:
 ; JumpIfZero
     test    ax, ax
-    jz      L31
+    je      L31
 ; {
 ; RPN'ized expression: "( p *u putchar ) "
 ; Expanded expression: " (@-6) *(2) *(1)  putchar ()2 "
@@ -646,7 +646,7 @@ L31:
     sub     sp, -2
 ; JumpIfZero
     test    ax, ax
-    jz      L34
+    je      L34
 ; {
 ; while
 ; RPN'ized expression: "( p *u isdigit ) "
@@ -662,7 +662,7 @@ L36:
     sub     sp, -2
 ; JumpIfZero
     test    ax, ax
-    jz      L37
+    je      L37
 ; RPN'ized expression: "minlen minlen 10 * p ++p *u + 48 - = "
 ; Expanded expression: "(@-28) (@-28) *(2) 10 * (@-6) ++p(2) *(1) + 48 - =(2) "
 ; Fused expression:    "* *(@-28) 10 push-ax ++p(2) *(@-6) + *sp *ax - ax 48 =(34) *(@-28) ax "
@@ -773,7 +773,7 @@ L43:
     mov     ax, [bp-22]
 ; JumpIfZero
     test    ax, ax
-    jz      L48
+    je      L48
 ; RPN'ized expression: "len ( pc strlen ) = "
 ; Expanded expression: "(@-30)  (@-22) *(2)  strlen ()2 =(2) "
 ; Fused expression:    "( *(2) (@-22) , strlen )2 =(34) *(@-30) ax "
@@ -817,7 +817,7 @@ L51:
     mov     ax, [bp-30]
 ; JumpIfZero
     test    ax, ax
-    jz      L52
+    je      L52
 ; while
 ; RPN'ized expression: "pc *u 0 != "
 ; Expanded expression: "(@-22) *(2) *(1) 0 != "
@@ -957,7 +957,7 @@ L61:
     mov     ax, [bp-24]
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L60
+    jne     L60
 L62:
 ; if
 ; RPN'ized expression: "sign 0 < "
@@ -1150,7 +1150,7 @@ L78:
     mov     ax, [bp-24]
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L77
+    jne     L77
 L79:
 ; while
 ; RPN'ized expression: "minlen len > "
@@ -1287,7 +1287,7 @@ L87:
     mov     ax, [bp-24]
 ; JumpIfNotZero
     test    ax, ax
-    jnz     L86
+    jne     L86
 L88:
 ; while
 ; RPN'ized expression: "minlen len > "
@@ -1451,7 +1451,7 @@ L95:
     mov     ax, [bp+4]
 ; JumpIfZero
     test    ax, ax
-    jz      L96
+    je      L96
 ; RPN'ized expression: "( n putdec ) "
 ; Expanded expression: " (@4) *(2)  putdec ()2 "
 ; Fused expression:    "( *(2) (@4) , putdec )2 "
@@ -1549,7 +1549,7 @@ L100:
     mov     ax, [bp+4]
 ; JumpIfZero
     test    ax, ax
-    jz      L101
+    je      L101
 ; RPN'ized expression: "( n putdecu ) "
 ; Expanded expression: " (@4) *(2)  putdecu ()2 "
 ; Fused expression:    "( *(2) (@4) , putdecu )2 "
