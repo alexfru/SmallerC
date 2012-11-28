@@ -354,6 +354,11 @@ int OutputFormat = FormatSegmented;
 // gcc calls __main().
 char* MainPrologCtorFxn = NULL;
 
+// Names of C functions and variables are usually prefixed with an underscore.
+// One notable exception is the ELF format used by gcc in Linux.
+// Global C identifiers in the ELF format should not be predixed with an underscore.
+int UseLeadingUnderscores = 1;
+
 char* FileHeader = "";
 char* CodeHeader = "";
 char* CodeFooter = "";
@@ -1175,33 +1180,63 @@ int GetToken(void)
 
 void GenLabel(char* Label)
 {
-  if (OutputFormat != FormatFlat)
-    printf("    global  _%s\n", Label);
-  printf("_%s:\n", Label);
+  if (UseLeadingUnderscores)
+  {
+    if (OutputFormat != FormatFlat)
+      printf("    global  _%s\n", Label);
+    printf("_%s:\n", Label);
+  }
+  else
+  {
+    if (OutputFormat != FormatFlat)
+      printf("    global  $%s\n", Label);
+    printf("$%s:\n", Label);
+  }
 }
 
 void GenExtern(char* Label)
 {
   if (OutputFormat != FormatFlat)
-    printf("    extern  _%s\n", Label);
+  {
+    if (UseLeadingUnderscores)
+      printf("    extern  _%s\n", Label);
+    else
+      printf("    extern  $%s\n", Label);
+  }
 }
 
 void GenPrintLabel(char* Label)
 {
-  if (isdigit(*Label))
-    printf("L%s", Label);
+  if (UseLeadingUnderscores)
+  {
+    if (isdigit(*Label))
+      printf("L%s", Label);
+    else
+      printf("_%s", Label);
+  }
   else
-    printf("_%s", Label);
+  {
+    if (isdigit(*Label))
+      printf("..@L%s", Label);
+    else
+      printf("$%s", Label);
+  }
 }
 
 void GenNumLabel(int Label)
 {
-  printf("L%d:\n", Label);
+  if (UseLeadingUnderscores)
+    printf("L%d:\n", Label);
+  else
+    printf("..@L%d:\n", Label);
 }
 
 void GenPrintNumLabel(int label)
 {
-  printf("L%d", label);
+  if (UseLeadingUnderscores)
+    printf("L%d", label);
+  else
+    printf("..@L%d", label);
 }
 
 void GenZeroData(int Size)
@@ -6221,6 +6256,17 @@ int main(int argc, char** argv)
         MainPrologCtorFxn = argv[++i];
         continue;
       }
+    }
+    else if (!strcmp(argv[i], "-leading-underscore"))
+    {
+      // this is the default option
+      UseLeadingUnderscores = 1;
+      continue;
+    }
+    else if (!strcmp(argv[i], "-no-leading-underscore"))
+    {
+      UseLeadingUnderscores = 0;
+      continue;
     }
     else if (CurFileName == NULL)
     {
