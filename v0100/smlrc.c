@@ -91,6 +91,7 @@ EXTERN int putchar(int);
 EXTERN FILE* fopen(char*, char*);
 EXTERN int fclose(FILE*);
 EXTERN int fgetc(FILE*);
+EXTERN int puts(char*);
 EXTERN int printf(char*, ...);
 EXTERN int sprintf(char*, char*, ...);
 //EXTERN int vprintf(char*, va_list);
@@ -108,6 +109,8 @@ EXTERN int vsprintf(char*, char*, void*);
 #define MAX_MACRO_TABLE_LEN  4096
 #define MAX_STRING_TABLE_LEN 512
 #define MAX_IDENT_TABLE_LEN  4096
+#define MAX_INCLUDES         8
+#define MAX_FILE_NAME_LEN    95
 
 /* +-~* /% &|^! << >> && || < <= > >= == !=  () *[] ++ -- = += -= ~= *= /= %= &= |= ^= <<= >>= {} ,;: -> ... */
 
@@ -229,10 +232,6 @@ PROTO int GetTokenValueStringLength(void);
 
 PROTO char* GetTokenIdentName(void);
 
-PROTO char* GetTokenFileName(void);
-PROTO int GetTokenFileLineNo(void);
-PROTO int GetTokenFileLinePos(void);
-
 PROTO void DumpMacroTable(void);
 
 PROTO void PurgeStringTable(void);
@@ -301,8 +300,6 @@ char TokenValueString[MAX_STRING_LEN + 1];
 int TokenStringLen = 0;
 int LineNo = 1;
 int LinePos = 1;
-char* CurFileName = NULL;
-FILE* CurFile = NULL;
 char CharQueue[MAX_CHAR_QUEUE_LEN];
 int CharQueueLen = 0;
 
@@ -332,6 +329,14 @@ int StringTableLen = 0;
 */
 char IdentTable[MAX_IDENT_TABLE_LEN];
 int IdentTableLen = 0;
+
+// Data structures to support #include
+int FileCnt = 0;
+char FileNames[MAX_INCLUDES][MAX_FILE_NAME_LEN + 1];
+FILE* Files[MAX_INCLUDES];
+char CharQueues[MAX_INCLUDES][3];
+int LineNos[MAX_INCLUDES];
+int LinePoss[MAX_INCLUDES];
 
 // expr.c data
 
@@ -694,39 +699,23 @@ char* GetTokenIdentName(void)
   return TokenIdentName;
 }
 
-// TBD!!! finish and use these for error reporting:
-
-char* GetTokenFileName(void)
-{
-  return NULL;
-}
-
-int GetTokenFileLineNo(void)
-{
-  return 0;
-}
-
-int GetTokenFileLinePos(void)
-{
-  return 0;
-}
-
-void ShiftChar(void);
-
 int GetNextChar(void)
 {
-  int ch;
+  int ch = EOF;
 
-  if (CurFile == NULL)
+  if (FileCnt && Files[FileCnt - 1])
   {
-    if ((CurFile = fopen(CurFileName, "rt")) == NULL)
-      error("Cannot open file \"%s\"\n", CurFileName);
-  }
+    if ((ch = fgetc(Files[FileCnt - 1])) == EOF)
+    {
+      fclose(Files[FileCnt - 1]);
+      Files[FileCnt - 1] = NULL;
 
-  if ((ch = fgetc(CurFile)) == EOF)
-  {
-    fclose(CurFile);
-    CurFile = NULL;
+      // store the last line/pos, they may still be needed later
+      LineNos[FileCnt - 1] = LineNo;
+      LinePoss[FileCnt - 1] = LinePos;
+
+      // don't drop the file record just yet
+    }
   }
 
   return ch;
@@ -734,25 +723,16 @@ int GetNextChar(void)
 
 void ShiftChar(void)
 {
-  int eof = 0;
-
   if (CharQueueLen)
-  {
     memmove(CharQueue, CharQueue + 1, --CharQueueLen);
-    eof = CharQueue[CharQueueLen] == '\0';
-  }
 
-  while (CharQueueLen < 4)
+  // make sure there always are at least 3 chars in the queue
+  while (CharQueueLen < 3)
   {
-    if (!eof)
-    {
-      int ch = GetNextChar();
-      CharQueue[CharQueueLen] = ch;
-      eof = ch == EOF;
-    }
-    if (eof)
-      CharQueue[CharQueueLen] = '\0';
-    CharQueueLen++;
+    int ch = GetNextChar();
+    if (ch == EOF)
+      ch = '\0';
+    CharQueue[CharQueueLen++] = ch;
   }
 }
 
@@ -763,6 +743,53 @@ void ShiftCharN(int n)
     ShiftChar();
     LinePos++;
   }
+}
+
+void IncludeFile(/*char quot*/)
+{
+  if (CharQueueLen != 3)
+    error("Error: #include parsing error\n");
+
+  if (FileCnt >= MAX_INCLUDES)
+    error("Error: Too many include files\n");
+
+  // store the including file's position and buffered chars
+  LineNos[FileCnt - 1] = LineNo;
+  LinePoss[FileCnt - 1] = LinePos;
+  memcpy(CharQueues[FileCnt - 1], CharQueue, CharQueueLen);
+
+  // open the included file
+
+  if (strlen(TokenValueString) > MAX_FILE_NAME_LEN)
+    error("Error: File name too long\n");
+  strcpy(FileNames[FileCnt], TokenValueString);
+
+  // TBD!!! differentiate between quot == '\"' and quot == '<'
+  if ((Files[FileCnt] = fopen(FileNames[FileCnt], "rt")) == NULL)
+    error("Error: Cannot open file \"%s\"\n", FileNames[FileCnt]);
+
+  // reset line/pos and empty the char queue
+  CharQueueLen = 0;
+  LineNo = LinePos = 1;
+  FileCnt++;
+
+  // fill the char queue with file data
+  ShiftChar();
+}
+
+int EndOfFiles(void)
+{
+  // if there are no including files, we're done
+  if (!--FileCnt)
+    return 1;
+
+  // restore the including file's position and buffered chars
+  LineNo = LineNos[FileCnt - 1];
+  LinePos = LinePoss[FileCnt - 1];
+  CharQueueLen = 3;
+  memcpy(CharQueue, CharQueues[FileCnt - 1], CharQueueLen);
+
+  return 0;
 }
 
 void SkipSpace(int SkipNewLines)
@@ -861,6 +888,110 @@ void GetIdent(void)
   }
 }
 
+void GetString(char terminator, int SkipNewLines)
+{
+  char* p = CharQueue;
+  char ch;
+
+  TokenStringLen = 0;
+  TokenValueString[TokenStringLen] = '\0';
+
+  for (;;)
+  {
+    ShiftCharN(1);
+    while (!(*p == terminator || strchr("\a\b\f\n\r\t\v", *p)))
+    {
+      ch = *p;
+      if (ch == '\\')
+      {
+        ShiftCharN(1);
+        ch = *p;
+        if (strchr("\a\b\f\n\r\t\v", ch))
+          break;
+        switch (ch)
+        {
+        case 'a': ch = '\a'; ShiftCharN(1); break;
+        case 'b': ch = '\b'; ShiftCharN(1); break;
+        case 'f': ch = '\f'; ShiftCharN(1); break;
+        case 'n': ch = '\n'; ShiftCharN(1); break;
+        case 'r': ch = '\r'; ShiftCharN(1); break;
+        case 't': ch = '\t'; ShiftCharN(1); break;
+        case 'v': ch = '\v'; ShiftCharN(1); break;
+        // DONE: \nnn, \xnn
+        case 'x':
+          {
+            // hexadecimal character codes \xN+
+            int cnt = 0;
+            ShiftCharN(1);
+            ch = 0;
+            while (*p != '\0' && (isdigit(*p) || strchr("abcdefABCDEF", *p)))
+            {
+              ch *= 16;
+              if (*p >= 'a') ch += *p - 'a' + 10;
+              else if (*p >= 'A') ch += *p - 'A' + 10;
+              else ch += *p - '0';
+              ShiftCharN(1);
+              cnt++;
+            }
+            if (!cnt)
+              error("Error: Unsupported or invalid character/string constant\n");
+          }
+          break;
+        default:
+          if (*p >= '0' && *p <= '7')
+          {
+            // octal character codes \N+
+            int cnt = 0;
+            ch = 0;
+            while (*p >= '0' && *p <= '7')
+            {
+              ch = ch * 8 + *p - '0';
+              ShiftCharN(1);
+              cnt++;
+            }
+            if (!cnt)
+              error("Error: Unsupported or invalid character/string constant\n");
+          }
+          else
+          {
+            ShiftCharN(1);
+          }
+          break;
+        } // endof switch (ch)
+      } // endof if (ch == '\\')
+      else
+      {
+        ShiftCharN(1);
+      }
+
+      if (terminator == '\'')
+      {
+        if (TokenStringLen != 0)
+          error("Error: Character constant too long\n");
+      }
+      else if (TokenStringLen == MAX_STRING_LEN)
+        error("Error: String constant too long\n");
+
+      TokenValueString[TokenStringLen++] = ch;
+      TokenValueString[TokenStringLen] = '\0';
+    } // endof while (!(*p == '\0' || *p == terminator || strchr("\a\b\f\n\r\t\v", *p)))
+
+    if (*p != terminator)
+      error("Error: Unsupported or invalid character/string constant\n");
+
+    ShiftCharN(1);
+
+    if (terminator != '\"')
+      break; // done with character constants
+
+    // Concatenate this string literal with all following ones, if any
+    SkipSpace(SkipNewLines);
+    if (*p != '\"')
+      break; // nothing to concatenate with
+    // Continue consuming string characters
+  } // endof for (;;)
+}
+
 // TBD!!! implement file I/O for input source code and output code (use fxn ptrs/wrappers to make librarization possible)
 // DONE: support string literals
 int GetToken(void)
@@ -868,14 +999,21 @@ int GetToken(void)
   char* p = CharQueue;
   int ch;
 
-  while ((ch = *p) != '\0')
+  for (;;)
   {
 /* +-~* /% &|^! << >> && || < <= > >= == !=  () *[] ++ -- = += -= ~= *= /= %= &= |= ^= <<= >>= {} ,;: -> ... */
 
     // skip white space and comments
     SkipSpace(1);
+
     if ((ch = *p) == '\0')
-      break;
+    {
+      // done with the current file, drop its record,
+      // pick up the including files (if any) or terminate
+      if (EndOfFiles())
+        break;
+      continue;
+    }
 
     // these single-character tokens/operators need no further processing
     if (strchr(",;:()[]{}~", ch) != NULL)
@@ -939,17 +1077,17 @@ int GetToken(void)
     }
 
     // DONE: hex and octal constants
-    if (isdigit(*p))
+    if (isdigit(ch))
     {
       TokenValueInt = 0;
-      if (*p == '0')
+      if (ch == '0')
       {
         // this is either an octal or a hex constant
         ShiftCharN(1);
-        if (*p == 'x' || *p == 'X')
+        if ((ch = *p) == 'x' || ch == 'X')
         {
           // this is a hex constant
-          int ch, cnt = 0;
+          int cnt = 0;
           ShiftCharN(1);
           while ((ch = *p) != '\0' && (isdigit(ch) || strchr("abcdefABCDEF", ch)))
           {
@@ -965,127 +1103,29 @@ int GetToken(void)
             error("Error: Invalid hexadecimal constant\n");
         }
         // this is an octal constant
-        else while (*p >= '0' && *p <= '7')
+        else while ((ch = *p) >= '0' && ch <= '7')
         {
           TokenValueInt *= 8;
-          TokenValueInt += *p - '0';
+          TokenValueInt += ch - '0';
           ShiftCharN(1);
         }
       }
       // this is a decimal constant
-      else while (*p >= '0' && *p <= '9')
+      else while ((ch = *p) >= '0' && ch <= '9')
       {
         TokenValueInt *= 10;
-        TokenValueInt += *p - '0';
+        TokenValueInt += ch - '0';
         ShiftCharN(1);
       }
       return tokNum;
-    }
+    } // endof if (isdigit(ch))
 
     // parse character and string constants
-    if (*p == '\'' || *p == '\"')
+    if (ch == '\'' || ch == '\"')
     {
-      char terminator = *p;
-      char ch;
-      TokenStringLen = 0;
-      TokenValueString[TokenStringLen] = '\0';
+      GetString(ch, 1);
 
-      for (;;)
-      {
-        ShiftCharN(1);
-        while (!(*p == '\0' || *p == terminator || strchr("\a\b\f\n\r\t\v", *p)))
-        {
-          ch = *p;
-          if (ch == '\\')
-          {
-            ShiftCharN(1);
-            ch = *p;
-            if (ch == '\0' || strchr("\a\b\f\n\r\t\v", ch))
-              break;
-            switch (ch)
-            {
-            case 'a': ch = '\a'; ShiftCharN(1); break;
-            case 'b': ch = '\b'; ShiftCharN(1); break;
-            case 'f': ch = '\f'; ShiftCharN(1); break;
-            case 'n': ch = '\n'; ShiftCharN(1); break;
-            case 'r': ch = '\r'; ShiftCharN(1); break;
-            case 't': ch = '\t'; ShiftCharN(1); break;
-            case 'v': ch = '\v'; ShiftCharN(1); break;
-            // DONE: \nnn, \xnn
-            case 'x':
-              {
-                // hexadecimal character codes \xN+
-                int cnt = 0;
-                ShiftCharN(1);
-                ch = 0;
-                while (*p != '\0' && (isdigit(*p) || strchr("abcdefABCDEF", *p)))
-                {
-                  ch *= 16;
-                  if (*p >= 'a') ch += *p - 'a' + 10;
-                  else if (*p >= 'A') ch += *p - 'A' + 10;
-                  else ch += *p - '0';
-                  ShiftCharN(1);
-                  cnt++;
-                }
-                if (!cnt)
-                  error("Error: Unsupported or invalid character/string constant\n");
-              }
-              break;
-            default:
-              if (*p >= '0' && *p <= '7')
-              {
-                // octal character codes \N+
-                int cnt = 0;
-                ch = 0;
-                while (*p >= '0' && *p <= '7')
-                {
-                  ch = ch * 8 + *p - '0';
-                  ShiftCharN(1);
-                  cnt++;
-                }
-                if (!cnt)
-                  error("Error: Unsupported or invalid character/string constant\n");
-              }
-              else
-              {
-                ShiftCharN(1);
-              }
-              break;
-            } // endof switch (ch)
-          } // endof if (ch == '\\')
-          else
-          {
-            ShiftCharN(1);
-          }
-
-          if (terminator == '\'')
-          {
-            if (TokenStringLen != 0)
-              error("Error: Character constant too long\n");
-          }
-          else if (TokenStringLen == MAX_STRING_LEN)
-            error("Error: String constant too long\n");
-
-          TokenValueString[TokenStringLen++] = ch;
-          TokenValueString[TokenStringLen] = '\0';
-        } // endof while (!(*p == '\0' || *p == terminator || strchr("\a\b\f\n\r\t\v", *p)))
-
-        if (*p != terminator)
-          error("Error: Unsupported or invalid character/string constant\n");
-
-        ShiftCharN(1);
-
-        if (terminator != '\"')
-          break; // done with character constants
-
-        // Concatenate this string literal with all following ones, if any
-        SkipSpace(1);
-        if (*p != '\"')
-          break; // nothing to concatenate with
-        // Continue consuming string characters
-      } // endof for (;;)
-
-      if (terminator == '\'')
+      if (ch == '\'')
       {
         if (TokenStringLen != 1)
           error("Error: Character constant too short\n");
@@ -1095,10 +1135,10 @@ int GetToken(void)
       }
 
       return tokLitStr;
-    } // endof if (*p == '\'' || *p == '\"')
+    } // endof if (ch == '\'' || ch == '\"')
 
     // parse identifiers and reserved keywords
-    if (*p == '_' || isalpha(*p))
+    if (ch == '_' || isalpha(ch))
     {
       int tok;
       int midx;
@@ -1127,49 +1167,75 @@ int GetToken(void)
       }
 
       return tok;
-    }
+    } // endof if (ch == '_' || isalpha(ch))
 
     // parse preprocessor directives
-    if (*p == '#')
+    if (ch == '#')
     {
       ShiftCharN(1);
 
       // Skip space and get preprocessor directive
       SkipSpace(0);
       GetIdent();
-      if (strcmp(TokenIdentName, "define"))
-        error("Error: Unsupported or invalid preprocessor directive\n");
 
-      // Skip space and get macro name
-      SkipSpace(0);
-      GetIdent();
-      if (FindMacro(TokenIdentName) >= 0)
-        error("Error: Redefinition of macro '%s'\n", TokenIdentName);
-      if (*p == '(')
-        error("Error: Unsupported type of macro '%s'\n", TokenIdentName);
-
-      AddMacroIdent(TokenIdentName);
-
-      SkipSpace(0);
-
-      // accumulate the macro expansion text
-      while (!strchr("\r\n", *p))
+      if (!strcmp(TokenIdentName, "define"))
       {
-        AddMacroExpansionChar(*p);
-        ShiftCharN(1);
-        if (*p != '\0' && (strchr(" \t", *p) || (*p == '/' && (p[1] == '/' || p[1] == '*'))))
-        {
-          SkipSpace(0);
-          AddMacroExpansionChar(' ');
-        }
-      }
-      AddMacroExpansionChar('\0');
+        // Skip space and get macro name
+        SkipSpace(0);
+        GetIdent();
+        if (FindMacro(TokenIdentName) >= 0)
+          error("Error: Redefinition of macro '%s'\n", TokenIdentName);
+        if (*p == '(')
+          error("Error: Unsupported type of macro '%s'\n", TokenIdentName);
 
-      continue;
-    }
+        AddMacroIdent(TokenIdentName);
+
+        SkipSpace(0);
+
+        // accumulate the macro expansion text
+        while (!strchr("\r\n", *p))
+        {
+          AddMacroExpansionChar(*p);
+          ShiftCharN(1);
+          if (*p != '\0' && (strchr(" \t", *p) || (*p == '/' && (p[1] == '/' || p[1] == '*'))))
+          {
+            SkipSpace(0);
+            AddMacroExpansionChar(' ');
+          }
+        }
+        AddMacroExpansionChar('\0');
+
+        continue;
+      }
+      else if (!strcmp(TokenIdentName, "include"))
+      {
+        // char quot;
+
+        // Skip space and get file name
+        SkipSpace(0);
+
+        // quot = *p;
+        if (*p == '\"')
+          GetString('\"', 0);
+        else if (*p == '<')
+          GetString('>', 0);
+        else
+          error("Error: Invalid file name\n");
+
+        SkipSpace(0);
+        if (!strchr("\r\n", *p))
+          error("Error: Unsupported or invalid preprocessor directive\n");
+
+        IncludeFile(/*quot*/);
+
+        continue;
+      }
+
+      error("Error: Unsupported or invalid preprocessor directive\n");
+    } // endof if (ch == '#')
 
     error("Error: Unsupported or invalid character '%c'\n", *p);
-  }
+  } // endof for (;;)
 
   return tokEof;
 }
@@ -3491,8 +3557,8 @@ void GenStrData(int insertJump)
       else
       {
         if (insertJump)
-          printf(CodeFooter);
-        printf(DataHeader);
+          puts(CodeFooter);
+        puts(DataHeader);
       }
       GenNumLabel(label);
 
@@ -3533,9 +3599,9 @@ void GenStrData(int insertJump)
       }
       else
       {
-        printf(DataFooter);
+        puts(DataFooter);
         if (insertJump)
-          printf(CodeHeader);
+          puts(CodeHeader);
       }
     }
   }
@@ -4886,6 +4952,11 @@ void error(char* format, ...)
   void* testptr[2];
   // hopefully enough space to sprintf() 3 pointers using "%p"
   char testbuf[3][CHAR_BIT * sizeof(void*) + 1];
+  int i, fidx = FileCnt - 1 + !FileCnt;
+
+  for (i = 0; i < FileCnt; i++)
+    if (Files[i])
+      fclose(Files[i]);
 
   printf("\n");
 
@@ -4893,7 +4964,7 @@ void error(char* format, ...)
   DumpMacroTable();
   DumpIdentTable();
 
-  printf("Error in \"%s\" (%d:%d)\n", CurFileName, LineNo, LinePos);
+  printf("Error in \"%s\" (%d:%d)\n", FileNames[fidx], LineNo, LinePos);
 
   // TBD!!! This is not good. Really need the va_something macros.
   // Test whether va_list is a pointer to the first optional parameter or
@@ -5407,7 +5478,7 @@ int ParseDecl(int tok)
       if (globalAllocSize && !external)
       {
         if (OutputFormat != FormatFlat)
-          printf(DataHeader);
+          puts(DataHeader);
         GenLabel(IdentTable + SyntaxStack[lastSyntaxPtr][1]);
       }
 
@@ -5447,14 +5518,14 @@ int ParseDecl(int tok)
           {
             GenIntData(globalAllocSize, exprVal);
             if (OutputFormat != FormatFlat)
-              printf(DataFooter);
+              puts(DataFooter);
           }
           else if (globalAllocSize == SizeOfWord && stack[sp - 1][0] == tokIdent)
           {
             char* p = IdentTable + stack[sp - 1][1];
             GenAddrData(globalAllocSize, p);
             if (OutputFormat != FormatFlat)
-              printf(DataFooter);
+              puts(DataFooter);
             // if the initializer is a literal string, also generate string data
             if (isdigit(*p))
               GenStrData(0);
@@ -5481,7 +5552,7 @@ int ParseDecl(int tok)
       {
         GenZeroData(globalAllocSize);
         if (OutputFormat != FormatFlat)
-          printf(DataFooter);
+          puts(DataFooter);
       }
       else if (tok == '{')
       {
@@ -5493,7 +5564,7 @@ int ParseDecl(int tok)
         ParseLevel++;
         GetFxnInfo(lastSyntaxPtr, &tmp, &tmp, &CurFxnReturnExprTypeSynPtr); // get return type
         if (OutputFormat != FormatFlat)
-          printf(CodeHeader);
+          puts(CodeHeader);
         GenLabel(IdentTable + SyntaxStack[lastSyntaxPtr][1]);
         CurFxnEpilogLabel = LabelCnt++;
         GenFxnProlog();
@@ -5512,7 +5583,7 @@ int ParseDecl(int tok)
         GenNumLabel(CurFxnEpilogLabel);
         GenFxnEpilog();
         if (OutputFormat != FormatFlat)
-          printf(CodeFooter);
+          puts(CodeFooter);
       }
 
       if (tok == ';' || tok == '}')
@@ -6268,23 +6339,26 @@ int main(int argc, char** argv)
       UseLeadingUnderscores = 0;
       continue;
     }
-    else if (CurFileName == NULL)
+    else if (!FileCnt)
     {
       // If it's none of the known options,
       // assume it's the source code file name
-      CurFileName = argv[i];
+      if (strlen(argv[i]) > MAX_FILE_NAME_LEN)
+        error("Error: File name too long\n");
+      strcpy(FileNames[0], argv[i]);
+      if ((Files[0] = fopen(FileNames[0], "rt")) == NULL)
+        error("Error: Cannot open file \"%s\"\n", FileNames[0]);
+      LineNos[0] = LineNo;
+      LinePoss[0] = LinePos;
+      FileCnt++;
       continue;
     }  
 
-    CurFileName = "";
     error("Error: Invalid/unsupported command line option(s)\n");
   }
 
-  if (CurFileName == NULL)
-  {
-    CurFileName = "";
+  if (!FileCnt)
     error("Error: Input source code file not specified.\n");
-  }
 
   if (SizeOfWord > intSize)
   {
@@ -6304,30 +6378,30 @@ int main(int argc, char** argv)
     if (SizeOfWord == 2)
     {
       FileHeader = "SEGMENT _TEXT PUBLIC CLASS=CODE USE16\n"
-                   "SEGMENT _DATA PUBLIC CLASS=DATA\n\n";
-      CodeHeader = "SEGMENT _TEXT\n";
-      CodeFooter = "; SEGMENT _TEXT\n";
-      DataHeader = "SEGMENT _DATA\n";
-      DataFooter = "; SEGMENT _DATA\n";
+                   "SEGMENT _DATA PUBLIC CLASS=DATA\n";
+      CodeHeader = "SEGMENT _TEXT";
+      CodeFooter = "; SEGMENT _TEXT";
+      DataHeader = "SEGMENT _DATA";
+      DataFooter = "; SEGMENT _DATA";
     }
     else
     {
-      CodeHeader = "section .text\n";
-      DataHeader = "section .data\n";
+      CodeHeader = "section .text";
+      DataHeader = "section .data";
     }
   }
   else
   {
     if (SizeOfWord == 2)
-      FileHeader = "BITS 16\n";
+      FileHeader = "BITS 16";
     else
-      FileHeader = "bits 32\n";
+      FileHeader = "bits 32";
   }
 
   // populate CharQueue[] with the initial file characters
   ShiftChar();
 
-  printf(FileHeader);
+  puts(FileHeader);
 
   // compile
   ParseBlock(NULL, 0);
