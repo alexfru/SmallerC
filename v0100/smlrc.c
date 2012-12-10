@@ -111,6 +111,7 @@ EXTERN int vsprintf(char*, char*, void*);
 #define MAX_IDENT_TABLE_LEN  4096
 #define MAX_INCLUDES         8
 #define MAX_FILE_NAME_LEN    95
+#define PREP_STACK_SIZE      8
 
 /* +-~* /% &|^! << >> && || < <= > >= == !=  () *[] ++ -- = += -= ~= *= /= %= &= |= ^= <<= >>= {} ,;: -> ... */
 
@@ -338,6 +339,11 @@ char CharQueues[MAX_INCLUDES][3];
 int LineNos[MAX_INCLUDES];
 int LinePoss[MAX_INCLUDES];
 
+// Data structures to support #ifdef/#ifndef,#else,#endif
+int PrepDontSkipTokens = 1;
+int PrepStack[PREP_STACK_SIZE][2];
+int PrepSp = 0;
+
 // expr.c data
 
 int ExprLevel = 0;
@@ -417,6 +423,32 @@ int FindMacro(char* name)
   }
 
   return -1;
+}
+
+int UndefineMacro(char* name)
+{
+  int i;
+
+  for (i = 0; i < MacroTableLen; )
+  {
+    if (!strcmp(MacroTable + i + 1, name))
+    {
+      int len = 1 + MacroTable[i]; // id part len
+      len = len + 1 + MacroTable[i + len]; // + ex part len
+
+      memmove(MacroTable + i,
+              MacroTable + i + len,
+              MacroTableLen - i - len);
+      MacroTableLen -= len;
+
+      return 1;
+    }
+
+    i = i + 1 + MacroTable[i]; // skip id
+    i = i + 1 + MacroTable[i]; // skip ex
+  }
+
+  return 0;
 }
 
 void AddMacroIdent(char* name)
@@ -992,12 +1024,158 @@ void GetString(char terminator, int SkipNewLines)
   } // endof for (;;)
 }
 
+void pushPrep(int NoSkip)
+{
+  if (PrepSp >= PREP_STACK_SIZE) error("Error: too many #if(n)def's\n");
+  PrepStack[PrepSp][0] = PrepDontSkipTokens;
+  PrepStack[PrepSp++][1] = NoSkip;
+  PrepDontSkipTokens &= NoSkip;
+}
+
+int popPrep(void)
+{
+  if (PrepSp <= 0) error("Error: #else or #endif without #if(n)def\n");
+  PrepDontSkipTokens = PrepStack[--PrepSp][0];
+  return PrepStack[PrepSp][1];
+}
+
+int GetTokenInner(void)
+{
+  char* p = CharQueue;
+  int ch = *p;
+
+  // these single-character tokens/operators need no further processing
+  if (strchr(",;:()[]{}~", ch) != NULL)
+  {
+    ShiftCharN(1);
+    return ch;
+  }
+
+  // parse multi-character tokens/operators
+
+  // DONE: other assignment operators
+  switch (ch)
+  {
+  case '+':
+    if (p[1] == '+') { ShiftCharN(2); return tokInc; }
+    if (p[1] == '=') { ShiftCharN(2); return tokAssignAdd; }
+    ShiftCharN(1); return ch;
+  case '-':
+    if (p[1] == '-') { ShiftCharN(2); return tokDec; }
+    if (p[1] == '=') { ShiftCharN(2); return tokAssignSub; }
+    if (p[1] == '>') { ShiftCharN(2); return tokArrow; }
+    ShiftCharN(1); return ch;
+  case '!':
+    if (p[1] == '=') { ShiftCharN(2); return tokNEQ; }
+    ShiftCharN(1); return ch;
+  case '=':
+    if (p[1] == '=') { ShiftCharN(2); return tokEQ; }
+    ShiftCharN(1); return ch;
+  case '<':
+    if (p[1] == '=') { ShiftCharN(2); return tokLEQ; }
+    if (p[1] == '<') { ShiftCharN(2); if (p[0] != '=') return tokLShift; ShiftCharN(1); return tokAssignLSh; }
+    ShiftCharN(1); return ch;
+  case '>':
+    if (p[1] == '=') { ShiftCharN(2); return tokGEQ; }
+    if (p[1] == '>') { ShiftCharN(2); if (p[0] != '=') return tokRShift; ShiftCharN(1); return tokAssignRSh; }
+    ShiftCharN(1); return ch;
+  case '&':
+    if (p[1] == '&') { ShiftCharN(2); return tokLogAnd; }
+    if (p[1] == '=') { ShiftCharN(2); return tokAssignAnd; }
+    ShiftCharN(1); return ch;
+  case '|':
+    if (p[1] == '|') { ShiftCharN(2); return tokLogOr; }
+    if (p[1] == '=') { ShiftCharN(2); return tokAssignOr; }
+    ShiftCharN(1); return ch;
+  case '^':
+    if (p[1] == '=') { ShiftCharN(2); return tokAssignXor; }
+    ShiftCharN(1); return ch;
+  case '.':
+    if (p[1] == '.' && p[2] == '.') { ShiftCharN(3); return tokEllipsis; }
+    ShiftCharN(1); return ch;
+  case '*':
+    if (p[1] == '=') { ShiftCharN(2); return tokAssignMul; }
+    ShiftCharN(1); return ch;
+  case '%':
+    if (p[1] == '=') { ShiftCharN(2); return tokAssignMod; }
+    ShiftCharN(1); return ch;
+  case '/':
+    if (p[1] == '=') { ShiftCharN(2); return tokAssignDiv; }
+    // if (p[1] == '/' || p[1] == '*') { SkipSpace(1); continue; } // already taken care of
+    ShiftCharN(1); return ch;
+  }
+
+  // DONE: hex and octal constants
+  if (isdigit(ch))
+  {
+    TokenValueInt = 0;
+    if (ch == '0')
+    {
+      // this is either an octal or a hex constant
+      ShiftCharN(1);
+      if ((ch = *p) == 'x' || ch == 'X')
+      {
+        // this is a hex constant
+        int cnt = 0;
+        ShiftCharN(1);
+        while ((ch = *p) != '\0' && (isdigit(ch) || strchr("abcdefABCDEF", ch)))
+        {
+          if (ch >= 'a') ch -= 'a' - 10;
+          else if (ch >= 'A') ch -= 'A' - 10;
+          else ch -= '0';
+          TokenValueInt *= 16;
+          TokenValueInt += ch;
+          ShiftCharN(1);
+          cnt++;
+        }
+        if (!cnt)
+          error("Error: Invalid hexadecimal constant\n");
+      }
+      // this is an octal constant
+      else while ((ch = *p) >= '0' && ch <= '7')
+      {
+        TokenValueInt *= 8;
+        TokenValueInt += ch - '0';
+        ShiftCharN(1);
+      }
+    }
+    // this is a decimal constant
+    else while ((ch = *p) >= '0' && ch <= '9')
+    {
+      TokenValueInt *= 10;
+      TokenValueInt += ch - '0';
+      ShiftCharN(1);
+    }
+    return tokNum;
+  } // endof if (isdigit(ch))
+
+  // parse character and string constants
+  if (ch == '\'' || ch == '\"')
+  {
+    GetString(ch, 1);
+
+    if (ch == '\'')
+    {
+      if (TokenStringLen != 1)
+        error("Error: Character constant too short\n");
+
+      TokenValueInt = TokenValueString[0];
+      return tokLitChar;
+    }
+
+    return tokLitStr;
+  } // endof if (ch == '\'' || ch == '\"')
+
+  return tokEof;
+}
+
 // TBD!!! implement file I/O for input source code and output code (use fxn ptrs/wrappers to make librarization possible)
 // DONE: support string literals
 int GetToken(void)
 {
   char* p = CharQueue;
   int ch;
+  int tok;
 
   for (;;)
   {
@@ -1015,135 +1193,23 @@ int GetToken(void)
       continue;
     }
 
-    // these single-character tokens/operators need no further processing
-    if (strchr(",;:()[]{}~", ch) != NULL)
+    if ((tok = GetTokenInner()) != tokEof)
     {
-      ShiftCharN(1);
-      return ch;
+      if (PrepDontSkipTokens)
+        return tok;
+      continue;
     }
-
-    // parse multi-character tokens/operators
-
-    // DONE: other assignment operators
-    switch (ch)
-    {
-    case '+':
-      if (p[1] == '+') { ShiftCharN(2); return tokInc; }
-      if (p[1] == '=') { ShiftCharN(2); return tokAssignAdd; }
-      ShiftCharN(1); return ch;
-    case '-':
-      if (p[1] == '-') { ShiftCharN(2); return tokDec; }
-      if (p[1] == '=') { ShiftCharN(2); return tokAssignSub; }
-      if (p[1] == '>') { ShiftCharN(2); return tokArrow; }
-      ShiftCharN(1); return ch;
-    case '!':
-      if (p[1] == '=') { ShiftCharN(2); return tokNEQ; }
-      ShiftCharN(1); return ch;
-    case '=':
-      if (p[1] == '=') { ShiftCharN(2); return tokEQ; }
-      ShiftCharN(1); return ch;
-    case '<':
-      if (p[1] == '=') { ShiftCharN(2); return tokLEQ; }
-      if (p[1] == '<') { ShiftCharN(2); if (p[0] != '=') return tokLShift; ShiftCharN(1); return tokAssignLSh; }
-      ShiftCharN(1); return ch;
-    case '>':
-      if (p[1] == '=') { ShiftCharN(2); return tokGEQ; }
-      if (p[1] == '>') { ShiftCharN(2); if (p[0] != '=') return tokRShift; ShiftCharN(1); return tokAssignRSh; }
-      ShiftCharN(1); return ch;
-    case '&':
-      if (p[1] == '&') { ShiftCharN(2); return tokLogAnd; }
-      if (p[1] == '=') { ShiftCharN(2); return tokAssignAnd; }
-      ShiftCharN(1); return ch;
-    case '|':
-      if (p[1] == '|') { ShiftCharN(2); return tokLogOr; }
-      if (p[1] == '=') { ShiftCharN(2); return tokAssignOr; }
-      ShiftCharN(1); return ch;
-    case '^':
-      if (p[1] == '=') { ShiftCharN(2); return tokAssignXor; }
-      ShiftCharN(1); return ch;
-    case '.':
-      if (p[1] == '.' && p[2] == '.') { ShiftCharN(3); return tokEllipsis; }
-      ShiftCharN(1); return ch;
-    case '*':
-      if (p[1] == '=') { ShiftCharN(2); return tokAssignMul; }
-      ShiftCharN(1); return ch;
-    case '%':
-      if (p[1] == '=') { ShiftCharN(2); return tokAssignMod; }
-      ShiftCharN(1); return ch;
-    case '/':
-      if (p[1] == '=') { ShiftCharN(2); return tokAssignDiv; }
-      if (p[1] == '/' || p[1] == '*') { SkipSpace(1); continue; }
-      ShiftCharN(1); return ch;
-    }
-
-    // DONE: hex and octal constants
-    if (isdigit(ch))
-    {
-      TokenValueInt = 0;
-      if (ch == '0')
-      {
-        // this is either an octal or a hex constant
-        ShiftCharN(1);
-        if ((ch = *p) == 'x' || ch == 'X')
-        {
-          // this is a hex constant
-          int cnt = 0;
-          ShiftCharN(1);
-          while ((ch = *p) != '\0' && (isdigit(ch) || strchr("abcdefABCDEF", ch)))
-          {
-            if (ch >= 'a') ch -= 'a' - 10;
-            else if (ch >= 'A') ch -= 'A' - 10;
-            else ch -= '0';
-            TokenValueInt *= 16;
-            TokenValueInt += ch;
-            ShiftCharN(1);
-            cnt++;
-          }
-          if (!cnt)
-            error("Error: Invalid hexadecimal constant\n");
-        }
-        // this is an octal constant
-        else while ((ch = *p) >= '0' && ch <= '7')
-        {
-          TokenValueInt *= 8;
-          TokenValueInt += ch - '0';
-          ShiftCharN(1);
-        }
-      }
-      // this is a decimal constant
-      else while ((ch = *p) >= '0' && ch <= '9')
-      {
-        TokenValueInt *= 10;
-        TokenValueInt += ch - '0';
-        ShiftCharN(1);
-      }
-      return tokNum;
-    } // endof if (isdigit(ch))
-
-    // parse character and string constants
-    if (ch == '\'' || ch == '\"')
-    {
-      GetString(ch, 1);
-
-      if (ch == '\'')
-      {
-        if (TokenStringLen != 1)
-          error("Error: Character constant too short\n");
-
-        TokenValueInt = TokenValueString[0];
-        return tokLitChar;
-      }
-
-      return tokLitStr;
-    } // endof if (ch == '\'' || ch == '\"')
 
     // parse identifiers and reserved keywords
     if (ch == '_' || isalpha(ch))
     {
-      int tok;
       int midx;
 
       GetIdent();
+
+      if (!PrepDontSkipTokens)
+        continue;
+
       tok = GetTokenByWord(TokenIdentName);
 
       // TBD!!! think of expanding macros in the context of concatenating string literals,
@@ -1183,6 +1249,15 @@ int GetToken(void)
         // Skip space and get macro name
         SkipSpace(0);
         GetIdent();
+
+        if (!PrepDontSkipTokens)
+        {
+          SkipSpace(0);
+          while (!strchr("\r\n", *p))
+            ShiftCharN(1);
+          continue;
+        }
+
         if (FindMacro(TokenIdentName) >= 0)
           error("Error: Redefinition of macro '%s'\n", TokenIdentName);
         if (*p == '(')
@@ -1207,6 +1282,20 @@ int GetToken(void)
 
         continue;
       }
+      else if (!strcmp(TokenIdentName, "undef"))
+      {
+        // Skip space and get macro name
+        SkipSpace(0);
+        GetIdent();
+
+        if (PrepDontSkipTokens)
+          UndefineMacro(TokenIdentName);
+
+        SkipSpace(0);
+        if (!strchr("\r\n", *p))
+          error("Error: Invalid preprocessor directive\n");
+        continue;
+      }
       else if (!strcmp(TokenIdentName, "include"))
       {
         // char quot;
@@ -1226,8 +1315,55 @@ int GetToken(void)
         if (!strchr("\r\n", *p))
           error("Error: Unsupported or invalid preprocessor directive\n");
 
-        IncludeFile(/*quot*/);
+        if (PrepDontSkipTokens)
+          IncludeFile(/*quot*/);
 
+        continue;
+      }
+      else if (!strcmp(TokenIdentName, "ifdef"))
+      {
+        int def;
+        // Skip space and get macro name
+        SkipSpace(0);
+        GetIdent();
+        def = FindMacro(TokenIdentName) >= 0;
+        SkipSpace(0);
+        if (!strchr("\r\n", *p))
+          error("Error: Invalid preprocessor directive\n");
+        pushPrep(def);
+        continue;
+      }
+      else if (!strcmp(TokenIdentName, "ifndef"))
+      {
+        int def;
+        // Skip space and get macro name
+        SkipSpace(0);
+        GetIdent();
+        def = FindMacro(TokenIdentName) >= 0;
+        SkipSpace(0);
+        if (!strchr("\r\n", *p))
+          error("Error: Invalid preprocessor directive\n");
+        pushPrep(!def);
+        continue;
+      }
+      else if (!strcmp(TokenIdentName, "else"))
+      {
+        int def;
+        SkipSpace(0);
+        if (!strchr("\r\n", *p))
+          error("Error: Invalid preprocessor directive\n");
+        def = popPrep();
+        if (def >= 2)
+          error("Error: #else without #if(n)def\n");
+        pushPrep(2 + !def); // #else works in opposite way to its preceding #if(n)def
+        continue;
+      }
+      else if (!strcmp(TokenIdentName, "endif"))
+      {
+        SkipSpace(0);
+        if (!strchr("\r\n", *p))
+          error("Error: Invalid preprocessor directive\n");
+        popPrep();
         continue;
       }
 
@@ -3618,7 +3754,7 @@ void GenExpr(void)
 
 void push2(int v, int v2)
 {
-  if (sp >= STACK_SIZE) error("stack overflow!\n");
+  if (sp >= STACK_SIZE) error("Error: expression stack overflow!\n");
   stack[sp][0] = v;
   stack[sp++][1] = v2;
 }
@@ -3630,7 +3766,7 @@ void push(int v)
 
 int stacktop()
 {
-  if (sp == 0) error("stack underflow!\n");
+  if (sp == 0) error("Error: expression stack underflow!\n");
   return stack[sp - 1][0];
 }
 
@@ -3650,7 +3786,7 @@ int pop()
 
 void ins2(int pos, int v, int v2)
 {
-  if (sp >= STACK_SIZE) error("stack overflow!\n");
+  if (sp >= STACK_SIZE) error("Error: expression stack overflow!\n");
   memmove(&stack[pos + 1], &stack[pos], sizeof(stack[0]) * (sp - pos));
   stack[pos][0] = v;
   stack[pos][1] = v2;
@@ -3672,7 +3808,7 @@ void del(int pos, int cnt)
 
 void pushop2(int v, int v2)
 {
-  if (opsp >= OPERATOR_STACK_SIZE) error("operator stack overflow!\n");
+  if (opsp >= OPERATOR_STACK_SIZE) error("Error: operator stack overflow!\n");
   opstack[opsp][0] = v;
   opstack[opsp++][1] = v2;
 }
@@ -3684,7 +3820,7 @@ void pushop(int v)
 
 int opstacktop()
 {
-  if (opsp == 0) error("operator stack underflow!\n");
+  if (opsp == 0) error("Error: operator stack underflow!\n");
   return opstack[opsp - 1][0];
 }
 
