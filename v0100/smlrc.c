@@ -396,6 +396,7 @@ int CurFxnSyntaxPtr = 0;
 int CurFxnParamCnt = 0;
 int CurFxnParamOfs = 0; // positive
 int CurFxnLocalOfs = 0; // negative
+int CurFxnMinLocalOfs = 0; // negative
 
 int CurFxnReturnExprTypeSynPtr = 0;
 int CurFxnEpilogLabel = 0;
@@ -5435,7 +5436,7 @@ int ParseArrayDimension(void)
 }
 
 void ParseFxnParams(void);
-int ParseBlock(int BrkCntSwchTarget[6], int switchBody);
+int ParseBlock(int BrkCntSwchTarget[4], int switchBody);
 void AddFxnParamSymbols(int SyntaxPtr);
 
 /*
@@ -5582,6 +5583,8 @@ int ParseDecl(int tok)
           InsertSyntax2(lastSyntaxPtr + 1, tokLocalOfs, CurFxnLocalOfs);
 
           localAllocSize = oldOfs - CurFxnLocalOfs;
+          if (CurFxnMinLocalOfs > CurFxnLocalOfs)
+            CurFxnMinLocalOfs = CurFxnLocalOfs;
         }
         else
         {
@@ -5609,8 +5612,6 @@ int ParseDecl(int tok)
       if (ExprLevel)
         return tok;
 
-      if (localAllocSize)
-        GenLocalAlloc(localAllocSize);
       if (globalAllocSize && !external)
       {
         if (OutputFormat != FormatFlat)
@@ -5697,13 +5698,19 @@ int ParseDecl(int tok)
         int undoSymbolsPtr = SyntaxStackCnt;
         int undoIdents = IdentTableLen;
         int tmp;
+        int locAllocLabel = (LabelCnt += 2) - 2;
+
         ParseLevel++;
         GetFxnInfo(lastSyntaxPtr, &tmp, &tmp, &CurFxnReturnExprTypeSynPtr); // get return type
+
         if (OutputFormat != FormatFlat)
           puts(CodeHeader);
         GenLabel(IdentTable + SyntaxStack[lastSyntaxPtr][1]);
         CurFxnEpilogLabel = LabelCnt++;
         GenFxnProlog();
+        GenJumpUncond(locAllocLabel + 1);
+        GenNumLabel(locAllocLabel);
+
         AddFxnParamSymbols(lastSyntaxPtr);
         if (!strcmp(IdentTable + SyntaxStack[lastSyntaxPtr][1], "main") && MainPrologCtorFxn)
         {
@@ -5716,8 +5723,13 @@ int ParseDecl(int tok)
           error("Error: ParseDecl(): '}' expected\n");
         IdentTableLen = undoIdents; // remove all identifier names
         SyntaxStackCnt = undoSymbolsPtr; // remove all params and locals
+
         GenNumLabel(CurFxnEpilogLabel);
         GenFxnEpilog();
+        GenNumLabel(locAllocLabel + 1);
+        if (CurFxnMinLocalOfs)
+          GenLocalAlloc(-CurFxnMinLocalOfs);
+        GenJumpUncond(locAllocLabel);
         if (OutputFormat != FormatFlat)
           puts(CodeFooter);
       }
@@ -5828,6 +5840,7 @@ void AddFxnParamSymbols(int SyntaxPtr)
   CurFxnParamCnt = 0;
   CurFxnParamOfs = 2 * SizeOfWord; // ret addr, xbp
   CurFxnLocalOfs = 0;
+  CurFxnMinLocalOfs = 0;
 
   SyntaxPtr += 2; // skip "ident("
 
@@ -5898,7 +5911,7 @@ void AddFxnParamSymbols(int SyntaxPtr)
   }
 }
 
-int ParseStatement(int tok, int BrkCntSwchTarget[6], int switchBody)
+int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
 {
 /*
   labeled statements:
@@ -5929,7 +5942,7 @@ int ParseStatement(int tok, int BrkCntSwchTarget[6], int switchBody)
   + return expression-opt ;
 */
   int gotUnary, synPtr,  constExpr, exprVal;
-  int brkCntSwchTarget[6];
+  int brkCntSwchTarget[4];
 
   if (tok == ';')
   {
@@ -5949,8 +5962,6 @@ int ParseStatement(int tok, int BrkCntSwchTarget[6], int switchBody)
       error("Error: ParseStatement(): '}' expected. Unexpected token %s\n", GetTokenName(tok));
     IdentTableLen = undoIdents; // remove all identifier names
     SyntaxStackCnt = undoSymbolsPtr; // remove all params and locals
-    if (CurFxnLocalOfs != undoLocalOfs)
-      GenLocalAlloc(CurFxnLocalOfs - undoLocalOfs);
     CurFxnLocalOfs = undoLocalOfs; // destroy on-stack local variables
     printf("; }\n");
     tok = GetToken();
@@ -6025,8 +6036,6 @@ int ParseStatement(int tok, int BrkCntSwchTarget[6], int switchBody)
     tok = GetToken();
     brkCntSwchTarget[0] = labelAfter; // break target
     brkCntSwchTarget[1] = labelBefore; // continue target
-    brkCntSwchTarget[2] = CurFxnLocalOfs; // break stack level
-    brkCntSwchTarget[3] = CurFxnLocalOfs; // continue stack level
     tok = ParseStatement(tok, brkCntSwchTarget, 0);
 
     GenJumpUncond(labelBefore);
@@ -6043,8 +6052,6 @@ int ParseStatement(int tok, int BrkCntSwchTarget[6], int switchBody)
     tok = GetToken();
     brkCntSwchTarget[0] = labelAfter; // break target
     brkCntSwchTarget[1] = labelWhile; // continue target
-    brkCntSwchTarget[2] = CurFxnLocalOfs; // break stack level
-    brkCntSwchTarget[3] = CurFxnLocalOfs; // continue stack level
     tok = ParseStatement(tok, brkCntSwchTarget, 0);
     if (tok != tokWhile)
       error("Error: ParseStatement(): 'while' expected after 'do statement'\n");
@@ -6222,8 +6229,6 @@ int ParseStatement(int tok, int BrkCntSwchTarget[6], int switchBody)
     tok = GetToken();
     brkCntSwchTarget[0] = labelAfter; // break target
     brkCntSwchTarget[1] = labelExpr3; // continue target
-    brkCntSwchTarget[2] = CurFxnLocalOfs; // break stack level
-    brkCntSwchTarget[3] = CurFxnLocalOfs; // continue stack level
     tok = ParseStatement(tok, brkCntSwchTarget, 0);
     GenJumpUncond(labelExpr3);
 
@@ -6237,9 +6242,6 @@ int ParseStatement(int tok, int BrkCntSwchTarget[6], int switchBody)
     tok = GetToken();
     if (BrkCntSwchTarget == NULL)
       error("Error: ParseStatement(): 'break' must be within 'while', 'for' or 'switch' statement\n");
-    // if the stack depth is different, remove locals
-    if (BrkCntSwchTarget[2] != CurFxnLocalOfs)
-      GenLocalAlloc(CurFxnLocalOfs - BrkCntSwchTarget[2]);
     GenJumpUncond(BrkCntSwchTarget[0]);
   }
   else if (tok == tokCont)
@@ -6250,9 +6252,6 @@ int ParseStatement(int tok, int BrkCntSwchTarget[6], int switchBody)
     tok = GetToken();
     if (BrkCntSwchTarget == NULL || BrkCntSwchTarget[1] == 0)
       error("Error: ParseStatement(): 'continue' must be within 'while' or 'for' statement\n");
-    // if the stack depth is different, remove locals
-    if (BrkCntSwchTarget[3] != CurFxnLocalOfs)
-      GenLocalAlloc(CurFxnLocalOfs - BrkCntSwchTarget[3]);
     GenJumpUncond(BrkCntSwchTarget[1]);
   }
   else if (tok == tokSwitch)
@@ -6282,16 +6281,13 @@ int ParseStatement(int tok, int BrkCntSwchTarget[6], int switchBody)
 
     brkCntSwchTarget[0] = LabelCnt++; // break target
     brkCntSwchTarget[1] = 0; // continue target
-    brkCntSwchTarget[2] = CurFxnLocalOfs; // break stack level
-    brkCntSwchTarget[3] = 0; // continue stack level
     if (BrkCntSwchTarget != NULL)
     {
       // preserve the continue target
       brkCntSwchTarget[1] = BrkCntSwchTarget[1]; // continue target
-      brkCntSwchTarget[3] = BrkCntSwchTarget[3]; // continue stack level
     }
-    brkCntSwchTarget[4] = LabelCnt++; // default target
-    brkCntSwchTarget[5] = (LabelCnt += 2) - 2; // next case target
+    brkCntSwchTarget[2] = LabelCnt++; // default target
+    brkCntSwchTarget[3] = (LabelCnt += 2) - 2; // next case target
 /*
   ParseBlock(0)
     ParseStatement(0)
@@ -6307,7 +6303,7 @@ int ParseStatement(int tok, int BrkCntSwchTarget[6], int switchBody)
                   ParseStatement(2)  // needed to disallow new locals
                   ...
 */
-    GenJumpUncond(brkCntSwchTarget[5]); // next case target
+    GenJumpUncond(brkCntSwchTarget[3]); // next case target
 
     tok = ParseStatement(tok, brkCntSwchTarget, 2);
 
@@ -6315,11 +6311,11 @@ int ParseStatement(int tok, int BrkCntSwchTarget[6], int switchBody)
     GenJumpUncond(brkCntSwchTarget[0]);
 
     // next, non-existent case (reached after none of the 'cases' have matched)
-    GenNumLabel(brkCntSwchTarget[5]);
+    GenNumLabel(brkCntSwchTarget[3]);
 
     // if there's 'default', 'goto default;' after all unmatched 'cases'
-    if (brkCntSwchTarget[4] < 0)
-      GenJumpUncond(-brkCntSwchTarget[4]);
+    if (brkCntSwchTarget[2] < 0)
+      GenJumpUncond(-brkCntSwchTarget[2]);
 
     GenNumLabel(brkCntSwchTarget[0]); // break label
   }
@@ -6342,12 +6338,12 @@ int ParseStatement(int tok, int BrkCntSwchTarget[6], int switchBody)
 
     lnext = (LabelCnt += 2) - 2;
 
-    GenJumpUncond(BrkCntSwchTarget[5] + 1); // fallthrough
-    GenNumLabel(BrkCntSwchTarget[5]);
+    GenJumpUncond(BrkCntSwchTarget[3] + 1); // fallthrough
+    GenNumLabel(BrkCntSwchTarget[3]);
     GenJumpIfNotEqual(exprVal, lnext);
-    GenNumLabel(BrkCntSwchTarget[5] + 1);
+    GenNumLabel(BrkCntSwchTarget[3] + 1);
 
-    BrkCntSwchTarget[5] = lnext;
+    BrkCntSwchTarget[3] = lnext;
   }
   else if (tok == tokDefault)
   {
@@ -6360,14 +6356,14 @@ int ParseStatement(int tok, int BrkCntSwchTarget[6], int switchBody)
     if (tok != ':')
       error("Error: ParseStatement(): ':' expected after 'default'\n");
 
-    if (BrkCntSwchTarget[4] < 0)
+    if (BrkCntSwchTarget[2] < 0)
       error("Error: ParseStatement(): only one 'default' allowed in 'switch'\n");
 
     tok = GetToken();
 
-    GenNumLabel(BrkCntSwchTarget[4]); // default:
+    GenNumLabel(BrkCntSwchTarget[2]); // default:
 
-    BrkCntSwchTarget[4] *= -1; // remember presence of default:
+    BrkCntSwchTarget[2] *= -1; // remember presence of default:
   }
   else
   {
@@ -6384,7 +6380,7 @@ int ParseStatement(int tok, int BrkCntSwchTarget[6], int switchBody)
 }
 
 // TBD!!! think of ways of getting rid of switchBody
-int ParseBlock(int BrkCntSwchTarget[6], int switchBody)
+int ParseBlock(int BrkCntSwchTarget[4], int switchBody)
 {
   int tok = GetToken();
 
@@ -6398,10 +6394,6 @@ int ParseBlock(int BrkCntSwchTarget[6], int switchBody)
 
     if (TokenStartsDeclaration(tok, 0))
     {
-      // Disallow variable definitions inside the immediate {} of switch(expr){}
-      // to avoid awkward execution stack (re)balancing
-      if (switchBody)
-        error("Error: ParseBlock(): Declarations aren't supported in 'switch' body\n");
       tok = ParseDecl(tok);
     }
     else if (ParseLevel > 0)
