@@ -362,14 +362,11 @@ L24:
 ; loc     c : (@4): int
 ; return
 ; RPN'ized expression: "c 32 == c 12 == || c 10 == || c 13 == || c 9 == || c 11 == || "
-; Expanded expression: "(@4) *(2) 32 == _Bool [sh||->31] (@4) *(2) 12 == _Bool ||[31] _Bool [sh||->30] (@4) *(2) 10 == _Bool ||[30] _Bool [sh||->29] (@4) *(2) 13 == _Bool ||[29] _Bool [sh||->28] (@4) *(2) 9 == _Bool ||[28] _Bool [sh||->27] (@4) *(2) 11 == _Bool ||[27] "
-; Fused expression:    "== *(@4) 32 _Bool [sh||->31] == *(@4) 12 _Bool ||[31] _Bool [sh||->30] == *(@4) 10 _Bool ||[30] _Bool [sh||->29] == *(@4) 13 _Bool ||[29] _Bool [sh||->28] == *(@4) 9 _Bool ||[28] _Bool [sh||->27] == *(@4) 11 _Bool ||[27] "
+; Expanded expression: "(@4) *(2) 32 == [sh||->31] (@4) *(2) 12 == ||[31] _Bool [sh||->30] (@4) *(2) 10 == ||[30] _Bool [sh||->29] (@4) *(2) 13 == ||[29] _Bool [sh||->28] (@4) *(2) 9 == ||[28] _Bool [sh||->27] (@4) *(2) 11 == ||[27] "
+; Fused expression:    "== *(@4) 32 [sh||->31] == *(@4) 12 ||[31] _Bool [sh||->30] == *(@4) 10 ||[30] _Bool [sh||->29] == *(@4) 13 ||[29] _Bool [sh||->28] == *(@4) 9 ||[28] _Bool [sh||->27] == *(@4) 11 ||[27] "
     mov     ax, [bp+4]
     cmp     ax, 32
     sete    al
-    cbw
-    test    ax, ax
-    setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
@@ -377,9 +374,6 @@ L24:
     mov     ax, [bp+4]
     cmp     ax, 12
     sete    al
-    cbw
-    test    ax, ax
-    setne   al
     cbw
 L31:
     test    ax, ax
@@ -392,9 +386,6 @@ L31:
     cmp     ax, 10
     sete    al
     cbw
-    test    ax, ax
-    setne   al
-    cbw
 L30:
     test    ax, ax
     setne   al
@@ -405,9 +396,6 @@ L30:
     mov     ax, [bp+4]
     cmp     ax, 13
     sete    al
-    cbw
-    test    ax, ax
-    setne   al
     cbw
 L29:
     test    ax, ax
@@ -420,9 +408,6 @@ L29:
     cmp     ax, 9
     sete    al
     cbw
-    test    ax, ax
-    setne   al
-    cbw
 L28:
     test    ax, ax
     setne   al
@@ -433,9 +418,6 @@ L28:
     mov     ax, [bp+4]
     cmp     ax, 11
     sete    al
-    cbw
-    test    ax, ax
-    setne   al
     cbw
 L27:
     jmp     L26
@@ -458,14 +440,11 @@ L32:
 ; loc     c : (@4): int
 ; return
 ; RPN'ized expression: "c 48 >= c 57 <= && "
-; Expanded expression: "(@4) *(2) 48 >= _Bool [sh&&->35] (@4) *(2) 57 <= _Bool &&[35] "
-; Fused expression:    ">= *(@4) 48 _Bool [sh&&->35] <= *(@4) 57 _Bool &&[35] "
+; Expanded expression: "(@4) *(2) 48 >= [sh&&->35] (@4) *(2) 57 <= &&[35] "
+; Fused expression:    ">= *(@4) 48 [sh&&->35] <= *(@4) 57 &&[35] "
     mov     ax, [bp+4]
     cmp     ax, 48
     setge   al
-    cbw
-    test    ax, ax
-    setne   al
     cbw
 ; JumpIfZero
     test    ax, ax
@@ -473,9 +452,6 @@ L32:
     mov     ax, [bp+4]
     cmp     ax, 57
     setle   al
-    cbw
-    test    ax, ax
-    setne   al
     cbw
 L35:
     jmp     L34
@@ -575,31 +551,25 @@ L43:
 ; {
 ; if
 ; RPN'ized expression: "p *u 37 != p 1 + *u 37 == || "
-; Expanded expression: "(@-6) *(2) *(1) 37 != _Bool [sh||->47] (@-6) *(2) 1 + *(1) 37 == _Bool ||[47] "
-; Fused expression:    "*(2) (@-6) != *ax 37 _Bool [sh||->47] + *(@-6) 1 == *ax 37 _Bool ||[47] "
+; Expanded expression: "(@-6) *(2) *(1) 37 != [sh||->47] (@-6) *(2) 1 + *(1) 37 == ||[47] "
+; Fused expression:    "*(2) (@-6) != *ax 37 [sh||->47] + *(@-6) 1 == *ax 37 ||[47] "
     mov     ax, [bp-6]
     mov     bx, ax
     mov     al, [bx]
     cbw
     cmp     ax, 37
-    setne   al
-    cbw
-    test    ax, ax
     setne   al
     cbw
 ; JumpIfNotZero
     test    ax, ax
     jne     L47
     mov     ax, [bp-6]
-    add     ax, 1
+    inc     ax
     mov     bx, ax
     mov     al, [bx]
     cbw
     cmp     ax, 37
     sete    al
-    cbw
-    test    ax, ax
-    setne   al
     cbw
 L47:
 ; JumpIfZero
@@ -1625,7 +1595,7 @@ L124:
 ; Expanded expression: "(@4) *(2)  (@4) *(2) 1 -  fact ()2 * "
 ; Fused expression:    "( - *(@4) 1 , fact )2 * *(@4) ax "
     mov     ax, [bp+4]
-    sub     ax, 1
+    dec     ax
     push    ax
     call    _fact
     sub     sp, -2
@@ -1688,7 +1658,7 @@ L130:
 ; Expanded expression: " (@4) *(2) 1 -  fib ()2  (@4) *(2) 2 -  fib ()2 + "
 ; Fused expression:    "( - *(@4) 1 , fib )2 push-ax ( - *(@4) 2 , fib )2 + *sp ax "
     mov     ax, [bp+4]
-    sub     ax, 1
+    dec     ax
     push    ax
     call    _fib
     sub     sp, -2
@@ -1822,7 +1792,6 @@ L147:
 SEGMENT _TEXT
 ; Fused expression:    "+ (@-8) 0 =(34) *ax L147 "
     lea     ax, [bp-8]
-    add     ax, 0
     mov     bx, ax
     mov     ax, L147
     mov     [bx], ax
@@ -1872,7 +1841,6 @@ SEGMENT _TEXT
 ; Expanded expression: "(@-16) 0 + (@-8) 6 + =(2) "
 ; Fused expression:    "+ (@-16) 0 push-ax + (@-8) 6 =(34) **sp ax "
     lea     ax, [bp-16]
-    add     ax, 0
     push    ax
     lea     ax, [bp-8]
     add     ax, 6
@@ -1984,7 +1952,7 @@ SEGMENT _TEXT
     add     ax, -2
     mov     bx, ax
     mov     ax, [bx]
-    add     ax, 1
+    inc     ax
     push    ax
     push    L161
     call    _printf
@@ -2529,7 +2497,7 @@ L222:
     imul    ax, ax, 80
     add     ax, [bp-44]
     imul    ax, ax, 2
-    add     ax, 1
+    inc     ax
     push    ax
     push    47104
     call    _pokeb
@@ -2954,7 +2922,6 @@ SEGMENT _TEXT
 ; Expanded expression: "(@-76) 0 + 11 =(2) "
 ; Fused expression:    "+ (@-76) 0 =(34) *ax 11 "
     lea     ax, [bp-76]
-    add     ax, 0
     mov     bx, ax
     mov     ax, 11
     mov     [bx], ax
@@ -3041,7 +3008,6 @@ SEGMENT _TEXT
 ; Expanded expression: "(@-76) 0 + (@-76) 2 + (@-76) 4 + *(2) *=(2) *=(2) "
 ; Fused expression:    "+ (@-76) 0 push-ax + (@-76) 2 push-ax + (@-76) 4 *=(34) **sp *ax *=(34) **sp ax "
     lea     ax, [bp-76]
-    add     ax, 0
     push    ax
     lea     ax, [bp-76]
     add     ax, 2
@@ -3077,7 +3043,6 @@ SEGMENT _TEXT
     mov     bx, ax
     push    word [bx]
     lea     ax, [bp-76]
-    add     ax, 0
     mov     bx, ax
     push    word [bx]
     push    L284

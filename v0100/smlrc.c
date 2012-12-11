@@ -1752,6 +1752,24 @@ void GenPrintInstr1Operand(int instr, int instrval, int operand, int operandval)
 
 void GenPrintInstr2Operands(int instr, int instrval, int operand1, int operand1val, int operand2, int operand2val)
 {
+  if (operand2 == X86OpConst && operand2val == 0 &&
+      (instr == X86InstrAdd || instr == X86InstrSub))
+    return;
+
+  if (operand2 == X86OpConst &&
+      (operand2val == 1 || operand2val == -1) &&
+      (instr == X86InstrAdd || instr == X86InstrSub))
+  {
+    if ((operand2val == 1 && instr == X86InstrAdd) ||
+        (operand2val == -1 && instr == X86InstrSub))
+      GenPrintInstr(X86InstrInc, 0);
+    else
+      GenPrintInstr(X86InstrDec, 0);
+    GenPrintOperand(operand1, operand1val);
+    GenPrintNewLine();
+    return;
+  }
+
   GenPrintInstr(instr, instrval);
   GenPrintOperand(operand1, operand1val);
   GenPrintOperandSeparator();
@@ -4826,7 +4844,23 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       stack[*idx + 1][1] = sc;
 
       // insert "!= 0" for right-hand operand
-      ins(++*idx, tok_Bool);
+      switch (stack[*idx][0])
+      {
+      case '<':
+      case tokULess:
+      case '>':
+      case tokUGreater:
+      case tokLEQ:
+      case tokULEQ:
+      case tokGEQ:
+      case tokUGEQ:
+      case tokEQ:
+      case tokNEQ:
+        break;
+      default:
+        ins(++*idx, tok_Bool);
+        break;
+      }
 
       sr = exprval(idx, &RightExprTypeSynPtr, &constExpr[1]);
 
@@ -4836,7 +4870,24 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       else
         ins2(++*idx, tokShortCirc, -sc);
       // insert "!= 0" for left-hand operand
-      ins(*idx, tok_Bool);
+      switch (stack[*idx - 1][0])
+      {
+      case '<':
+      case tokULess:
+      case '>':
+      case tokUGreater:
+      case tokLEQ:
+      case tokULEQ:
+      case tokGEQ:
+      case tokUGEQ:
+      case tokEQ:
+      case tokNEQ:
+        --*idx;
+        break;
+      default:
+        ins(*idx, tok_Bool);
+        break;
+      }
 
       sl = exprval(idx, ExprTypeSynPtr, &constExpr[0]);
 
