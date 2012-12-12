@@ -47,29 +47,36 @@ extern char _setargv__;
 //#define PROTO extern
 #define PROTO
 
-//#include <stddef.h>
+
+#ifndef __SMALLER_C__
+
+#include <limits.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+#include <stdio.h>
+
+#else // #ifndef __SMALLER_C__
+
 #define NULL 0
 #define size_t int
 
-//#include <limits.h>
 #define CHAR_BIT (8)
-#define INT_MAX ((1<<(CHAR_BIT*sizeof(int)-2))-1+(1<<(CHAR_BIT*sizeof(int)-2)))
-#define INT_MIN (-INT_MAX-1)
 
-//#include <stdarg.h>
-/*
-#define va_list int
-void va_start(int, ...) {}
-void va_end(int) {}
-*/
+#ifdef __SMALLER_C_16__
+#define INT_MAX (32767)
+#define INT_MIN (-32767-1)
+#else // #ifdef __SMALLER_C_16__
+#ifdef __SMALLER_C_32__
+#define INT_MAX (2147483647)
+#define INT_MIN (-2147483647-1)
+#endif // #ifdef __SMALLER_C_32__
+#endif // #ifdef __SMALLER_C_16__
 
-//#include <stdlib.h>
 EXTERN void exit(int);
-EXTERN void* malloc(size_t);
-EXTERN void free(void*);
 EXTERN int atoi(char*);
 
-//#include <string.h>
 EXTERN int strlen(char*);
 EXTERN char* strcpy(char*, char*);
 EXTERN char* strchr(char*, int);
@@ -78,14 +85,12 @@ EXTERN void* memmove(void*, void*, int);
 EXTERN void* memcpy(void*, void*, int);
 EXTERN void* memset(void*, int, int);
 
-//#include <ctype.h>
 EXTERN int isspace(int);
 EXTERN int isdigit(int);
 EXTERN int isalpha(int);
 EXTERN int isalnum(int);
 
-//#include <stdio.h>
-#define FILE int
+#define FILE void
 #define EOF (-1)
 EXTERN int putchar(int);
 EXTERN FILE* fopen(char*, char*);
@@ -98,6 +103,9 @@ EXTERN int sprintf(char*, char*, ...);
 EXTERN int vprintf(char*, void*);
 //EXTERN int vsprintf(char*, char*, va_list);
 EXTERN int vsprintf(char*, char*, void*);
+
+#endif // #ifndef __SMALLER_C__
+
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -490,6 +498,14 @@ void AddMacroExpansionChar(char e)
 
   MacroTable[MacroTableLen + 1 + MacroTable[MacroTableLen]] = e;
   MacroTable[MacroTableLen]++;
+}
+
+void DefineMacro(char* name, char* expansion)
+{
+  AddMacroIdent(name);
+  while (*expansion != '\0')
+    AddMacroExpansionChar(*expansion++);
+  AddMacroExpansionChar('\0');
 }
 
 void DumpMacroTable(void)
@@ -5134,13 +5150,16 @@ int ParseExpr(int tok, int* GotUnary, int* ExprTypeSynPtr, int* ConstExpr, int* 
 
 void error(char* format, ...)
 {
-//  va_list vl;
-//  va_start(vl, format);
+  int i, fidx = FileCnt - 1 + !FileCnt;
+#ifndef __SMALLER_C__
+  va_list vl;
+  va_start(vl, format);
+#else
   void* vl = &format + 1;
   void* testptr[2];
   // hopefully enough space to sprintf() 3 pointers using "%p"
   char testbuf[3][CHAR_BIT * sizeof(void*) + 1];
-  int i, fidx = FileCnt - 1 + !FileCnt;
+#endif
 
   for (i = 0; i < FileCnt; i++)
     if (Files[i])
@@ -5154,6 +5173,9 @@ void error(char* format, ...)
 
   printf("Error in \"%s\" (%d:%d)\n", FileNames[fidx], LineNo, LinePos);
 
+#ifndef __SMALLER_C__
+  vprintf(format, vl);
+#else
   // TBD!!! This is not good. Really need the va_something macros.
   // Test whether va_list is a pointer to the first optional parameter or
   // an array of one element containing said pointer
@@ -5181,8 +5203,11 @@ void error(char* format, ...)
     // the code may have long crashed by now
     printf("%s", format);
   }
+#endif
 
-//  va_end(vl);
+#ifndef __SMALLER_C__
+  va_end(vl);
+#endif
   exit(-1);
 }
 
@@ -6550,6 +6575,13 @@ int main(int argc, char** argv)
   SyntaxStack[SyntaxStackCnt++][1] = 0;
   SyntaxStack[SyntaxStackCnt][0] = tokInt;
   SyntaxStack[SyntaxStackCnt++][1] = 0;
+
+  // Define a few macros useful for conditional compilation
+  DefineMacro("__SMALLER_C__", "0x0100");
+  if (SizeOfWord == 2)
+    DefineMacro("__SMALLER_C_16__", "");
+  else if (SizeOfWord == 4)
+    DefineMacro("__SMALLER_C_32__", "");
 
   // Change the output assembly format/content according to the options
   if (OutputFormat == FormatSegmented)
