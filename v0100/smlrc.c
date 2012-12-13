@@ -67,12 +67,19 @@ extern char _setargv__;
 #ifdef __SMALLER_C_16__
 #define INT_MAX (32767)
 #define INT_MIN (-32767-1)
-#else // #ifdef __SMALLER_C_16__
+#endif
 #ifdef __SMALLER_C_32__
 #define INT_MAX (2147483647)
 #define INT_MIN (-2147483647-1)
-#endif // #ifdef __SMALLER_C_32__
-#endif // #ifdef __SMALLER_C_16__
+#endif
+#ifdef __SMALLER_C_SCHAR__
+#define CHAR_MIN (-128)
+#define CHAR_MAX (127)
+#endif
+#ifdef __SMALLER_C_UCHAR__
+#define CHAR_MIN (0)
+#define CHAR_MAX (255)
+#endif
 
 EXTERN void exit(int);
 EXTERN int atoi(char*);
@@ -120,6 +127,7 @@ EXTERN int vsprintf(char*, char*, void*);
 #define MAX_INCLUDES         8
 #define MAX_FILE_NAME_LEN    95
 #define PREP_STACK_SIZE      8
+#define MAX_SEARCH_PATH      256
 
 /* +-~* /% &|^! << >> && || < <= > >= == !=  () *[] ++ -- = += -= ~= *= /= %= &= |= ^= <<= >>= {} ,;: -> ... */
 
@@ -346,6 +354,8 @@ FILE* Files[MAX_INCLUDES];
 char CharQueues[MAX_INCLUDES][3];
 int LineNos[MAX_INCLUDES];
 int LinePoss[MAX_INCLUDES];
+char SearchPaths[MAX_SEARCH_PATH];
+int SearchPathsLen = 0;
 
 // Data structures to support #ifdef/#ifndef,#else,#endif
 int PrepDontSkipTokens = 1;
@@ -794,8 +804,10 @@ void ShiftCharN(int n)
   }
 }
 
-void IncludeFile(/*char quot*/)
+void IncludeFile(int quot)
 {
+  int nlen = strlen(TokenValueString);
+
   if (CharQueueLen != 3)
     error("Error: #include parsing error\n");
 
@@ -809,13 +821,51 @@ void IncludeFile(/*char quot*/)
 
   // open the included file
 
-  if (strlen(TokenValueString) > MAX_FILE_NAME_LEN)
+  if (nlen > MAX_FILE_NAME_LEN)
     error("Error: File name too long\n");
-  strcpy(FileNames[FileCnt], TokenValueString);
 
-  // TBD!!! differentiate between quot == '\"' and quot == '<'
-  if ((Files[FileCnt] = fopen(FileNames[FileCnt], "rt")) == NULL)
-    error("Error: Cannot open file \"%s\"\n", FileNames[FileCnt]);
+  // DONE: differentiate between quot == '\"' and quot == '<'
+
+  // first, try opening "file" in the current directory
+  if (quot == '\"')
+  {
+    strcpy(FileNames[FileCnt], TokenValueString);
+    Files[FileCnt] = fopen(FileNames[FileCnt], "rt");
+  }
+
+  // next, iterate the search paths trying to open "file" or <file>
+  if (Files[FileCnt] == NULL)
+  {
+    int i;
+    for (i = 0; i < SearchPathsLen; )
+    {
+      int plen = strlen(SearchPaths + i);
+      if (plen + 1 + nlen < MAX_FILE_NAME_LEN)
+      {
+        strcpy(FileNames[FileCnt], SearchPaths + i);
+        strcpy(FileNames[FileCnt] + plen + 1, TokenValueString);
+        // first, try '/' as a separator (Linux/Unix)
+        FileNames[FileCnt][plen] = '/';
+        if ((Files[FileCnt] = fopen(FileNames[FileCnt], "rt")) == NULL)
+        {
+          // next, try '\\' as a separator (DOS/Windows)
+          FileNames[FileCnt][plen] = '\\';
+          Files[FileCnt] = fopen(FileNames[FileCnt], "rt");
+        }
+        if (Files[FileCnt])
+          break;
+      }
+      i += plen + 1;
+    }
+  }
+
+  if (Files[FileCnt] == NULL)
+  {
+    if (quot == '<' && !SearchPathsLen)
+      error("Error: Cannot open file \"%s\", include search path unspecified\n", TokenValueString);
+
+    error("Error: Cannot open file \"%s\"\n", TokenValueString);
+  }
 
   // reset line/pos and empty the char queue
   CharQueueLen = 0;
@@ -1315,12 +1365,12 @@ int GetToken(void)
       }
       else if (!strcmp(TokenIdentName, "include"))
       {
-        // char quot;
+        int quot;
 
         // Skip space and get file name
         SkipSpace(0);
 
-        // quot = *p;
+        quot = *p;
         if (*p == '\"')
           GetString('\"', 0);
         else if (*p == '<')
@@ -1333,7 +1383,7 @@ int GetToken(void)
           error("Error: Unsupported or invalid preprocessor directive\n");
 
         if (PrepDontSkipTokens)
-          IncludeFile(/*quot*/);
+          IncludeFile(quot);
 
         continue;
       }
@@ -6543,6 +6593,18 @@ int main(int argc, char** argv)
       UseLeadingUnderscores = 0;
       continue;
     }
+    else if (!strcmp(argv[i], "-I"))
+    {
+      if (i + 1 < argc)
+      {
+        int len = strlen(argv[++i]);
+        if (MAX_SEARCH_PATH - SearchPathsLen < len + 1)
+          error("Error: Path name too long\n");
+        strcpy(SearchPaths + SearchPathsLen, argv[i]);
+        SearchPathsLen += len + 1;
+        continue;
+      }
+    }
     else if (!FileCnt)
     {
       // If it's none of the known options,
@@ -6582,6 +6644,10 @@ int main(int argc, char** argv)
     DefineMacro("__SMALLER_C_16__", "");
   else if (SizeOfWord == 4)
     DefineMacro("__SMALLER_C_32__", "");
+  if (CharIsSigned)
+    DefineMacro("__SMALLER_C_SCHAR__", "");
+  else
+    DefineMacro("__SMALLER_C_UCHAR__", "");
 
   // Change the output assembly format/content according to the options
   if (OutputFormat == FormatSegmented)
