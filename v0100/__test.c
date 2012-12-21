@@ -5,7 +5,7 @@
 
 int putchar(int c);
 int getchar(void);
-void pokeb(int seg, int ofs, char val);
+void pokeb(unsigned seg, unsigned ofs, char val);
 
 char* strcpy(char* s1, char* s2)
 {
@@ -13,9 +13,9 @@ char* strcpy(char* s1, char* s2)
   while(*s1++ = *s2++);
   return tmp;
 }
-int strlen(char* s)
+unsigned strlen(char* s)
 {
-  int l = 0;
+  unsigned l = 0;
   while(*s++) ++l;
   return l;
 }
@@ -46,18 +46,16 @@ int isdigit(int c)
   return c >= '0' && c <= '9';
 }
 
-int printf(char* fmt, ...)
+int vprintf(char* fmt, void* vl)
 {
-  int* pp = &fmt;
+  int* pp = vl;
   int cnt = 0;
   char* p;
   char* phex = "0123456789abcdef";
   char s[1/*sign*/+10/*magnitude*/+1/*\0*/]; // up to 11 octal digits in 32-bit numbers
   char* pc;
-  int n, sign;
+  int n, sign, msign;
   int minlen = 0, len;
-
-  pp++;
 
   for (p = fmt; *p != '\0'; p++)
   {
@@ -70,16 +68,28 @@ int printf(char* fmt, ...)
     }
     p++;
     minlen = 0;
+    msign = 0;
+    if (*p == '+') { msign = 1; p++; }
+    else if (*p == '-') { msign = -1; p++; }
     if (isdigit(*p))
     {
       while (isdigit(*p))
         minlen = minlen * 10 + *p++ - '0';
+      if (msign < 0)
+        minlen = -minlen;
+      msign = 0;
+    }
+    if (!msign)
+    {
+      if (*p == '+') { msign = 1; p++; }
+      else if (*p == '-') { msign = -1; p++; }
     }
     switch (*p)
     {
     case 'c':
       while (minlen > 1) { putchar(' '); cnt++; minlen--; }
       putchar(*pp++);
+      while (-minlen > 1) { putchar(' '); cnt++; minlen++; }
       cnt++;
       break;
     case 's':
@@ -94,6 +104,7 @@ int printf(char* fmt, ...)
           putchar(*pc++); 
           cnt++;
         }
+      while (-minlen > len) { putchar(' '); cnt++; minlen++; }
       break;
     case 'i':
     case 'd':
@@ -113,12 +124,45 @@ int printf(char* fmt, ...)
         *--pc = '-';
         len++;
       }
+      else if (msign > 0)
+      {
+        *--pc = '+';
+        len++;
+        msign = 0;
+      }
       while (minlen > len) { putchar(' '); cnt++; minlen--; }
       while (*pc != '\0')
       {
         putchar(*pc++); 
         cnt++;
       }
+      while (-minlen > len) { putchar(' '); cnt++; minlen++; }
+      break;
+    case 'u':
+      pc = &s[sizeof s - 1];
+      *pc = '\0';
+      len = 0;
+      n = *pp++;
+      do
+      {
+        unsigned nn = n;
+        *--pc = '0' + nn % 10;
+        n = nn / 10;
+        len++;
+      } while (n);
+      if (msign > 0)
+      {
+        *--pc = '+';
+        len++;
+        msign = 0;
+      }
+      while (minlen > len) { putchar(' '); cnt++; minlen--; }
+      while (*pc != '\0')
+      {
+        putchar(*pc++); 
+        cnt++;
+      }
+      while (-minlen > len) { putchar(' '); cnt++; minlen++; }
       break;
     case 'X':
       phex = "0123456789ABCDEF";
@@ -131,8 +175,9 @@ int printf(char* fmt, ...)
       n = *pp++;
       do
       {
-        *--pc = phex[n & 0xF];
-        n = (n >> 4) & ((1 << (8 * sizeof n - 4)) - 1); // drop sign-extended bits
+        unsigned nn = n;
+        *--pc = phex[nn & 0xF];
+        n = nn >> 4;
         len++;
       } while (n);
       while (minlen > len) { putchar(' '); cnt++; minlen--; }
@@ -141,6 +186,7 @@ int printf(char* fmt, ...)
         putchar(*pc++); 
         cnt++;
       }
+      while (-minlen > len) { putchar(' '); cnt++; minlen++; }
       break;
     case 'o':
       pc = &s[sizeof s - 1];
@@ -149,8 +195,9 @@ int printf(char* fmt, ...)
       n = *pp++;
       do
       {
-        *--pc = '0' + (n & 7);
-        n = (n >> 3) & ((1 << (8 * sizeof n - 3)) - 1); // drop sign-extended bits
+        unsigned nn = n;
+        *--pc = '0' + (nn & 7);
+        n = nn >> 3;
         len++;
       } while (n);
       while (minlen > len) { putchar(' '); cnt++; minlen--; }
@@ -159,6 +206,7 @@ int printf(char* fmt, ...)
         putchar(*pc++); 
         cnt++;
       }
+      while (-minlen > len) { putchar(' '); cnt++; minlen++; }
       break;
     default:
       return -1;
@@ -166,6 +214,12 @@ int printf(char* fmt, ...)
   }
 
   return cnt;
+}
+
+int printf(char* fmt, ...)
+{
+  void** pp = &fmt;
+  return vprintf(fmt, pp + 1);
 }
 
 void putdec(int n)
@@ -190,21 +244,12 @@ void putdec(int n)
   putchar('0' + r);
 }
 
-void putdecu(int n)
+void putdecu(unsigned n)
 {
   int r;
 
-  if (n < 0)
-  {
-    int n2 = ((n >> 1) & ((1 << (8 * sizeof n - 1)) - 1)) / 5; // n2 = (unsigned)n / 10;
-    r = n - n2 * 10;
-    n = n2;
-  }
-  else
-  {
-    r = n % 10;
-    n = n / 10;
-  }
+  r = n % 10;
+  n = n / 10;
 
   if (n)
     putdecu(n);
@@ -212,44 +257,6 @@ void putdecu(int n)
   putchar('0' + r);
 }
 
-/*
-int one(void)
-{
-  return 1;
-}
-
-int DivisionIsSafe(int dvdnt, int dvsr)
-{
-  return dvsr != 0 && (dvsr != -1 || dvdnt != -32767-1);
-}
-
-int sgn(int x)
-{
-  if (x > 0) return 1;
-  else if (x < 0) return -1;
-  else return 0;
-}
-
-int copy(int x)
-{
-  int c = 0;
-  do ++c; while(x != c);
-  return c;
-}
-
-int square(int x)
-{
-  int i, s;
-  for (s = i = 0; i <= x; ++i)
-    s = s + i;
-  return 2 * s - x;
-}
-
-void infloop(void)
-{
-  for (;;);
-}
-*/
 int fact(int x)
 {
   if (x <= 1)
@@ -349,7 +356,7 @@ int main(void)
   *phw++='H'; *phw++='e'; *phw++='l'; *phw++='l'; *phw++='o'; *phw++=' ';
   *phw++='W'; *phw++='o'; *phw++='r'; *phw++='l'; *phw++='d'; *phw++='!'; *phw++='\0';
 
-  printf("hws=\"%s\", strlen(hws)=%d\n", hws, strlen(hws));
+  printf("hws=\"%s\", strlen(hws)=%u\n", hws, strlen(hws));
   puts("Buongiorno!");
   puts(Hola);
 
@@ -361,7 +368,7 @@ int main(void)
   printf("'\\x0'=%X, '\\x7F'=%X, '\\0'=%o, '\\177'=%o, '\\xFf'=%X, '\\377'=%o\n",
          '\x0', '\x7F', '\0', '\177', '\xFf', '\377');
 
-  printf("\"xyz\"[2]='%c', sizeof \"az\"=%d\n", "xyz"[2], sizeof "az");
+  printf("\"xyz\"[2]='%c', sizeof \"az\"=%u\n", "xyz"[2], sizeof "az");
 
   printf("fact(7)=%d, fib(10)=%d\n", fact(7), fib(10));
 
@@ -393,20 +400,20 @@ int main(void)
   getchar();
   gfxmode(3);
 
-  printf("sizeof(char)=%d\n", sizeof(char));
-  printf("sizeof(int)=%d\n", sizeof(int));
-  printf("sizeof(char[3])=%d\n", sizeof(char[3]));
-  printf("sizeof char(*[5])()=%d\n", sizeof char(*[5])());
-  printf("sizeof(int[sizeof(int[sizeof(int[3])])])=%d\n", sizeof(int[sizeof(int[sizeof(int[3])])]));
+  printf("sizeof(char)=%u\n", sizeof(char));
+  printf("sizeof(int)=%u\n", sizeof(int));
+  printf("sizeof(char[3])=%u\n", sizeof(char[3]));
+  printf("sizeof char(*[5])()=%u\n", sizeof char(*[5])());
+  printf("sizeof(int[sizeof(int[sizeof(int[3])])])=%u\n", sizeof(int[sizeof(int[sizeof(int[3])])]));
   char yui[sizeof(int[sizeof(int[sizeof(int[3])])])];
-  printf("sizeof(char(*)())=%d\n", sizeof(char(*)()));
-  printf("sizeof(char())=%d\n", sizeof(char()));
-  printf("sizeof(char*())=%d\n", sizeof(char*()));
-  printf("sizeof(int())=%d\n", sizeof(int()));
-  printf("sizeof main=%d\n", sizeof main);
-  printf("sizeof main()=%d\n", sizeof main());
-  printf("sizeof(void()())=%d\n", sizeof(void()()));
-  printf("sizeof((char[7]))=%d\n", sizeof((char[7])));
+  printf("sizeof(char(*)())=%u\n", sizeof(char(*)()));
+  printf("sizeof(char())=%u\n", sizeof(char()));
+  printf("sizeof(char*())=%u\n", sizeof(char*()));
+  printf("sizeof(int())=%u\n", sizeof(int()));
+  printf("sizeof main=%u\n", sizeof main);
+  printf("sizeof main()=%u\n", sizeof main());
+  printf("sizeof(void()())=%u\n", sizeof(void()()));
+  printf("sizeof((char[7]))=%u\n", sizeof((char[7])));
 
   PointerStew();
   Print8("hello")(" ")("world")("!")("\n");
@@ -418,6 +425,8 @@ int main(void)
 */
   printf("These ""are " "six ""concatenated ""string "  "literals!\n");
   printf("\"\\x41\\x42\\x43\\60\\61\\62abc\" = \"%s\"\n", "\x41\x42\x43\60\61\62abc");
+
+  puts("press a key..."); getchar();
 
   int arr[3], *p = arr + 1;
   arr[0] = 11;
@@ -439,12 +448,12 @@ int main(void)
   printf("printf(\"%%d\\n\", c *= 127): %d\n", c *= 127); // DONE: must be 1, not 16129
 
   putdecu(32767); putchar('\n');
-  putdecu(-32767-1); putchar('\n');
-  putdecu(-32767); putchar('\n');
-  putdecu(-32767+1); putchar('\n');
-  putdecu(-3); putchar('\n');
-  putdecu(-2); putchar('\n');
-  putdecu(-1); putchar('\n');
+  putdecu(32768u); putchar('\n');
+  putdecu(32769u); putchar('\n');
+  putdecu(32770u); putchar('\n');
+  putdecu(65533u); putchar('\n');
+  putdecu(65534u); putchar('\n');
+  printf("%u\n", 65535u);
 
   return 0;
 }

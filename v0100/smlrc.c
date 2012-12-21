@@ -37,9 +37,11 @@ either expressed or implied, of the FreeBSD Project.
 /*                                                                           */
 /*****************************************************************************/
 
+//#ifdef __TURBOC__
 // You need to declare __setargv__ as an extern symbol when bootstrapping with
 // Turbo C++ in order to access main()'s argc and argv params.
 extern char _setargv__;
+//#endif
 
 #define EXTERN extern
 //#define EXTERN
@@ -60,18 +62,10 @@ extern char _setargv__;
 #else // #ifndef __SMALLER_C__
 
 #define NULL 0
-#define size_t int
+#define size_t unsigned int
 
 #define CHAR_BIT (8)
 
-#ifdef __SMALLER_C_16__
-#define INT_MAX (32767)
-#define INT_MIN (-32767-1)
-#endif
-#ifdef __SMALLER_C_32__
-#define INT_MAX (2147483647)
-#define INT_MIN (-2147483647-1)
-#endif
 #ifdef __SMALLER_C_SCHAR__
 #define CHAR_MIN (-128)
 #define CHAR_MAX (127)
@@ -81,16 +75,29 @@ extern char _setargv__;
 #define CHAR_MAX (255)
 #endif
 
+#ifdef __SMALLER_C_16__
+#define INT_MAX (32767)
+#define INT_MIN (-32767-1)
+#define UINT_MAX (65535u)
+#define UINT_MIN (0u)
+#endif
+#ifdef __SMALLER_C_32__
+#define INT_MAX (2147483647)
+#define INT_MIN (-2147483647-1)
+#define UINT_MAX (4294967295u)
+#define UINT_MIN (0u)
+#endif
+
 EXTERN void exit(int);
 EXTERN int atoi(char*);
 
-EXTERN int strlen(char*);
+EXTERN size_t strlen(char*);
 EXTERN char* strcpy(char*, char*);
 EXTERN char* strchr(char*, int);
 EXTERN int strcmp(char*, char*);
-EXTERN void* memmove(void*, void*, int);
-EXTERN void* memcpy(void*, void*, int);
-EXTERN void* memset(void*, int, int);
+EXTERN void* memmove(void*, void*, size_t);
+EXTERN void* memcpy(void*, void*, size_t);
+EXTERN void* memset(void*, int, size_t);
 
 EXTERN int isspace(int);
 EXTERN int isdigit(int);
@@ -132,8 +139,8 @@ EXTERN int vsprintf(char*, char*, void*);
 /* +-~* /% &|^! << >> && || < <= > >= == !=  () *[] ++ -- = += -= ~= *= /= %= &= |= ^= <<= >>= {} ,;: -> ... */
 
 #define tokEof        0
-#define tokNum        1
-#define tokLitChar    2
+#define tokNumInt     1
+#define tokNumUint    2
 #define tokLitStr     3
 
 #define tokLShift     4
@@ -201,7 +208,13 @@ EXTERN int vsprintf(char*, char*, void*);
 #define tok_Imagin    'z'
 
 /* Pseudo-tokens (converted from others or generated) */
-//#define tokIf
+#define tokURShift    28
+#define tokUDiv       29
+#define tokUMod       30
+#define tokAssignURSh 31
+#define tokAssignUDiv '@'
+#define tokAssignUMod 'K'
+
 #define tokIfNot      'L'
 
 #define tokUnaryAnd   'M'
@@ -228,6 +241,7 @@ EXTERN int vsprintf(char*, char*, void*);
 #define SYNTAX_STACK_MAX 2048
 #define SymVoidSynPtr 0
 #define SymIntSynPtr 1
+#define SymUintSynPtr 2
 
 #define STACK_SIZE 100
 
@@ -238,6 +252,9 @@ EXTERN int vsprintf(char*, char*, void*);
 #define SymLocalArr  5
 
 // all public prototypes
+PROTO int uint2int(unsigned);
+PROTO unsigned truncUint(unsigned);
+PROTO int truncInt(int);
 
 PROTO int GetToken(void);
 PROTO char* GetTokenName(int token);
@@ -262,7 +279,7 @@ PROTO void DumpIdentTable(void);
 PROTO void GenLabel(char* Label);
 PROTO void GenExtern(char* Label);
 PROTO void GenNumLabel(int Label);
-PROTO void GenZeroData(int Size);
+PROTO void GenZeroData(unsigned Size);
 PROTO void GenIntData(int Size, int Val);
 PROTO void GenAddrData(int Size, char* Label);
 
@@ -307,6 +324,9 @@ PROTO int GetFxnInfo(int ExprTypeSynPtr, int* MinParams, int* MaxParams, int* Re
 
 // avoids signed-to-unsigned comparison warnings with unsigned sizeof(int)
 int intSize = sizeof(int);
+
+// indicates whether or not constant subexpressions can be folded
+int canSimplify = 0;
 
 // prep.c data
 
@@ -394,7 +414,6 @@ char* CodeFooter = "";
 char* DataHeader = "";
 char* DataFooter = "";
 
-int SizeOfChar = 1; // TBD??? currently unused
 int CharIsSigned = 1;
 int SizeOfWord = 2; // in chars (char can be a multiple of octets); ints and pointers are of word size
 
@@ -425,6 +444,56 @@ int SyntaxStack[SYNTAX_STACK_MAX][2];
 int SyntaxStackCnt = 0;
 
 // all code
+
+int uint2int(unsigned n)
+{
+  int r;
+  // Convert n to (int)n in such a way that (unsigned)(int)n == n,
+  // IOW, avoid signed overflows in (int)n.
+  // We're assuming ints are 2's complement.
+
+  // "n < INT_MAX + 1u" is equivalent to "n <= INT_MAX" without the
+  // possible warning about comparing signed and unsigned types
+  if (n < INT_MAX + 1u)
+  {
+    r = n;
+  }
+  else
+  {
+    n = n - INT_MAX - 1; // Now, 0 <= n <= INT_MAX, n is representable in int
+    r = n;
+    r = r - INT_MAX - 1; // Now, INT_MIN <= r <= -1
+  }
+
+  return r;
+}
+
+unsigned truncUint(unsigned n)
+{
+  // Truncate n to SizeOfWord * 8 bits
+  if (SizeOfWord == 2)
+    n &= ~(~0u << 8 << 8);
+  else if (SizeOfWord == 4)
+    n &= ~(~0u << 8 << 12 << 12);
+  return n;
+}
+
+int truncInt(int n)
+{
+  // Truncate n to SizeOfWord * 8 bits and then sign-extend it
+  unsigned un = n;
+  if (SizeOfWord == 2)
+  {
+    un &= ~(~0u << 8 << 8);
+    un |= (((un >> 8 >> 7) & 1) * ~0u) << 8 << 8;
+  }
+  else if (SizeOfWord == 4)
+  {
+    un &= ~(~0u << 8 << 12 << 12);
+    un |= (((un >> 8 >> 12 >> 11) & 1) * ~0u) << 8 << 12 << 12;
+  }
+  return uint2int(un);
+}
 
 // prep.c code
 
@@ -706,6 +775,9 @@ char* GetTokenName(int token)
   case tokPostAdd: return "+=p";         case tokPostSub: return "-=p";
   case tokULess: return "<u";            case tokUGreater: return ">u";
   case tokULEQ: return "<=u";            case tokUGEQ: return ">=u";
+  case tokURShift: return ">>u";         case tokAssignURSh: return ">>=u";
+  case tokUDiv: return "/u";             case tokAssignUDiv: return "/=u";
+  case tokUMod: return "%u";             case tokAssignUMod: return "%=u";
 
   // Reserved keywords:
   case tokVoid: return "void";           case tokChar: return "char";
@@ -729,7 +801,7 @@ char* GetTokenName(int token)
   case tok_Imagin: return "_Imaginary";
 
   // Helper (pseudo-)tokens:
-  case tokNum: return "<Num>";           case tokLitChar: return "<LitChar>";
+  case tokNumInt: return "<NumInt>";     case tokNumUint: return "<NumUint>";
   case tokLitStr: return "<LitStr>";     case tokIdent: return "<Ident>";
   case tokLocalOfs: return "<LocalOfs>"; case tokShortCirc: return "<ShortCirc>";
   }
@@ -1021,19 +1093,21 @@ void GetString(char terminator, int SkipNewLines)
           {
             // hexadecimal character codes \xN+
             int cnt = 0;
+            int c = 0;
             ShiftCharN(1);
-            ch = 0;
             while (*p != '\0' && (isdigit(*p) || strchr("abcdefABCDEF", *p)))
             {
-              ch *= 16;
-              if (*p >= 'a') ch += *p - 'a' + 10;
-              else if (*p >= 'A') ch += *p - 'A' + 10;
-              else ch += *p - '0';
+              c = (c * 16) & 0xFF;
+              if (*p >= 'a') c += *p - 'a' + 10;
+              else if (*p >= 'A') c += *p - 'A' + 10;
+              else c += *p - '0';
               ShiftCharN(1);
               cnt++;
             }
             if (!cnt)
               error("Error: Unsupported or invalid character/string constant\n");
+            c -= (c >= 0x80 && CHAR_MIN) * 0x100;
+            ch = c;
           }
           break;
         default:
@@ -1041,15 +1115,18 @@ void GetString(char terminator, int SkipNewLines)
           {
             // octal character codes \N+
             int cnt = 0;
-            ch = 0;
+            int c = 0;
             while (*p >= '0' && *p <= '7')
             {
-              ch = ch * 8 + *p - '0';
+              c = (c * 8) & 0xFF;
+              c += *p - '0';
               ShiftCharN(1);
               cnt++;
             }
             if (!cnt)
               error("Error: Unsupported or invalid character/string constant\n");
+            c -= (c >= 0x80 && CHAR_MIN) * 0x100;
+            ch = c;
           }
           else
           {
@@ -1104,6 +1181,100 @@ int popPrep(void)
   if (PrepSp <= 0) error("Error: #else or #endif without #if(n)def\n");
   PrepDontSkipTokens = PrepStack[--PrepSp][0];
   return PrepStack[PrepSp][1];
+}
+
+int GetNumber(void)
+{
+  char* p = CharQueue;
+  int ch = *p;
+  unsigned n = 0;
+  int type = 0;
+  int uSuffix = 0;
+
+  if (ch == '0')
+  {
+    // this is either an octal or a hex constant
+    type = 'o';
+    ShiftCharN(1);
+    if ((ch = *p) == 'x' || ch == 'X')
+    {
+      // this is a hex constant
+      int cnt = 0;
+      ShiftCharN(1);
+      while ((ch = *p) != '\0' && (isdigit(ch) || strchr("abcdefABCDEF", ch)))
+      {
+        if (ch >= 'a') ch -= 'a' - 10;
+        else if (ch >= 'A') ch -= 'A' - 10;
+        else ch -= '0';
+        if (PrepDontSkipTokens && (n * 16 / 16 != n || n * 16 + ch < n * 16))
+          error("Error: Constant too big\n");
+        n = n * 16 + ch;
+        ShiftCharN(1);
+        cnt++;
+      }
+      if (!cnt)
+        error("Error: Invalid hexadecimal constant\n");
+      type = 'h';
+    }
+    // this is an octal constant
+    else while ((ch = *p) >= '0' && ch <= '7')
+    {
+      ch -= '0';
+      if (PrepDontSkipTokens && (n * 8 / 8 != n || n * 8 + ch < n * 8))
+        error("Error: Constant too big\n");
+      n = n * 8 + ch;
+      ShiftCharN(1);
+    }
+  }
+  // this is a decimal constant
+  else
+  {
+    type = 'd';
+    while ((ch = *p) >= '0' && ch <= '9')
+    {
+      ch -= '0';
+      if (PrepDontSkipTokens && (n * 10 / 10 != n || n * 10 + ch < n * 10))
+        error("Error: Constant too big\n");
+      n = n * 10 + ch;
+      ShiftCharN(1);
+    }
+  }
+
+  if ((ch = *p) == 'u' || ch == 'U')
+  {
+    uSuffix = 1;
+    ShiftCharN(1);
+  }
+
+  if (!PrepDontSkipTokens)
+  {
+    // Don't fail on big constants when skipping tokens under #if
+    TokenValueInt = 0;
+    return tokNumInt;
+  }
+
+  // Ensure the constant fits into 16(32) bits
+  if ((SizeOfWord == 2 && n >> 8 >> 8) || // equiv. to SizeOfWord == 2 && n > 0xFFFF
+      (SizeOfWord == 4 && n >> 8 >> 12 >> 12)) // equiv. to SizeOfWord == 4 && n > 0xFFFFFFFF
+    error("Error: Constant too big for %d-bit type\n", SizeOfWord * 8);
+
+  TokenValueInt = uint2int(n);
+
+  // Unsuffixed (with 'u') integer constants (octal, decimal, hex)
+  // fitting into 15(31) out of 16(32) bits are signed ints
+  if (!uSuffix &&
+      ((SizeOfWord == 2 && !(n >> 8 >> 7)) || // equiv. to SizeOfWord == 2 && n <= 0x7FFF
+       (SizeOfWord == 4 && !(n >> 8 >> 12 >> 11)))) // equiv. to SizeOfWord == 4 && n <= 0x7FFFFFFF
+    return tokNumInt;
+
+  // Unlike octal and hex constants, decimal constants are always
+  // a signed type. Error out when a decimal constant doesn't fit
+  // into an int since currently there's no next bigger signed type
+  // (e.g. long) to use instead of int.
+  if (!uSuffix && type == 'd')
+    error("Error: Constant too big for %d-bit signed type\n", SizeOfWord * 8);
+
+  return tokNumUint;
 }
 
 int GetTokenInner(void)
@@ -1174,47 +1345,7 @@ int GetTokenInner(void)
 
   // DONE: hex and octal constants
   if (isdigit(ch))
-  {
-    TokenValueInt = 0;
-    if (ch == '0')
-    {
-      // this is either an octal or a hex constant
-      ShiftCharN(1);
-      if ((ch = *p) == 'x' || ch == 'X')
-      {
-        // this is a hex constant
-        int cnt = 0;
-        ShiftCharN(1);
-        while ((ch = *p) != '\0' && (isdigit(ch) || strchr("abcdefABCDEF", ch)))
-        {
-          if (ch >= 'a') ch -= 'a' - 10;
-          else if (ch >= 'A') ch -= 'A' - 10;
-          else ch -= '0';
-          TokenValueInt *= 16;
-          TokenValueInt += ch;
-          ShiftCharN(1);
-          cnt++;
-        }
-        if (!cnt)
-          error("Error: Invalid hexadecimal constant\n");
-      }
-      // this is an octal constant
-      else while ((ch = *p) >= '0' && ch <= '7')
-      {
-        TokenValueInt *= 8;
-        TokenValueInt += ch - '0';
-        ShiftCharN(1);
-      }
-    }
-    // this is a decimal constant
-    else while ((ch = *p) >= '0' && ch <= '9')
-    {
-      TokenValueInt *= 10;
-      TokenValueInt += ch - '0';
-      ShiftCharN(1);
-    }
-    return tokNum;
-  } // endof if (isdigit(ch))
+    return GetNumber();
 
   // parse character and string constants
   if (ch == '\'' || ch == '\"')
@@ -1226,8 +1357,9 @@ int GetTokenInner(void)
       if (TokenStringLen != 1)
         error("Error: Character constant too short\n");
 
-      TokenValueInt = TokenValueString[0];
-      return tokLitChar;
+      TokenValueInt = TokenValueString[0] & 0xFF;
+      TokenValueInt -= (CharIsSigned && TokenValueInt >= 0x80) * 0x100;
+      return tokNumInt;
     }
 
     return tokLitStr;
@@ -1508,13 +1640,14 @@ void GenPrintNumLabel(int label)
     printf("..@L%d", label);
 }
 
-void GenZeroData(int Size)
+void GenZeroData(unsigned Size)
 {
-  printf("    times %d db 0\n", Size);
+  printf("    times %u db 0\n", truncUint(Size));
 }
 
 void GenIntData(int Size, int Val)
 {
+  Val = truncInt(Val);
   if (Size == 1)
     printf("    db  %d\n", Val);
   else if (Size == 2)
@@ -1553,20 +1686,22 @@ void GenAddrData(int Size, char* Label)
 #define X86InstrMul    0x10
 #define X86InstrImul   0x11
 #define X86InstrIdiv   0x12
-#define X86InstrShl    0x13
-#define X86InstrSar    0x14
-#define X86InstrNeg    0x15
-#define X86InstrNot    0x16
-#define X86InstrCbw    0x17
-#define X86InstrCwd    0x18
-#define X86InstrCdq    0x19
-#define X86InstrSetCc  0x1A
-#define X86InstrJcc    0x1B
-#define X86InstrJNotCc 0x1C
-#define X86InstrLeave  0x1D
-#define X86InstrCall   0x1E
-#define X86InstrRet    0x1F
-#define X86InstrJmp    0x20
+#define X86InstrDiv    0x13
+#define X86InstrShl    0x14
+#define X86InstrSar    0x15
+#define X86InstrShr    0x16
+#define X86InstrNeg    0x17
+#define X86InstrNot    0x18
+#define X86InstrCbw    0x19
+#define X86InstrCwd    0x1A
+#define X86InstrCdq    0x1B
+#define X86InstrSetCc  0x1C
+#define X86InstrJcc    0x1D
+#define X86InstrJNotCc 0x1E
+#define X86InstrLeave  0x1F
+#define X86InstrCall   0x20
+#define X86InstrRet    0x21
+#define X86InstrJmp    0x22
 
 void GenPrintInstr(int instr, int val)
 {
@@ -1593,8 +1728,10 @@ void GenPrintInstr(int instr, int val)
   case X86InstrMul: p = "mul"; break;
   case X86InstrImul: p = "imul"; break;
   case X86InstrIdiv: p = "idiv"; break;
+  case X86InstrDiv: p = "div"; break;
   case X86InstrShl: p = "shl"; break;
   case X86InstrSar: p = "sar"; break;
+  case X86InstrShr: p = "shr"; break;
   case X86InstrNeg: p = "neg"; break;
   case X86InstrNot: p = "not"; break;
   case X86InstrCbw: p = "cbw"; break;
@@ -1743,7 +1880,7 @@ void GenPrintOperand(int op, int val)
     case X86OpRegDWord: printf("dx"); break;
     case X86OpRegBpWord: printf("bp"); break;
     case X86OpRegSpWord: printf("sp"); break;
-    case X86OpConst: printf("%d", val); break;
+    case X86OpConst: printf("%d", truncInt(val)); break;
     case X86OpLabel: GenPrintLabel(IdentTable + val); break;
     case X86OpNumLabel: GenPrintNumLabel(val); break;
     case X86OpIndLabel: printf("["); GenPrintLabel(IdentTable + val); printf("]"); break;
@@ -1770,7 +1907,7 @@ void GenPrintOperand(int op, int val)
     case X86OpRegDWord: printf("edx"); break;
     case X86OpRegBpWord: printf("ebp"); break;
     case X86OpRegSpWord: printf("esp"); break;
-    case X86OpConst: printf("%d", val); break;
+    case X86OpConst: printf("%d", truncInt(val)); break;
     case X86OpLabel: GenPrintLabel(IdentTable + val); break;
     case X86OpNumLabel: GenPrintNumLabel(val); break;
     case X86OpIndLabel: printf("["); GenPrintLabel(IdentTable + val); printf("]"); break;
@@ -2175,15 +2312,16 @@ void GenPostAddSubIndirect(int opSz, int val, int tok)
                          X86OpConst, val);
 }
 
-#define tokOpNum         0x100
-#define tokOpIdent       0x101
-#define tokOpLocalOfs    0x102
-#define tokOpAcc         0x103
-#define tokOpIndIdent    0x104
-#define tokOpIndLocalOfs 0x105
-#define tokOpIndAcc      0x106
-#define tokOpStack       0x107
-#define tokOpIndStack    0x108
+#define tokOpNumInt      0x100
+#define tokOpNumUint     0x101
+#define tokOpIdent       0x102
+#define tokOpLocalOfs    0x103
+#define tokOpAcc         0x104
+#define tokOpIndIdent    0x105
+#define tokOpIndLocalOfs 0x106
+#define tokOpIndAcc      0x107
+#define tokOpStack       0x108
+#define tokOpIndStack    0x109
 
 #define tokPushAcc       0x200
 
@@ -2193,7 +2331,7 @@ int GetOperandInfo(int idx, int lvalSize, int* val, int* size, int* delDeref)
 
   *delDeref = 0;
 
-  while (stack[idx][0] >= tokOpNum && stack[idx][0] <= tokOpIndAcc)
+  while (stack[idx][0] >= tokOpNumInt && stack[idx][0] <= tokOpIndAcc)
     idx--;
 
   if (stack[idx][0] == tokUnaryStar)
@@ -2242,9 +2380,10 @@ int GetOperandInfo(int idx, int lvalSize, int* val, int* size, int* delDeref)
 
   switch (stack[idx][0])
   {
-  case tokNum:
-  case tokLitChar:
-    return tokOpNum;
+  case tokNumInt:
+    return tokOpNumInt;
+  case tokNumUint:
+    return tokOpNumUint;
   case tokIdent:
     return tokOpIdent;
   case tokLocalOfs:
@@ -2279,8 +2418,8 @@ void GenFuse(int* idx)
 
   switch (tok)
   {
-  case tokLitChar:
-  case tokNum:
+  case tokNumInt:
+  case tokNumUint:
   case tokIdent:
   case tokLocalOfs:
     break;
@@ -2359,7 +2498,7 @@ void GenFuse(int* idx)
     {
     case tokIdent:
     case tokLocalOfs:
-      stack[oldIdxRight + 2][0] = tokOpNum;
+      stack[oldIdxRight + 2][0] = tokOpNumInt;
       stack[oldIdxRight + 2][1] = num;
       if (stack[oldIdxRight][0] == tokIdent)
         stack[oldIdxRight + 1][0] = tokOpIndIdent;
@@ -2373,7 +2512,7 @@ void GenFuse(int* idx)
       stack[oldIdxRight + 1][0] = tok;
       stack[oldIdxRight + 1][1] = opSzRight;
       stack[oldIdxRight + 2][0] = tokOpIndAcc;
-      ins2(oldIdxRight + 3, tokOpNum, num);
+      ins2(oldIdxRight + 3, tokOpNumInt, num);
       break;
     }
     break;
@@ -2453,9 +2592,12 @@ void GenFuse(int* idx)
   case tokAssignSub:
   case tokAssignMul:
   case tokAssignDiv:
+  case tokAssignUDiv:
   case tokAssignMod:
+  case tokAssignUMod:
   case tokAssignLSh:
   case tokAssignRSh:
+  case tokAssignURSh:
   case tokAssignAnd:
   case tokAssignXor:
   case tokAssignOr:
@@ -2463,9 +2605,12 @@ void GenFuse(int* idx)
   case '-':
   case '*':
   case '/':
+  case tokUDiv:
   case '%':
+  case tokUMod:
   case tokLShift:
   case tokRShift:
+  case tokURShift:
   case '&':
   case '^':
   case '|':
@@ -2488,9 +2633,12 @@ void GenFuse(int* idx)
     case tokAssignSub:
     case tokAssignMul:
     case tokAssignDiv:
+    case tokAssignUDiv:
     case tokAssignMod:
+    case tokAssignUMod:
     case tokAssignLSh:
     case tokAssignRSh:
+    case tokAssignURSh:
     case tokAssignAnd:
     case tokAssignXor:
     case tokAssignOr:
@@ -2626,12 +2774,20 @@ int GenGetBinaryOperatorInstr(int tok)
   case tokAssignDiv:
   case tokAssignMod:
     return X86InstrIdiv;
+  case tokUDiv:
+  case tokUMod:
+  case tokAssignUDiv:
+  case tokAssignUMod:
+    return X86InstrDiv;
   case tokLShift:
   case tokAssignLSh:
     return X86InstrShl;
   case tokRShift:
   case tokAssignRSh:
     return X86InstrSar;
+  case tokURShift:
+  case tokAssignURSh:
+    return X86InstrShr;
 
   default:
     error("Error: Invalid operator\n");
@@ -2641,6 +2797,7 @@ int GenGetBinaryOperatorInstr(int tok)
 
 // Newer, less stack-dependent code generator,
 // generates more compact code (~30% less) than the stack-based generator
+#ifndef CG_STACK_BASED
 void GenExpr1(void)
 {
   int s = sp - 1;
@@ -2656,9 +2813,13 @@ void GenExpr1(void)
     int tok = stack[i][0];
     switch (tok)
     {
-    case tokNum: case tokLitChar:
-    case tokOpNum:
-      printf("%d", stack[i][1]);
+    case tokNumInt:
+    case tokOpNumInt:
+      printf("%d", truncInt(stack[i][1]));
+      break;
+    case tokNumUint:
+    case tokOpNumUint:
+      printf("%uu", truncUint(stack[i][1]));
       break;
     case tokIdent:
     case tokOpIdent:
@@ -2728,7 +2889,8 @@ void GenExpr1(void)
       case tokAssignAdd: case tokAssignSub:
       case tokPostAdd: case tokPostSub:
       case tokAssignMul: case tokAssignDiv: case tokAssignMod:
-      case tokAssignLSh: case tokAssignRSh:
+      case tokAssignUDiv: case tokAssignUMod:
+      case tokAssignLSh: case tokAssignRSh: case tokAssignURSh:
       case tokAssignAnd: case tokAssignXor: case tokAssignOr:
         printf("(%d)", stack[i][1]);
         break;
@@ -2747,8 +2909,8 @@ void GenExpr1(void)
 
     switch (tok)
     {
-    case tokNum:
-    case tokLitChar:
+    case tokNumInt:
+    case tokNumUint:
       // Don't load operand into ax when ax is going to be pushed next, push it directly
       if (!(i + 1 < sp && stack[i + 1][0] == ','))
         GenPrintInstr2Operands(X86InstrMov, 0,
@@ -2836,8 +2998,8 @@ void GenExpr1(void)
       {
         switch (stack[i - 1][0])
         {
-        case tokNum:
-        case tokLitChar:
+        case tokNumInt:
+        case tokNumUint:
           GenPrintInstr1Operand(X86InstrPush, 0,
                                 X86OpConst, stack[i - 1][1]);
           break;
@@ -2929,9 +3091,12 @@ void GenExpr1(void)
     case tokAssignSub:
     case tokAssignMul:
     case tokAssignDiv:
+    case tokAssignUDiv:
     case tokAssignMod:
+    case tokAssignUMod:
     case tokAssignLSh:
     case tokAssignRSh:
+    case tokAssignURSh:
     case tokAssignAnd:
     case tokAssignXor:
     case tokAssignOr:
@@ -2939,9 +3104,12 @@ void GenExpr1(void)
     case '-':
     case '*':
     case '/':
+    case tokUDiv:
     case '%':
+    case tokUMod:
     case tokLShift:
     case tokRShift:
+    case tokURShift:
     case '&':
     case '^':
     case '|':
@@ -2986,7 +3154,8 @@ void GenExpr1(void)
 
       switch (stack[i + 1][0])
       {
-      case tokOpNum:
+      case tokOpNumInt:
+      case tokOpNumUint:
         GenPrintInstr2Operands(X86InstrMov, 0,
                                X86OpRegAWord, 0,
                                X86OpConst, stack[i + 1][1]);
@@ -3064,7 +3233,8 @@ void GenExpr1(void)
 
         switch (stack[i + 2][0])
         {
-        case tokOpNum:
+        case tokOpNumInt:
+        case tokOpNumUint:
           GenPrintInstr2Operands(instr, 0,
                                  X86OpRegAWord, 0,
                                  X86OpConst, stack[i + 2][1]);
@@ -3177,7 +3347,8 @@ void GenExpr1(void)
 
         switch (stack[i + 2][0])
         {
-        case tokOpNum:
+        case tokOpNumInt:
+        case tokOpNumUint:
           GenPrintInstr3Operands(X86InstrImul, 0,
                                  X86OpRegAWord, 0,
                                  X86OpRegAWord, 0,
@@ -3232,19 +3403,37 @@ void GenExpr1(void)
         break;
 
       case '/':
+      case tokUDiv:
       case '%':
+      case tokUMod:
       case tokAssignDiv:
+      case tokAssignUDiv:
       case tokAssignMod:
+      case tokAssignUMod:
         instr = GenGetBinaryOperatorInstr(tok);
 
-        if (SizeOfWord == 2)
-          GenPrintInstrNoOperand(X86InstrCwd);
-        else
-          GenPrintInstrNoOperand(X86InstrCdq);
+        switch (tok)
+        {
+        case '/':
+        case '%':
+        case tokAssignDiv:
+        case tokAssignMod:
+          if (SizeOfWord == 2)
+            GenPrintInstrNoOperand(X86InstrCwd);
+          else
+            GenPrintInstrNoOperand(X86InstrCdq);
+          break;
+        default:
+          GenPrintInstr2Operands(X86InstrMov, 0,
+                                 X86OpRegDWord, 0,
+                                 X86OpConst, 0);
+          break;
+        }
 
         switch (stack[i + 2][0])
         {
-        case tokOpNum:
+        case tokOpNumInt:
+        case tokOpNumUint:
           GenPrintInstr2Operands(X86InstrMov, 0,
                                  X86OpRegCWord, 0,
                                  X86OpConst, stack[i + 2][1]);
@@ -3298,7 +3487,8 @@ void GenExpr1(void)
           }
         }
 
-        if (tok == '%' || tok == tokAssignMod)
+        if (tok == '%' || tok == tokAssignMod ||
+            tok == tokUMod || tok == tokAssignUMod)
           GenPrintInstr2Operands(X86InstrMov, 0,
                                  X86OpRegAWord, 0,
                                  X86OpRegDWord, 0);
@@ -3306,13 +3496,16 @@ void GenExpr1(void)
 
       case tokLShift:
       case tokRShift:
+      case tokURShift:
       case tokAssignLSh:
       case tokAssignRSh:
+      case tokAssignURSh:
         instr = GenGetBinaryOperatorInstr(tok);
 
         switch (stack[i + 2][0])
         {
-        case tokOpNum:
+        case tokOpNumInt:
+        case tokOpNumUint:
           GenPrintInstr2Operands(instr, 0,
                                  X86OpRegAWord, 0,
                                  X86OpConst, stack[i + 2][1]);
@@ -3360,7 +3553,7 @@ void GenExpr1(void)
         break;
 
       default:
-        error("WTF?! unexpected token %s\n", GetTokenName(tok));
+        error("Error: Internal Error: GenExpr1() a: unexpected token %s\n", GetTokenName(tok));
         break;
       }
 
@@ -3372,9 +3565,12 @@ void GenExpr1(void)
       case tokAssignSub:
       case tokAssignMul:
       case tokAssignDiv:
+      case tokAssignUDiv:
       case tokAssignMod:
+      case tokAssignUMod:
       case tokAssignLSh:
       case tokAssignRSh:
+      case tokAssignURSh:
       case tokAssignAnd:
       case tokAssignXor:
       case tokAssignOr:
@@ -3426,15 +3622,14 @@ void GenExpr1(void)
       break;
 
     default:
-      error("WTF?! unexpected token %s\n", GetTokenName(tok));
+      error("Error: Internal Error: GenExpr1() b: unexpected token %s\n", GetTokenName(tok));
       break;
     }
   }
 }
-
+#else // #ifndef CG_STACK_BASED
 // Original, primitive stack-based code generator
-// TBD!!! test 32-bit code generation
-/*
+// DONE: test 32-bit code generation
 void GenExpr0(void)
 {
   int i;
@@ -3447,7 +3642,8 @@ void GenExpr0(void)
 
     switch (tok)
     {
-    case tokNum: case tokLitChar: printf("; %d\n", v); break;
+    case tokNumInt: printf("; %d\n", truncInt(v)); break;
+    case tokNumUint: printf("; %uu\n", truncUint(v)); break;
     case tokIdent: printf("; %s\n", IdentTable + v); break;
     case tokLocalOfs: printf("; local ofs\n"); break;
     case ')': printf("; ) fxn call\n"); break;
@@ -3462,8 +3658,8 @@ void GenExpr0(void)
 
     switch (tok)
     {
-    case tokNum:
-    case tokLitChar:
+    case tokNumInt:
+    case tokNumUint:
       if (gotUnary)
         GenPrintInstr1Operand(X86InstrPush, 0,
                               X86OpRegAWord, 0);
@@ -3540,16 +3736,32 @@ void GenExpr0(void)
       break;
 
     case '/':
+    case tokUDiv:
     case '%':
+    case tokUMod:
       GenPrintInstr1Operand(X86InstrPop, 0,
                             X86OpRegBWord, 0);
       GenPrintInstr2Operands(X86InstrXchg, 0,
                              X86OpRegAWord, 0,
                              X86OpRegBWord, 0);
-      GenPrintInstrNoOperand(X86InstrCwd);
-      GenPrintInstr1Operand(X86InstrIdiv, 0,
-                            X86OpRegBWord, 0);
-      if (tok == '%')
+      if (tok == '/' || tok == '%')
+      {
+        if (SizeOfWord == 2)
+          GenPrintInstrNoOperand(X86InstrCwd);
+        else
+          GenPrintInstrNoOperand(X86InstrCdq);
+        GenPrintInstr1Operand(X86InstrIdiv, 0,
+                              X86OpRegBWord, 0);
+      }
+      else
+      {
+        GenPrintInstr2Operands(X86InstrMov, 0,
+                               X86OpRegDWord, 0,
+                               X86OpConst, 0);
+        GenPrintInstr1Operand(X86InstrDiv, 0,
+                              X86OpRegBWord, 0);
+      }
+      if (tok == '%' || tok == tokUMod)
         GenPrintInstr2Operands(X86InstrMov, 0,
                                X86OpRegAWord, 0,
                                X86OpRegDWord, 0);
@@ -3557,6 +3769,7 @@ void GenExpr0(void)
 
     case tokLShift:
     case tokRShift:
+    case tokURShift:
       {
         int instr = GenGetBinaryOperatorInstr(tok);
         GenPrintInstr1Operand(X86InstrPop, 0,
@@ -3634,7 +3847,9 @@ void GenExpr0(void)
       break;
 
     case tokAssignDiv:
+    case tokAssignUDiv:
     case tokAssignMod:
+    case tokAssignUMod:
       GenPrintInstr1Operand(X86InstrPop, 0,
                             X86OpRegBWord, 0);
       GenPrintInstr2Operands(X86InstrMov, 0,
@@ -3644,10 +3859,24 @@ void GenExpr0(void)
                              GenSelectByteOrWord(X86OpRegAByteOrWord, v), 0,
                              X86OpIndRegB, 0);
       GenExtendRegAIfNeeded(v);
-      GenPrintInstrNoOperand(X86InstrCwd);
-      GenPrintInstr1Operand(X86InstrIdiv, 0,
-                            X86OpRegCWord, 0);
-      if (tok == tokAssignMod)
+      if (tok == tokAssignDiv || tok == tokAssignMod)
+      {
+        if (SizeOfWord == 2)
+          GenPrintInstrNoOperand(X86InstrCwd);
+        else
+          GenPrintInstrNoOperand(X86InstrCdq);
+        GenPrintInstr1Operand(X86InstrIdiv, 0,
+                              X86OpRegCWord, 0);
+      }
+      else
+      {
+        GenPrintInstr2Operands(X86InstrMov, 0,
+                               X86OpRegDWord, 0,
+                               X86OpConst, 0);
+        GenPrintInstr1Operand(X86InstrDiv, 0,
+                              X86OpRegCWord, 0);
+      }
+      if (tok == tokAssignMod || tok == tokAssignUMod)
         GenPrintInstr2Operands(X86InstrMov, 0,
                                X86OpRegAWord, 0,
                                X86OpRegDWord, 0);
@@ -3659,6 +3888,7 @@ void GenExpr0(void)
 
     case tokAssignLSh:
     case tokAssignRSh:
+    case tokAssignURSh:
       {
         int instr = GenGetBinaryOperatorInstr(tok);
         GenPrintInstr1Operand(X86InstrPop, 0,
@@ -3702,7 +3932,12 @@ void GenExpr0(void)
                              X86OpRegAWord, 0);
       GenPrintInstr1Operand(X86InstrSetCc, tok,
                             X86OpRegAByte, 0);
-      GenPrintInstrNoOperand(X86InstrCbw);
+      if (SizeOfWord == 2)
+        GenPrintInstrNoOperand(X86InstrCbw);
+      else
+        GenPrintInstr2Operands(X86InstrMovZx, 0,
+                               X86OpRegAWord, 0,
+                               X86OpRegAByte, 0);
       break;
 
     case tok_Bool:
@@ -3711,7 +3946,12 @@ void GenExpr0(void)
                              X86OpRegAWord, 0);
       GenPrintInstr1Operand(X86InstrSetCc, tokNEQ,
                             X86OpRegAByte, 0);
-      GenPrintInstrNoOperand(X86InstrCbw);
+      if (SizeOfWord == 2)
+        GenPrintInstrNoOperand(X86InstrCbw);
+      else
+        GenPrintInstr2Operands(X86InstrMovZx, 0,
+                               X86OpRegAWord, 0,
+                               X86OpRegAByte, 0);
       break;
 
     case tokShortCirc:
@@ -3745,12 +3985,12 @@ void GenExpr0(void)
       break;
 
     default:
-      error("WTF?! unexpected token %s\n", GetTokenName(tok));
+      error("Error: Internal Error: GenExpr0(): unexpected token %s\n", GetTokenName(tok));
       break;
     }
   }
 }
-*/
+#endif // #ifndef CG_STACK_BASED
 
 void GenStrData(int insertJump)
 {
@@ -3831,8 +4071,11 @@ void GenStrData(int insertJump)
 void GenExpr(void)
 {
   GenStrData(1);
-//  GenExpr0();
+#ifndef CG_STACK_BASED
   GenExpr1();
+#else
+  GenExpr0();
+#endif
 }
 
 // expr.c code
@@ -4030,7 +4273,7 @@ int exprUnary(int tok, int* gotUnary)
       break;
     case '!':
       // replace "!" with "== 0"
-      push2(tokNum, 0);
+      push2(tokNumInt, 0);
       push(tokEQ);
       break;
     default:
@@ -4042,7 +4285,7 @@ int exprUnary(int tok, int* gotUnary)
   {
     int inspos = sp;
 
-    if (tok == tokNum || tok == tokLitChar)
+    if (tok == tokNumInt || tok == tokNumUint)
     {
       push2(tok, GetTokenValueInt());
       *gotUnary = 1;
@@ -4055,7 +4298,7 @@ int exprUnary(int tok, int* gotUnary)
       char s[1 + (2 + CHAR_BIT * sizeof lbl) / 3];
       char *p = s + sizeof s;
 
-      // imitate definition: char #[l] = "...";
+      // imitate definition: char #[len] = "...";
 
       AddString(lbl, GetTokenValueString(), len = 1 + GetTokenValueStringLength());
 
@@ -4071,7 +4314,7 @@ int exprUnary(int tok, int* gotUnary)
       // DONE: can this break incomplete yet declarations???, e.g.: int x[sizeof("az")][5];
       PushSyntax2(tokIdent, id = AddIdent(p));
       PushSyntax('[');
-      PushSyntax2(tokNum, len);
+      PushSyntax2(tokNumUint, len);
       PushSyntax(']');
       PushSyntax(tokChar);
 
@@ -4308,17 +4551,25 @@ void nonVoidTypeCheck(int ExprTypeSynPtr, int tok)
 void numericTypeCheck(int ExprTypeSynPtr, int tok)
 {
   if (ExprTypeSynPtr >= 0 &&
-      ((SyntaxStack[ExprTypeSynPtr][0] == tokChar) ||
-       (SyntaxStack[ExprTypeSynPtr][0] == tokInt)))
+      (SyntaxStack[ExprTypeSynPtr][0] == tokChar ||
+       SyntaxStack[ExprTypeSynPtr][0] == tokInt ||
+       SyntaxStack[ExprTypeSynPtr][0] == tokUnsigned))
     return;
   error("Error: numericTypeCheck(): unexpected operand type for operator '%s', numeric type expected\n",
         GetTokenName(tok));
 }
 
-void promoteType(int* ExprTypeSynPtr)
+void promoteType(int* ExprTypeSynPtr, int* TheOtherExprTypeSynPtr)
 {
+  // chars must be promoted to ints in expressions as the very first thing
   if (*ExprTypeSynPtr >= 0 && SyntaxStack[*ExprTypeSynPtr][0] == tokChar)
     *ExprTypeSynPtr = SymIntSynPtr;
+
+  // ints must be converted to unsigned ints if they are used in binary
+  // operators whose other operand is unsigned int (except <<,>>,<<=,>>=)
+  if (*ExprTypeSynPtr >= 0 && SyntaxStack[*ExprTypeSynPtr][0] == tokInt &&
+      *TheOtherExprTypeSynPtr >= 0 && SyntaxStack[*TheOtherExprTypeSynPtr][0] == tokUnsigned)
+    *ExprTypeSynPtr = SymUintSynPtr;
 }
 
 int GetFxnInfo(int ExprTypeSynPtr, int* MinParams, int* MaxParams, int* ReturnExprTypeSynPtr)
@@ -4404,12 +4655,17 @@ int GetFxnInfo(int ExprTypeSynPtr, int* MinParams, int* MaxParams, int* ReturnEx
   return 1;
 }
 
-void simplifyConstExpr(int val, int isConst, int top, int bottom)
+void simplifyConstExpr(int val, int isConst, int* ExprTypeSynPtr, int top, int bottom)
 {
-  if (!isConst || stack[top][0] == tokNum)
+  if (!isConst || stack[top][0] == tokNumInt || stack[top][0] == tokNumUint)
     return;
-  stack[top][0] = tokNum;
+
+  if (SyntaxStack[*ExprTypeSynPtr][0] == tokUnsigned)
+    stack[top][0] = tokNumUint;
+  else
+    stack[top][0] = tokNumInt;
   stack[top][1] = val;
+
   del(bottom, top - bottom);
 }
 
@@ -4440,10 +4696,14 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
   switch (tok)
   {
   // Constants
-  case tokNum:
-  case tokLitChar: // TBD!!! do I still need this here???
+  case tokNumInt:
     // return the constant's type: int
     *ExprTypeSynPtr = SymIntSynPtr;
+    *ConstExpr = 1;
+    break;
+  case tokNumUint:
+    // return the constant's type: unsigned int
+    *ExprTypeSynPtr = SymUintSynPtr;
     *ConstExpr = 1;
     break;
 
@@ -4486,17 +4746,17 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       s = GetDeclSize(*ExprTypeSynPtr);
     else
       s = SizeOfWord;
-    if (s <= 0)
+    if (s == 0)
       error("Error: exprval(): sizeof of incomplete type (e.g. 'void')\n");
 
     // replace sizeof with its numeric value
-    stack[oldIdxRight + 1 - (oldSpRight - sp)][0] = tokNum;
+    stack[oldIdxRight + 1 - (oldSpRight - sp)][0] = tokNumUint;
     stack[oldIdxRight + 1 - (oldSpRight - sp)][1] = s;
 
     // remove the sizeof's subexpression
     del(*idx + 1, oldIdxRight - (oldSpRight - sp) - *idx);
 
-    *ExprTypeSynPtr = SymIntSynPtr;
+    *ExprTypeSynPtr = SymUintSynPtr;
     *ConstExpr = 1;
     break;
 
@@ -4594,7 +4854,10 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       oldSpLeft = sp;
       sl = exprval(idx, ExprTypeSynPtr, &constExpr[0]);
 
-      s = sl + (tok == '+') * sr - (tok == '-') * sr;
+      if (tok == '+')
+        s = uint2int(sl + 0u + sr);
+      else
+        s = uint2int(sl + 0u - sr);
 
       nonVoidTypeCheck(RightExprTypeSynPtr, tok);
       nonVoidTypeCheck(*ExprTypeSynPtr, tok);
@@ -4617,7 +4880,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
         }
         else if (incSize != 1)
         {
-          ins2(oldIdxLeft + 1 - (oldSpLeft - sp), tokNum, incSize);
+          ins2(oldIdxLeft + 1 - (oldSpLeft - sp), tokNumInt, incSize);
           ins(oldIdxLeft + 1 - (oldSpLeft - sp), '*');
         }
 
@@ -4633,7 +4896,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
         }
         else if (incSize != 1)
         {
-          ins2(oldIdxRight + 1 - (oldSpRight - sp), tokNum, incSize);
+          ins2(oldIdxRight + 1 - (oldSpRight - sp), tokNumInt, incSize);
           ins(oldIdxRight + 1 - (oldSpRight - sp), '*');
         }
       }
@@ -4641,11 +4904,11 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
         error("Error: exprval(): invalid/unsupported combination of operands for '+' or '-'\n");
       // TBD!!! "ptr1-ptr2": pointer compatibility test needed
 
-      // Promote the result from char to int if necessary
-      promoteType(ExprTypeSynPtr);
+      // Promote the result from char to int (and from int to unsigned) if necessary
+      promoteType(ExprTypeSynPtr, &RightExprTypeSynPtr);
 
-      *ConstExpr = constExpr[0] && constExpr[1];
-      simplifyConstExpr(s, *ConstExpr, oldIdxRight + 1 - (oldSpRight - sp), *idx + 1);
+      *ConstExpr = constExpr[0] && constExpr[1] && canSimplify;
+      simplifyConstExpr(s, *ConstExpr, ExprTypeSynPtr, oldIdxRight + 1 - (oldSpRight - sp), *idx + 1);
     }
     break;
 
@@ -4672,7 +4935,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
         error("Error: exprval(): lvalue expected for '++' or '--'\n");
 
       // "remove" the lvalue dereference as we don't need
-      // to read the value forgetting its location. We need to
+      // to read the value and forget its location. We need to
       // keep the lvalue location.
       // Remember the operand size.
       opSize = stack[oldIdxRight - (oldSpRight - sp)][1];
@@ -4706,7 +4969,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
         // store the operand size in the operator
         stack[oldIdxRight + 1 - (oldSpRight - sp)][1] = opSize;
 
-        ins2(oldIdxRight + 1 - (oldSpRight - sp), tokNum, incSize);
+        ins2(oldIdxRight + 1 - (oldSpRight - sp), tokNumInt, incSize);
       }
 
       *ConstExpr = 0;
@@ -4735,7 +4998,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
         error("Error: exprval(): lvalue expected before '='\n");
 
       // "remove" the lvalue dereference as we don't need
-      // to read the value forgetting its location. We need to
+      // to read the value and forget its location. We need to
       // keep the lvalue location.
       opSize = stack[oldIdxLeft - (oldSpLeft - sp)][1];
       // store the operand size in the operator
@@ -4759,10 +5022,11 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
     {
     case '~':           s = ~s; break;
     case tokUnaryPlus:  s = +s; break;
-    case tokUnaryMinus: s = -s; break;
+    case tokUnaryMinus: s = uint2int(~(s - 1u)); break;
     }
-    promoteType(ExprTypeSynPtr);
-    simplifyConstExpr(s, *ConstExpr, oldIdxRight + 1 - (oldSpRight - sp), *idx + 1);
+    promoteType(ExprTypeSynPtr, ExprTypeSynPtr);
+    *ConstExpr &= canSimplify;
+    simplifyConstExpr(s, *ConstExpr, ExprTypeSynPtr, oldIdxRight + 1 - (oldSpRight - sp), *idx + 1);
     break;
 
   // Arithmetic and bitwise binary operators
@@ -4777,6 +5041,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
     {
       // int oldIdxLeft, oldSpLeft;
       int sr, sl;
+      int Unsigned;
       sr = exprval(idx, &RightExprTypeSynPtr, &constExpr[1]);
       // oldIdxLeft = *idx;
       // oldSpLeft = sp;
@@ -4788,38 +5053,104 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       numericTypeCheck(RightExprTypeSynPtr, tok);
       numericTypeCheck(*ExprTypeSynPtr, tok);
 
-      *ConstExpr = constExpr[0] && constExpr[1];
+      *ConstExpr = constExpr[0] && constExpr[1] && canSimplify;
+
+      Unsigned = SyntaxStack[*ExprTypeSynPtr][0] == tokUnsigned || SyntaxStack[RightExprTypeSynPtr][0] == tokUnsigned;
 
       switch (tok)
       {
       // DONE: check for division overflows
       case '/':
-        if (*ConstExpr)
-        {
-          if (sr == 0 || (-INT_MAX != INT_MIN && sl == INT_MIN && sr == -1))
-            error("Error: exprval(): division overflow\n");
-          sl /= sr;
-        }
-        break;
       case '%':
         if (*ConstExpr)
         {
-          if (sr == 0 || (-INT_MAX != INT_MIN && sl == INT_MIN && sr == -1))
-            error("Error: exprval(): division overflow\n");
-          sl %= sr;
+          if (!Unsigned)
+          {
+            sl = truncInt(sl);
+            sr = truncInt(sr);
+            if (sr == 0 || (sl == INT_MIN && sr == -1) || sl / sr != truncInt(sl / sr))
+              error("Error: exprval(): division overflow\n");
+            if (tok == '/')
+              sl /= sr;
+            else
+              sl %= sr;
+          }
+          else
+          {
+            if (truncUint(sr) == 0)
+              error("Error: exprval(): division overflow\n");
+            if (tok == '/')
+              sl = uint2int(truncUint(sl) / truncUint(sr));
+            else
+              sl = uint2int(truncUint(sl) % truncUint(sr));
+          }
+        }
+
+        if (Unsigned)
+        {
+          if (tok == '/')
+            stack[oldIdxRight + 1 - (oldSpRight - sp)][0] = tokUDiv;
+          else
+            stack[oldIdxRight + 1 - (oldSpRight - sp)][0] = tokUMod;
         }
         break;
-      case '*':       sl *= sr; break;
-      case tokLShift: sl <<= sr; break;
-      case tokRShift: sl >>= sr; break;
-      case '&':       sl &= sr; break;
-      case '^':       sl ^= sr; break;
-      case '|':       sl |= sr; break;
+
+      case '*':
+        sl = uint2int((sl + 0u) * sr);
+        break;
+
+      case tokLShift:
+      case tokRShift:
+        if (*ConstExpr)
+        {
+          if (SyntaxStack[RightExprTypeSynPtr][0] != tokUnsigned)
+            sr = truncInt(sr);
+          else
+            sr = uint2int(truncUint(sr));
+          // can't shift by a negative count and by a count exceeding
+          // the number of bits in int
+          if ((SyntaxStack[RightExprTypeSynPtr][0] != tokUnsigned && sr < 0) ||
+              (sr + 0u) >= CHAR_BIT * sizeof(int) ||
+              (sr + 0u) >= 8u * SizeOfWord)
+            error("Error: exprval(): Invalid shift count\n");
+          if (tok == tokLShift)
+          {
+            // left shift is the same for signed and unsigned ints
+            sl = uint2int((sl + 0u) << sr);
+          }
+          else
+          {
+            if (SyntaxStack[*ExprTypeSynPtr][0] == tokUnsigned)
+            {
+              // right shift for unsigned ints
+              sl = uint2int(truncUint(sl) >> sr);
+            }
+            else if (sr)
+            {
+              // right shift for signed ints is arithmetic, sign-bit-preserving
+              // don't depend on the compiler's implementation, do it "manually"
+              sl = truncInt(sl);
+              sl = uint2int((truncUint(sl) >> sr) |
+                            ((sl < 0) * (~0u << (8 * SizeOfWord - sr))));
+            }
+          }
+        }
+
+        if (SyntaxStack[*ExprTypeSynPtr][0] == tokUnsigned && tok == tokRShift)
+            stack[oldIdxRight + 1 - (oldSpRight - sp)][0] = tokURShift;
+
+        // ignore RightExprTypeSynPtr for the purpose of promotion/conversion of the result of <</>>
+        RightExprTypeSynPtr = SymIntSynPtr;
+        break;
+
+      case '&': sl &= sr; break;
+      case '^': sl ^= sr; break;
+      case '|': sl |= sr; break;
       }
 
       s = sl;
-      promoteType(ExprTypeSynPtr);
-      simplifyConstExpr(s, *ConstExpr, oldIdxRight + 1 - (oldSpRight - sp), *idx + 1);
+      promoteType(ExprTypeSynPtr, &RightExprTypeSynPtr);
+      simplifyConstExpr(s, *ConstExpr, ExprTypeSynPtr, oldIdxRight + 1 - (oldSpRight - sp), *idx + 1);
     }
     break;
 
@@ -4833,11 +5164,9 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
   case tokNEQ:
     {
       int ptrmask;
-      // int oldIdxLeft, oldSpLeft;
       int sr, sl;
+      int Unsigned;
       sr = exprval(idx, &RightExprTypeSynPtr, &constExpr[1]);
-      // oldIdxLeft = *idx;
-      // oldSpLeft = sp;
       sl = exprval(idx, ExprTypeSynPtr, &constExpr[0]);
 
       nonVoidTypeCheck(RightExprTypeSynPtr, tok);
@@ -4851,11 +5180,48 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       // Disallow >, <, >=, <= between a pointer and a number
       if (ptrmask >= 1 && ptrmask <= 2 &&
           tok != tokEQ && tok != tokNEQ)
-        error("Error: exprval(): invalid/unsupported combination of compared operands\n");
+        error("Error: exprval(): Invalid/unsupported combination of compared operands\n");
 
-      // Pointer comparison should be unsigned
-      if (ptrmask)
+      *ConstExpr = constExpr[0] && constExpr[1] && canSimplify;
+
+      Unsigned = !ptrmask &&
+        (SyntaxStack[*ExprTypeSynPtr][0] == tokUnsigned || SyntaxStack[RightExprTypeSynPtr][0] == tokUnsigned);
+
+      if (*ConstExpr)
       {
+        if (!Unsigned)
+        {
+          sl = truncInt(sl);
+          sr = truncInt(sr);
+          switch (tok)
+          {
+          case '<':    sl = sl <  sr; break;
+          case '>':    sl = sl >  sr; break;
+          case tokLEQ: sl = sl <= sr; break;
+          case tokGEQ: sl = sl >= sr; break;
+          case tokEQ:  sl = sl == sr; break;
+          case tokNEQ: sl = sl != sr; break;
+          }
+        }
+        else
+        {
+          sl = uint2int(truncUint(sl));
+          sr = uint2int(truncUint(sr));
+          switch (tok)
+          {
+          case '<':    sl = sl + 0u <  sr + 0u; break;
+          case '>':    sl = sl + 0u >  sr + 0u; break;
+          case tokLEQ: sl = sl + 0u <= sr + 0u; break;
+          case tokGEQ: sl = sl + 0u >= sr + 0u; break;
+          case tokEQ:  sl = sl == sr; break;
+          case tokNEQ: sl = sl != sr; break;
+          }
+        }
+      }
+
+      if (ptrmask || Unsigned)
+      {
+        // Pointer comparison should be unsigned
         int t = tok;
         switch (tok)
         {
@@ -4868,20 +5234,9 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
           stack[oldIdxRight + 1 - (oldSpRight - sp)][0] = t;
       }
 
-      switch (tok)
-      {
-      case '<':    sl = sl < sr; break;
-      case '>':    sl = sl > sr; break;
-      case tokLEQ: sl = sl <= sr; break;
-      case tokGEQ: sl = sl >= sr; break;
-      case tokEQ:  sl = sl == sr; break;
-      case tokNEQ: sl = sl != sr; break;
-      }
-
       s = sl;
       *ExprTypeSynPtr = SymIntSynPtr;
-      *ConstExpr = constExpr[0] && constExpr[1];
-      simplifyConstExpr(s, *ConstExpr, oldIdxRight + 1 - (oldSpRight - sp), *idx + 1);
+      simplifyConstExpr(s, *ConstExpr, ExprTypeSynPtr, oldIdxRight + 1 - (oldSpRight - sp), *idx + 1);
     }
     break;
 
@@ -4891,7 +5246,8 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
     nonVoidTypeCheck(*ExprTypeSynPtr, tok);
     decayArray(ExprTypeSynPtr, 0);
     *ExprTypeSynPtr = SymIntSynPtr;
-    simplifyConstExpr(s, *ConstExpr, oldIdxRight + 1 - (oldSpRight - sp), *idx + 1);
+    *ConstExpr &= canSimplify;
+    simplifyConstExpr(s, *ConstExpr, ExprTypeSynPtr, oldIdxRight + 1 - (oldSpRight - sp), *idx + 1);
     break;
 
   // Logical binary operators
@@ -4964,8 +5320,8 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
 
       s = sl;
       *ExprTypeSynPtr = SymIntSynPtr;
-      *ConstExpr = constExpr[0] && constExpr[1];
-      simplifyConstExpr(s, *ConstExpr, oldIdxRight + 1 - (oldSpRight - sp), *idx + 1);
+      *ConstExpr = constExpr[0] && constExpr[1] && canSimplify;
+      simplifyConstExpr(s, *ConstExpr, ExprTypeSynPtr, oldIdxRight + 1 - (oldSpRight - sp), *idx + 1);
     }
     break;
 
@@ -5024,6 +5380,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       int oldIdxLeft, oldSpLeft;
       int incSize;
       int opSize;
+      int Unsigned;
       exprval(idx, &RightExprTypeSynPtr, &constExpr[1]);
       oldIdxLeft = *idx;
       oldSpLeft = sp;
@@ -5040,7 +5397,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
         error("Error: exprval(): lvalue expected before %s\n", GetTokenName(tok));
 
       // "remove" the lvalue dereference as we don't need
-      // to read the value forgetting its location. We need to
+      // to read the value and forget its location. We need to
       // keep the lvalue location.
       opSize = stack[oldIdxLeft - (oldSpLeft - sp)][1];
       // store the operand size in the operator
@@ -5048,6 +5405,9 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       del(oldIdxLeft - (oldSpLeft - sp), 1);
 
       ptrmask = (RightExprTypeSynPtr < 0) + (*ExprTypeSynPtr < 0) * 2;
+
+      Unsigned = !ptrmask &&
+        (SyntaxStack[*ExprTypeSynPtr][0] == tokUnsigned || SyntaxStack[RightExprTypeSynPtr][0] == tokUnsigned);
 
       if (tok != tokAssignAdd && tok != tokAssignSub)
       {
@@ -5071,9 +5431,21 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
         }
         else if (incSize != 1)
         {
-          ins2(oldIdxRight + 1 - (oldSpRight - sp), tokNum, incSize);
+          ins2(oldIdxRight + 1 - (oldSpRight - sp), tokNumInt, incSize);
           ins(oldIdxRight + 1 - (oldSpRight - sp), '*');
         }
+      }
+      else if (Unsigned)
+      {
+        int t = tok;
+        switch (tok)
+        {
+        case tokAssignDiv: t = tokAssignUDiv; break;
+        case tokAssignMod: t = tokAssignUMod; break;
+        case tokAssignRSh: t = tokAssignURSh; break;
+        }
+        if (t != tok)
+          stack[oldIdxRight + 1 - (oldSpRight - sp)][0] = t;
       }
 
       *ConstExpr = 0;
@@ -5120,8 +5492,11 @@ int ParseExpr(int tok, int* GotUnary, int* ExprTypeSynPtr, int* ConstExpr, int* 
         int tok = stack[i][0];
         switch (tok)
         {
-        case tokNum: case tokLitChar:
-          printf("%d", stack[i][1]);
+        case tokNumInt:
+          printf("%d", truncInt(stack[i][1]));
+          break;
+        case tokNumUint:
+          printf("%uu", truncUint(stack[i][1]));
           break;
         case tokIdent:
           {
@@ -5263,7 +5638,9 @@ void error(char* format, ...)
 
 int TokenStartsDeclaration(int t, int params)
 {
-  return t == tokVoid || t == tokChar || t == tokInt || (!params && t == tokExtern);
+  return t == tokVoid || t == tokChar || t == tokInt ||
+         t == tokSigned || t == tokUnsigned ||
+         (!params && t == tokExtern);
 }
 
 void PushSyntax2(int t, int v)
@@ -5362,10 +5739,10 @@ int SymType(int SynPtr)
 int GetDeclSize(int SyntaxPtr)
 {
   int i;
-  int size = 1;
+  unsigned size = 1;
 
   if (SyntaxPtr < 0)
-    return -1;
+    return 0;
 
   for (i = SyntaxPtr; i < SyntaxStackCnt; i++)
   {
@@ -5378,23 +5755,31 @@ int GetDeclSize(int SyntaxPtr)
     case tokChar:
       return size;
     case tokInt:
-      return size * SizeOfWord;
+    case tokUnsigned:
     case '*':
-      return size * SizeOfWord;
     case '(': // size of fxn = size of ptr for now
-      return size * SizeOfWord;
+      if (size * SizeOfWord / SizeOfWord != size)
+        error("Error: Variable too big\n");
+      size *= SizeOfWord;
+      if (size != truncUint(size))
+        error("Error: Variable too big\n");
+      return uint2int(size);
     case '[':
-      if (SyntaxStack[i + 1][0] != tokNum)
-        return -1;
+      if (SyntaxStack[i + 1][0] != tokNumInt && SyntaxStack[i + 1][0] != tokNumUint)
+        return 0;
+      if (size * SyntaxStack[i + 1][1] / SyntaxStack[i + 1][1] != size)
+        error("Error: Variable too big\n");
       size *= SyntaxStack[i + 1][1];
+      if (size != truncUint(size))
+        error("Error: Variable too big\n");
       i += 2;
       break;
     default:
-      return -1;
+      return 0;
     }
   }
 
-  return -1;
+  return 0;
 }
 
 void ShowDecl(int SyntaxPtr, int IsParam)
@@ -5447,8 +5832,11 @@ void ShowDecl(int SyntaxPtr, int IsParam)
       printf("[");
       break;
 
-    case tokNum:
-      printf("%d", v);
+    case tokNumInt:
+      printf("%d", truncInt(v));
+      break;
+    case tokNumUint:
+      printf("%uu", truncUint(v));
       break;
 
     case ']':
@@ -5511,6 +5899,7 @@ void ShowDecl(int SyntaxPtr, int IsParam)
       case tokVoid:
       case tokChar:
       case tokInt:
+      case tokUnsigned:
       case tokEllipsis:
         printf("%s\n", GetTokenName(tok));
         break;
@@ -5535,6 +5924,7 @@ int ParseArrayDimension(void)
 {
   int tok;
   int gotUnary, synPtr, constExpr, exprVal;
+  unsigned exprValU;
   int oldssp, oldesp, undoIdents;
 
   tok = GetToken();
@@ -5554,10 +5944,14 @@ int ParseArrayDimension(void)
   if (!constExpr)
     error("Error: ParseArrayDimension(): non-constant array dimension\n");
 
-  if (exprVal < 1)
+  exprValU = exprVal;
+  if ((synPtr == SymIntSynPtr && exprVal < 1) || (synPtr == SymUintSynPtr && exprValU < 1))
     error("Error: ParseArrayDimension(): array dimension less than 1\n");
 
-  PushSyntax2(tokNum, exprVal);
+  if (exprValU != truncUint(exprValU))
+    error("Error: ParseArrayDimension(): array dimension too big\n");
+
+  PushSyntax2(tokNumUint, exprVal);
   return tok;
 }
 
@@ -5565,24 +5959,57 @@ void ParseFxnParams(void);
 int ParseBlock(int BrkCntSwchTarget[4], int switchBody);
 void AddFxnParamSymbols(int SyntaxPtr);
 
+int ParseBase(int tok, int* base)
+{
+  if (tok == tokVoid || tok == tokChar || tok == tokInt)
+  {
+    *base = tok;
+    tok = GetToken();
+  }
+  else if (tok == tokSigned || tok == tokUnsigned)
+  {
+    int sign = tok;
+    tok = GetToken();
+
+    if (tok == tokChar)
+      error("Error: ParseBase(): 'signed char' and 'unsigned char' not supported\n");
+
+    if (tok == tokInt)
+      tok = GetToken();
+
+    if (sign == tokUnsigned)
+      *base = tokUnsigned;
+    else
+      *base = tokInt;
+  }
+
+  if (!tok || !(strchr("*([,)", tok) || tok == tokIdent))
+    error("Error: ParseBase(): Invalid or unsupported type\n");
+
+  return tok;
+}
+
 /*
   base * name []  ->  name : [] * base
   base *2 (*1 name []1) []2  ->  name : []1 *1 []2 *2 base
   base *3 (*2 (*1 name []1) []2) []3  ->  name : []1 *1 []2 *2 []3 *3 base
 */
 
-int ParseDerived(void)
+int ParseDerived(int tok)
 {
-  int tok;
   int stars = 0;
   int lastSyntaxPtr = SyntaxStackCnt;
 
-  while ((tok = GetToken()) == '*')
+  while (tok == '*')
+  {
     stars++;
+    tok = GetToken();
+  }
 
   if (tok == '(')
   {
-    tok = ParseDerived();
+    tok = GetToken();
+    tok = ParseDerived(tok);
     if (tok != ')')
       error("Error: ParseDerived(): ')' expected\n");
     tok = GetToken();
@@ -5664,14 +6091,14 @@ int ParseDecl(int tok)
     if (!TokenStartsDeclaration(tok, 1))
       error("Error: ParseDecl(): unexpected token %s\n", GetTokenName(tok));
   }
-  base = tok;
+  tok = ParseBase(tok, &base);
 
   for (;;)
   {
     lastSyntaxPtr = SyntaxStackCnt;
 
     /* derived type */
-    tok = ParseDerived();
+    tok = ParseDerived(tok);
 
     /* base type */
     PushSyntax(base);
@@ -5693,8 +6120,8 @@ int ParseDecl(int tok)
       if (SyntaxStack[lastSyntaxPtr + 1][0] != '(')
       {
         int sz = GetDeclSize(lastSyntaxPtr);
-        if (sz <= 0)
-          error("Error: ParseDecl(): GetDeclSize() <= 0 (incomplete types aren't supported)\n");
+        if (sz == 0)
+          error("Error: ParseDecl(): GetDeclSize() = 0 (incomplete types aren't supported)\n");
 
         if (ParseLevel && !external && !ExprLevel)
         {
@@ -5702,8 +6129,9 @@ int ParseDecl(int tok)
           // It's a local variable, let's calculate its relative on-stack location
           oldOfs = CurFxnLocalOfs;
 
-          CurFxnLocalOfs -= sz;
-          CurFxnLocalOfs = -((-CurFxnLocalOfs + SizeOfWord - 1) / SizeOfWord * SizeOfWord);
+          CurFxnLocalOfs = uint2int((CurFxnLocalOfs + 0u - sz) & ~(SizeOfWord - 1u));
+          if (CurFxnLocalOfs >= oldOfs || CurFxnLocalOfs != truncInt(CurFxnLocalOfs))
+            error("Error: ParseDecl(): Local variables take too much space\n");
 
           // Insert a local var offset token
           InsertSyntax2(lastSyntaxPtr + 1, tokLocalOfs, CurFxnLocalOfs);
@@ -5863,6 +6291,7 @@ int ParseDecl(int tok)
       if (tok == ';' || tok == '}')
         break;
 
+      tok = GetToken();
       continue;
     }
 
@@ -5884,8 +6313,7 @@ void ParseFxnParams(void)
   {
     lastSyntaxPtr = SyntaxStackCnt;
 
-    /* base type */
-    base = tok = GetToken();
+    tok = GetToken();
 
     if (tok == ')') /* unspecified params */
       break;
@@ -5902,12 +6330,21 @@ void ParseFxnParams(void)
       }
       else
         error("Error: ParseFxnParams(): Unexpected token %s\n", GetTokenName(tok));
+      base = tok; // "..."
+      PushSyntax2(tokIdent, AddIdent("<something>"));
+      tok = GetToken();
     }
-    else if (ellCnt)
-      error("Error: ParseFxnParams(): '...' must be the last in the parameter list\n");
+    else
+    {
+      if (ellCnt)
+        error("Error: ParseFxnParams(): '...' must be the last in the parameter list\n");
 
-    /* derived type */
-    tok = ParseDerived();
+      /* base type */
+      tok = ParseBase(tok, &base);
+
+      /* derived type */
+      tok = ParseDerived(tok);
+    }
 
     /* base type */
     PushSyntax(base);
@@ -5917,7 +6354,8 @@ void ParseFxnParams(void)
     if (SyntaxStack[lastSyntaxPtr][0] == '[')
     {
       DeleteSyntax(lastSyntaxPtr, 1);
-      if (SyntaxStack[lastSyntaxPtr][0] == tokNum)
+      if (SyntaxStack[lastSyntaxPtr][0] == tokNumInt ||
+          SyntaxStack[lastSyntaxPtr][0] == tokNumUint)
         DeleteSyntax(lastSyntaxPtr, 1);
       SyntaxStack[lastSyntaxPtr][0] = '*';
     }
@@ -5988,8 +6426,8 @@ void AddFxnParamSymbols(int SyntaxPtr)
         break;
 
       sz = GetDeclSize(i);
-      if (sz <= 0)
-        error("Internal error: AddFxnParamSymbols(): GetDeclSize()\n");
+      if (sz == 0)
+        error("Internal error: AddFxnParamSymbols(): GetDeclSize() = 0\n");
 
       // Let's calculate this parameter's relative on-stack location
       CurFxnParamOfs = (CurFxnParamOfs + SizeOfWord - 1) / SizeOfWord * SizeOfWord;
@@ -6531,9 +6969,6 @@ int ParseBlock(int BrkCntSwchTarget[4], int switchBody)
   }
 }
 
-// Ensure that pointers and ints are of the same size
-//extern char __int_ptr_size_check__[(sizeof(int) == sizeof(void*))][(sizeof(int) == sizeof(void(*)()))];
-
 int main(int argc, char** argv)
 {
   // gcc/MinGW inserts a call to __main() here.
@@ -6542,6 +6977,8 @@ int main(int argc, char** argv)
   // Parse the command line parameters
   for (i = 1; i < argc; i++)
   {
+    // TBD!!! move code-generator-specific options to
+    // the code generator
     if (!strcmp(argv[i], "-seg16"))
     {
       // this is the default option
@@ -6605,6 +7042,7 @@ int main(int argc, char** argv)
         continue;
       }
     }
+    // TBD!!! '-D macro[=expansion]': '#define macro 1' when there's no '=expansion'
     else if (!FileCnt)
     {
       // If it's none of the known options,
@@ -6626,16 +7064,12 @@ int main(int argc, char** argv)
   if (!FileCnt)
     error("Error: Input source code file not specified.\n");
 
-  if (SizeOfWord > intSize)
-  {
-    printf("; Warning: generating 32-bit assembly code with 16-bit compiler,\n");
-    printf("; output may be incorrect (e.g. 32-bit constants truncated to 16-bit).\n\n");
-  }
-
   // some manual initialization because there's no array initialization yet
   SyntaxStack[SyntaxStackCnt][0] = tokVoid;
   SyntaxStack[SyntaxStackCnt++][1] = 0;
   SyntaxStack[SyntaxStackCnt][0] = tokInt;
+  SyntaxStack[SyntaxStackCnt++][1] = 0;
+  SyntaxStack[SyntaxStackCnt][0] = tokUnsigned;
   SyntaxStack[SyntaxStackCnt++][1] = 0;
 
   // Define a few macros useful for conditional compilation
@@ -6674,6 +7108,12 @@ int main(int argc, char** argv)
     else
       FileHeader = "bits 32";
   }
+
+  // When generating 32-bit assembly code with 16-bit compiler
+  // output may be incorrect if constant subexpressions are folded
+  // (because 32-bit constants get truncated to 16-bit).
+  // Disable constant subexpression simplification if needed.
+  canSimplify = !(SizeOfWord == 4 && sizeof(int) * CHAR_BIT < 32u);
 
   // populate CharQueue[] with the initial file characters
   ShiftChar();
