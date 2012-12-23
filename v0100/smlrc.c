@@ -214,6 +214,7 @@ EXTERN int vsprintf(char*, char*, void*);
 #define tokAssignURSh 31
 #define tokAssignUDiv '@'
 #define tokAssignUMod 'K'
+#define tokComma      '0'
 
 #define tokIfNot      'L'
 
@@ -317,7 +318,7 @@ PROTO int FindSymbol(char* s);
 PROTO int SymType(int SynPtr);
 PROTO int GetDeclSize(int SyntaxPtr);
 
-PROTO int ParseExpr(int tok, int* GotUnary, int* ExprTypeSynPtr, int* ConstExpr, int* ConstVal);
+PROTO int ParseExpr(int tok, int* GotUnary, int* ExprTypeSynPtr, int* ConstExpr, int* ConstVal, int commaSeparator);
 PROTO int GetFxnInfo(int ExprTypeSynPtr, int* MinParams, int* MaxParams, int* ReturnExprTypeSynPtr);
 
 // all data
@@ -778,6 +779,7 @@ char* GetTokenName(int token)
   case tokURShift: return ">>u";         case tokAssignURSh: return ">>=u";
   case tokUDiv: return "/u";             case tokAssignUDiv: return "/=u";
   case tokUMod: return "%u";             case tokAssignUMod: return "%=u";
+  case tokComma: return ",b";
 
   // Reserved keywords:
   case tokVoid: return "void";           case tokChar: return "char";
@@ -2481,6 +2483,7 @@ void GenFuse(int* idx)
   case tokUnaryPlus:
   case tokUnaryMinus:
   case tok_Bool:
+  case tokVoid:
     GenFuse(idx);
     oldIdxRight -= oldSpRight - sp;
     if (tok == tokUnaryPlus)
@@ -2626,6 +2629,7 @@ void GenFuse(int* idx)
   case tokUGEQ:
   case tokLogAnd:
   case tokLogOr:
+  case tokComma:
     switch (tok)
     {
     case '=':
@@ -2659,8 +2663,8 @@ void GenFuse(int* idx)
     oldIdxRight -= oldSpLeft - sp;
     opTypLeft = GetOperandInfo(oldIdxLeft, lvalSize, &opValLeft, &opSzLeft, &delDerefLeft);
 
-    // operands of && and || aren't to be fused into && and ||
-    if (tok == tokLogAnd || tok == tokLogOr)
+    // operands of &&, || and comma aren't to be fused into &&, || and comma
+    if (tok == tokLogAnd || tok == tokLogOr || tok == tokComma)
       break;
 
     if (opTypLeft != tokOpAcc && opTypLeft != tokOpIndAcc)
@@ -3621,6 +3625,10 @@ void GenExpr1(void)
     case tokIfNot:
       break;
 
+    case tokVoid:
+    case tokComma:
+      break;
+
     default:
       error("Error: Internal Error: GenExpr1() b: unexpected token %s\n", GetTokenName(tok));
       break;
@@ -3973,6 +3981,11 @@ void GenExpr0(void)
       GenNumLabel(v);
       break;
 
+    case tokVoid:
+      gotUnary = 0;
+      break;
+
+    case tokComma:
     case ',':
     case '(':
       break;
@@ -4189,6 +4202,7 @@ int isop(int tok)
   case tokAssignAdd: case tokAssignSub:
   case tokAssignLSh: case tokAssignRSh:
   case tokAssignAnd: case tokAssignXor: case tokAssignOr:
+  case tokComma:
     return 1;
   default:
     return 0;
@@ -4204,21 +4218,23 @@ int preced(int tok)
 {
   switch (tok)
   {
-  case '*': case '/': case '%': return 11;
-  case '+': case '-': return 10;
-  case tokLShift: case tokRShift: return 9;
-  case '<': case '>': case tokLEQ: case tokGEQ: return 8;
-  case tokEQ: case tokNEQ: return 7;
-  case '&': return 6;
-  case '^': return 5;
-  case '|': return 4;
-  case tokLogAnd: return 3;
-  case tokLogOr: return 2;
+  case '*': case '/': case '%': return 12;
+  case '+': case '-': return 11;
+  case tokLShift: case tokRShift: return 10;
+  case '<': case '>': case tokLEQ: case tokGEQ: return 9;
+  case tokEQ: case tokNEQ: return 8;
+  case '&': return 7;
+  case '^': return 6;
+  case '|': return 5;
+  case tokLogAnd: return 4;
+  case tokLogOr: return 3;
   case '=':
   case tokAssignMul: case tokAssignDiv: case tokAssignMod:
   case tokAssignAdd: case tokAssignSub:
   case tokAssignLSh: case tokAssignRSh:
   case tokAssignAnd: case tokAssignXor: case tokAssignOr:
+    return 2;
+  case tokComma:
     return 1;
   }
   return 0;
@@ -4226,23 +4242,19 @@ int preced(int tok)
 
 int precedGEQ(int lfttok, int rhttok)
 {
-  // TBD!!! rethink the comma operator as it could be implemented similarly
+  // DONE: rethink the comma operator as it could be implemented similarly
   // DONE: is this correct:???
-  switch (lfttok)
-  {
-  case '=':
-  case tokAssignMul: case tokAssignDiv: case tokAssignMod:
-  case tokAssignAdd: case tokAssignSub:
-  case tokAssignLSh: case tokAssignRSh:
-  case tokAssignAnd: case tokAssignXor: case tokAssignOr:
-    return 0; // assignment is right-associative
-  }
-  return preced(lfttok) >= preced(rhttok);
+  int pl = preced(lfttok);
+  int pr = preced(rhttok);
+  // assignment is right-associative
+  if (pl == 2 && pr >= 2)
+    pl = 0;
+  return pl >= pr;
 }
 
-int expr(int tok, int* gotUnary);
+int expr(int tok, int* gotUnary, int commaSeparator);
 
-int exprUnary(int tok, int* gotUnary)
+int exprUnary(int tok, int* gotUnary, int commaSeparator)
 {
   int decl = 0;
   *gotUnary = 0;
@@ -4250,7 +4262,7 @@ int exprUnary(int tok, int* gotUnary)
   if (isop(tok) && (isunary(tok) || strchr("&*+-", tok) != NULL))
   {
     int lastTok = tok;
-    tok = exprUnary(GetToken(), gotUnary);
+    tok = exprUnary(GetToken(), gotUnary, commaSeparator);
     if (!*gotUnary)
       error("exprUnary(): primary expression expected after token %s\n", GetTokenName(lastTok));
     switch (lastTok)
@@ -4343,7 +4355,7 @@ int exprUnary(int tok, int* gotUnary)
     }
     else if (tok == '(')
     {
-      tok = expr(GetToken(), gotUnary);
+      tok = expr(GetToken(), gotUnary, 0);
       if (tok != ')')
         error("exprUnary(): ')' expected, unexpected token %s\n", GetTokenName(tok));
       if (!*gotUnary)
@@ -4376,7 +4388,7 @@ int exprUnary(int tok, int* gotUnary)
             int pos2 = sp;
 
             tok = GetToken();
-            tok = expr(tok, gotUnary);
+            tok = expr(tok, gotUnary, 1);
 
             // Reverse the order of argument evaluation, which is important for
             // variadic functions like printf():
@@ -4416,7 +4428,7 @@ int exprUnary(int tok, int* gotUnary)
           for (;;)
           {
             tok = GetToken();
-            tok = expr(tok, gotUnary);
+            tok = expr(tok, gotUnary, 0);
             if (!*gotUnary)
               error("exprUnary(): primary expression expected in '[]'\n");
             if (tok == ']') break; // end of index
@@ -4454,16 +4466,19 @@ int exprUnary(int tok, int* gotUnary)
     } // endof while (*gotUnary)
   }
 
+  if (tok == ',' && !commaSeparator)
+    tok = tokComma;
+
   return tok;
 }
 
-int expr(int tok, int* gotUnary)
+int expr(int tok, int* gotUnary, int commaSeparator)
 {
   *gotUnary = 0;
 
   pushop(tokEof);
 
-  tok = exprUnary(tok, gotUnary);
+  tok = exprUnary(tok, gotUnary, commaSeparator);
 
   while (tok != tokEof && strchr(",;:)]", tok) == NULL && *gotUnary)
   {
@@ -4481,7 +4496,7 @@ int expr(int tok, int* gotUnary)
       // here: preced(postacktop()) < preced(tok)
       pushop(tok);
 
-      tok = exprUnary(GetToken(), gotUnary);
+      tok = exprUnary(GetToken(), gotUnary, commaSeparator);
       // DONE: figure out a check to see if exprUnary() fails to add a rhs operand
       if (!*gotUnary)
         error("expr(): primary expression expected after token %s\n", GetTokenName(lastTok));
@@ -4900,9 +4915,21 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
           ins(oldIdxRight + 1 - (oldSpRight - sp), '*');
         }
       }
+      else if (ptrmask == 3 && tok == '-')
+      {
+        incSize = GetDeclSize(-*ExprTypeSynPtr);
+        // TBD!!! "ptr1-ptr2": better pointer compatibility test needed
+        if (incSize != GetDeclSize(-RightExprTypeSynPtr))
+          error("Error: exprval(): incompatible pointers\n");
+        if (incSize != 1)
+        {
+          ins2(oldIdxRight + 2 - (oldSpRight - sp), tokNumInt, incSize);
+          ins(oldIdxRight + 2 - (oldSpRight - sp), '/');
+        }
+        *ExprTypeSynPtr = SymIntSynPtr;
+      }
       else if (ptrmask)
-        error("Error: exprval(): invalid/unsupported combination of operands for '+' or '-'\n");
-      // TBD!!! "ptr1-ptr2": pointer compatibility test needed
+        error("Error: exprval(): invalid combination of operands for '+' or '-'\n");
 
       // Promote the result from char to int (and from int to unsigned) if necessary
       promoteType(ExprTypeSynPtr, &RightExprTypeSynPtr);
@@ -5371,6 +5398,39 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
     }
     break;
 
+  case tokComma:
+    {
+      int oldIdxLeft, oldSpLeft;
+      s = exprval(idx, &RightExprTypeSynPtr, &constExpr[1]);
+      oldIdxLeft = *idx;
+      oldSpLeft = sp;
+
+      // Signify uselessness of the result of the left operand's value
+      ins(*idx + 1, tokVoid);
+
+      exprval(idx, ExprTypeSynPtr, &constExpr[0]);
+      *ConstExpr = constExpr[0] && constExpr[1];
+      *ExprTypeSynPtr = RightExprTypeSynPtr;
+      if (*ConstExpr)
+      {
+        // both subexprs are const, remove both and comma
+        simplifyConstExpr(s, *ConstExpr, ExprTypeSynPtr, oldIdxRight + 1 - (oldSpRight - sp), *idx + 1);
+      }
+      else if (constExpr[0])
+      {
+        // only left subexpr is const, remove it and comma
+        del(*idx + 1, oldIdxLeft - (oldSpLeft - sp) - *idx);
+        del(oldIdxRight + 1 - (oldSpRight - sp), 1);
+      }
+      else if (constExpr[1])
+      {
+        // only right subexpr is const, remove it
+        simplifyConstExpr(s, constExpr[1], ExprTypeSynPtr,
+                          oldIdxRight - (oldSpRight - sp), oldIdxLeft + 1 - (oldSpLeft - sp));
+      }
+    }
+    break;
+
   case tokAssignMul: case tokAssignDiv: case tokAssignMod:
   case tokAssignAdd: case tokAssignSub:
   case tokAssignLSh: case tokAssignRSh:
@@ -5459,7 +5519,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
   return s;
 }
 
-int ParseExpr(int tok, int* GotUnary, int* ExprTypeSynPtr, int* ConstExpr, int* ConstVal)
+int ParseExpr(int tok, int* GotUnary, int* ExprTypeSynPtr, int* ConstExpr, int* ConstVal, int commaSeparator)
 {
   int i;
 
@@ -5472,7 +5532,7 @@ int ParseExpr(int tok, int* GotUnary, int* ExprTypeSynPtr, int* ConstExpr, int* 
     PurgeStringTable();
   }
 
-  tok = expr(tok, GotUnary);
+  tok = expr(tok, GotUnary, commaSeparator);
 
   if (tok == tokEof || strchr(",;:)]", tok) == NULL)
     error("Error: ParseExpr(): Unexpected token %s\n", GetTokenName(tok));
@@ -5932,7 +5992,7 @@ int ParseArrayDimension(void)
   oldssp = SyntaxStackCnt;
   oldesp = sp;
   undoIdents = IdentTableLen;
-  tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal);
+  tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0);
   IdentTableLen = undoIdents; // remove all temporary identifier names from e.g. "sizeof"
   SyntaxStackCnt = oldssp; // undo any temporary declarations from e.g. "sizeof" in the expression
   sp = oldesp;
@@ -6196,7 +6256,7 @@ int ParseDecl(int tok)
           error("Error: ParseDecl(): invalid/unsupported initialization of array or function\n");
 
         tok = GetToken();
-        tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal);
+        tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 1);
         if (!tok || !strchr(",;", tok))
           error("Error: ParseDecl(): unexpected token %s after '='\n", GetTokenName(tok));
 
@@ -6535,7 +6595,7 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
     // DONE: functions returning void vs non-void
     printf("; return\n");
     tok = GetToken();
-    if (ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal) != ';')
+    if (ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0) != ';')
       error("Error: ParseStatement(): ';' expected\n");
     if (CurFxnReturnExprTypeSynPtr >= 0 &&
         SyntaxStack[CurFxnReturnExprTypeSynPtr][0] == tokVoid)
@@ -6564,7 +6624,7 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
       error("Error: ParseStatement(): '(' expected after 'while'\n");
 
     tok = GetToken();
-    if (ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal) != ')')
+    if (ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0) != ')')
       error("Error: ParseStatement(): ')' expected after 'while ( expression'\n");
 
     if (!gotUnary)
@@ -6626,7 +6686,7 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
       error("Error: ParseStatement(): '(' expected after 'while'\n");
 
     tok = GetToken();
-    if (ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal) != ')')
+    if (ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0) != ')')
       error("Error: ParseStatement(): ')' expected after 'while ( expression'\n");
 
     if (!gotUnary)
@@ -6678,7 +6738,7 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
       error("Error: ParseStatement(): '(' expected after 'if'\n");
 
     tok = GetToken();
-    if (ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal) != ')')
+    if (ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0) != ')')
       error("Error: ParseStatement(): ')' expected after 'if ( expression'\n");
 
     if (!gotUnary)
@@ -6739,7 +6799,7 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
       error("Error: ParseStatement(): '(' expected after 'for'\n");
 
     tok = GetToken();
-    if (ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal) != ';')
+    if (ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0) != ';')
       error("Error: ParseStatement(): ';' expected after 'for ( expression'\n");
     if (gotUnary)
     {
@@ -6748,7 +6808,7 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
 
     GenNumLabel(labelBefore);
     tok = GetToken();
-    if (ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal) != ';')
+    if (ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0) != ';')
       error("Error: ParseStatement(): ';' expected after 'for ( expression ; expression'\n");
     if (gotUnary)
     {
@@ -6781,7 +6841,7 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
 
     GenNumLabel(labelExpr3);
     tok = GetToken();
-    if (ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal) != ')')
+    if (ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0) != ')')
       error("Error: ParseStatement(): ')' expected after 'for ( expression ; expression ; expression'\n");
     if (gotUnary)
     {
@@ -6827,7 +6887,7 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
       error("Error: ParseStatement(): '(' expected after 'switch'\n");
 
     tok = GetToken();
-    if (ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal) != ')')
+    if (ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0) != ')')
       error("Error: ParseStatement(): ')' expected after 'switch ( expression'\n");
 
     if (!gotUnary)
@@ -6892,7 +6952,7 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
       error("Error: ParseStatement(): 'case' must be within 'switch' statement\n");
 
     tok = GetToken();
-    if (ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal) != ':')
+    if (ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0) != ':')
       error("Error: ParseStatement(): ':' expected after 'case expression'\n");
 
     if (!gotUnary || !constExpr || (synPtr >= 0 && SyntaxStack[synPtr][0] == tokVoid))
@@ -6931,7 +6991,7 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
   }
   else
   {
-    if (ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal) != ';')
+    if (ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0) != ';')
       error("Error: ParseStatement(): ';' expected\n");
     if (gotUnary)
     {
@@ -7042,7 +7102,40 @@ int main(int argc, char** argv)
         continue;
       }
     }
-    // TBD!!! '-D macro[=expansion]': '#define macro 1' when there's no '=expansion'
+    // DONE: '-D macro[=expansion]': '#define macro 1' when there's no '=expansion'
+    else if (!strcmp(argv[i], "-D"))
+    {
+      if (i + 1 < argc)
+      {
+        char id[MAX_IDENT_LEN + 1];
+        char* e = strchr(argv[++i], '=');
+        int len;
+        if (e)
+        {
+          len = e - argv[i];
+          e++;
+        }
+        else
+        {
+          len = strlen(argv[i]);
+          e = "1";
+        }
+        if (len > 0 && len <= MAX_IDENT_LEN)
+        {
+          int j, bad = 1;
+          memcpy(id, argv[i], len);
+          id[len] = '\0';
+          for (j = 0; j < len; j++)
+            if ((bad = !(id[j] == '_' || (!j * isalpha(id[j]) + j * isalnum(id[j])))) != 0)
+              break;
+          if (!bad)
+          {
+            DefineMacro(id, e);
+            continue;
+          }
+        }
+      }
+    }
     else if (!FileCnt)
     {
       // If it's none of the known options,

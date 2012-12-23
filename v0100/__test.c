@@ -455,6 +455,16 @@ int main(void)
   putdecu(65534u); putchar('\n');
   printf("%u\n", 65535u);
 
+  puts("press a key..."); getchar();
+
+  0, 1, printf((2, "&arr[3]-&arr[0]=%d "), &arr[3]-(3,4,&arr[0])), 5, (6, printf("&arr[0]-&arr[3]=%d\n", &arr[0]-&arr[3]), (7, 8));
+  printf("&arr[16383]-&arr[0]=%d ", &arr[16383]-&arr[0]); printf("&arr[0]-&arr[16383]=%d\n", &arr[0]-&arr[16383]);
+  printf("&arr[16384]-&arr[0]=%d ", &arr[16384]-&arr[0]); printf("&arr[0]-&arr[16384]=%d\n", &arr[0]-&arr[16384]);
+  printf("&arr[32768u]-&arr[0]=%d ", &arr[32768u]-&arr[0]); printf("&arr[0]-&arr[32768u]=%d\n", &arr[0]-&arr[32768u]);
+  printf("&arr[32769u]-&arr[0]=%d ", &arr[32769u]-&arr[0]); printf("&arr[0]-&arr[32769u]=%d\n", &arr[0]-&arr[32769u]);
+  printf("&arr[65535u]-&arr[0]=%d ", &arr[65535u]-&arr[0]); printf("&arr[0]-&arr[65535u]=%d\n", &arr[0]-&arr[65535u]);
+  printf("&arr[-1]-&arr[0]=%d ", &arr[-1]-&arr[0]); printf("&arr[0]-&arr[-1]=%d\n", &arr[0]-&arr[-1]);
+
   return 0;
 }
 
