@@ -414,6 +414,11 @@ int main(void)
   printf("sizeof main()=%u\n", sizeof main());
   printf("sizeof(void()())=%u\n", sizeof(void()()));
   printf("sizeof((char[7]))=%u\n", sizeof((char[7])));
+  printf("%s%s=%u\n",
+   "sizeof(int[sizeof(int[sizeof(int[sizeof(int[3])+sizeof(int[5])])])+",  // ((3*2+5*2)*2*2 +
+              "sizeof(int[sizeof(int[sizeof(int[7])+sizeof(int[9])])])])", //  (7*2+9*2)*2*2) * 2 = 384
+    sizeof(int[sizeof(int[sizeof(int[sizeof(int[3])+sizeof(int[5])])])+
+               sizeof(int[sizeof(int[sizeof(int[7])+sizeof(int[9])])])]));
 
   PointerStew();
   Print8("hello")(" ")("world")("!")("\n");

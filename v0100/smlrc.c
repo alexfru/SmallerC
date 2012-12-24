@@ -95,6 +95,7 @@ EXTERN size_t strlen(char*);
 EXTERN char* strcpy(char*, char*);
 EXTERN char* strchr(char*, int);
 EXTERN int strcmp(char*, char*);
+EXTERN int strncmp(char*, char*, size_t);
 EXTERN void* memmove(void*, void*, size_t);
 EXTERN void* memcpy(void*, void*, size_t);
 EXTERN void* memset(void*, int, size_t);
@@ -4337,10 +4338,33 @@ int exprUnary(int tok, int* gotUnary, int commaSeparator)
     else if (TokenStartsDeclaration(tok, 0))
     {
       int synPtr;
+      int lbl = LabelCnt++;
+      int i;
+      char s[1 + (2 + CHAR_BIT * sizeof lbl) / 3 + sizeof "<something>" - 1];
+      char *p = s + sizeof s;
+
       tok = ParseDecl(tok);
       if (tok != ')')
         error("exprUnary(): ')' expected, unexpected token %s\n", GetTokenName(tok));
       synPtr = FindSymbol("<something>");
+
+      // Rename "<something>" to "<something#>", where # is lbl.
+      // This makes the nameless declaration uniquely identifiable by name.
+
+      *--p = '\0';
+      *--p = '>';
+
+      i = lbl;
+      do
+      {
+        *--p = '0' + i % 10;
+        i /= 10;
+      } while (i);
+
+      p -= sizeof "<something>" - 1 - 1;
+      memcpy(p, "<something", sizeof "<something" - 1);
+
+      SyntaxStack[synPtr][1] = AddIdent(p);
       push2(tokIdent, SyntaxStack[synPtr][1]);
       decl = *gotUnary = 1;
     }
@@ -4728,7 +4752,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       int synPtr = FindSymbol(IdentTable + s);
       int type = SymType(synPtr);
 
-      if (!strcmp(IdentTable + SyntaxStack[synPtr][1], "<something>") &&
+      if (!strncmp(IdentTable + SyntaxStack[synPtr][1], "<something", sizeof "<something>" - 1 - 1) &&
           ((*idx + 2 >= sp) || stack[*idx + 2][0] != tokSizeof))
         error("Error: exprval(): unexpected type declaration\n");
 
@@ -5421,12 +5445,6 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
         // only left subexpr is const, remove it and comma
         del(*idx + 1, oldIdxLeft - (oldSpLeft - sp) - *idx);
         del(oldIdxRight + 1 - (oldSpRight - sp), 1);
-      }
-      else if (constExpr[1])
-      {
-        // only right subexpr is const, remove it
-        simplifyConstExpr(s, constExpr[1], ExprTypeSynPtr,
-                          oldIdxRight - (oldSpRight - sp), oldIdxLeft + 1 - (oldSpLeft - sp));
       }
     }
     break;

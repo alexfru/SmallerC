@@ -61,10 +61,10 @@ _gfxmode:
     ret
 
 ; dos.h:
-; void pokeb(int seg, int ofs, char val);
-; void poke(int seg, int ofs, int val);
-; char peekb(int seg, int ofs);
-; int peek(int seg, int ofs);
+; void pokeb(unsigned seg, unsigned ofs, char val);
+; void poke(unsigned seg, unsigned ofs, int val);
+; char peekb(unsigned seg, int unsigned);
+; int peek(unsigned seg, unsigned ofs);
 _pokeb:
     push    bp
     mov     bp, sp

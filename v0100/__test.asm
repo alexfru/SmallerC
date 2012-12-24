@@ -3124,7 +3124,7 @@ L267:
     call    _gfxmode
     sub     sp, -2
 ; loc     <something> : char
-; RPN'ized expression: "( <something> sizeof , L272 printf ) "
+; RPN'ized expression: "( <something274> sizeof , L272 printf ) "
 ; Expanded expression: " 1u  L272  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
@@ -3138,169 +3138,101 @@ SEGMENT _TEXT
     call    _printf
     sub     sp, -4
 ; loc     <something> : int
-; RPN'ized expression: "( <something> sizeof , L274 printf ) "
-; Expanded expression: " 2u  L274  printf ()4 "
+; RPN'ized expression: "( <something277> sizeof , L275 printf ) "
+; Expanded expression: " 2u  L275  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L274:
+L275:
     db  "sizeof(int)=%u",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( 2u , L274 , printf )4 "
+; Fused expression:    "( 2u , L275 , printf )4 "
     push    2
-    push    L274
+    push    L275
     call    _printf
     sub     sp, -4
-; RPN'ized expression: "( , L276 printf 3 "
-; Expanded expression: "  L276 printf 3 "
+; RPN'ized expression: "( , L278 printf 3 "
+; Expanded expression: "  L278 printf 3 "
 ; Expression value: 3
 ; loc     <something> : [3u] char
-; RPN'ized expression: "( <something> sizeof , L276 printf ) "
-; Expanded expression: " 3u  L276  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L276:
-    db  "sizeof(char[3])=%u",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( 3u , L276 , printf )4 "
-    push    3
-    push    L276
-    call    _printf
-    sub     sp, -4
-; RPN'ized expression: "( , L278 printf 5 "
-; Expanded expression: "  L278 printf 5 "
-; Expression value: 5
-; loc     <something> : [5u] * () char
-; RPN'ized expression: "( <something> sizeof , L278 printf ) "
-; Expanded expression: " 10u  L278  printf ()4 "
+; RPN'ized expression: "( <something280> sizeof , L278 printf ) "
+; Expanded expression: " 3u  L278  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
 L278:
-    db  "sizeof char(*[5])()=%u",10,0
+    db  "sizeof(char[3])=%u",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( 10u , L278 , printf )4 "
-    push    10
+; Fused expression:    "( 3u , L278 , printf )4 "
+    push    3
     push    L278
     call    _printf
     sub     sp, -4
-; RPN'ized expression: "( , L280 printf 3 "
-; Expanded expression: "  L280 printf 3 "
-; Expression value: 3
-; loc     <something> : [3u] int
-; RPN'ized expression: "( , L280 printf <something> sizeof "
-; Expanded expression: "  L280 printf 6u "
-; Expression value: 6
-; loc     <something> : [6u] int
-; RPN'ized expression: "( , L280 printf <something> sizeof "
-; Expanded expression: "  L280 printf 12u "
-; Expression value: 12
-; loc     <something> : [12u] int
-; RPN'ized expression: "( <something> sizeof , L280 printf ) "
-; Expanded expression: " 24u  L280  printf ()4 "
+; RPN'ized expression: "( , L281 printf 5 "
+; Expanded expression: "  L281 printf 5 "
+; Expression value: 5
+; loc     <something> : [5u] * () char
+; RPN'ized expression: "( <something283> sizeof , L281 printf ) "
+; Expanded expression: " 10u  L281  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L280:
+L281:
+    db  "sizeof char(*[5])()=%u",10,0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "( 10u , L281 , printf )4 "
+    push    10
+    push    L281
+    call    _printf
+    sub     sp, -4
+; RPN'ized expression: "( , L284 printf 3 "
+; Expanded expression: "  L284 printf 3 "
+; Expression value: 3
+; loc     <something> : [3u] int
+; RPN'ized expression: "( , L284 printf <something288> sizeof "
+; Expanded expression: "  L284 printf 6u "
+; Expression value: 6
+; loc     <something> : [6u] int
+; RPN'ized expression: "( , L284 printf <something287> sizeof "
+; Expanded expression: "  L284 printf 12u "
+; Expression value: 12
+; loc     <something> : [12u] int
+; RPN'ized expression: "( <something286> sizeof , L284 printf ) "
+; Expanded expression: " 24u  L284  printf ()4 "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L284:
     db  "sizeof(int[sizeof(int[sizeof(int[3])])])=%u",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( 24u , L280 , printf )4 "
+; Fused expression:    "( 24u , L284 , printf )4 "
     push    24
-    push    L280
+    push    L284
     call    _printf
     sub     sp, -4
 ; RPN'ized expression: "3 "
 ; Expanded expression: "3 "
 ; Expression value: 3
 ; loc     <something> : [3u] int
-; RPN'ized expression: "<something> sizeof "
+; RPN'ized expression: "<something291> sizeof "
 ; Expanded expression: "6u "
 ; Expression value: 6
 ; loc     <something> : [6u] int
-; RPN'ized expression: "<something> sizeof "
+; RPN'ized expression: "<something290> sizeof "
 ; Expanded expression: "12u "
 ; Expression value: 12
 ; loc     <something> : [12u] int
-; RPN'ized expression: "<something> sizeof "
+; RPN'ized expression: "<something289> sizeof "
 ; Expanded expression: "24u "
 ; Expression value: 24
 ; loc     yui : (@-70): [24u] char
 ; loc     <something> : * () char
-; RPN'ized expression: "( <something> sizeof , L282 printf ) "
-; Expanded expression: " 2u  L282  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L282:
-    db  "sizeof(char(*)())=%u",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( 2u , L282 , printf )4 "
-    push    2
-    push    L282
-    call    _printf
-    sub     sp, -4
-; loc     <something> : char
-; RPN'ized expression: "( <something> sizeof , L284 printf ) "
-; Expanded expression: " 1u  L284  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L284:
-    db  "sizeof(char())=%u",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( 1u , L284 , printf )4 "
-    push    1
-    push    L284
-    call    _printf
-    sub     sp, -4
-; loc     <something> : * char
-; RPN'ized expression: "( <something> sizeof , L286 printf ) "
-; Expanded expression: " 2u  L286  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L286:
-    db  "sizeof(char*())=%u",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( 2u , L286 , printf )4 "
-    push    2
-    push    L286
-    call    _printf
-    sub     sp, -4
-; loc     <something> : int
-; RPN'ized expression: "( <something> sizeof , L288 printf ) "
-; Expanded expression: " 2u  L288  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L288:
-    db  "sizeof(int())=%u",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( 2u , L288 , printf )4 "
-    push    2
-    push    L288
-    call    _printf
-    sub     sp, -4
-; RPN'ized expression: "( main sizeof , L290 printf ) "
-; Expanded expression: " 2u  L290  printf ()4 "
-; SEGMENT _TEXT
-SEGMENT _DATA
-L290:
-    db  "sizeof main=%u",10,0
-; SEGMENT _DATA
-SEGMENT _TEXT
-; Fused expression:    "( 2u , L290 , printf )4 "
-    push    2
-    push    L290
-    call    _printf
-    sub     sp, -4
-; RPN'ized expression: "( ( main ) sizeof , L292 printf ) "
+; RPN'ized expression: "( <something294> sizeof , L292 printf ) "
 ; Expanded expression: " 2u  L292  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
 L292:
-    db  "sizeof main()=%u",10,0
+    db  "sizeof(char(*)())=%u",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
 ; Fused expression:    "( 2u , L292 , printf )4 "
@@ -3308,79 +3240,210 @@ SEGMENT _TEXT
     push    L292
     call    _printf
     sub     sp, -4
-; loc     <something> : () void
-; RPN'ized expression: "( <something> sizeof , L294 printf ) "
-; Expanded expression: " 2u  L294  printf ()4 "
+; loc     <something> : char
+; RPN'ized expression: "( <something297> sizeof , L295 printf ) "
+; Expanded expression: " 1u  L295  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L294:
+L295:
+    db  "sizeof(char())=%u",10,0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "( 1u , L295 , printf )4 "
+    push    1
+    push    L295
+    call    _printf
+    sub     sp, -4
+; loc     <something> : * char
+; RPN'ized expression: "( <something300> sizeof , L298 printf ) "
+; Expanded expression: " 2u  L298  printf ()4 "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L298:
+    db  "sizeof(char*())=%u",10,0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "( 2u , L298 , printf )4 "
+    push    2
+    push    L298
+    call    _printf
+    sub     sp, -4
+; loc     <something> : int
+; RPN'ized expression: "( <something303> sizeof , L301 printf ) "
+; Expanded expression: " 2u  L301  printf ()4 "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L301:
+    db  "sizeof(int())=%u",10,0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "( 2u , L301 , printf )4 "
+    push    2
+    push    L301
+    call    _printf
+    sub     sp, -4
+; RPN'ized expression: "( main sizeof , L304 printf ) "
+; Expanded expression: " 2u  L304  printf ()4 "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L304:
+    db  "sizeof main=%u",10,0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "( 2u , L304 , printf )4 "
+    push    2
+    push    L304
+    call    _printf
+    sub     sp, -4
+; RPN'ized expression: "( ( main ) sizeof , L306 printf ) "
+; Expanded expression: " 2u  L306  printf ()4 "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L306:
+    db  "sizeof main()=%u",10,0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "( 2u , L306 , printf )4 "
+    push    2
+    push    L306
+    call    _printf
+    sub     sp, -4
+; loc     <something> : () void
+; RPN'ized expression: "( <something310> sizeof , L308 printf ) "
+; Expanded expression: " 2u  L308  printf ()4 "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L308:
     db  "sizeof(void()())=%u",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( 2u , L294 , printf )4 "
+; Fused expression:    "( 2u , L308 , printf )4 "
     push    2
-    push    L294
+    push    L308
     call    _printf
     sub     sp, -4
-; RPN'ized expression: "( , L296 printf 7 "
-; Expanded expression: "  L296 printf 7 "
+; RPN'ized expression: "( , L311 printf 7 "
+; Expanded expression: "  L311 printf 7 "
 ; Expression value: 7
 ; loc     <something> : [7u] char
-; RPN'ized expression: "( <something> sizeof , L296 printf ) "
-; Expanded expression: " 7u  L296  printf ()4 "
+; RPN'ized expression: "( <something313> sizeof , L311 printf ) "
+; Expanded expression: " 7u  L311  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L296:
+L311:
     db  "sizeof((char[7]))=%u",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( 7u , L296 , printf )4 "
+; Fused expression:    "( 7u , L311 , printf )4 "
     push    7
-    push    L296
+    push    L311
     call    _printf
     sub     sp, -4
+; RPN'ized expression: "( , L318 , L316 , L314 printf 3 "
+; Expanded expression: "  L318  L316  L314 printf 3 "
+; Expression value: 3
+; loc     <something> : [3u] int
+; RPN'ized expression: "( , L318 , L316 , L314 printf <something323> sizeof 5 "
+; Expanded expression: "  L318  L316  L314 printf <something323> sizeof 5 "
+; Expression value: 5
+; loc     <something> : [5u] int
+; RPN'ized expression: "( , L318 , L316 , L314 printf <something323> sizeof <something324> sizeof + "
+; Expanded expression: "  L318  L316  L314 printf 16u "
+; Expression value: 16
+; loc     <something> : [16u] int
+; RPN'ized expression: "( , L318 , L316 , L314 printf <something322> sizeof "
+; Expanded expression: "  L318  L316  L314 printf 32u "
+; Expression value: 32
+; loc     <something> : [32u] int
+; RPN'ized expression: "( , L318 , L316 , L314 printf <something321> sizeof 7 "
+; Expanded expression: "  L318  L316  L314 printf <something321> sizeof 7 "
+; Expression value: 7
+; loc     <something> : [7u] int
+; RPN'ized expression: "( , L318 , L316 , L314 printf <something321> sizeof <something327> sizeof 9 "
+; Expanded expression: "  L318  L316  L314 printf <something321> sizeof <something327> sizeof 9 "
+; Expression value: 9
+; loc     <something> : [9u] int
+; RPN'ized expression: "( , L318 , L316 , L314 printf <something321> sizeof <something327> sizeof <something328> sizeof + "
+; Expanded expression: "  L318  L316  L314 printf <something321> sizeof 32u "
+; Expression value: 32
+; loc     <something> : [32u] int
+; RPN'ized expression: "( , L318 , L316 , L314 printf <something321> sizeof <something326> sizeof "
+; Expanded expression: "  L318  L316  L314 printf <something321> sizeof 64u "
+; Expression value: 64
+; loc     <something> : [64u] int
+; RPN'ized expression: "( , L318 , L316 , L314 printf <something321> sizeof <something325> sizeof + "
+; Expanded expression: "  L318  L316  L314 printf 192u "
+; Expression value: 192
+; loc     <something> : [192u] int
+; RPN'ized expression: "( <something320> sizeof , L318 , L316 , L314 printf ) "
+; Expanded expression: " 384u  L318  L316  L314  printf ()8 "
+; SEGMENT _TEXT
+SEGMENT _DATA
+L318:
+    db  "sizeof(int[sizeof(int[sizeof(int[7])+sizeof(int[9])])])])",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; SEGMENT _TEXT
+SEGMENT _DATA
+L316:
+    db  "sizeof(int[sizeof(int[sizeof(int[sizeof(int[3])+sizeof(int[5])])])+",0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; SEGMENT _TEXT
+SEGMENT _DATA
+L314:
+    db  "%s%s=%u",10,0
+; SEGMENT _DATA
+SEGMENT _TEXT
+; Fused expression:    "( 384u , L318 , L316 , L314 , printf )8 "
+    push    384
+    push    L318
+    push    L316
+    push    L314
+    call    _printf
+    sub     sp, -8
 ; RPN'ized expression: "( PointerStew ) "
 ; Expanded expression: " PointerStew ()0 "
 ; Fused expression:    "( PointerStew )0 "
     call    _PointerStew
-; RPN'ized expression: "( L306 ( L304 ( L302 ( L300 ( L298 Print8 ) ) ) ) ) "
-; Expanded expression: " L306   L304   L302   L300   L298  Print8 ()2 ()2 ()2 ()2 ()2 "
+; RPN'ized expression: "( L337 ( L335 ( L333 ( L331 ( L329 Print8 ) ) ) ) ) "
+; Expanded expression: " L337   L335   L333   L331   L329  Print8 ()2 ()2 ()2 ()2 ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L306:
+L337:
     db  10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L304:
+L335:
     db  "!",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L302:
+L333:
     db  "world",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L300:
+L331:
     db  " ",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L298:
+L329:
     db  "hello",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L306 , ( L304 , ( L302 , ( L300 , ( L298 , Print8 )2 )2 )2 )2 )2 "
-    push    L306
-    push    L304
-    push    L302
-    push    L300
-    push    L298
+; Fused expression:    "( L337 , ( L335 , ( L333 , ( L331 , ( L329 , Print8 )2 )2 )2 )2 )2 "
+    push    L337
+    push    L335
+    push    L333
+    push    L331
+    push    L329
     call    _Print8
     sub     sp, -2
     call    ax
@@ -3395,47 +3458,47 @@ SEGMENT _TEXT
 ; Expanded expression: " macros ()0 "
 ; Fused expression:    "( macros )0 "
     call    _macros
-; RPN'ized expression: "( L308 printf ) "
-; Expanded expression: " L308  printf ()2 "
+; RPN'ized expression: "( L339 printf ) "
+; Expanded expression: " L339  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L308:
+L339:
     db  "These are six concatenated string literals!",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L308 , printf )2 "
-    push    L308
+; Fused expression:    "( L339 , printf )2 "
+    push    L339
     call    _printf
     sub     sp, -2
-; RPN'ized expression: "( L312 , L310 printf ) "
-; Expanded expression: " L312  L310  printf ()4 "
+; RPN'ized expression: "( L343 , L341 printf ) "
+; Expanded expression: " L343  L341  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L312:
+L343:
     db  "ABC012abc",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L310:
+L341:
     db  34,"\x41\x42\x43\60\61\62abc",34," = ",34,"%s",34,10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L312 , L310 , printf )4 "
-    push    L312
-    push    L310
+; Fused expression:    "( L343 , L341 , printf )4 "
+    push    L343
+    push    L341
     call    _printf
     sub     sp, -4
-; RPN'ized expression: "( L314 puts ) "
-; Expanded expression: " L314  puts ()2 "
+; RPN'ized expression: "( L345 puts ) "
+; Expanded expression: " L345  puts ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L314:
+L345:
     db  "press a key...",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L314 , puts )2 "
-    push    L314
+; Fused expression:    "( L345 , puts )2 "
+    push    L345
     call    _puts
     sub     sp, -2
 ; RPN'ized expression: "( getchar ) "
@@ -3477,67 +3540,67 @@ SEGMENT _TEXT
     mov     bx, ax
     mov     ax, 33
     mov     [bx], ax
-; RPN'ized expression: "( p 1 -= *u , L316 printf ) "
-; Expanded expression: " (@-78) 2 -=(2) *(2)  L316  printf ()4 "
+; RPN'ized expression: "( p 1 -= *u , L347 printf ) "
+; Expanded expression: " (@-78) 2 -=(2) *(2)  L347  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L316:
+L347:
     db  "arr[0]=%d",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( -=(34) *(@-78) 2 *(2) ax , L316 , printf )4 "
+; Fused expression:    "( -=(34) *(@-78) 2 *(2) ax , L347 , printf )4 "
     mov     ax, [bp-78]
     sub     ax, 2
     mov     [bp-78], ax
     mov     bx, ax
     push    word [bx]
-    push    L316
+    push    L347
     call    _printf
     sub     sp, -4
-; RPN'ized expression: "( p 1 += *u , L318 printf ) "
-; Expanded expression: " (@-78) 2 +=(2) *(2)  L318  printf ()4 "
+; RPN'ized expression: "( p 1 += *u , L349 printf ) "
+; Expanded expression: " (@-78) 2 +=(2) *(2)  L349  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L318:
+L349:
     db  "arr[1]=%d",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( +=(34) *(@-78) 2 *(2) ax , L318 , printf )4 "
+; Fused expression:    "( +=(34) *(@-78) 2 *(2) ax , L349 , printf )4 "
     mov     ax, [bp-78]
     add     ax, 2
     mov     [bp-78], ax
     mov     bx, ax
     push    word [bx]
-    push    L318
+    push    L349
     call    _printf
     sub     sp, -4
-; RPN'ized expression: "( p 1 += *u , L320 printf ) "
-; Expanded expression: " (@-78) 2 +=(2) *(2)  L320  printf ()4 "
+; RPN'ized expression: "( p 1 += *u , L351 printf ) "
+; Expanded expression: " (@-78) 2 +=(2) *(2)  L351  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L320:
+L351:
     db  "arr[2]=%d",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( +=(34) *(@-78) 2 *(2) ax , L320 , printf )4 "
+; Fused expression:    "( +=(34) *(@-78) 2 *(2) ax , L351 , printf )4 "
     mov     ax, [bp-78]
     add     ax, 2
     mov     [bp-78], ax
     mov     bx, ax
     push    word [bx]
-    push    L320
+    push    L351
     call    _printf
     sub     sp, -4
-; RPN'ized expression: "( L322 printf ) "
-; Expanded expression: " L322  printf ()2 "
+; RPN'ized expression: "( L353 printf ) "
+; Expanded expression: " L353  printf ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L322:
+L353:
     db  "arr[0] *= arr[1] *= arr[2];",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L322 , printf )2 "
-    push    L322
+; Fused expression:    "( L353 , printf )2 "
+    push    L353
     call    _printf
     sub     sp, -2
 ; RPN'ized expression: "arr 0 + *u arr 1 + *u arr 2 + *u *= *= "
@@ -3561,15 +3624,15 @@ SEGMENT _TEXT
     mov     ax, [bx]
     mul     cx
     mov     [bx], ax
-; RPN'ized expression: "( arr 2 + *u , arr 1 + *u , arr 0 + *u , L324 printf ) "
-; Expanded expression: " (@-76) 4 + *(2)  (@-76) 2 + *(2)  (@-76) 0 + *(2)  L324  printf ()8 "
+; RPN'ized expression: "( arr 2 + *u , arr 1 + *u , arr 0 + *u , L355 printf ) "
+; Expanded expression: " (@-76) 4 + *(2)  (@-76) 2 + *(2)  (@-76) 0 + *(2)  L355  printf ()8 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L324:
+L355:
     db  "arr[0]=%d",10,"arr[1]=%d",10,"arr[2]=%d",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( + (@-76) 4 *(2) ax , + (@-76) 2 *(2) ax , + (@-76) 0 *(2) ax , L324 , printf )8 "
+; Fused expression:    "( + (@-76) 4 *(2) ax , + (@-76) 2 *(2) ax , + (@-76) 0 *(2) ax , L355 , printf )8 "
     lea     ax, [bp-76]
     add     ax, 4
     mov     bx, ax
@@ -3581,7 +3644,7 @@ SEGMENT _TEXT
     lea     ax, [bp-76]
     mov     bx, ax
     push    word [bx]
-    push    L324
+    push    L355
     call    _printf
     sub     sp, -8
 ; loc     c : (@-80): char
@@ -3592,52 +3655,52 @@ SEGMENT _TEXT
 ; Fused expression:    "=(34) *(@-80) 127 "
     mov     ax, 127
     mov     [bp-80], ax
-; RPN'ized expression: "( c 127 *= sizeof , c 127 * sizeof , L326 printf ) "
-; Expanded expression: " 1u  2u  L326  printf ()6 "
+; RPN'ized expression: "( c 127 *= sizeof , c 127 * sizeof , L357 printf ) "
+; Expanded expression: " 1u  2u  L357  printf ()6 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L326:
+L357:
     db  "char c = 127; sizeof(c * 127)=%d; sizeof(c *= 127)=%d",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( 1u , 2u , L326 , printf )6 "
+; Fused expression:    "( 1u , 2u , L357 , printf )6 "
     push    1
     push    2
-    push    L326
+    push    L357
     call    _printf
     sub     sp, -6
-; RPN'ized expression: "( c 127 * , L328 printf ) "
-; Expanded expression: " (@-80) *(1) 127 *  L328  printf ()4 "
+; RPN'ized expression: "( c 127 * , L359 printf ) "
+; Expanded expression: " (@-80) *(1) 127 *  L359  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L328:
+L359:
     db  "printf(",34,"%%d\n",34,", c * 127): %d",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( * *(@-80) 127 , L328 , printf )4 "
+; Fused expression:    "( * *(@-80) 127 , L359 , printf )4 "
     mov     al, [bp-80]
     cbw
     imul    ax, ax, 127
     push    ax
-    push    L328
+    push    L359
     call    _printf
     sub     sp, -4
-; RPN'ized expression: "( c 127 *= , L330 printf ) "
-; Expanded expression: " (@-80) 127 *=(1)  L330  printf ()4 "
+; RPN'ized expression: "( c 127 *= , L361 printf ) "
+; Expanded expression: " (@-80) 127 *=(1)  L361  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L330:
+L361:
     db  "printf(",34,"%%d\n",34,", c *= 127): %d",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( *=(18) *(@-80) 127 , L330 , printf )4 "
+; Fused expression:    "( *=(18) *(@-80) 127 , L361 , printf )4 "
     mov     al, [bp-80]
     cbw
     imul    ax, ax, 127
     mov     [bp-80], al
     cbw
     push    ax
-    push    L330
+    push    L361
     call    _printf
     sub     sp, -4
 ; RPN'ized expression: "( 32767 putdecu ) "
@@ -3712,50 +3775,50 @@ SEGMENT _TEXT
     push    10
     call    _putchar
     sub     sp, -2
-; RPN'ized expression: "( 65535u , L332 printf ) "
-; Expanded expression: " 65535u  L332  printf ()4 "
+; RPN'ized expression: "( 65535u , L363 printf ) "
+; Expanded expression: " 65535u  L363  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L332:
+L363:
     db  "%u",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( 65535u , L332 , printf )4 "
+; Fused expression:    "( 65535u , L363 , printf )4 "
     push    -1
-    push    L332
+    push    L363
     call    _printf
     sub     sp, -4
-; RPN'ized expression: "( L334 puts ) "
-; Expanded expression: " L334  puts ()2 "
+; RPN'ized expression: "( L365 puts ) "
+; Expanded expression: " L365  puts ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L334:
+L365:
     db  "press a key...",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L334 , puts )2 "
-    push    L334
+; Fused expression:    "( L365 , puts )2 "
+    push    L365
     call    _puts
     sub     sp, -2
 ; RPN'ized expression: "( getchar ) "
 ; Expanded expression: " getchar ()0 "
 ; Fused expression:    "( getchar )0 "
     call    _getchar
-; RPN'ized expression: "0 1 ,b ( arr 3 + *u &u 3 4 ,b arr 0 + *u &u ,b - , 2 L336 ,b printf ) ,b 5 ,b 6 ( arr 0 + *u &u arr 3 + *u &u - , L338 printf ) ,b 7 8 ,b ,b ,b "
-; Expanded expression: " (@-76) 6 + (@-76) 0 + - 2 /  L336  printf ()4 void 5 ,b void  (@-76) 0 + (@-76) 6 + - 2 /  L338  printf ()4 void 8 ,b ,b "
+; RPN'ized expression: "0 1 ,b ( arr 3 + *u &u 3 4 ,b arr 0 + *u &u ,b - , 2 L367 ,b printf ) ,b 5 ,b 6 ( arr 0 + *u &u arr 3 + *u &u - , L369 printf ) ,b 7 8 ,b ,b ,b "
+; Expanded expression: " (@-76) 6 + (@-76) 0 + - 2 /  L367  printf ()4 void 5 ,b void  (@-76) 0 + (@-76) 6 + - 2 /  L369  printf ()4 void 8 ,b ,b "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L336:
+L367:
     db  "&arr[3]-&arr[0]=%d ",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L338:
+L369:
     db  "&arr[0]-&arr[3]=%d",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( + (@-76) 6 push-ax + (@-76) 0 - *sp ax / ax 2 , L336 , printf )4 void 5 ,b void ( + (@-76) 0 push-ax + (@-76) 6 - *sp ax / ax 2 , L338 , printf )4 void 8 ,b ,b "
+; Fused expression:    "( + (@-76) 6 push-ax + (@-76) 0 - *sp ax / ax 2 , L367 , printf )4 void 5 ,b void ( + (@-76) 0 push-ax + (@-76) 6 - *sp ax / ax 2 , L369 , printf )4 void 8 ,b ,b "
     lea     ax, [bp-76]
     add     ax, 6
     push    ax
@@ -3767,7 +3830,7 @@ SEGMENT _TEXT
     mov     cx, 2
     idiv    cx
     push    ax
-    push    L336
+    push    L367
     call    _printf
     sub     sp, -4
     mov     ax, 5
@@ -3782,19 +3845,19 @@ SEGMENT _TEXT
     mov     cx, 2
     idiv    cx
     push    ax
-    push    L338
+    push    L369
     call    _printf
     sub     sp, -4
     mov     ax, 8
-; RPN'ized expression: "( arr 16383 + *u &u arr 0 + *u &u - , L340 printf ) "
-; Expanded expression: " (@-76) 32766 + (@-76) 0 + - 2 /  L340  printf ()4 "
+; RPN'ized expression: "( arr 16383 + *u &u arr 0 + *u &u - , L371 printf ) "
+; Expanded expression: " (@-76) 32766 + (@-76) 0 + - 2 /  L371  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L340:
+L371:
     db  "&arr[16383]-&arr[0]=%d ",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( + (@-76) 32766 push-ax + (@-76) 0 - *sp ax / ax 2 , L340 , printf )4 "
+; Fused expression:    "( + (@-76) 32766 push-ax + (@-76) 0 - *sp ax / ax 2 , L371 , printf )4 "
     lea     ax, [bp-76]
     add     ax, 32766
     push    ax
@@ -3806,18 +3869,18 @@ SEGMENT _TEXT
     mov     cx, 2
     idiv    cx
     push    ax
-    push    L340
+    push    L371
     call    _printf
     sub     sp, -4
-; RPN'ized expression: "( arr 0 + *u &u arr 16383 + *u &u - , L342 printf ) "
-; Expanded expression: " (@-76) 0 + (@-76) 32766 + - 2 /  L342  printf ()4 "
+; RPN'ized expression: "( arr 0 + *u &u arr 16383 + *u &u - , L373 printf ) "
+; Expanded expression: " (@-76) 0 + (@-76) 32766 + - 2 /  L373  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L342:
+L373:
     db  "&arr[0]-&arr[16383]=%d",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( + (@-76) 0 push-ax + (@-76) 32766 - *sp ax / ax 2 , L342 , printf )4 "
+; Fused expression:    "( + (@-76) 0 push-ax + (@-76) 32766 - *sp ax / ax 2 , L373 , printf )4 "
     lea     ax, [bp-76]
     push    ax
     lea     ax, [bp-76]
@@ -3829,18 +3892,18 @@ SEGMENT _TEXT
     mov     cx, 2
     idiv    cx
     push    ax
-    push    L342
+    push    L373
     call    _printf
     sub     sp, -4
-; RPN'ized expression: "( arr 16384 + *u &u arr 0 + *u &u - , L344 printf ) "
-; Expanded expression: " (@-76) -32768 + (@-76) 0 + - 2 /  L344  printf ()4 "
+; RPN'ized expression: "( arr 16384 + *u &u arr 0 + *u &u - , L375 printf ) "
+; Expanded expression: " (@-76) -32768 + (@-76) 0 + - 2 /  L375  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L344:
+L375:
     db  "&arr[16384]-&arr[0]=%d ",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( + (@-76) -32768 push-ax + (@-76) 0 - *sp ax / ax 2 , L344 , printf )4 "
+; Fused expression:    "( + (@-76) -32768 push-ax + (@-76) 0 - *sp ax / ax 2 , L375 , printf )4 "
     lea     ax, [bp-76]
     add     ax, -32768
     push    ax
@@ -3852,18 +3915,18 @@ SEGMENT _TEXT
     mov     cx, 2
     idiv    cx
     push    ax
-    push    L344
+    push    L375
     call    _printf
     sub     sp, -4
-; RPN'ized expression: "( arr 0 + *u &u arr 16384 + *u &u - , L346 printf ) "
-; Expanded expression: " (@-76) 0 + (@-76) -32768 + - 2 /  L346  printf ()4 "
+; RPN'ized expression: "( arr 0 + *u &u arr 16384 + *u &u - , L377 printf ) "
+; Expanded expression: " (@-76) 0 + (@-76) -32768 + - 2 /  L377  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L346:
+L377:
     db  "&arr[0]-&arr[16384]=%d",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( + (@-76) 0 push-ax + (@-76) -32768 - *sp ax / ax 2 , L346 , printf )4 "
+; Fused expression:    "( + (@-76) 0 push-ax + (@-76) -32768 - *sp ax / ax 2 , L377 , printf )4 "
     lea     ax, [bp-76]
     push    ax
     lea     ax, [bp-76]
@@ -3875,19 +3938,20 @@ SEGMENT _TEXT
     mov     cx, 2
     idiv    cx
     push    ax
-    push    L346
+    push    L377
     call    _printf
     sub     sp, -4
-; RPN'ized expression: "( arr 32768u + *u &u arr 0 + *u &u - , L348 printf ) "
-; Expanded expression: " (@-76) 0u + (@-76) 0 + - 2 /  L348  printf ()4 "
+; RPN'ized expression: "( arr 32768u + *u &u arr 0 + *u &u - , L379 printf ) "
+; Expanded expression: " (@-76) 0u + (@-76) 0 + - 2 /  L379  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L348:
+L379:
     db  "&arr[32768u]-&arr[0]=%d ",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( + (@-76) 0u push-ax + (@-76) 0 - *sp ax / ax 2 , L348 , printf )4 "
+; Fused expression:    "( + (@-76) 0u push-ax + (@-76) 0 - *sp ax / ax 2 , L379 , printf )4 "
     lea     ax, [bp-76]
+    add     ax, 0
     push    ax
     lea     ax, [bp-76]
     mov     cx, ax
@@ -3897,21 +3961,22 @@ SEGMENT _TEXT
     mov     cx, 2
     idiv    cx
     push    ax
-    push    L348
+    push    L379
     call    _printf
     sub     sp, -4
-; RPN'ized expression: "( arr 0 + *u &u arr 32768u + *u &u - , L350 printf ) "
-; Expanded expression: " (@-76) 0 + (@-76) 0u + - 2 /  L350  printf ()4 "
+; RPN'ized expression: "( arr 0 + *u &u arr 32768u + *u &u - , L381 printf ) "
+; Expanded expression: " (@-76) 0 + (@-76) 0u + - 2 /  L381  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L350:
+L381:
     db  "&arr[0]-&arr[32768u]=%d",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( + (@-76) 0 push-ax + (@-76) 0u - *sp ax / ax 2 , L350 , printf )4 "
+; Fused expression:    "( + (@-76) 0 push-ax + (@-76) 0u - *sp ax / ax 2 , L381 , printf )4 "
     lea     ax, [bp-76]
     push    ax
     lea     ax, [bp-76]
+    add     ax, 0
     mov     cx, ax
     pop     ax
     sub     ax, cx
@@ -3919,18 +3984,18 @@ SEGMENT _TEXT
     mov     cx, 2
     idiv    cx
     push    ax
-    push    L350
+    push    L381
     call    _printf
     sub     sp, -4
-; RPN'ized expression: "( arr 32769u + *u &u arr 0 + *u &u - , L352 printf ) "
-; Expanded expression: " (@-76) 2u + (@-76) 0 + - 2 /  L352  printf ()4 "
+; RPN'ized expression: "( arr 32769u + *u &u arr 0 + *u &u - , L383 printf ) "
+; Expanded expression: " (@-76) 2u + (@-76) 0 + - 2 /  L383  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L352:
+L383:
     db  "&arr[32769u]-&arr[0]=%d ",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( + (@-76) 2u push-ax + (@-76) 0 - *sp ax / ax 2 , L352 , printf )4 "
+; Fused expression:    "( + (@-76) 2u push-ax + (@-76) 0 - *sp ax / ax 2 , L383 , printf )4 "
     lea     ax, [bp-76]
     add     ax, 2
     push    ax
@@ -3942,18 +4007,18 @@ SEGMENT _TEXT
     mov     cx, 2
     idiv    cx
     push    ax
-    push    L352
+    push    L383
     call    _printf
     sub     sp, -4
-; RPN'ized expression: "( arr 0 + *u &u arr 32769u + *u &u - , L354 printf ) "
-; Expanded expression: " (@-76) 0 + (@-76) 2u + - 2 /  L354  printf ()4 "
+; RPN'ized expression: "( arr 0 + *u &u arr 32769u + *u &u - , L385 printf ) "
+; Expanded expression: " (@-76) 0 + (@-76) 2u + - 2 /  L385  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L354:
+L385:
     db  "&arr[0]-&arr[32769u]=%d",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( + (@-76) 0 push-ax + (@-76) 2u - *sp ax / ax 2 , L354 , printf )4 "
+; Fused expression:    "( + (@-76) 0 push-ax + (@-76) 2u - *sp ax / ax 2 , L385 , printf )4 "
     lea     ax, [bp-76]
     push    ax
     lea     ax, [bp-76]
@@ -3965,18 +4030,18 @@ SEGMENT _TEXT
     mov     cx, 2
     idiv    cx
     push    ax
-    push    L354
+    push    L385
     call    _printf
     sub     sp, -4
-; RPN'ized expression: "( arr 65535u + *u &u arr 0 + *u &u - , L356 printf ) "
-; Expanded expression: " (@-76) 65534u + (@-76) 0 + - 2 /  L356  printf ()4 "
+; RPN'ized expression: "( arr 65535u + *u &u arr 0 + *u &u - , L387 printf ) "
+; Expanded expression: " (@-76) 65534u + (@-76) 0 + - 2 /  L387  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L356:
+L387:
     db  "&arr[65535u]-&arr[0]=%d ",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( + (@-76) 65534u push-ax + (@-76) 0 - *sp ax / ax 2 , L356 , printf )4 "
+; Fused expression:    "( + (@-76) 65534u push-ax + (@-76) 0 - *sp ax / ax 2 , L387 , printf )4 "
     lea     ax, [bp-76]
     add     ax, -2
     push    ax
@@ -3988,18 +4053,18 @@ SEGMENT _TEXT
     mov     cx, 2
     idiv    cx
     push    ax
-    push    L356
+    push    L387
     call    _printf
     sub     sp, -4
-; RPN'ized expression: "( arr 0 + *u &u arr 65535u + *u &u - , L358 printf ) "
-; Expanded expression: " (@-76) 0 + (@-76) 65534u + - 2 /  L358  printf ()4 "
+; RPN'ized expression: "( arr 0 + *u &u arr 65535u + *u &u - , L389 printf ) "
+; Expanded expression: " (@-76) 0 + (@-76) 65534u + - 2 /  L389  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L358:
+L389:
     db  "&arr[0]-&arr[65535u]=%d",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( + (@-76) 0 push-ax + (@-76) 65534u - *sp ax / ax 2 , L358 , printf )4 "
+; Fused expression:    "( + (@-76) 0 push-ax + (@-76) 65534u - *sp ax / ax 2 , L389 , printf )4 "
     lea     ax, [bp-76]
     push    ax
     lea     ax, [bp-76]
@@ -4011,18 +4076,18 @@ SEGMENT _TEXT
     mov     cx, 2
     idiv    cx
     push    ax
-    push    L358
+    push    L389
     call    _printf
     sub     sp, -4
-; RPN'ized expression: "( arr 1 -u + *u &u arr 0 + *u &u - , L360 printf ) "
-; Expanded expression: " (@-76) -2 + (@-76) 0 + - 2 /  L360  printf ()4 "
+; RPN'ized expression: "( arr 1 -u + *u &u arr 0 + *u &u - , L391 printf ) "
+; Expanded expression: " (@-76) -2 + (@-76) 0 + - 2 /  L391  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L360:
+L391:
     db  "&arr[-1]-&arr[0]=%d ",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( + (@-76) -2 push-ax + (@-76) 0 - *sp ax / ax 2 , L360 , printf )4 "
+; Fused expression:    "( + (@-76) -2 push-ax + (@-76) 0 - *sp ax / ax 2 , L391 , printf )4 "
     lea     ax, [bp-76]
     add     ax, -2
     push    ax
@@ -4034,18 +4099,18 @@ SEGMENT _TEXT
     mov     cx, 2
     idiv    cx
     push    ax
-    push    L360
+    push    L391
     call    _printf
     sub     sp, -4
-; RPN'ized expression: "( arr 0 + *u &u arr 1 -u + *u &u - , L362 printf ) "
-; Expanded expression: " (@-76) 0 + (@-76) -2 + - 2 /  L362  printf ()4 "
+; RPN'ized expression: "( arr 0 + *u &u arr 1 -u + *u &u - , L393 printf ) "
+; Expanded expression: " (@-76) 0 + (@-76) -2 + - 2 /  L393  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L362:
+L393:
     db  "&arr[0]-&arr[-1]=%d",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( + (@-76) 0 push-ax + (@-76) -2 - *sp ax / ax 2 , L362 , printf )4 "
+; Fused expression:    "( + (@-76) 0 push-ax + (@-76) -2 - *sp ax / ax 2 , L393 , printf )4 "
     lea     ax, [bp-76]
     push    ax
     lea     ax, [bp-76]
@@ -4057,7 +4122,7 @@ SEGMENT _TEXT
     mov     cx, 2
     idiv    cx
     push    ax
-    push    L362
+    push    L393
     call    _printf
     sub     sp, -4
 ; return
@@ -4080,538 +4145,538 @@ SEGMENT _TEXT
 _Switch:
     push    bp
     mov     bp, sp
-    jmp     L365
-L364:
+    jmp     L396
+L395:
 ; switch
 ; RPN'ized expression: "1 "
 ; Expanded expression: "1 "
 ; Expression value: 1
 ; Fused expression:    "1 "
     mov     ax, 1
-    jmp     L369
+    jmp     L400
 ; {
 ; default
-L368:
+L399:
 ; }
-    jmp     L367
-L369:
-    jmp     L368
-L367:
+    jmp     L398
+L400:
+    jmp     L399
+L398:
 ; switch
 ; RPN'ized expression: "1 "
 ; Expanded expression: "1 "
 ; Expression value: 1
 ; Fused expression:    "1 "
     mov     ax, 1
-    jmp     L373
+    jmp     L404
 ; {
 ; case
 ; RPN'ized expression: "0 "
 ; Expanded expression: "0 "
 ; Expression value: 0
-    jmp     L374
-L373:
+    jmp     L405
+L404:
     cmp     ax, 0
-    jne     L375
-L374:
+    jne     L406
+L405:
 ; }
-    jmp     L371
-L375:
-L371:
+    jmp     L402
+L406:
+L402:
 ; switch
 ; RPN'ized expression: "1 "
 ; Expanded expression: "1 "
 ; Expression value: 1
 ; Fused expression:    "1 "
     mov     ax, 1
-    jmp     L379
+    jmp     L410
 ; {
 ; case
 ; RPN'ized expression: "1 "
 ; Expanded expression: "1 "
 ; Expression value: 1
-    jmp     L380
-L379:
+    jmp     L411
+L410:
     cmp     ax, 1
-    jne     L381
-L380:
+    jne     L412
+L411:
 ; }
-    jmp     L377
-L381:
-L377:
+    jmp     L408
+L412:
+L408:
 ; switch
 ; RPN'ized expression: "1 "
 ; Expanded expression: "1 "
 ; Expression value: 1
 ; Fused expression:    "1 "
     mov     ax, 1
-    jmp     L385
+    jmp     L416
 ; {
 ; {
 ; loc             i : (@-2): int
 ; }
 ; }
-    jmp     L383
-L385:
-L383:
+    jmp     L414
+L416:
+L414:
 ; switch
 ; RPN'ized expression: "1 "
 ; Expanded expression: "1 "
 ; Expression value: 1
 ; Fused expression:    "1 "
     mov     ax, 1
-    jmp     L389
+    jmp     L420
 ; {
-; RPN'ized expression: "( L391 puts ) "
-; Expanded expression: " L391  puts ()2 "
+; RPN'ized expression: "( L422 puts ) "
+; Expanded expression: " L422  puts ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L391:
+L422:
     db  "never printed",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L391 , puts )2 "
-    push    L391
+; Fused expression:    "( L422 , puts )2 "
+    push    L422
     call    _puts
     sub     sp, -2
 ; case
 ; RPN'ized expression: "0 "
 ; Expanded expression: "0 "
 ; Expression value: 0
-    jmp     L390
-L389:
+    jmp     L421
+L420:
     cmp     ax, 0
-    jne     L393
-L390:
-; RPN'ized expression: "( L395 puts ) "
-; Expanded expression: " L395  puts ()2 "
+    jne     L424
+L421:
+; RPN'ized expression: "( L426 puts ) "
+; Expanded expression: " L426  puts ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L395:
+L426:
     db  "0",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L395 , puts )2 "
-    push    L395
+; Fused expression:    "( L426 , puts )2 "
+    push    L426
     call    _puts
     sub     sp, -2
 ; break
-    jmp     L387
+    jmp     L418
 ; case
 ; RPN'ized expression: "1 "
 ; Expanded expression: "1 "
 ; Expression value: 1
-    jmp     L394
-L393:
+    jmp     L425
+L424:
     cmp     ax, 1
-    jne     L397
-L394:
-; RPN'ized expression: "( L399 puts ) "
-; Expanded expression: " L399  puts ()2 "
+    jne     L428
+L425:
+; RPN'ized expression: "( L430 puts ) "
+; Expanded expression: " L430  puts ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L399:
+L430:
     db  "1",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L399 , puts )2 "
-    push    L399
+; Fused expression:    "( L430 , puts )2 "
+    push    L430
     call    _puts
     sub     sp, -2
 ; break
-    jmp     L387
+    jmp     L418
 ; case
 ; RPN'ized expression: "2 "
 ; Expanded expression: "2 "
 ; Expression value: 2
-    jmp     L398
-L397:
+    jmp     L429
+L428:
     cmp     ax, 2
-    jne     L401
-L398:
-; RPN'ized expression: "( L403 puts ) "
-; Expanded expression: " L403  puts ()2 "
+    jne     L432
+L429:
+; RPN'ized expression: "( L434 puts ) "
+; Expanded expression: " L434  puts ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L403:
+L434:
     db  "2",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L403 , puts )2 "
-    push    L403
+; Fused expression:    "( L434 , puts )2 "
+    push    L434
     call    _puts
     sub     sp, -2
 ; break
-    jmp     L387
+    jmp     L418
 ; default
-L388:
-; RPN'ized expression: "( L405 puts ) "
-; Expanded expression: " L405  puts ()2 "
+L419:
+; RPN'ized expression: "( L436 puts ) "
+; Expanded expression: " L436  puts ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L405:
+L436:
     db  "default",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L405 , puts )2 "
-    push    L405
+; Fused expression:    "( L436 , puts )2 "
+    push    L436
     call    _puts
     sub     sp, -2
 ; break
-    jmp     L387
+    jmp     L418
 ; }
-    jmp     L387
-L401:
-    jmp     L388
-L387:
+    jmp     L418
+L432:
+    jmp     L419
+L418:
 ; switch
 ; RPN'ized expression: "2 "
 ; Expanded expression: "2 "
 ; Expression value: 2
 ; Fused expression:    "2 "
     mov     ax, 2
-    jmp     L409
+    jmp     L440
 ; {
 ; case
 ; RPN'ized expression: "2 "
 ; Expanded expression: "2 "
 ; Expression value: 2
-    jmp     L410
-L409:
+    jmp     L441
+L440:
     cmp     ax, 2
-    jne     L411
-L410:
-; RPN'ized expression: "( L413 puts ) "
-; Expanded expression: " L413  puts ()2 "
+    jne     L442
+L441:
+; RPN'ized expression: "( L444 puts ) "
+; Expanded expression: " L444  puts ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L413:
+L444:
     db  "2",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L413 , puts )2 "
-    push    L413
+; Fused expression:    "( L444 , puts )2 "
+    push    L444
     call    _puts
     sub     sp, -2
 ; break
-    jmp     L407
+    jmp     L438
 ; }
-    jmp     L407
-L411:
-L407:
+    jmp     L438
+L442:
+L438:
 ; switch
 ; RPN'ized expression: "1 "
 ; Expanded expression: "1 "
 ; Expression value: 1
 ; Fused expression:    "1 "
     mov     ax, 1
-    jmp     L417
+    jmp     L448
 ; {
 ; default
-L416:
-; RPN'ized expression: "( L419 puts ) "
-; Expanded expression: " L419  puts ()2 "
+L447:
+; RPN'ized expression: "( L450 puts ) "
+; Expanded expression: " L450  puts ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L419:
+L450:
     db  "default",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L419 , puts )2 "
-    push    L419
+; Fused expression:    "( L450 , puts )2 "
+    push    L450
     call    _puts
     sub     sp, -2
 ; break
-    jmp     L415
+    jmp     L446
 ; }
-    jmp     L415
-L417:
-    jmp     L416
-L415:
+    jmp     L446
+L448:
+    jmp     L447
+L446:
 ; switch
 ; RPN'ized expression: "1 "
 ; Expanded expression: "1 "
 ; Expression value: 1
 ; Fused expression:    "1 "
     mov     ax, 1
-    jmp     L423
+    jmp     L454
 ; {
 ; default
-L422:
-; RPN'ized expression: "( L425 puts ) "
-; Expanded expression: " L425  puts ()2 "
+L453:
+; RPN'ized expression: "( L456 puts ) "
+; Expanded expression: " L456  puts ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L425:
+L456:
     db  "default",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L425 , puts )2 "
-    push    L425
+; Fused expression:    "( L456 , puts )2 "
+    push    L456
     call    _puts
     sub     sp, -2
 ; break
-    jmp     L421
+    jmp     L452
 ; case
 ; RPN'ized expression: "0 "
 ; Expanded expression: "0 "
 ; Expression value: 0
-    jmp     L424
-L423:
+    jmp     L455
+L454:
     cmp     ax, 0
-    jne     L427
-L424:
-; RPN'ized expression: "( L429 puts ) "
-; Expanded expression: " L429  puts ()2 "
+    jne     L458
+L455:
+; RPN'ized expression: "( L460 puts ) "
+; Expanded expression: " L460  puts ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L429:
+L460:
     db  "0",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L429 , puts )2 "
-    push    L429
+; Fused expression:    "( L460 , puts )2 "
+    push    L460
     call    _puts
     sub     sp, -2
 ; break
-    jmp     L421
+    jmp     L452
 ; }
-    jmp     L421
-L427:
-    jmp     L422
-L421:
+    jmp     L452
+L458:
+    jmp     L453
+L452:
 ; switch
 ; RPN'ized expression: "1 "
 ; Expanded expression: "1 "
 ; Expression value: 1
 ; Fused expression:    "1 "
     mov     ax, 1
-    jmp     L433
+    jmp     L464
 ; {
 ; case
 ; RPN'ized expression: "0 "
 ; Expanded expression: "0 "
 ; Expression value: 0
-    jmp     L434
-L433:
+    jmp     L465
+L464:
     cmp     ax, 0
-    jne     L435
-L434:
-; RPN'ized expression: "( L437 puts ) "
-; Expanded expression: " L437  puts ()2 "
+    jne     L466
+L465:
+; RPN'ized expression: "( L468 puts ) "
+; Expanded expression: " L468  puts ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L437:
+L468:
     db  "0",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L437 , puts )2 "
-    push    L437
+; Fused expression:    "( L468 , puts )2 "
+    push    L468
     call    _puts
     sub     sp, -2
 ; break
-    jmp     L431
+    jmp     L462
 ; default
-L432:
-; RPN'ized expression: "( L439 puts ) "
-; Expanded expression: " L439  puts ()2 "
+L463:
+; RPN'ized expression: "( L470 puts ) "
+; Expanded expression: " L470  puts ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L439:
+L470:
     db  "default",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L439 , puts )2 "
-    push    L439
+; Fused expression:    "( L470 , puts )2 "
+    push    L470
     call    _puts
     sub     sp, -2
 ; break
-    jmp     L431
+    jmp     L462
 ; }
-    jmp     L431
-L435:
-    jmp     L432
-L431:
+    jmp     L462
+L466:
+    jmp     L463
+L462:
 ; switch
 ; RPN'ized expression: "3 "
 ; Expanded expression: "3 "
 ; Expression value: 3
 ; Fused expression:    "3 "
     mov     ax, 3
-    jmp     L443
+    jmp     L474
 ; {
 ; case
 ; RPN'ized expression: "2 "
 ; Expanded expression: "2 "
 ; Expression value: 2
-    jmp     L444
-L443:
+    jmp     L475
+L474:
     cmp     ax, 2
-    jne     L445
-L444:
-; RPN'ized expression: "( L447 puts ) "
-; Expanded expression: " L447  puts ()2 "
+    jne     L476
+L475:
+; RPN'ized expression: "( L478 puts ) "
+; Expanded expression: " L478  puts ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L447:
+L478:
     db  "2 & fallthru",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L447 , puts )2 "
-    push    L447
+; Fused expression:    "( L478 , puts )2 "
+    push    L478
     call    _puts
     sub     sp, -2
 ; case
 ; RPN'ized expression: "3 "
 ; Expanded expression: "3 "
 ; Expression value: 3
-    jmp     L446
-L445:
+    jmp     L477
+L476:
     cmp     ax, 3
-    jne     L449
-L446:
-; RPN'ized expression: "( L451 puts ) "
-; Expanded expression: " L451  puts ()2 "
+    jne     L480
+L477:
+; RPN'ized expression: "( L482 puts ) "
+; Expanded expression: " L482  puts ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L451:
+L482:
     db  "3 & fallthru",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L451 , puts )2 "
-    push    L451
+; Fused expression:    "( L482 , puts )2 "
+    push    L482
     call    _puts
     sub     sp, -2
 ; case
 ; RPN'ized expression: "4 "
 ; Expanded expression: "4 "
 ; Expression value: 4
-    jmp     L450
-L449:
+    jmp     L481
+L480:
     cmp     ax, 4
-    jne     L453
-L450:
-; RPN'ized expression: "( L455 puts ) "
-; Expanded expression: " L455  puts ()2 "
+    jne     L484
+L481:
+; RPN'ized expression: "( L486 puts ) "
+; Expanded expression: " L486  puts ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L455:
+L486:
     db  "4 & fallthru",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L455 , puts )2 "
-    push    L455
+; Fused expression:    "( L486 , puts )2 "
+    push    L486
     call    _puts
     sub     sp, -2
 ; default
-L442:
-; RPN'ized expression: "( L457 puts ) "
-; Expanded expression: " L457  puts ()2 "
+L473:
+; RPN'ized expression: "( L488 puts ) "
+; Expanded expression: " L488  puts ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L457:
+L488:
     db  "default & fallthru",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L457 , puts )2 "
-    push    L457
+; Fused expression:    "( L488 , puts )2 "
+    push    L488
     call    _puts
     sub     sp, -2
 ; }
-    jmp     L441
-L453:
-    jmp     L442
-L441:
+    jmp     L472
+L484:
+    jmp     L473
+L472:
 ; switch
 ; RPN'ized expression: "5 "
 ; Expanded expression: "5 "
 ; Expression value: 5
 ; Fused expression:    "5 "
     mov     ax, 5
-    jmp     L461
+    jmp     L492
 ; {
 ; default
-L460:
-; RPN'ized expression: "( L463 puts ) "
-; Expanded expression: " L463  puts ()2 "
+L491:
+; RPN'ized expression: "( L494 puts ) "
+; Expanded expression: " L494  puts ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L463:
+L494:
     db  "default & fallthru",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L463 , puts )2 "
-    push    L463
+; Fused expression:    "( L494 , puts )2 "
+    push    L494
     call    _puts
     sub     sp, -2
 ; case
 ; RPN'ized expression: "4 "
 ; Expanded expression: "4 "
 ; Expression value: 4
-    jmp     L462
-L461:
+    jmp     L493
+L492:
     cmp     ax, 4
-    jne     L465
-L462:
-; RPN'ized expression: "( L467 puts ) "
-; Expanded expression: " L467  puts ()2 "
+    jne     L496
+L493:
+; RPN'ized expression: "( L498 puts ) "
+; Expanded expression: " L498  puts ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L467:
+L498:
     db  "4 & fallthru",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L467 , puts )2 "
-    push    L467
+; Fused expression:    "( L498 , puts )2 "
+    push    L498
     call    _puts
     sub     sp, -2
 ; case
 ; RPN'ized expression: "3 "
 ; Expanded expression: "3 "
 ; Expression value: 3
-    jmp     L466
-L465:
+    jmp     L497
+L496:
     cmp     ax, 3
-    jne     L469
-L466:
-; RPN'ized expression: "( L471 puts ) "
-; Expanded expression: " L471  puts ()2 "
+    jne     L500
+L497:
+; RPN'ized expression: "( L502 puts ) "
+; Expanded expression: " L502  puts ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L471:
+L502:
     db  "3 & fallthru",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L471 , puts )2 "
-    push    L471
+; Fused expression:    "( L502 , puts )2 "
+    push    L502
     call    _puts
     sub     sp, -2
 ; case
 ; RPN'ized expression: "2 "
 ; Expanded expression: "2 "
 ; Expression value: 2
-    jmp     L470
-L469:
+    jmp     L501
+L500:
     cmp     ax, 2
-    jne     L473
-L470:
-; RPN'ized expression: "( L475 puts ) "
-; Expanded expression: " L475  puts ()2 "
+    jne     L504
+L501:
+; RPN'ized expression: "( L506 puts ) "
+; Expanded expression: " L506  puts ()2 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L475:
+L506:
     db  "2 & fallthru",0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( L475 , puts )2 "
-    push    L475
+; Fused expression:    "( L506 , puts )2 "
+    push    L506
     call    _puts
     sub     sp, -2
 ; }
-    jmp     L459
-L473:
-    jmp     L460
-L459:
+    jmp     L490
+L504:
+    jmp     L491
+L490:
 ; loc     i : (@-2): int
 ; for
 ; RPN'ized expression: "i 1 = "
@@ -4619,76 +4684,76 @@ L459:
 ; Fused expression:    "=(34) *(@-2) 1 "
     mov     ax, 1
     mov     [bp-2], ax
-L477:
+L508:
 ; RPN'ized expression: "i 5 <= "
 ; Expanded expression: "(@-2) *(2) 5 <= "
 ; Fused expression:    "<= *(@-2) 5 IF! "
     mov     ax, [bp-2]
     cmp     ax, 5
-    jg      L480
-    jmp     L479
-L478:
+    jg      L511
+    jmp     L510
+L509:
 ; RPN'ized expression: "i ++p "
 ; Expanded expression: "(@-2) ++p(2) "
 ; Fused expression:    "++p(2) *(@-2) "
     mov     ax, [bp-2]
     inc     word [bp-2]
-    jmp     L477
-L479:
+    jmp     L508
+L510:
 ; switch
 ; RPN'ized expression: "i "
 ; Expanded expression: "(@-2) *(2) "
 ; Fused expression:    "*(2) (@-2) "
     mov     ax, [bp-2]
-    jmp     L483
+    jmp     L514
 ; {
 ; case
 ; RPN'ized expression: "3 "
 ; Expanded expression: "3 "
 ; Expression value: 3
-    jmp     L484
-L483:
+    jmp     L515
+L514:
     cmp     ax, 3
-    jne     L485
-L484:
+    jne     L516
+L515:
 ; continue
-    jmp     L478
+    jmp     L509
 ; default
-L482:
-; RPN'ized expression: "( i , L487 printf ) "
-; Expanded expression: " (@-2) *(2)  L487  printf ()4 "
+L513:
+; RPN'ized expression: "( i , L518 printf ) "
+; Expanded expression: " (@-2) *(2)  L518  printf ()4 "
 ; SEGMENT _TEXT
 SEGMENT _DATA
-L487:
+L518:
     db  "%d",10,0
 ; SEGMENT _DATA
 SEGMENT _TEXT
-; Fused expression:    "( *(2) (@-2) , L487 , printf )4 "
+; Fused expression:    "( *(2) (@-2) , L518 , printf )4 "
     push    word [bp-2]
-    push    L487
+    push    L518
     call    _printf
     sub     sp, -4
 ; break
-    jmp     L481
+    jmp     L512
 ; }
-    jmp     L481
-L485:
-    jmp     L482
-L481:
-    jmp     L478
-L480:
+    jmp     L512
+L516:
+    jmp     L513
+L512:
+    jmp     L509
+L511:
 ; return
-    jmp     L366
-L366:
+    jmp     L397
+L397:
     leave
     ret
-L365:
+L396:
     sub     sp, 2
-    jmp     L364
+    jmp     L395
 ; SEGMENT _TEXT
 
 ; Syntax/declaration table/stack:
-; Bytes used: 788/8192
+; Bytes used: 1576/16384
 
 
 ; Macro table:
