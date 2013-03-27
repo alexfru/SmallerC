@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2012, Alexey Frunze
+Copyright (c) 2012-2013, Alexey Frunze
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,9 @@ either expressed or implied, of the FreeBSD Project.
 /*       A simple and small single-pass C compiler ("small C" class).        */
 /*                                                                           */
 /*            Produces 16/32-bit 80386 assembly output for NASM.             */
+/*             Produces 32-bit MIPS assembly output for gcc/as.              */
+/*                                                                           */
+/*                              Main/x86 file                                */
 /*                                                                           */
 /*****************************************************************************/
 
@@ -278,11 +281,17 @@ PROTO int AddIdent(char* name);
 PROTO int FindIdent(char* name);
 PROTO void DumpIdentTable(void);
 
+PROTO void GenInit(void);
+PROTO int GenInitParams(int argc, char** argv, int* idx);
+PROTO void GenInitFinalize(void);
+PROTO void GenStartCommentLine(void);
+PROTO void GenWordAlignment(void);
 PROTO void GenLabel(char* Label);
 PROTO void GenExtern(char* Label);
 PROTO void GenNumLabel(int Label);
 PROTO void GenZeroData(unsigned Size);
 PROTO void GenIntData(int Size, int Val);
+PROTO void GenStartAsciiString(void);
 PROTO void GenAddrData(int Size, char* Label);
 
 PROTO void GenJumpUncond(int Label);
@@ -433,6 +442,8 @@ int LabelCnt = 1; // label counter for jumps
 //   local var n
 int CurFxnSyntaxPtr = 0;
 int CurFxnParamCnt = 0;
+int CurFxnParamCntMin = 0;
+int CurFxnParamCntMax = 0;
 int CurFxnParamOfs = 0; // positive
 int CurFxnLocalOfs = 0; // negative
 int CurFxnMinLocalOfs = 0; // negative
@@ -591,12 +602,14 @@ void DefineMacro(char* name, char* expansion)
 
 void DumpMacroTable(void)
 {
+#ifndef NO_ANNOTATIONS
   int i, j;
 
-  printf("\n; Macro table:\n");
+  puts("");
+  GenStartCommentLine(); printf("Macro table:\n");
   for (i = 0; i < MacroTableLen; )
   {
-    printf("; Macro %s = ", MacroTable + i + 1);
+    GenStartCommentLine(); printf("Macro %s = ", MacroTable + i + 1);
     i = i + 1 + MacroTable[i]; // skip id
     printf("`");
     j = MacroTable[i++];
@@ -604,7 +617,8 @@ void DumpMacroTable(void)
       printf("%c", MacroTable[i++]);
     printf("`\n");
   }
-  printf("; Bytes used: %d/%d\n\n", MacroTableLen, MAX_MACRO_TABLE_LEN);
+  GenStartCommentLine(); printf("Bytes used: %d/%d\n\n", MacroTableLen, MAX_MACRO_TABLE_LEN);
+#endif
 }
 
 void PurgeStringTable(void)
@@ -684,14 +698,17 @@ int AddIdent(char* name)
 
 void DumpIdentTable(void)
 {
+#ifndef NO_ANNOTATIONS
   int i;
-  printf("\n; Identifier table:\n");
+  puts("");
+  GenStartCommentLine(); printf("Identifier table:\n");
   for (i = 0; i < IdentTableLen; )
   {
-    printf("; Ident %s\n", IdentTable + i);
+    GenStartCommentLine(); printf("Ident %s\n", IdentTable + i);
     i += strlen(IdentTable + i) + 2;
   }
-  printf("; Bytes used: %d/%d\n\n", IdentTableLen, MAX_IDENT_TABLE_LEN);
+  GenStartCommentLine(); printf("Bytes used: %d/%d\n\n", IdentTableLen, MAX_IDENT_TABLE_LEN);
+#endif
 }
 
 int GetTokenByWord(char* word)
@@ -708,8 +725,10 @@ int GetTokenByWord(char* word)
   if (!strcmp(word, "if")) return tokIf;
   if (!strcmp(word, "int")) return tokInt;
   if (!strcmp(word, "return")) return tokReturn;
+  if (!strcmp(word, "signed")) return tokSigned;
   if (!strcmp(word, "sizeof")) return tokSizeof;
   if (!strcmp(word, "switch")) return tokSwitch;
+  if (!strcmp(word, "unsigned")) return tokUnsigned;
   if (!strcmp(word, "void")) return tokVoid;
   if (!strcmp(word, "while")) return tokWhile;
 
@@ -724,12 +743,10 @@ int GetTokenByWord(char* word)
   if (!strcmp(word, "register")) return tokRegister;
   if (!strcmp(word, "restrict")) return tokRestrict;
   if (!strcmp(word, "short")) return tokShort;
-  if (!strcmp(word, "signed")) return tokSigned;
   if (!strcmp(word, "static")) return tokStatic;
   if (!strcmp(word, "struct")) return tokStruct;
   if (!strcmp(word, "typedef")) return tokTypedef;
   if (!strcmp(word, "union")) return tokUnion;
-  if (!strcmp(word, "unsigned")) return tokUnsigned;
   if (!strcmp(word, "volatile")) return tokVolatile;
   if (!strcmp(word, "_Bool")) return tok_Bool;
   if (!strcmp(word, "_Complex")) return tok_Complex;
@@ -1578,22 +1595,104 @@ int GetToken(void)
   return tokEof;
 }
 
+#ifdef MIPS
+#include "cgmips.c"
+#else
 // cgx86.c code
 
 // TBD!!! compress/clean up
+
+void GenInit(void)
+{
+  // initialization of target-specific code generator
+  SizeOfWord = 2;
+  OutputFormat = FormatSegmented;
+  UseLeadingUnderscores = 1;
+}
+
+int GenInitParams(int argc, char** argv, int* idx)
+{
+  // initialization of target-specific code generator with parameters
+
+  if (!strcmp(argv[*idx], "-seg16"))
+  {
+    // this is the default option for x86
+    OutputFormat = FormatSegmented; SizeOfWord = 2;
+    return 1;
+  }
+  else if (!strcmp(argv[*idx], "-seg32"))
+  {
+    OutputFormat = FormatSegmented; SizeOfWord = 4;
+    return 1;
+  }
+  else if (!strcmp(argv[*idx], "-flat16"))
+  {
+    OutputFormat = FormatFlat; SizeOfWord = 2;
+    return 1;
+  }
+  else if (!strcmp(argv[*idx], "-flat32"))
+  {
+    OutputFormat = FormatFlat; SizeOfWord = 4;
+    return 1;
+  }
+
+  return 0;
+}
+
+void GenInitFinalize(void)
+{
+  // finalization of initialization of target-specific code generator
+
+  // Change the output assembly format/content according to the options
+  if (OutputFormat == FormatSegmented)
+  {
+    if (SizeOfWord == 2)
+    {
+      FileHeader = "SEGMENT _TEXT PUBLIC CLASS=CODE USE16\n"
+                   "SEGMENT _DATA PUBLIC CLASS=DATA\n";
+      CodeHeader = "SEGMENT _TEXT";
+      CodeFooter = "; SEGMENT _TEXT";
+      DataHeader = "SEGMENT _DATA";
+      DataFooter = "; SEGMENT _DATA";
+    }
+    else
+    {
+      CodeHeader = "section .text";
+      DataHeader = "section .data";
+    }
+  }
+  else
+  {
+    if (SizeOfWord == 2)
+      FileHeader = "BITS 16";
+    else
+      FileHeader = "bits 32";
+  }
+}
+
+void GenStartCommentLine(void)
+{
+  printf("; ");
+}
+
+void GenWordAlignment(void)
+{
+// TBD??? enable alignment on x86?
+//  printf("\talign %d\n", SizeOfWord);
+}
 
 void GenLabel(char* Label)
 {
   if (UseLeadingUnderscores)
   {
     if (OutputFormat != FormatFlat)
-      printf("    global  _%s\n", Label);
+      printf("\tglobal\t_%s\n", Label);
     printf("_%s:\n", Label);
   }
   else
   {
     if (OutputFormat != FormatFlat)
-      printf("    global  $%s\n", Label);
+      printf("\tglobal\t$%s\n", Label);
     printf("$%s:\n", Label);
   }
 }
@@ -1603,9 +1702,9 @@ void GenExtern(char* Label)
   if (OutputFormat != FormatFlat)
   {
     if (UseLeadingUnderscores)
-      printf("    extern  _%s\n", Label);
+      printf("\textern\t_%s\n", Label);
     else
-      printf("    extern  $%s\n", Label);
+      printf("\textern\t$%s\n", Label);
   }
 }
 
@@ -1645,29 +1744,34 @@ void GenPrintNumLabel(int label)
 
 void GenZeroData(unsigned Size)
 {
-  printf("    times %u db 0\n", truncUint(Size));
+  printf("\ttimes\t%u db 0\n", truncUint(Size));
 }
 
 void GenIntData(int Size, int Val)
 {
   Val = truncInt(Val);
   if (Size == 1)
-    printf("    db  %d\n", Val);
+    printf("\tdb\t%d\n", Val);
   else if (Size == 2)
-    printf("    dw  %d\n", Val);
+    printf("\tdw\t%d\n", Val);
   else if (Size == 4)
-    printf("    dd  %d\n", Val);
+    printf("\tdd\t%d\n", Val);
+}
+
+void GenStartAsciiString(void)
+{
+  printf("\tdb\t");
 }
 
 void GenAddrData(int Size, char* Label)
 {
   if (Size == 1)
-    printf("    db  ");
+    printf("\tdb\t");
   else if (Size == 2)
-    printf("    dw  ");
+    printf("\tdw\t");
   else if (Size == 4)
-    printf("    dd  ");
-  GenPrintLabel(Label); printf("\n");
+    printf("\tdd\t");
+  GenPrintLabel(Label); puts("");
 }
 
 #define X86InstrMov    0x00
@@ -1800,10 +1904,10 @@ void GenPrintInstr(int instr, int val)
   case X86InstrCdq:
   case X86InstrLeave:
   case X86InstrRet:
-    printf("    %s", p);
+    printf("\t%s", p);
     break;
   default:
-    printf("    %-7s ", p);
+    printf("\t%s\t", p);
     break;
   }
 }
@@ -1933,7 +2037,7 @@ void GenPrintOperandSeparator(void)
 
 void GenPrintNewLine(void)
 {
-  printf("\n");
+  puts("");
 }
 
 void GenPrintInstrNoOperand(int instr)
@@ -2041,7 +2145,9 @@ void GenJumpIfNotEqual(int val, int label)
 
 void GenJumpIfZero(int label)
 {
-  printf("; JumpIfZero\n");
+#ifndef NO_ANNOTATIONS
+  GenStartCommentLine(); printf("JumpIfZero\n");
+#endif
   GenPrintInstr2Operands(X86InstrTest, 0,
                          X86OpRegAWord, 0,
                          X86OpRegAWord, 0);
@@ -2051,7 +2157,9 @@ void GenJumpIfZero(int label)
 
 void GenJumpIfNotZero(int label)
 {
-  printf("; JumpIfNotZero\n");
+#ifndef NO_ANNOTATIONS
+  GenStartCommentLine(); printf("JumpIfNotZero\n");
+#endif
   GenPrintInstr2Operands(X86InstrTest, 0,
                          X86OpRegAWord, 0,
                          X86OpRegAWord, 0);
@@ -2812,6 +2920,7 @@ void GenExpr1(void)
     s--;
   GenFuse(&s);
 
+#ifndef NO_ANNOTATIONS
   printf("; Fused expression:    \"");
   for (i = 0; i < sp; i++)
   {
@@ -2905,6 +3014,7 @@ void GenExpr1(void)
     printf(" ");
   }
   printf("\"\n");
+#endif
 
   for (i = 0; i < sp; i++)
   {
@@ -3649,6 +3759,7 @@ void GenExpr0(void)
     int tok = stack[i][0];
     int v = stack[i][1];
 
+#ifndef NO_ANNOTATIONS
     switch (tok)
     {
     case tokNumInt: printf("; %d\n", truncInt(v)); break;
@@ -3664,6 +3775,7 @@ void GenExpr0(void)
     case tokIf: case tokIfNot: break;
     default: printf("; %s\n", GetTokenName(tok)); break;
     }
+#endif
 
     switch (tok)
     {
@@ -3964,10 +4076,12 @@ void GenExpr0(void)
       break;
 
     case tokShortCirc:
+#ifndef NO_ANNOTATIONS
       if (v >= 0)
         printf("&&\n");
       else
         printf("||\n");
+#endif
       if (v >= 0)
         GenJumpIfZero(v); // &&
       else
@@ -4006,6 +4120,17 @@ void GenExpr0(void)
 }
 #endif // #ifndef CG_STACK_BASED
 
+void GenExpr(void)
+{
+  GenStrData(1);
+#ifndef CG_STACK_BASED
+  GenExpr1();
+#else
+  GenExpr0();
+#endif
+}
+#endif // #ifdef MIPS
+
 void GenStrData(int insertJump)
 {
   int i;
@@ -4037,7 +4162,7 @@ void GenStrData(int insertJump)
       }
       GenNumLabel(label);
 
-      printf("    db  ");
+      GenStartAsciiString();
       while (len--)
       {
         // quote ASCII chars for better readability
@@ -4065,7 +4190,7 @@ void GenStrData(int insertJump)
       }
       if (quot)
         printf("\"");
-      printf("\n");
+      puts("");
 
       if (OutputFormat == FormatFlat)
       {
@@ -4080,16 +4205,6 @@ void GenStrData(int insertJump)
       }
     }
   }
-}
-
-void GenExpr(void)
-{
-  GenStrData(1);
-#ifndef CG_STACK_BASED
-  GenExpr1();
-#else
-  GenExpr0();
-#endif
 }
 
 // expr.c code
@@ -5381,7 +5496,6 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
     {
       int tmpSynPtr, c;
       int minParams, maxParams;
-
       exprval(idx, ExprTypeSynPtr, ConstExpr);
 
       if (!GetFxnInfo(*ExprTypeSynPtr, &minParams, &maxParams, ExprTypeSynPtr))
@@ -5415,8 +5529,8 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       if (c < minParams)
         error("exprval(): too few function parameters\n");
 
-      // store the cumulative parameter size in the function call operator
-      stack[oldIdxRight + 1 - (oldSpRight - sp)][1] = c * SizeOfWord;
+      // store the cumulative parameter size in the function call operators
+      stack[1 + *idx][1] = stack[oldIdxRight + 1 - (oldSpRight - sp)][1] = c * SizeOfWord;
 
       *ConstExpr = 0;
     }
@@ -5539,8 +5653,6 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
 
 int ParseExpr(int tok, int* GotUnary, int* ExprTypeSynPtr, int* ConstExpr, int* ConstVal, int commaSeparator)
 {
-  int i;
-
   *ConstVal = *ConstExpr = 0;
   *ExprTypeSynPtr = SymVoidSynPtr;
 
@@ -5562,8 +5674,11 @@ int ParseExpr(int tok, int* GotUnary, int* ExprTypeSynPtr, int* ConstExpr, int* 
     // and after manipulations
     for (j = 0; j < 2; j++)
     {
-      if (j) printf("; Expanded");
-      else printf("; RPN'ized");
+#ifndef NO_ANNOTATIONS
+      int i;
+      GenStartCommentLine();
+      if (j) printf("Expanded");
+      else printf("RPN'ized");
       printf(" expression: \"");
       for (i = 0; i < sp; i++)
       {
@@ -5631,16 +5746,20 @@ int ParseExpr(int tok, int* GotUnary, int* ExprTypeSynPtr, int* ConstExpr, int* 
         }
         printf(" ");
       }
-      // printf("\b\"\n");
       printf("\"\n");
-
+#endif
       if (!j)
       {
         int idx = sp - 1;
         *ConstVal = exprval(&idx, ExprTypeSynPtr, ConstExpr);
       }
+#ifndef NO_ANNOTATIONS
       else if (*ConstExpr)
-        printf("; Expression value: %d\n", *ConstVal);
+      {
+        GenStartCommentLine();
+        printf("Expression value: %d\n", *ConstVal);
+      }
+#endif
     }
   }
 
@@ -5668,11 +5787,13 @@ void error(char* format, ...)
     if (Files[i])
       fclose(Files[i]);
 
-  printf("\n");
+  puts("");
 
   DumpSynDecls();
   DumpMacroTable();
   DumpIdentTable();
+
+  GenStartCommentLine(); printf("Compilation failed.\n");
 
   printf("Error in \"%s\" (%d:%d)\n", FileNames[fidx], LineNo, LinePos);
 
@@ -5860,8 +5981,9 @@ int GetDeclSize(int SyntaxPtr)
   return 0;
 }
 
-void ShowDecl(int SyntaxPtr, int IsParam)
+void DumpDecl(int SyntaxPtr, int IsParam)
 {
+#ifndef NO_ANNOTATIONS
   int i;
   int icnt = 0;
 
@@ -5882,7 +6004,7 @@ void ShowDecl(int SyntaxPtr, int IsParam)
       if (++icnt > 1 && !IsParam) // show at most one declaration, except params
         return;
 
-      printf("; ");
+      GenStartCommentLine();
 
       if (ParseLevel == 0)
         printf("glb ");
@@ -5945,9 +6067,9 @@ void ShowDecl(int SyntaxPtr, int IsParam)
         }
         else
         {
-          printf("\n");
+          puts("");
           ParseLevel++;
-          ShowDecl(i, 1);
+          DumpDecl(i, 1);
           ParseLevel--;
         }
 
@@ -5955,7 +6077,7 @@ void ShowDecl(int SyntaxPtr, int IsParam)
         i = j - 1;
         if (!noparams)
         {
-          printf("; ");
+          GenStartCommentLine();
           printf("    ");
           {
             int j;
@@ -5988,14 +6110,18 @@ void ShowDecl(int SyntaxPtr, int IsParam)
       break;
     }
   }
+#endif
 }
 
 void DumpSynDecls(void)
 {
+#ifndef NO_ANNOTATIONS
   int used = SyntaxStackCnt * sizeof SyntaxStack[0];
   int total = SYNTAX_STACK_MAX * sizeof SyntaxStack[0];
-  printf("\n; Syntax/declaration table/stack:\n");
-  printf("; Bytes used: %d/%d\n\n", used, total);
+  puts("");
+  GenStartCommentLine(); printf("Syntax/declaration table/stack:\n");
+  GenStartCommentLine(); printf("Bytes used: %d/%d\n\n", used, total);
+#endif
 }
 
 int ParseArrayDimension(void)
@@ -6239,7 +6365,7 @@ int ParseDecl(int tok)
           error("Error: ParseDecl(): Identifier name unexpected\n");
       }
 
-      ShowDecl(lastSyntaxPtr, 0);
+      DumpDecl(lastSyntaxPtr, 0);
 
       if (ExprLevel)
         return tok;
@@ -6248,6 +6374,7 @@ int ParseDecl(int tok)
       {
         if (OutputFormat != FormatFlat)
           puts(DataHeader);
+        GenWordAlignment();
         GenLabel(IdentTable + SyntaxStack[lastSyntaxPtr][1]);
       }
 
@@ -6261,7 +6388,9 @@ int ParseDecl(int tok)
         int gotUnary, synPtr,  constExpr, exprVal;
         int p;
         int oldssp, undoIdents;
-        printf("; =\n");
+#ifndef NO_ANNOTATIONS
+        GenStartCommentLine(); printf("=\n");
+#endif
 
         p = lastSyntaxPtr;
         while (SyntaxStack[p][0] == tokIdent || SyntaxStack[p][0] == tokLocalOfs)
@@ -6329,11 +6458,10 @@ int ParseDecl(int tok)
         // local variables to the symbol table and parse the body.
         int undoSymbolsPtr = SyntaxStackCnt;
         int undoIdents = IdentTableLen;
-        int tmp;
         int locAllocLabel = (LabelCnt += 2) - 2;
 
         ParseLevel++;
-        GetFxnInfo(lastSyntaxPtr, &tmp, &tmp, &CurFxnReturnExprTypeSynPtr); // get return type
+        GetFxnInfo(lastSyntaxPtr, &CurFxnParamCntMin, &CurFxnParamCntMax, &CurFxnReturnExprTypeSynPtr); // get return type
 
         if (OutputFormat != FormatFlat)
           puts(CodeHeader);
@@ -6522,7 +6650,7 @@ void AddFxnParamSymbols(int SyntaxPtr)
         if (tok == tokIdent || tok == ')')
         {
           CurFxnParamCnt++;
-          ShowDecl(paramPtr, 0);
+          DumpDecl(paramPtr, 0);
           i--;
           break;
         }
@@ -6596,7 +6724,9 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
     int undoSymbolsPtr = SyntaxStackCnt;
     int undoLocalOfs = CurFxnLocalOfs;
     int undoIdents = IdentTableLen;
-    printf("; {\n");
+#ifndef NO_ANNOTATIONS
+    GenStartCommentLine(); printf("{\n");
+#endif
     ParseLevel++;
     tok = ParseBlock(BrkCntSwchTarget, switchBody / 2);
     ParseLevel--;
@@ -6605,13 +6735,17 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
     IdentTableLen = undoIdents; // remove all identifier names
     SyntaxStackCnt = undoSymbolsPtr; // remove all params and locals
     CurFxnLocalOfs = undoLocalOfs; // destroy on-stack local variables
-    printf("; }\n");
+#ifndef NO_ANNOTATIONS
+    GenStartCommentLine(); printf("}\n");
+#endif
     tok = GetToken();
   }
   else if (tok == tokReturn)
   {
     // DONE: functions returning void vs non-void
-    printf("; return\n");
+#ifndef NO_ANNOTATIONS
+    GenStartCommentLine(); printf("return\n");
+#endif
     tok = GetToken();
     if (ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0) != ';')
       error("Error: ParseStatement(): ';' expected\n");
@@ -6635,7 +6769,9 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
   {
     int labelBefore = LabelCnt++;
     int labelAfter = LabelCnt++;
-    printf("; while\n");
+#ifndef NO_ANNOTATIONS
+    GenStartCommentLine(); printf("while\n");
+#endif
 
     tok = GetToken();
     if (tok != '(')
@@ -6688,7 +6824,9 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
     int labelBefore = LabelCnt++;
     int labelWhile = LabelCnt++;
     int labelAfter = LabelCnt++;
-    printf("; do\n");
+#ifndef NO_ANNOTATIONS
+    GenStartCommentLine(); printf("do\n");
+#endif
     GenNumLabel(labelBefore);
 
     tok = GetToken();
@@ -6698,7 +6836,9 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
     if (tok != tokWhile)
       error("Error: ParseStatement(): 'while' expected after 'do statement'\n");
 
-    printf("; while\n");
+#ifndef NO_ANNOTATIONS
+    GenStartCommentLine(); printf("while\n");
+#endif
     tok = GetToken();
     if (tok != '(')
       error("Error: ParseStatement(): '(' expected after 'while'\n");
@@ -6749,7 +6889,9 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
   {
     int labelAfterIf = LabelCnt++;
     int labelAfterElse = LabelCnt++;
-    printf("; if\n");
+#ifndef NO_ANNOTATIONS
+    GenStartCommentLine(); printf("if\n");
+#endif
 
     tok = GetToken();
     if (tok != '(')
@@ -6795,7 +6937,9 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
     {
       GenJumpUncond(labelAfterElse);
       GenNumLabel(labelAfterIf);
-      printf("; else\n");
+#ifndef NO_ANNOTATIONS
+      GenStartCommentLine(); printf("else\n");
+#endif
       tok = GetToken();
       tok = ParseStatement(tok, BrkCntSwchTarget, 0);
       GenNumLabel(labelAfterElse);
@@ -6811,7 +6955,9 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
     int labelExpr3 = LabelCnt++;
     int labelBody = LabelCnt++;
     int labelAfter = LabelCnt++;
-    printf("; for\n");
+#ifndef NO_ANNOTATIONS
+    GenStartCommentLine(); printf("for\n");
+#endif
     tok = GetToken();
     if (tok != '(')
       error("Error: ParseStatement(): '(' expected after 'for'\n");
@@ -6878,7 +7024,9 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
   }
   else if (tok == tokBreak)
   {
-    printf("; break\n");
+#ifndef NO_ANNOTATIONS
+    GenStartCommentLine(); printf("break\n");
+#endif
     if (GetToken() != ';')
       error("Error: ParseStatement(): ';' expected\n");
     tok = GetToken();
@@ -6888,7 +7036,9 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
   }
   else if (tok == tokCont)
   {
-    printf("; continue\n");
+#ifndef NO_ANNOTATIONS
+    GenStartCommentLine(); printf("continue\n");
+#endif
     if (GetToken() != ';')
       error("Error: ParseStatement(): ';' expected\n");
     tok = GetToken();
@@ -6898,7 +7048,9 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
   }
   else if (tok == tokSwitch)
   {
-    printf("; switch\n");
+#ifndef NO_ANNOTATIONS
+    GenStartCommentLine(); printf("switch\n");
+#endif
 
     tok = GetToken();
     if (tok != '(')
@@ -6964,7 +7116,9 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
   else if (tok == tokCase)
   {
     int lnext;
-    printf("; case\n");
+#ifndef NO_ANNOTATIONS
+    GenStartCommentLine(); printf("case\n");
+#endif
 
     if (!switchBody)
       error("Error: ParseStatement(): 'case' must be within 'switch' statement\n");
@@ -6989,7 +7143,9 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
   }
   else if (tok == tokDefault)
   {
-    printf("; default\n");
+#ifndef NO_ANNOTATIONS
+    GenStartCommentLine(); printf("default\n");
+#endif
 
     if (!switchBody)
       error("Error: ParseStatement(): 'default' must be within 'switch' statement\n");
@@ -7052,30 +7208,15 @@ int main(int argc, char** argv)
   // gcc/MinGW inserts a call to __main() here.
   int i;
 
+  GenInit();
+
   // Parse the command line parameters
   for (i = 1; i < argc; i++)
   {
-    // TBD!!! move code-generator-specific options to
+    // DONE: move code-generator-specific options to
     // the code generator
-    if (!strcmp(argv[i], "-seg16"))
+    if (GenInitParams(argc, argv, &i))
     {
-      // this is the default option
-      OutputFormat = FormatSegmented; SizeOfWord = 2;
-      continue;
-    }
-    else if (!strcmp(argv[i], "-seg32"))
-    {
-      OutputFormat = FormatSegmented; SizeOfWord = 4;
-      continue;
-    }
-    else if (!strcmp(argv[i], "-flat16"))
-    {
-      OutputFormat = FormatFlat; SizeOfWord = 2;
-      continue;
-    }
-    else if (!strcmp(argv[i], "-flat32"))
-    {
-      OutputFormat = FormatFlat; SizeOfWord = 4;
       continue;
     }
     else if (!strcmp(argv[i], "-signed-char"))
@@ -7099,12 +7240,13 @@ int main(int argc, char** argv)
     }
     else if (!strcmp(argv[i], "-leading-underscore"))
     {
-      // this is the default option
+      // this is the default option for x86
       UseLeadingUnderscores = 1;
       continue;
     }
     else if (!strcmp(argv[i], "-no-leading-underscore"))
     {
+      // this is the default option for MIPS
       UseLeadingUnderscores = 0;
       continue;
     }
@@ -7175,6 +7317,8 @@ int main(int argc, char** argv)
   if (!FileCnt)
     error("Error: Input source code file not specified.\n");
 
+  GenInitFinalize();
+
   // some manual initialization because there's no array initialization yet
   SyntaxStack[SyntaxStackCnt][0] = tokVoid;
   SyntaxStack[SyntaxStackCnt++][1] = 0;
@@ -7194,32 +7338,6 @@ int main(int argc, char** argv)
   else
     DefineMacro("__SMALLER_C_UCHAR__", "");
 
-  // Change the output assembly format/content according to the options
-  if (OutputFormat == FormatSegmented)
-  {
-    if (SizeOfWord == 2)
-    {
-      FileHeader = "SEGMENT _TEXT PUBLIC CLASS=CODE USE16\n"
-                   "SEGMENT _DATA PUBLIC CLASS=DATA\n";
-      CodeHeader = "SEGMENT _TEXT";
-      CodeFooter = "; SEGMENT _TEXT";
-      DataHeader = "SEGMENT _DATA";
-      DataFooter = "; SEGMENT _DATA";
-    }
-    else
-    {
-      CodeHeader = "section .text";
-      DataHeader = "section .data";
-    }
-  }
-  else
-  {
-    if (SizeOfWord == 2)
-      FileHeader = "BITS 16";
-    else
-      FileHeader = "bits 32";
-  }
-
   // When generating 32-bit assembly code with 16-bit compiler
   // output may be incorrect if constant subexpressions are folded
   // (because 32-bit constants get truncated to 16-bit).
@@ -7237,6 +7355,8 @@ int main(int argc, char** argv)
   DumpSynDecls();
   DumpMacroTable();
   DumpIdentTable();
+
+  GenStartCommentLine(); printf("Compilation succeeded.\n");
 
   return 0;
 }
