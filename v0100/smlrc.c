@@ -248,7 +248,7 @@ EXTERN int vsprintf(char*, char*, void*);
 #define SymIntSynPtr 1
 #define SymUintSynPtr 2
 
-#define STACK_SIZE 100
+#define STACK_SIZE 128
 
 #define SymFxn       1
 #define SymGlobalVar 2
@@ -401,7 +401,7 @@ int ExprLevel = 0;
 int stack[STACK_SIZE][2];
 int sp = 0;
 
-#define OPERATOR_STACK_SIZE 100
+#define OPERATOR_STACK_SIZE STACK_SIZE
 int opstack[OPERATOR_STACK_SIZE][2];
 int opsp = 0;
 
@@ -1612,6 +1612,9 @@ void GenInit(void)
 
 int GenInitParams(int argc, char** argv, int* idx)
 {
+#ifndef __SMALLER_C__
+  (void)argc;
+#endif
   // initialization of target-specific code generator with parameters
 
   if (!strcmp(argv[*idx], "-seg16"))
@@ -5983,6 +5986,10 @@ int GetDeclSize(int SyntaxPtr)
 
 void DumpDecl(int SyntaxPtr, int IsParam)
 {
+#ifndef __SMALLER_C__
+  (void)SyntaxPtr;
+  (void)IsParam;
+#endif
 #ifndef NO_ANNOTATIONS
   int i;
   int icnt = 0;
