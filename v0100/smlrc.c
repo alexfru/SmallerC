@@ -4123,17 +4123,6 @@ void GenExpr0(void)
 }
 #endif // #ifndef CG_STACK_BASED
 
-void GenExpr(void)
-{
-  GenStrData(1);
-#ifndef CG_STACK_BASED
-  GenExpr1();
-#else
-  GenExpr0();
-#endif
-}
-#endif // #ifdef MIPS
-
 void GenStrData(int insertJump)
 {
   int i;
@@ -4209,6 +4198,17 @@ void GenStrData(int insertJump)
     }
   }
 }
+
+void GenExpr(void)
+{
+  GenStrData(1);
+#ifndef CG_STACK_BASED
+  GenExpr1();
+#else
+  GenExpr0();
+#endif
+}
+#endif // #ifdef MIPS
 
 // expr.c code
 
@@ -5986,10 +5986,6 @@ int GetDeclSize(int SyntaxPtr)
 
 void DumpDecl(int SyntaxPtr, int IsParam)
 {
-#ifndef __SMALLER_C__
-  (void)SyntaxPtr;
-  (void)IsParam;
-#endif
 #ifndef NO_ANNOTATIONS
   int i;
   int icnt = 0;
@@ -6117,6 +6113,10 @@ void DumpDecl(int SyntaxPtr, int IsParam)
       break;
     }
   }
+#endif
+#ifndef __SMALLER_C__
+  (void)SyntaxPtr;
+  (void)IsParam;
 #endif
 }
 

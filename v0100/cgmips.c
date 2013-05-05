@@ -1368,6 +1368,71 @@ void GenExpr0(void)
   }
 }
 
+void GenStrData(int insertJump)
+{
+  int i;
+
+  // insert string literals into the code
+  for (i = 0; i < sp; i++)
+  {
+    int tok = stack[i][0];
+    char* p = IdentTable + stack[i][1];
+    if (tok == tokIdent && isdigit(*p))
+    {
+      int label = atoi(p);
+      int len;
+
+      p = FindString(label);
+      len = *p++;
+
+      if (OutputFormat == FormatFlat)
+      {
+        if (insertJump)
+          GenJumpUncond(label + 1);
+      }
+      else
+      {
+        if (insertJump)
+          puts(CodeFooter);
+        puts(DataHeader);
+      }
+      GenNumLabel(label);
+
+      GenStartAsciiString();
+      printf("\"");
+      while (len--)
+      {
+        // quote ASCII chars for better readability
+        if (*p >= 0x20 && *p <= 0x7E)
+        {
+          if (*p == '\"' || *p == '\\')
+            printf("\\");
+          printf("%c", *p);
+        }
+        else
+        {
+          printf("\\%03o", *p);
+        }
+        p++;
+      }
+      printf("\"");
+      puts("");
+
+      if (OutputFormat == FormatFlat)
+      {
+        if (insertJump)
+          GenNumLabel(label + 1);
+      }
+      else
+      {
+        puts(DataFooter);
+        if (insertJump)
+          puts(CodeHeader);
+      }
+    }
+  }
+}
+
 void GenExpr(void)
 {
   GenStrData(1);
