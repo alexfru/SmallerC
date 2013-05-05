@@ -7180,13 +7180,14 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
       error("Error: ParseStatement(): '(' expected after 'asm'\n");
 
     tok = GetToken();
-    if (ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0) != ')')
-      error("Error: ParseStatement(): ')' expected after 'asm ( expression'\n");
-
-    if (!gotUnary || tok != tokLitStr)
+    if (tok != tokLitStr)
       error("Error: ParseStatement(): string literal expression expected in 'asm ( expression )'\n");
 
     puts(GetTokenValueString());
+
+    tok = GetToken();
+    if (tok != ')')
+      error("Error: ParseStatement(): ')' expected after 'asm ( expression'\n");
 
     tok = GetToken();
     if (tok != ';')
