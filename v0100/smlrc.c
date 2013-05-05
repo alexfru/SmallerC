@@ -211,6 +211,8 @@ EXTERN int vsprintf(char*, char*, void*);
 #define tok_Complex   'y'
 #define tok_Imagin    'z'
 
+#define tok_Asm       '`'
+
 /* Pseudo-tokens (converted from others or generated) */
 #define tokURShift    28
 #define tokUDiv       29
@@ -731,6 +733,7 @@ int GetTokenByWord(char* word)
   if (!strcmp(word, "unsigned")) return tokUnsigned;
   if (!strcmp(word, "void")) return tokVoid;
   if (!strcmp(word, "while")) return tokWhile;
+  if (!strcmp(word, "asm")) return tok_Asm;
 
   if (!strcmp(word, "auto")) return tokAuto;
   if (!strcmp(word, "const")) return tokConst;
@@ -818,7 +821,7 @@ char* GetTokenName(int token)
   case tokFor: return "for";             case tokSwitch: return "switch";
   case tokCase: return "case";           case tokDefault: return "default";
   case tok_Bool: return "_Bool";         case tok_Complex: return "_Complex";
-  case tok_Imagin: return "_Imaginary";
+  case tok_Imagin: return "_Imaginary";  case tok_Asm: return "asm";
 
   // Helper (pseudo-)tokens:
   case tokNumInt: return "<NumInt>";     case tokNumUint: return "<NumUint>";
@@ -7169,6 +7172,27 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
     GenNumLabel(BrkCntSwchTarget[2]); // default:
 
     BrkCntSwchTarget[2] *= -1; // remember presence of default:
+  }
+  else if (tok == tok_Asm)
+  {
+    tok = GetToken();
+    if (tok != '(')
+      error("Error: ParseStatement(): '(' expected after 'asm'\n");
+
+    tok = GetToken();
+    if (ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0) != ')')
+      error("Error: ParseStatement(): ')' expected after 'asm ( expression'\n");
+
+    if (!gotUnary || tok != tokLitStr)
+      error("Error: ParseStatement(): string literal expression expected in 'asm ( expression )'\n");
+
+    puts(GetTokenValueString());
+
+    tok = GetToken();
+    if (tok != ';')
+      error("Error: ParseStatement(): ';' expected after 'asm ( expression )'\n");
+
+    tok = GetToken();
   }
   else
   {
