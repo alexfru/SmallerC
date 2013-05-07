@@ -1411,7 +1411,7 @@ void GenStrData(int insertJump)
         }
         else
         {
-          printf("\\%03o", *p);
+          printf("\\%03o", *p & 0xFF);
         }
         p++;
       }

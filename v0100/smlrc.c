@@ -273,7 +273,9 @@ PROTO int GetTokenValueStringLength(void);
 
 PROTO char* GetTokenIdentName(void);
 
+#ifndef NO_PREPROCESSOR
 PROTO void DumpMacroTable(void);
+#endif
 
 PROTO void PurgeStringTable(void);
 PROTO void AddString(int label, char* str, int len);
@@ -353,6 +355,7 @@ int LinePos = 1;
 char CharQueue[MAX_CHAR_QUEUE_LEN];
 int CharQueueLen = 0;
 
+#ifndef NO_PREPROCESSOR
 /*
   Macro table entry format:
     idlen char:     identifier length (<= 127)
@@ -362,6 +365,7 @@ int CharQueueLen = 0;
 */
 char MacroTable[MAX_MACRO_TABLE_LEN];
 int MacroTableLen = 0;
+#endif
 
 /*
   String table entry format:
@@ -512,6 +516,7 @@ int truncInt(int n)
 
 // prep.c code
 
+#ifndef NO_PREPROCESSOR
 int FindMacro(char* name)
 {
   int i;
@@ -622,6 +627,7 @@ void DumpMacroTable(void)
   GenStartCommentLine(); printf("Bytes used: %d/%d\n\n", MacroTableLen, MAX_MACRO_TABLE_LEN);
 #endif
 }
+#endif // #ifndef NO_PREPROCESSOR
 
 void PurgeStringTable(void)
 {
@@ -899,6 +905,7 @@ void ShiftCharN(int n)
   }
 }
 
+#ifndef NO_PREPROCESSOR
 void IncludeFile(int quot)
 {
   int nlen = strlen(TokenValueString);
@@ -970,6 +977,7 @@ void IncludeFile(int quot)
   // fill the char queue with file data
   ShiftChar();
 }
+#endif // #ifndef NO_PREPROCESSOR
 
 int EndOfFiles(void)
 {
@@ -1191,6 +1199,7 @@ void GetString(char terminator, int SkipNewLines)
   } // endof for (;;)
 }
 
+#ifndef NO_PREPROCESSOR
 void pushPrep(int NoSkip)
 {
   if (PrepSp >= PREP_STACK_SIZE) error("Error: too many #if(n)def's\n");
@@ -1205,6 +1214,7 @@ int popPrep(void)
   PrepDontSkipTokens = PrepStack[--PrepSp][0];
   return PrepStack[PrepSp][1];
 }
+#endif
 
 int GetNumber(void)
 {
@@ -1425,7 +1435,9 @@ int GetToken(void)
     // parse identifiers and reserved keywords
     if (ch == '_' || isalpha(ch))
     {
+#ifndef NO_PREPROCESSOR
       int midx;
+#endif
 
       GetIdent();
 
@@ -1434,6 +1446,7 @@ int GetToken(void)
 
       tok = GetTokenByWord(TokenIdentName);
 
+#ifndef NO_PREPROCESSOR
       // TBD!!! think of expanding macros in the context of concatenating string literals,
       // maybe factor out this piece of code
       if ((midx = FindMacro(TokenIdentName)) >= 0)
@@ -1453,10 +1466,12 @@ int GetToken(void)
 
         continue;
       }
+#endif
 
       return tok;
     } // endof if (ch == '_' || isalpha(ch))
 
+#ifndef NO_PREPROCESSOR
     // parse preprocessor directives
     if (ch == '#')
     {
@@ -1591,6 +1606,7 @@ int GetToken(void)
 
       error("Error: Unsupported or invalid preprocessor directive\n");
     } // endof if (ch == '#')
+#endif // #ifndef NO_PREPROCESSOR
 
     error("Error: Unsupported or invalid character '%c'\n", *p);
   } // endof for (;;)
@@ -5796,7 +5812,9 @@ void error(char* format, ...)
   puts("");
 
   DumpSynDecls();
+#ifndef NO_PREPROCESSOR
   DumpMacroTable();
+#endif
   DumpIdentTable();
 
   GenStartCommentLine(); printf("Compilation failed.\n");
@@ -7282,6 +7300,7 @@ int main(int argc, char** argv)
       UseLeadingUnderscores = 0;
       continue;
     }
+#ifndef NO_PREPROCESSOR
     else if (!strcmp(argv[i], "-I"))
     {
       if (i + 1 < argc)
@@ -7328,6 +7347,7 @@ int main(int argc, char** argv)
         }
       }
     }
+#endif // #ifndef NO_PREPROCESSOR
     else if (!FileCnt)
     {
       // If it's none of the known options,
@@ -7359,6 +7379,7 @@ int main(int argc, char** argv)
   SyntaxStack[SyntaxStackCnt][0] = tokUnsigned;
   SyntaxStack[SyntaxStackCnt++][1] = 0;
 
+#ifndef NO_PREPROCESSOR
   // Define a few macros useful for conditional compilation
   DefineMacro("__SMALLER_C__", "0x0100");
   if (SizeOfWord == 2)
@@ -7369,6 +7390,7 @@ int main(int argc, char** argv)
     DefineMacro("__SMALLER_C_SCHAR__", "");
   else
     DefineMacro("__SMALLER_C_UCHAR__", "");
+#endif
 
   // When generating 32-bit assembly code with 16-bit compiler
   // output may be incorrect if constant subexpressions are folded
@@ -7385,7 +7407,9 @@ int main(int argc, char** argv)
   ParseBlock(NULL, 0);
 
   DumpSynDecls();
+#ifndef NO_PREPROCESSOR
   DumpMacroTable();
+#endif
   DumpIdentTable();
 
   GenStartCommentLine(); printf("Compilation succeeded.\n");
