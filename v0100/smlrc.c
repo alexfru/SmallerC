@@ -1606,6 +1606,54 @@ int GetToken(void)
 
       error("Error: Unsupported or invalid preprocessor directive\n");
     } // endof if (ch == '#')
+#else // #ifndef NO_PREPROCESSOR
+    if (ch == '#')
+    {
+      int quot, line;
+
+      ShiftCharN(1);
+
+      // Support for external, gcc-like, preprocessor output:
+      //   # linenum filename flags
+      //
+      // no flags, flag = 1 -- start of a file
+      //           flag = 2 -- return to a file after #include
+      //        other flags -- uninteresting
+
+      SkipSpace(0);
+
+      if (!isdigit(*p) || GetNumber() != tokNumInt)
+        error("Error: Invalid line number in preprocessor output\n");
+      line = GetTokenValueInt();
+
+      SkipSpace(0);
+
+      quot = *p;
+      if (*p == '\"')
+        GetString('\"', 0);
+      else if (*p == '<')
+        GetString('>', 0);
+      else
+        error("Error: Invalid file name in preprocessor output\n");
+
+      if (strlen(GetTokenValueString()) > MAX_FILE_NAME_LEN)
+        error("Error: File name too long in preprocessor output\n");
+
+      SkipSpace(0);
+
+      while (!strchr("\r\n", *p))
+      {
+        if (!isdigit(*p) || GetNumber() != tokNumInt)
+          error("Error: Invalid flag in preprocessor output\n");
+        SkipSpace(0);
+      }
+
+      LineNo = line - 1; // "line" is the number of the next line
+      LinePos = 1;
+      strcpy(FileNames[0], GetTokenValueString());
+
+      continue;
+    } // endof if (ch == '#')
 #endif // #ifndef NO_PREPROCESSOR
 
     error("Error: Unsupported or invalid character '%c'\n", *p);
