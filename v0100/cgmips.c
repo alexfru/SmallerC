@@ -70,14 +70,14 @@ void GenStartCommentLine(void)
 
 void GenWordAlignment(void)
 {
-  printf("\t.p2align 2\n");
+  printf("\t.align 2\n");
 }
 
 void GenLabel(char* Label)
 {
   {
     if (OutputFormat != FormatFlat)
-      printf("\t.global\t%s\n", Label);
+      printf("\t.globl\t%s\n", Label);
     printf("%s:\n", Label);
   }
 }
@@ -121,9 +121,9 @@ void GenIntData(int Size, int Val)
   if (Size == 1)
     printf("\t.byte\t%d\n", Val);
   else if (Size == 2)
-    printf("\t.short\t%d\n", Val);
+    printf("\t.half\t%d\n", Val);
   else if (Size == 4)
-    printf("\t.int\t%d\n", Val);
+    printf("\t.word\t%d\n", Val);
 }
 
 void GenStartAsciiString(void)
@@ -136,9 +136,9 @@ void GenAddrData(int Size, char* Label)
   if (Size == 1)
     printf("\t.byte\t");
   else if (Size == 2)
-    printf("\t.short\t");
+    printf("\t.half\t");
   else if (Size == 4)
-    printf("\t.int\t");
+    printf("\t.word\t");
   GenPrintLabel(Label); puts("");
 }
 
@@ -1411,7 +1411,7 @@ void GenStrData(int insertJump)
         }
         else
         {
-          printf("\\%03o", *p & 0xFF);
+          printf("\\%03o", *p & 0xFFu);
         }
         p++;
       }
