@@ -65,20 +65,20 @@ void GenInitFinalize(void)
 
 void GenStartCommentLine(void)
 {
-  printf(" # ");
+  printf2(" # ");
 }
 
 void GenWordAlignment(void)
 {
-  printf("\t.align 2\n");
+  printf2("\t.align 2\n");
 }
 
 void GenLabel(char* Label)
 {
   {
     if (OutputFormat != FormatFlat)
-      printf("\t.globl\t%s\n", Label);
-    printf("%s:\n", Label);
+      printf2("\t.globl\t%s\n", Label);
+    printf2("%s:\n", Label);
   }
 }
 
@@ -86,7 +86,7 @@ void GenExtern(char* Label)
 {
   if (OutputFormat != FormatFlat)
   {
-    printf("\t.extern\t%s\n", Label);
+    printf2("\t.extern\t%s\n", Label);
   }
 }
 
@@ -94,52 +94,52 @@ void GenPrintLabel(char* Label)
 {
   {
     if (isdigit(*Label))
-      printf("$L%s", Label);
+      printf2("$L%s", Label);
     else
-      printf("%s", Label);
+      printf2("%s", Label);
   }
 }
 
 void GenNumLabel(int Label)
 {
-  printf("$L%d:\n", Label);
+  printf2("$L%d:\n", Label);
 }
 
 void GenPrintNumLabel(int label)
 {
-  printf("$L%d", label);
+  printf2("$L%d", label);
 }
 
 void GenZeroData(unsigned Size)
 {
-  printf("\t.fill\t%u\n", truncUint(Size)); // or ".space size"
+  printf2("\t.fill\t%u\n", truncUint(Size)); // or ".space size"
 }
 
 void GenIntData(int Size, int Val)
 {
   Val = truncInt(Val);
   if (Size == 1)
-    printf("\t.byte\t%d\n", Val);
+    printf2("\t.byte\t%d\n", Val);
   else if (Size == 2)
-    printf("\t.half\t%d\n", Val);
+    printf2("\t.half\t%d\n", Val);
   else if (Size == 4)
-    printf("\t.word\t%d\n", Val);
+    printf2("\t.word\t%d\n", Val);
 }
 
 void GenStartAsciiString(void)
 {
-  printf("\t.ascii\t");
+  printf2("\t.ascii\t");
 }
 
 void GenAddrData(int Size, char* Label)
 {
   if (Size == 1)
-    printf("\t.byte\t");
+    printf2("\t.byte\t");
   else if (Size == 2)
-    printf("\t.half\t");
+    printf2("\t.half\t");
   else if (Size == 4)
-    printf("\t.word\t");
-  GenPrintLabel(Label); puts("");
+    printf2("\t.word\t");
+  GenPrintLabel(Label); puts2("");
 }
 
 #define MipsInstrNop    0x00
@@ -235,7 +235,7 @@ void GenPrintInstr(int instr, int val)
   case MipsInstrBreak: p = "break"; break;
   }
 
-  printf("\t%s\t", p);
+  printf2("\t%s\t", p);
 }
 
 #define MipsOpRegZero                    0x00
@@ -268,6 +268,7 @@ void GenPrintInstr(int instr, int val)
 #define MipsOpRegFp                      0x1E
 #define MipsOpRegRa                      0x1F
 
+#define MipsOpIndRegZero                 0x20
 #define MipsOpIndRegAt                   0x21
 #define MipsOpIndRegV0                   0x22
 #define MipsOpIndRegV1                   0x23
@@ -279,6 +280,7 @@ void GenPrintInstr(int instr, int val)
 #define MipsOpIndRegT1                   0x29
 #define MipsOpIndRegSp                   0x3D
 #define MipsOpIndRegFp                   0x3E
+#define MipsOpIndRegRa                   0x3F
 
 #define MipsOpConst                      0x80
 #define MipsOpLabel                      0x81
@@ -287,19 +289,19 @@ void GenPrintInstr(int instr, int val)
 
 void GenPrintOperand(int op, int val)
 {
-  if (op >= 0x00 && op < 0x20)
+  if (op >= MipsOpRegZero && op <= MipsOpRegRa)
   {
-    printf("$%d", op);
+    printf2("$%d", op);
   }
-  else if (op >= 0x20 && op < 0x40)
+  else if (op >= MipsOpIndRegZero && op <= MipsOpIndRegRa)
   {
-    printf("%d($%d)", truncInt(val), op - 0x20);
+    printf2("%d($%d)", truncInt(val), op - MipsOpIndRegZero);
   }
   else
   {
     switch (op)
     {
-    case MipsOpConst: printf("%d", truncInt(val)); break;
+    case MipsOpConst: printf2("%d", truncInt(val)); break;
     case MipsOpLabel: GenPrintLabel(IdentTable + val); break;
     case MipsOpNumLabel: GenPrintNumLabel(val); break;
     default: error("WTF!\n"); break;
@@ -309,12 +311,12 @@ void GenPrintOperand(int op, int val)
 
 void GenPrintOperandSeparator(void)
 {
-  printf(", ");
+  printf2(", ");
 }
 
 void GenPrintNewLine(void)
 {
-  puts("");
+  puts2("");
 }
 
 void GenPrintInstrNoOperand(int instr)
@@ -413,7 +415,7 @@ void GenJumpIfNotEqual(int val, int label)
 void GenJumpIfZero(int label)
 {
 #ifndef NO_ANNOTATIONS
-  printf(" # JumpIfZero\n");
+  printf2(" # JumpIfZero\n");
 #endif
   GenPrintInstr3Operands(MipsInstrBEQ, 0,
                          MipsOpRegV0, 0,
@@ -424,7 +426,7 @@ void GenJumpIfZero(int label)
 void GenJumpIfNotZero(int label)
 {
 #ifndef NO_ANNOTATIONS
-  printf(" # JumpIfNotZero\n");
+  printf2(" # JumpIfNotZero\n");
 #endif
   GenPrintInstr3Operands(MipsInstrBNE, 0,
                          MipsOpRegV0, 0,
@@ -613,20 +615,20 @@ void GenReadIndirect(int regDst, int regSrc, int opSz)
     {
       GenPrintInstr2Operands(MipsInstrLB, 0,
                              regDst, 0,
-                             regSrc + 0x20, 0);
+                             regSrc + MipsOpIndRegZero, 0);
     }
     else
     {
       GenPrintInstr2Operands(MipsInstrLBU, 0,
                              regDst, 0,
-                             regSrc + 0x20, 0);
+                             regSrc + MipsOpIndRegZero, 0);
     }
   }
   else
   {
     GenPrintInstr2Operands(MipsInstrLW, 0,
                            regDst, 0,
-                           regSrc + 0x20, 0);
+                           regSrc + MipsOpIndRegZero, 0);
   }
 }
 
@@ -668,13 +670,13 @@ void GenWriteIndirect(int regDst, int regSrc, int opSz)
   {
     GenPrintInstr2Operands(MipsInstrSB, 0,
                            regSrc, 0,
-                           regDst + 0x20, 0);
+                           regDst + MipsOpIndRegZero, 0);
   }
   else
   {
     GenPrintInstr2Operands(MipsInstrSW, 0,
                            regSrc, 0,
-                           regDst + 0x20, 0);
+                           regDst + MipsOpIndRegZero, 0);
   }
 }
 
@@ -864,18 +866,18 @@ void GenExpr0(void)
 #ifndef NO_ANNOTATIONS
     switch (tok)
     {
-    case tokNumInt: printf(" # %d\n", truncInt(v)); break;
-    case tokNumUint: printf(" # %uu\n", truncUint(v)); break;
-    case tokIdent: printf(" # %s\n", IdentTable + v); break;
-    case tokLocalOfs: printf(" # local ofs\n"); break;
-    case ')': printf(" # ) fxn call\n"); break;
-    case tokUnaryStar: printf(" # * (read dereference)\n"); break;
-    case '=': printf(" # = (write dereference)\n"); break;
-    case tokShortCirc: printf(" # short-circuit "); break;
-    case tokLogAnd: printf(" # short-circuit && target\n"); break;
-    case tokLogOr: printf(" # short-circuit || target\n"); break;
+    case tokNumInt: printf2(" # %d\n", truncInt(v)); break;
+    case tokNumUint: printf2(" # %uu\n", truncUint(v)); break;
+    case tokIdent: printf2(" # %s\n", IdentTable + v); break;
+    case tokLocalOfs: printf2(" # local ofs\n"); break;
+    case ')': printf2(" # ) fxn call\n"); break;
+    case tokUnaryStar: printf2(" # * (read dereference)\n"); break;
+    case '=': printf2(" # = (write dereference)\n"); break;
+    case tokShortCirc: printf2(" # short-circuit "); break;
+    case tokLogAnd: printf2(" # short-circuit && target\n"); break;
+    case tokLogOr: printf2(" # short-circuit || target\n"); break;
     case tokIf: case tokIfNot: break;
-    default: printf(" # %s\n", GetTokenName(tok)); break;
+    default: printf2(" # %s\n", GetTokenName(tok)); break;
     }
 #endif
 
@@ -1329,9 +1331,9 @@ void GenExpr0(void)
     case tokShortCirc:
 #ifndef NO_ANNOTATIONS
       if (v >= 0)
-        printf("&&\n");
+        printf2("&&\n");
       else
-        printf("||\n");
+        printf2("||\n");
 #endif
       if (v >= 0)
         GenJumpIfZero(v); // &&
@@ -1393,30 +1395,30 @@ void GenStrData(int insertJump)
       else
       {
         if (insertJump)
-          puts(CodeFooter);
-        puts(DataHeader);
+          puts2(CodeFooter);
+        puts2(DataHeader);
       }
       GenNumLabel(label);
 
       GenStartAsciiString();
-      printf("\"");
+      printf2("\"");
       while (len--)
       {
         // quote ASCII chars for better readability
         if (*p >= 0x20 && *p <= 0x7E)
         {
           if (*p == '\"' || *p == '\\')
-            printf("\\");
-          printf("%c", *p);
+            printf2("\\");
+          printf2("%c", *p);
         }
         else
         {
-          printf("\\%03o", *p & 0xFFu);
+          printf2("\\%03o", *p & 0xFFu);
         }
         p++;
       }
-      printf("\"");
-      puts("");
+      printf2("\"");
+      puts2("");
 
       if (OutputFormat == FormatFlat)
       {
@@ -1425,9 +1427,9 @@ void GenStrData(int insertJump)
       }
       else
       {
-        puts(DataFooter);
+        puts2(DataFooter);
         if (insertJump)
-          puts(CodeHeader);
+          puts2(CodeHeader);
       }
     }
   }

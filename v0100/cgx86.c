@@ -112,13 +112,13 @@ void GenInitFinalize(void)
 
 void GenStartCommentLine(void)
 {
-  printf("; ");
+  printf2("; ");
 }
 
 void GenWordAlignment(void)
 {
 // TBD??? enable alignment on x86?
-//  printf("\talign %d\n", SizeOfWord);
+//  printf2("\talign %d\n", SizeOfWord);
 }
 
 void GenLabel(char* Label)
@@ -126,14 +126,14 @@ void GenLabel(char* Label)
   if (UseLeadingUnderscores)
   {
     if (OutputFormat != FormatFlat)
-      printf("\tglobal\t_%s\n", Label);
-    printf("_%s:\n", Label);
+      printf2("\tglobal\t_%s\n", Label);
+    printf2("_%s:\n", Label);
   }
   else
   {
     if (OutputFormat != FormatFlat)
-      printf("\tglobal\t$%s\n", Label);
-    printf("$%s:\n", Label);
+      printf2("\tglobal\t$%s\n", Label);
+    printf2("$%s:\n", Label);
   }
 }
 
@@ -142,9 +142,9 @@ void GenExtern(char* Label)
   if (OutputFormat != FormatFlat)
   {
     if (UseLeadingUnderscores)
-      printf("\textern\t_%s\n", Label);
+      printf2("\textern\t_%s\n", Label);
     else
-      printf("\textern\t$%s\n", Label);
+      printf2("\textern\t$%s\n", Label);
   }
 }
 
@@ -153,65 +153,65 @@ void GenPrintLabel(char* Label)
   if (UseLeadingUnderscores)
   {
     if (isdigit(*Label))
-      printf("L%s", Label);
+      printf2("L%s", Label);
     else
-      printf("_%s", Label);
+      printf2("_%s", Label);
   }
   else
   {
     if (isdigit(*Label))
-      printf("..@L%s", Label);
+      printf2("..@L%s", Label);
     else
-      printf("$%s", Label);
+      printf2("$%s", Label);
   }
 }
 
 void GenNumLabel(int Label)
 {
   if (UseLeadingUnderscores)
-    printf("L%d:\n", Label);
+    printf2("L%d:\n", Label);
   else
-    printf("..@L%d:\n", Label);
+    printf2("..@L%d:\n", Label);
 }
 
 void GenPrintNumLabel(int label)
 {
   if (UseLeadingUnderscores)
-    printf("L%d", label);
+    printf2("L%d", label);
   else
-    printf("..@L%d", label);
+    printf2("..@L%d", label);
 }
 
 void GenZeroData(unsigned Size)
 {
-  printf("\ttimes\t%u db 0\n", truncUint(Size));
+  printf2("\ttimes\t%u db 0\n", truncUint(Size));
 }
 
 void GenIntData(int Size, int Val)
 {
   Val = truncInt(Val);
   if (Size == 1)
-    printf("\tdb\t%d\n", Val);
+    printf2("\tdb\t%d\n", Val);
   else if (Size == 2)
-    printf("\tdw\t%d\n", Val);
+    printf2("\tdw\t%d\n", Val);
   else if (Size == 4)
-    printf("\tdd\t%d\n", Val);
+    printf2("\tdd\t%d\n", Val);
 }
 
 void GenStartAsciiString(void)
 {
-  printf("\tdb\t");
+  printf2("\tdb\t");
 }
 
 void GenAddrData(int Size, char* Label)
 {
   if (Size == 1)
-    printf("\tdb\t");
+    printf2("\tdb\t");
   else if (Size == 2)
-    printf("\tdw\t");
+    printf2("\tdw\t");
   else if (Size == 4)
-    printf("\tdd\t");
-  GenPrintLabel(Label); puts("");
+    printf2("\tdd\t");
+  GenPrintLabel(Label); puts2("");
 }
 
 #define X86InstrMov    0x00
@@ -344,10 +344,10 @@ void GenPrintInstr(int instr, int val)
   case X86InstrCdq:
   case X86InstrLeave:
   case X86InstrRet:
-    printf("\t%s", p);
+    printf2("\t%s", p);
     break;
   default:
-    printf("\t%s\t", p);
+    printf2("\t%s\t", p);
     break;
   }
 }
@@ -418,66 +418,66 @@ void GenPrintOperand(int op, int val)
   {
     switch (op)
     {
-    case X86OpRegAByte: printf("al"); break;
-    case X86OpRegAByteHigh: printf("ah"); break;
-    case X86OpRegCByte: printf("cl"); break;
-    case X86OpRegAWord: printf("ax"); break;
-    case X86OpRegBWord: printf("bx"); break;
-    case X86OpRegCWord: printf("cx"); break;
-    case X86OpRegDWord: printf("dx"); break;
-    case X86OpRegBpWord: printf("bp"); break;
-    case X86OpRegSpWord: printf("sp"); break;
-    case X86OpConst: printf("%d", truncInt(val)); break;
+    case X86OpRegAByte: printf2("al"); break;
+    case X86OpRegAByteHigh: printf2("ah"); break;
+    case X86OpRegCByte: printf2("cl"); break;
+    case X86OpRegAWord: printf2("ax"); break;
+    case X86OpRegBWord: printf2("bx"); break;
+    case X86OpRegCWord: printf2("cx"); break;
+    case X86OpRegDWord: printf2("dx"); break;
+    case X86OpRegBpWord: printf2("bp"); break;
+    case X86OpRegSpWord: printf2("sp"); break;
+    case X86OpConst: printf2("%d", truncInt(val)); break;
     case X86OpLabel: GenPrintLabel(IdentTable + val); break;
     case X86OpNumLabel: GenPrintNumLabel(val); break;
-    case X86OpIndLabel: printf("["); GenPrintLabel(IdentTable + val); printf("]"); break;
-    case X86OpIndLabelExplicitByte: printf("byte ["); GenPrintLabel(IdentTable + val); printf("]"); break;
-    case X86OpIndLabelExplicitWord: printf("word ["); GenPrintLabel(IdentTable + val); printf("]"); break;
-    case X86OpIndLocal: printf("[bp%+d]", val); break;
-    case X86OpIndLocalExplicitByte: printf("byte [bp%+d]", val); break;
-    case X86OpIndLocalExplicitWord: printf("word [bp%+d]", val); break;
-    case X86OpIndRegB: printf("[bx]"); break;
-    case X86OpIndRegBExplicitByte: printf("byte [bx]"); break;
-    case X86OpIndRegBExplicitWord: printf("word [bx]"); break;
+    case X86OpIndLabel: printf2("["); GenPrintLabel(IdentTable + val); printf2("]"); break;
+    case X86OpIndLabelExplicitByte: printf2("byte ["); GenPrintLabel(IdentTable + val); printf2("]"); break;
+    case X86OpIndLabelExplicitWord: printf2("word ["); GenPrintLabel(IdentTable + val); printf2("]"); break;
+    case X86OpIndLocal: printf2("[bp%+d]", val); break;
+    case X86OpIndLocalExplicitByte: printf2("byte [bp%+d]", val); break;
+    case X86OpIndLocalExplicitWord: printf2("word [bp%+d]", val); break;
+    case X86OpIndRegB: printf2("[bx]"); break;
+    case X86OpIndRegBExplicitByte: printf2("byte [bx]"); break;
+    case X86OpIndRegBExplicitWord: printf2("word [bx]"); break;
     }
   }
   else
   {
     switch (op)
     {
-    case X86OpRegAByte: printf("al"); break;
-    case X86OpRegAByteHigh: printf("ah"); break;
-    case X86OpRegCByte: printf("cl"); break;
-    case X86OpRegAWord: printf("eax"); break;
-    case X86OpRegBWord: printf("ebx"); break;
-    case X86OpRegCWord: printf("ecx"); break;
-    case X86OpRegDWord: printf("edx"); break;
-    case X86OpRegBpWord: printf("ebp"); break;
-    case X86OpRegSpWord: printf("esp"); break;
-    case X86OpConst: printf("%d", truncInt(val)); break;
+    case X86OpRegAByte: printf2("al"); break;
+    case X86OpRegAByteHigh: printf2("ah"); break;
+    case X86OpRegCByte: printf2("cl"); break;
+    case X86OpRegAWord: printf2("eax"); break;
+    case X86OpRegBWord: printf2("ebx"); break;
+    case X86OpRegCWord: printf2("ecx"); break;
+    case X86OpRegDWord: printf2("edx"); break;
+    case X86OpRegBpWord: printf2("ebp"); break;
+    case X86OpRegSpWord: printf2("esp"); break;
+    case X86OpConst: printf2("%d", truncInt(val)); break;
     case X86OpLabel: GenPrintLabel(IdentTable + val); break;
     case X86OpNumLabel: GenPrintNumLabel(val); break;
-    case X86OpIndLabel: printf("["); GenPrintLabel(IdentTable + val); printf("]"); break;
-    case X86OpIndLabelExplicitByte: printf("byte ["); GenPrintLabel(IdentTable + val); printf("]"); break;
-    case X86OpIndLabelExplicitWord: printf("dword ["); GenPrintLabel(IdentTable + val); printf("]"); break;
-    case X86OpIndLocal: printf("[ebp%+d]", val); break;
-    case X86OpIndLocalExplicitByte: printf("byte [ebp%+d]", val); break;
-    case X86OpIndLocalExplicitWord: printf("dword [ebp%+d]", val); break;
-    case X86OpIndRegB: printf("[ebx]"); break;
-    case X86OpIndRegBExplicitByte: printf("byte [ebx]"); break;
-    case X86OpIndRegBExplicitWord: printf("dword [ebx]"); break;
+    case X86OpIndLabel: printf2("["); GenPrintLabel(IdentTable + val); printf2("]"); break;
+    case X86OpIndLabelExplicitByte: printf2("byte ["); GenPrintLabel(IdentTable + val); printf2("]"); break;
+    case X86OpIndLabelExplicitWord: printf2("dword ["); GenPrintLabel(IdentTable + val); printf2("]"); break;
+    case X86OpIndLocal: printf2("[ebp%+d]", val); break;
+    case X86OpIndLocalExplicitByte: printf2("byte [ebp%+d]", val); break;
+    case X86OpIndLocalExplicitWord: printf2("dword [ebp%+d]", val); break;
+    case X86OpIndRegB: printf2("[ebx]"); break;
+    case X86OpIndRegBExplicitByte: printf2("byte [ebx]"); break;
+    case X86OpIndRegBExplicitWord: printf2("dword [ebx]"); break;
     }
   }
 }
 
 void GenPrintOperandSeparator(void)
 {
-  printf(", ");
+  printf2(", ");
 }
 
 void GenPrintNewLine(void)
 {
-  puts("");
+  puts2("");
 }
 
 void GenPrintInstrNoOperand(int instr)
@@ -586,7 +586,7 @@ void GenJumpIfNotEqual(int val, int label)
 void GenJumpIfZero(int label)
 {
 #ifndef NO_ANNOTATIONS
-  GenStartCommentLine(); printf("JumpIfZero\n");
+  GenStartCommentLine(); printf2("JumpIfZero\n");
 #endif
   GenPrintInstr2Operands(X86InstrTest, 0,
                          X86OpRegAWord, 0,
@@ -598,7 +598,7 @@ void GenJumpIfZero(int label)
 void GenJumpIfNotZero(int label)
 {
 #ifndef NO_ANNOTATIONS
-  GenStartCommentLine(); printf("JumpIfNotZero\n");
+  GenStartCommentLine(); printf2("JumpIfNotZero\n");
 #endif
   GenPrintInstr2Operands(X86InstrTest, 0,
                          X86OpRegAWord, 0,
@@ -1361,7 +1361,7 @@ void GenExpr1(void)
   GenFuse(&s);
 
 #ifndef NO_ANNOTATIONS
-  printf("; Fused expression:    \"");
+  printf2("; Fused expression:    \"");
   for (i = 0; i < sp; i++)
   {
     int tok = stack[i][0];
@@ -1369,73 +1369,73 @@ void GenExpr1(void)
     {
     case tokNumInt:
     case tokOpNumInt:
-      printf("%d", truncInt(stack[i][1]));
+      printf2("%d", truncInt(stack[i][1]));
       break;
     case tokNumUint:
     case tokOpNumUint:
-      printf("%uu", truncUint(stack[i][1]));
+      printf2("%uu", truncUint(stack[i][1]));
       break;
     case tokIdent:
     case tokOpIdent:
       {
         char* p = IdentTable + stack[i][1];
         if (isdigit(*p))
-          printf("L");
-        printf("%s", p);
+          printf2("L");
+        printf2("%s", p);
       }
       break;
     case tokOpIndIdent:
-      printf("*%s", IdentTable + stack[i][1]);
+      printf2("*%s", IdentTable + stack[i][1]);
       break;
     case tokShortCirc:
       if (stack[i][1] >= 0)
-        printf("[sh&&->%d]", stack[i][1]);
+        printf2("[sh&&->%d]", stack[i][1]);
       else
-        printf("[sh||->%d]", -stack[i][1]);
+        printf2("[sh||->%d]", -stack[i][1]);
       break;
     case tokLocalOfs:
     case tokOpLocalOfs:
-      printf("(@%d)", stack[i][1]);
+      printf2("(@%d)", stack[i][1]);
       break;
     case tokOpIndLocalOfs:
-      printf("*(@%d)", stack[i][1]);
+      printf2("*(@%d)", stack[i][1]);
       break;
     case tokUnaryStar:
-      printf("*(%d)", stack[i][1]);
+      printf2("*(%d)", stack[i][1]);
       break;
     case '(': case ',':
-      printf("%c", tok);
+      printf2("%c", tok);
       break;
     case ')':
-      printf(")%d", stack[i][1]);
+      printf2(")%d", stack[i][1]);
       break;
     case tokOpAcc:
-      printf("ax");
+      printf2("ax");
       break;
     case tokOpIndAcc:
-      printf("*ax");
+      printf2("*ax");
       break;
     case tokOpStack:
-      printf("*sp");
+      printf2("*sp");
       break;
     case tokOpIndStack:
-      printf("**sp");
+      printf2("**sp");
       break;
     case tokPushAcc:
-      printf("push-ax");
+      printf2("push-ax");
       break;
     case tokIf:
-      printf("IF");
+      printf2("IF");
       break;
     case tokIfNot:
-      printf("IF!");
+      printf2("IF!");
       break;
     default:
-      printf("%s", GetTokenName(tok));
+      printf2("%s", GetTokenName(tok));
       switch (tok)
       {
       case tokLogOr: case tokLogAnd:
-        printf("[%d]", stack[i][1]);
+        printf2("[%d]", stack[i][1]);
         break;
       case '=':
       case tokInc: case tokDec:
@@ -1446,14 +1446,14 @@ void GenExpr1(void)
       case tokAssignUDiv: case tokAssignUMod:
       case tokAssignLSh: case tokAssignRSh: case tokAssignURSh:
       case tokAssignAnd: case tokAssignXor: case tokAssignOr:
-        printf("(%d)", stack[i][1]);
+        printf2("(%d)", stack[i][1]);
         break;
       }
       break;
     }
-    printf(" ");
+    printf2(" ");
   }
-  printf("\"\n");
+  printf2("\"\n");
 #endif
 
   for (i = 0; i < sp; i++)
@@ -2202,18 +2202,18 @@ void GenExpr0(void)
 #ifndef NO_ANNOTATIONS
     switch (tok)
     {
-    case tokNumInt: printf("; %d\n", truncInt(v)); break;
-    case tokNumUint: printf("; %uu\n", truncUint(v)); break;
-    case tokIdent: printf("; %s\n", IdentTable + v); break;
-    case tokLocalOfs: printf("; local ofs\n"); break;
-    case ')': printf("; ) fxn call\n"); break;
-    case tokUnaryStar: printf("; * (read dereference)\n"); break;
-    case '=': printf("; = (write dereference)\n"); break;
-    case tokShortCirc: printf("; short-circuit "); break;
-    case tokLogAnd: printf("; short-circuit && target\n"); break;
-    case tokLogOr: printf("; short-circuit || target\n"); break;
+    case tokNumInt: printf2("; %d\n", truncInt(v)); break;
+    case tokNumUint: printf2("; %uu\n", truncUint(v)); break;
+    case tokIdent: printf2("; %s\n", IdentTable + v); break;
+    case tokLocalOfs: printf2("; local ofs\n"); break;
+    case ')': printf2("; ) fxn call\n"); break;
+    case tokUnaryStar: printf2("; * (read dereference)\n"); break;
+    case '=': printf2("; = (write dereference)\n"); break;
+    case tokShortCirc: printf2("; short-circuit "); break;
+    case tokLogAnd: printf2("; short-circuit && target\n"); break;
+    case tokLogOr: printf2("; short-circuit || target\n"); break;
     case tokIf: case tokIfNot: break;
-    default: printf("; %s\n", GetTokenName(tok)); break;
+    default: printf2("; %s\n", GetTokenName(tok)); break;
     }
 #endif
 
@@ -2518,9 +2518,9 @@ void GenExpr0(void)
     case tokShortCirc:
 #ifndef NO_ANNOTATIONS
       if (v >= 0)
-        printf("&&\n");
+        printf2("&&\n");
       else
-        printf("||\n");
+        printf2("||\n");
 #endif
       if (v >= 0)
         GenJumpIfZero(v); // &&
@@ -2586,8 +2586,8 @@ void GenStrData(int insertJump)
       else
       {
         if (insertJump)
-          puts(CodeFooter);
-        puts(DataHeader);
+          puts2(CodeFooter);
+        puts2(DataHeader);
       }
       GenNumLabel(label);
 
@@ -2600,26 +2600,26 @@ void GenStrData(int insertJump)
           if (!quot)
           {
             quot = 1;
-            printf("\"");
+            printf2("\"");
           }
-          printf("%c", *p);
+          printf2("%c", *p);
         }
         else
         {
           if (quot)
           {
             quot = 0;
-            printf("\",");
+            printf2("\",");
           }
-          printf("%d", *p);
+          printf2("%d", *p);
           if (len)
-            printf(",");
+            printf2(",");
         }
         p++;
       }
       if (quot)
-        printf("\"");
-      puts("");
+        printf2("\"");
+      puts2("");
 
       if (OutputFormat == FormatFlat)
       {
@@ -2628,9 +2628,9 @@ void GenStrData(int insertJump)
       }
       else
       {
-        puts(DataFooter);
+        puts2(DataFooter);
         if (insertJump)
-          puts(CodeHeader);
+          puts2(CodeHeader);
       }
     }
   }
