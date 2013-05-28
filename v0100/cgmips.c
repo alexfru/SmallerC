@@ -885,7 +885,7 @@ void GenExpr0(void)
     {
     case tokNumInt:
     case tokNumUint:
-      if (!(i + 1 < sp && (strchr("+-*&^|", stack[i + 1][0]) ||
+      if (!(i + 1 < sp && (strchr("+-&^|", stack[i + 1][0]) ||
                            stack[i + 1][0] == tokLShift ||
                            stack[i + 1][0] == tokRShift ||
                            stack[i + 1][0] == tokURShift)))
@@ -1038,7 +1038,7 @@ void GenExpr0(void)
     case tokLShift:
     case tokRShift:
     case tokURShift:
-      if (stack[i - 1][0] == tokNumInt || stack[i - 1][0] == tokNumUint)
+      if ((stack[i - 1][0] == tokNumInt || stack[i - 1][0] == tokNumUint) && tok != '*')
       {
         int instr = GenGetBinaryOperatorInstr(tok);
         GenPrintInstr3Operands(instr, 0,
