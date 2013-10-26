@@ -3526,7 +3526,7 @@ int GetDeclSize(int SyntaxPtr)
     case tokLocalOfs: // skip local var offset, too
       break;
     case tokChar:
-      return size;
+      return uint2int(size);
     case tokInt:
     case tokUnsigned:
     case '*':
@@ -3540,7 +3540,8 @@ int GetDeclSize(int SyntaxPtr)
     case '[':
       if (SyntaxStack[i + 1][0] != tokNumInt && SyntaxStack[i + 1][0] != tokNumUint)
         return 0;
-      if (size * SyntaxStack[i + 1][1] / SyntaxStack[i + 1][1] != size)
+      if (SyntaxStack[i + 1][1] &&
+          size * SyntaxStack[i + 1][1] / SyntaxStack[i + 1][1] != size)
         error("Error: Variable too big\n");
       size *= SyntaxStack[i + 1][1];
       if (size != truncUint(size))
@@ -3702,7 +3703,7 @@ void DumpSynDecls(void)
 #endif
 }
 
-int ParseArrayDimension(void)
+int ParseArrayDimension(int AllowEmptyDimension)
 {
   int tok;
   int gotUnary, synPtr, constExpr, exprVal;
@@ -3723,15 +3724,25 @@ int ParseArrayDimension(void)
     error("Error: ParseArrayDimension(): Unsupported or invalid array dimension (token %s)\n",
           GetTokenName(tok));
 
-  if (!constExpr)
-    error("Error: ParseArrayDimension(): non-constant array dimension\n");
+  if (!gotUnary)
+  {
+    if (!AllowEmptyDimension)
+      error("Error: ParseArrayDimension(): missing array dimension\n");
+    // Empty dimension is dimension of 0
+    exprVal = 0;
+  }
+  else
+  {
+    if (!constExpr)
+      error("Error: ParseArrayDimension(): non-constant array dimension\n");
 
-  exprValU = exprVal;
-  if ((synPtr == SymIntSynPtr && exprVal < 1) || (synPtr == SymUintSynPtr && exprValU < 1))
-    error("Error: ParseArrayDimension(): array dimension less than 1\n");
+    exprValU = exprVal;
+    if ((synPtr == SymIntSynPtr && exprVal < 1) || (synPtr == SymUintSynPtr && exprValU < 1))
+      error("Error: ParseArrayDimension(): array dimension less than 1\n");
 
-  if (exprValU != truncUint(exprValU))
-    error("Error: ParseArrayDimension(): array dimension too big\n");
+    if (exprValU != truncUint(exprValU))
+      error("Error: ParseArrayDimension(): array dimension too big\n");
+  }
 
   PushSyntax2(tokNumUint, exprVal);
   return tok;
@@ -3808,18 +3819,20 @@ int ParseDerived(int tok)
 
   if (tok == '[')
   {
-    // TBD!!! allow first [] to go without the dimension in function parameters
+    // DONE!!! allow first [] to go without the dimension in function parameters
+    int allowEmptyDimension = 1;
     while (tok == '[')
     {
       int oldsp = SyntaxStackCnt;
       PushSyntax(tokVoid); // prevent cases like "int arr[arr];" and "int arr[arr[0]];"
       PushSyntax(tok);
-      tok = ParseArrayDimension();
+      tok = ParseArrayDimension(allowEmptyDimension);
       if (tok != ']')
         error("Error: ParseDerived(): ']' expected\n");
       PushSyntax(']');
       tok = GetToken();
       DeleteSyntax(oldsp, 1);
+      allowEmptyDimension = 0;
     }
   }
   else if (tok == '(')
