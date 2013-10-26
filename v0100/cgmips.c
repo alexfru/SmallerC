@@ -84,10 +84,15 @@ void GenLabel(char* Label)
 
 void GenExtern(char* Label)
 {
-  if (OutputFormat != FormatFlat)
-  {
-    printf2("\t.extern\t%s\n", Label);
-  }
+  // GNU as doesn't need an explicit .extern,
+  // it treats all undefined symbols as external by default.
+  // if (OutputFormat != FormatFlat)
+  // {
+  //   printf2("\t.extern\t%s\n", Label);
+  // }
+#ifndef __SMALLER_C__
+  (void)Label;
+#endif
 }
 
 void GenPrintLabel(char* Label)
@@ -112,7 +117,7 @@ void GenPrintNumLabel(int label)
 
 void GenZeroData(unsigned Size)
 {
-  printf2("\t.fill\t%u\n", truncUint(Size)); // or ".space size"
+  printf2("\t.space\t%u\n", truncUint(Size)); // or ".fill size"
 }
 
 void GenIntData(int Size, int Val)
