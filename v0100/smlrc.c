@@ -3915,7 +3915,7 @@ int ParseDecl(int tok)
       if (SyntaxStack[lastSyntaxPtr + 1][0] != '(')
       {
         int sz = GetDeclSize(lastSyntaxPtr);
-        if (sz == 0)
+        if (sz == 0 && !external)
           error("Error: ParseDecl(): GetDeclSize() = 0 (incomplete types aren't supported)\n");
 
         if (ParseLevel && !external && !ExprLevel)
