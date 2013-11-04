@@ -314,7 +314,7 @@ PROTO void GenFxnEpilog(void);
 
 PROTO void GenLocalAlloc(int Size);
 
-PROTO void GenStrData(int insertJump);
+PROTO unsigned GenStrData(int generatingCode, unsigned requiredLen);
 PROTO void GenExpr(void);
 
 PROTO void PushSyntax(int t);
@@ -2087,7 +2087,7 @@ int expr(int tok, int* gotUnary, int commaSeparator)
 
   tok = exprUnary(tok, gotUnary, commaSeparator);
 
-  while (tok != tokEof && strchr(",;:)]", tok) == NULL && *gotUnary)
+  while (tok != tokEof && strchr(",;:)]}", tok) == NULL && *gotUnary)
   {
     if (isop(tok) && !isunary(tok))
     {
@@ -3132,7 +3132,7 @@ int ParseExpr(int tok, int* GotUnary, int* ExprTypeSynPtr, int* ConstExpr, int* 
 
   tok = expr(tok, GotUnary, commaSeparator);
 
-  if (tok == tokEof || strchr(",;:)]", tok) == NULL)
+  if (tok == tokEof || strchr(",;:)]}", tok) == NULL)
     error("Error: ParseExpr(): Unexpected token %s\n", GetTokenName(tok));
 
   if (*GotUnary)
@@ -3902,6 +3902,9 @@ int ParseDecl(int tok)
     {
       int localAllocSize = 0;
       int globalAllocSize = 0;
+      int allocSizeKnownAfterInit = 0;
+      int isArray = 0;
+      unsigned elementSz = 0;
 
       // Disallow void variables and arrays of void
       if (base == tokVoid)
@@ -3915,8 +3918,15 @@ int ParseDecl(int tok)
       if (SyntaxStack[lastSyntaxPtr + 1][0] != '(')
       {
         int sz = GetDeclSize(lastSyntaxPtr);
-        if (sz == 0 && !external)
+        isArray = SyntaxStack[lastSyntaxPtr + 1][0] == '[';
+        allocSizeKnownAfterInit = sz == 0 && !external && isArray && tok == '=';
+        if (sz == 0 && !external && !allocSizeKnownAfterInit)
           error("Error: ParseDecl(): GetDeclSize() = 0 (incomplete types aren't supported)\n");
+
+        if (isArray)
+          elementSz = GetDeclSize(lastSyntaxPtr + 4);
+        else
+          elementSz = sz;
 
         if (ParseLevel && !external && !ExprLevel)
         {
@@ -3961,11 +3971,12 @@ int ParseDecl(int tok)
       if (ExprLevel)
         return tok;
 
-      if (globalAllocSize && !external)
+      if ((globalAllocSize || allocSizeKnownAfterInit) && !external)
       {
         if (OutputFormat != FormatFlat)
           puts2(DataHeader);
-        GenWordAlignment();
+        if (elementSz % SizeOfWord == 0)
+          GenWordAlignment();
         GenLabel(IdentTable + SyntaxStack[lastSyntaxPtr][1]);
       }
 
@@ -3976,9 +3987,14 @@ int ParseDecl(int tok)
       // Handle initialization
       else if (tok == '=')
       {
-        int gotUnary, synPtr,  constExpr, exprVal;
+        int gotUnary, synPtr, constExpr, exprVal;
         int p;
         int oldssp, undoIdents;
+        int braces = 0;
+        unsigned elementCnt = 0;
+        unsigned elementsRequired = 0;
+        int strLitAllowed = 1;
+        int nonStrLitAllowed = 1;
 #ifndef NO_ANNOTATIONS
         GenStartCommentLine(); printf2("=\n");
 #endif
@@ -3990,49 +4006,123 @@ int ParseDecl(int tok)
         oldssp = SyntaxStackCnt;
         undoIdents = IdentTableLen;
 
-        if (strchr("([", SyntaxStack[p][0]))
+        if (SyntaxStack[p][0] == '(' || // function
+            (isArray &&
+             (SyntaxStack[p + 3][0] == '[' || ParseLevel))) // 2+-dimensional or local array
           error("Error: ParseDecl(): invalid/unsupported initialization of array or function\n");
 
+        if (isArray)
+          elementsRequired = SyntaxStack[p + 1][1];
+
         tok = GetToken();
-        tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 1);
-        if (!tok || !strchr(",;", tok))
-          error("Error: ParseDecl(): unexpected token %s after '='\n", GetTokenName(tok));
-
-        if (!gotUnary)
-          error("Error: ParseDecl(): missing initialization expression after '='\n");
-
-        if (!ParseLevel)
+        // Interestingly, scalars can be legally initialized with braced
+        // initializers just like arrays, e.g. "int a = { 1 };".
+        // Let's not support that!
+        if (isArray && tok == '{')
         {
-          if (constExpr)
+          braces = 1;
+          tok = GetToken();
+        }
+
+        for (;;)
+        {
+          int strLitInitializer;
+
+          if (braces && tok == '}')
           {
-            GenIntData(globalAllocSize, exprVal);
-            if (OutputFormat != FormatFlat)
-              puts2(DataFooter);
+            tok = GetToken();
+            if (!tok || !strchr(",;", tok))
+              error("Error: ParseDecl(): unexpected token %s\n", GetTokenName(tok));
+            break;
           }
-          else if (globalAllocSize == SizeOfWord && stack[sp - 1][0] == tokIdent)
+
+          tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 1);
+          if (!gotUnary)
+            error("Error: ParseDecl(): missing initialization expression\n");
+          if (!tok ||
+              (braces && !strchr(",}", tok)) ||
+              (!braces && !strchr(",;", tok)))
+            error("Error: ParseDecl(): unexpected token %s\n", GetTokenName(tok));
+
+          strLitInitializer = stack[sp - 1][0] == tokIdent &&
+                              isdigit(IdentTable[stack[sp - 1][1]]);
+
+          // Prohibit initializers like in "int a[1] = 1;"
+          if (isArray && !strLitInitializer && !braces)
+            error("Error: ParseDecl(): array initializers must be in braces\n");
+
+          // Prohibit initializers like { 'a', "b" }, { "a", 'b' }, { "a", "b" }
+          if (!strLitInitializer)
+            strLitAllowed = 0;
+          else
+            nonStrLitAllowed = 0;
+          if ((strLitInitializer && !strLitAllowed) ||
+              (!strLitInitializer && !nonStrLitAllowed))
+            error("Error: ParseDecl(): invalid initialization\n");
+          if (strLitInitializer)
+            strLitAllowed = 0;
+
+          elementCnt++;
+
+          if (braces && elementsRequired && elementCnt > elementsRequired)
+            error("Error: ParseDecl(): excess array initializers\n");
+
+          if (!ParseLevel)
           {
-            char* p = IdentTable + stack[sp - 1][1];
-            GenAddrData(globalAllocSize, p);
-            if (OutputFormat != FormatFlat)
-              puts2(DataFooter);
-            // if the initializer is a literal string, also generate string data
-            if (isdigit(*p))
-              GenStrData(0);
+            if (constExpr)
+            {
+              GenIntData(elementSz, exprVal);
+            }
+            else if (elementSz == SizeOfWord + 0u && stack[sp - 1][0] == tokIdent)
+            {
+              if (isArray && strLitInitializer)
+                error("Error: ParseDecl(): not an array of char\n");
+              GenAddrData(elementSz, IdentTable + stack[sp - 1][1]);
+              // if the initializer is a string literal, also generate string data
+              if (strLitInitializer)
+                GenStrData(0, 0);
+            }
+            else if (elementSz == 1 && isArray && strLitInitializer)
+            {
+              elementCnt = GenStrData(0, elementsRequired);
+            }
+            else
+              error("Error: ParseDecl(): cannot initialize a global variable with a non-constant expression\n");
           }
           else
-            error("Error: ParseDecl(): cannot initialize a global variable with a non-constant expression\n");
+          {
+            if (synPtr >= 0 && SyntaxStack[synPtr][0] == tokVoid)
+              error("Error: ParseDecl(): cannot initialize a variable with a 'void' expression\n");
+            // transform the current expression stack into:
+            //   tokLocalOfs(...), original expression stack, =(localAllocSize)
+            // this will simulate assignment
+            ins2(0, tokLocalOfs, SyntaxStack[lastSyntaxPtr + 1][1]);
+            push2('=', localAllocSize);
+            GenExpr();
+          }
+
+          if (braces)
+          {
+            if (tok == ',')
+              tok = GetToken();
+          }
+          else
+            break;
         }
-        else
+
+        if (isArray)
         {
-          if (synPtr >= 0 && SyntaxStack[synPtr][0] == tokVoid)
-            error("Error: ParseDecl(): cannot initialize a variable with a 'void' expression\n");
-          // transform the current expression stack into:
-          //   tokLocalOfs(...), original expression stack, =(localAllocSize)
-          // this will simulate assignment
-          ins2(0, tokLocalOfs, SyntaxStack[lastSyntaxPtr + 1][1]);
-          push2('=', localAllocSize);
-          GenExpr();
+          // Implicit initialization with 0 of what's not initialized explicitly
+          if (elementCnt < elementsRequired)
+            GenZeroData((elementsRequired - elementCnt) * elementSz);
+
+          // The number of elements is now known
+          if (!SyntaxStack[p + 1][1])
+            SyntaxStack[p + 1][1] = elementCnt;
         }
+
+        if (!ParseLevel && OutputFormat != FormatFlat)
+          puts2(DataFooter);
 
         IdentTableLen = undoIdents; // remove all temporary identifier names from e.g. "sizeof" or "str"
         SyntaxStackCnt = oldssp; // undo any temporary declarations from e.g. "sizeof" or "str" in the expression

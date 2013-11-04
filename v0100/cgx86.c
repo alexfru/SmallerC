@@ -117,8 +117,7 @@ void GenStartCommentLine(void)
 
 void GenWordAlignment(void)
 {
-// TBD??? enable alignment on x86?
-//  printf2("\talign %d\n", SizeOfWord);
+  printf2("\talign %d\n", SizeOfWord);
 }
 
 void GenLabel(char* Label)
@@ -2560,9 +2559,10 @@ void GenExpr0(void)
 }
 #endif // #ifndef CG_STACK_BASED
 
-void GenStrData(int insertJump)
+unsigned GenStrData(int generatingCode, unsigned requiredLen)
 {
   int i;
+  unsigned total = 0;
 
   // insert string literals into the code
   for (i = 0; i < sp; i++)
@@ -2573,22 +2573,41 @@ void GenStrData(int insertJump)
     {
       int label = atoi(p);
       int quot = 0;
-      int len;
+      unsigned len;
 
       p = FindString(label);
       len = *p++;
 
-      if (OutputFormat == FormatFlat)
+      // If this is a string literal initializing an array of char,
+      // truncate or pad it as necessary.
+      if (requiredLen)
       {
-        if (insertJump)
+        if (len >= requiredLen)
+        {
+          len = requiredLen; // copy count
+          requiredLen = 0; // count to be zeroed out
+        }
+        else
+        {
+          requiredLen -= len; // count to be zeroed out
+        }
+      }
+      // Also, calculate its real size for incompletely typed arrays.
+      total = len + requiredLen;
+
+      if (generatingCode)
+      {
+        if (OutputFormat == FormatFlat)
+        {
           GenJumpUncond(label + 1);
-      }
-      else
-      {
-        if (insertJump)
+        }
+        else
+        {
           puts2(CodeFooter);
-        puts2(DataHeader);
+          puts2(DataHeader);
+        }
       }
+
       GenNumLabel(label);
 
       GenStartAsciiString();
@@ -2611,34 +2630,47 @@ void GenStrData(int insertJump)
             quot = 0;
             printf2("\",");
           }
-          printf2("%d", *p);
-          if (len)
+          printf2("%u", *p & 0xFFu);
+          if (len || requiredLen)
             printf2(",");
         }
         p++;
       }
       if (quot)
+      {
         printf2("\"");
+        if (requiredLen)
+          printf2(",");
+      }
+      while (requiredLen)
+      {
+        printf2("0");
+        if (--requiredLen)
+          printf2(",");
+      }
       puts2("");
 
-      if (OutputFormat == FormatFlat)
+      if (generatingCode)
       {
-        if (insertJump)
+        if (OutputFormat == FormatFlat)
+        {
           GenNumLabel(label + 1);
-      }
-      else
-      {
-        puts2(DataFooter);
-        if (insertJump)
+        }
+        else
+        {
+          puts2(DataFooter);
           puts2(CodeHeader);
+        }
       }
     }
   }
+
+  return total;
 }
 
 void GenExpr(void)
 {
-  GenStrData(1);
+  GenStrData(1, 0);
 #ifndef CG_STACK_BASED
   GenExpr1();
 #else

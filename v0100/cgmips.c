@@ -1375,9 +1375,10 @@ void GenExpr0(void)
   }
 }
 
-void GenStrData(int insertJump)
+unsigned GenStrData(int generatingCode, unsigned requiredLen)
 {
   int i;
+  unsigned total = 0;
 
   // insert string literals into the code
   for (i = 0; i < sp; i++)
@@ -1387,22 +1388,41 @@ void GenStrData(int insertJump)
     if (tok == tokIdent && isdigit(*p))
     {
       int label = atoi(p);
-      int len;
+      unsigned len;
 
       p = FindString(label);
       len = *p++;
 
-      if (OutputFormat == FormatFlat)
+      // If this is a string literal initializing an array of char,
+      // truncate or pad it as necessary.
+      if (requiredLen)
       {
-        if (insertJump)
+        if (len >= requiredLen)
+        {
+          len = requiredLen; // copy count
+          requiredLen = 0; // count to be zeroed out
+        }
+        else
+        {
+          requiredLen -= len; // count to be zeroed out
+        }
+      }
+      // Also, calculate its real size for incompletely typed arrays.
+      total = len + requiredLen;
+
+      if (generatingCode)
+      {
+        if (OutputFormat == FormatFlat)
+        {
           GenJumpUncond(label + 1);
-      }
-      else
-      {
-        if (insertJump)
+        }
+        else
+        {
           puts2(CodeFooter);
-        puts2(DataHeader);
+          puts2(DataHeader);
+        }
       }
+
       GenNumLabel(label);
 
       GenStartAsciiString();
@@ -1422,26 +1442,34 @@ void GenStrData(int insertJump)
         }
         p++;
       }
+      while (requiredLen)
+      {
+        printf2("\\000");
+        requiredLen--;
+      }
       printf2("\"");
       puts2("");
 
-      if (OutputFormat == FormatFlat)
+      if (generatingCode)
       {
-        if (insertJump)
+        if (OutputFormat == FormatFlat)
+        {
           GenNumLabel(label + 1);
-      }
-      else
-      {
-        puts2(DataFooter);
-        if (insertJump)
+        }
+        else
+        {
+          puts2(DataFooter);
           puts2(CodeHeader);
+        }
       }
     }
   }
+
+  return total;
 }
 
 void GenExpr(void)
 {
-  GenStrData(1);
+  GenStrData(1, 0);
   GenExpr0();
 }
