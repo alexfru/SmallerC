@@ -120,17 +120,17 @@ void GenWordAlignment(void)
   printf2("\talign %d\n", SizeOfWord);
 }
 
-void GenLabel(char* Label)
+void GenLabel(char* Label, int Static)
 {
   if (UseLeadingUnderscores)
   {
-    if (OutputFormat != FormatFlat)
+    if (OutputFormat != FormatFlat && !Static)
       printf2("\tglobal\t_%s\n", Label);
     printf2("_%s:\n", Label);
   }
   else
   {
-    if (OutputFormat != FormatFlat)
+    if (OutputFormat != FormatFlat && !Static)
       printf2("\tglobal\t$%s\n", Label);
     printf2("$%s:\n", Label);
   }

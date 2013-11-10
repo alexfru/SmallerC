@@ -73,10 +73,10 @@ void GenWordAlignment(void)
   printf2("\t.align 2\n");
 }
 
-void GenLabel(char* Label)
+void GenLabel(char* Label, int Static)
 {
   {
-    if (OutputFormat != FormatFlat)
+    if (OutputFormat != FormatFlat && !Static)
       printf2("\t.globl\t%s\n", Label);
     printf2("%s:\n", Label);
   }

@@ -295,7 +295,7 @@ PROTO int GenInitParams(int argc, char** argv, int* idx);
 PROTO void GenInitFinalize(void);
 PROTO void GenStartCommentLine(void);
 PROTO void GenWordAlignment(void);
-PROTO void GenLabel(char* Label);
+PROTO void GenLabel(char* Label, int Static);
 PROTO void GenExtern(char* Label);
 PROTO void GenNumLabel(int Label);
 PROTO void GenZeroData(unsigned Size);
@@ -1918,7 +1918,7 @@ int exprUnary(int tok, int* gotUnary, int commaSeparator)
       *gotUnary = 1;
       tok = GetToken();
     }
-    else if (TokenStartsDeclaration(tok, 0))
+    else if (TokenStartsDeclaration(tok, 1))
     {
       int synPtr;
       int lbl = LabelCnt++;
@@ -3413,7 +3413,7 @@ int TokenStartsDeclaration(int t, int params)
 {
   return t == tokVoid || t == tokChar || t == tokInt ||
          t == tokSigned || t == tokUnsigned ||
-         (!params && t == tokExtern);
+         (!params && (t == tokExtern || t == tokStatic));
 }
 
 void PushSyntax2(int t, int v)
@@ -3776,6 +3776,7 @@ int ParseBase(int tok, int* base)
       *base = tokInt;
   }
 
+  // TBD!!! review/test this fxn
   if (!tok || !(strchr("*([,)", tok) || tok == tokIdent))
     error("Error: ParseBase(): Invalid or unsupported type\n");
 
@@ -3791,7 +3792,6 @@ int ParseBase(int tok, int* base)
 int ParseDerived(int tok)
 {
   int stars = 0;
-  int lastSyntaxPtr = SyntaxStackCnt;
 
   while (tok == '*')
   {
@@ -3819,7 +3819,7 @@ int ParseDerived(int tok)
 
   if (tok == '[')
   {
-    // DONE!!! allow first [] to go without the dimension in function parameters
+    // DONE!!! allow the first [] without the dimension in function parameters
     int allowEmptyDimension = 1;
     while (tok == '[')
     {
@@ -3849,22 +3849,8 @@ int ParseDerived(int tok)
     PushSyntax('*');
 
   // TBD??? balance parens
-  if (tok == ')')
-    return tok;
 
-  if (tok == '{')
-  {
-    // This can be the beginning of a function body, is this a function?
-    int fxn = (lastSyntaxPtr + 1 < SyntaxStackCnt &&
-               SyntaxStack[lastSyntaxPtr + 1][0] == '(');
-
-    if (!fxn || ExprLevel)
-      error("Error: ParseDerived(): '{' unexpected\n");
-    if (ParseLevel)
-      error("Error: ParseDerived(): Cannot define a nested function\n");
-  }
-
-  if (!tok || !strchr(",;{=", tok))
+  if (!tok || !strchr(",;{=)", tok))
     error("Error: ParseDerived(): unexpected token %s\n", GetTokenName(tok));
 
   return tok;
@@ -3879,8 +3865,9 @@ int ParseDecl(int tok)
   int base;
   int lastSyntaxPtr;
   int external = tok == tokExtern;
+  int Static = tok == tokStatic;
 
-  if (external)
+  if (external || Static)
   {
     tok = GetToken();
     if (!TokenStartsDeclaration(tok, 1))
@@ -3902,8 +3889,7 @@ int ParseDecl(int tok)
     {
       int localAllocSize = 0;
       int globalAllocSize = 0;
-      int allocSizeKnownAfterInit = 0;
-      int isArray = 0;
+      int isFxn, isArray, isMultiDimArray, isIncompleteArr;
       unsigned elementSz = 0;
 
       // Disallow void variables and arrays of void
@@ -3915,20 +3901,90 @@ int ParseDecl(int tok)
                 IdentTable + SyntaxStack[lastSyntaxPtr][1]);
       }
 
-      if (SyntaxStack[lastSyntaxPtr + 1][0] != '(')
+      isFxn = SyntaxStack[lastSyntaxPtr + 1][0] == '(';
+      isArray = SyntaxStack[lastSyntaxPtr + 1][0] == '[';
+      isMultiDimArray = isArray && SyntaxStack[lastSyntaxPtr + 4][0] == '[';
+      isIncompleteArr = isArray && SyntaxStack[lastSyntaxPtr + 2][1] == 0;
+
+      // Error conditions in declarations(/definitions/initializations):
+      // Legend:
+      //   +  error
+      //   -  no error
+      //
+      // file scope          fxn   fxn {}  var   arr[]   arr[]...[]   arr[incomplete]   arr[incomplete]...[]
+      //                     -     -       -     -       -            +                 +
+      // file scope          fxn=          var=  arr[]=  arr[]...[]=  arr[incomplete]=  arr[incomplete]...[]=
+      //                     +             -     -       +            -                 +
+      // file scope  extern  fxn   fxn {}  var   arr[]   arr[]...[]   arr[incomplete]   arr[incomplete]...[]
+      //                     -     -       -     -       -            -                 -
+      // file scope  extern  fxn=          var=  arr[]=  arr[]...[]=  arr[incomplete]=  arr[incomplete]...[]=
+      //                     +             +     +       +            +                 +
+      // file scope  static  fxn   fxn {}  var   arr[]   arr[]...[]   arr[incomplete]   arr[incomplete]...[]
+      //                     -     -       -     -       -            +                 +
+      // file scope  static  fxn=          var=  arr[]=  arr[]...[]=  arr[incomplete]=  arr[incomplete]...[]=
+      //                     +             -     -       +            -                 +
+      // fxn scope           fxn   fxn {}  var   arr[]   arr[]...[]   arr[incomplete]   arr[incomplete]...[]
+      //                     -     +       -     -       -            +                 +
+      // fxn scope           fxn=          var=  arr[]=  arr[]...[]=  arr[incomplete]=  arr[incomplete]...[]=
+      //                     +             -     +       +            +                 +
+      // fxn scope   extern  fxn   fxn {}  var   arr[]   arr[]...[]   arr[incomplete]   arr[incomplete]...[]
+      //                     -     +       -     -       -            -                 -
+      // fxn scope   extern  fxn=          var=  arr[]=  arr[]...[]=  arr[incomplete]=  arr[incomplete]...[]=
+      //                     +             +     +       +            +                 +
+      // fxn scope   static  fxn   fxn {}  var   arr[]   arr[]...[]   arr[incomplete]   arr[incomplete]...[]
+      //                     +     +       +     +       +            +                 +
+      // fxn scope   static  fxn=          var=  arr[]=  arr[]...[]=  arr[incomplete]=  arr[incomplete]...[]=
+      //                     +             +     +       +            +                 +
+
+      if (isFxn && tok == '=')
+        error("Error: ParseDecl(): cannot initialize a function\n");
+
+      // TBD!!! this is actually taken care of in ParseDerived(), remove there???
+      if (isFxn && tok == '{' && ParseLevel)
+        error("Error: ParseDecl(): cannot define a nested function\n");
+
+      if (isFxn && Static && ParseLevel)
+        error("Error: ParseDecl(): cannot declare a static function in this scope\n");
+
+      if (external && tok == '=')
+        error("Error: ParseDecl(): cannot initialize an external variable\n");
+
+      if (isIncompleteArr && !(external || tok == '='))
+        error("Error: ParseDecl(): cannot define an array of incomplete type\n");
+
+      if (Static && ParseLevel)
+        error("Error: ParseDecl(): static not supported in this scope\n");
+
+      if (isMultiDimArray && tok == '=')
+        error("Error: ParseDecl(): multidimensional array initialization not supported\n");
+
+      if (isArray && tok == '=' && ParseLevel)
+        error("Error: ParseDecl(): array initialization not supported in this scope\n");
+
+      // TBD!!! de-uglify
+      if (!strcmp(IdentTable + SyntaxStack[lastSyntaxPtr][1], "<something>"))
+      {
+        // Disallow nameless variables and prototypes.
+        if (!ExprLevel)
+          error("Error: ParseDecl(): Identifier name expected\n");
+      }
+      else
+      {
+        // Disallow named variables and prototypes.
+        if (ExprLevel)
+          error("Error: ParseDecl(): Identifier name unexpected\n");
+      }
+
+      if (!isFxn)
       {
         int sz = GetDeclSize(lastSyntaxPtr);
-        isArray = SyntaxStack[lastSyntaxPtr + 1][0] == '[';
-        allocSizeKnownAfterInit = sz == 0 && !external && isArray && tok == '=';
-        if (sz == 0 && !external && !allocSizeKnownAfterInit)
-          error("Error: ParseDecl(): GetDeclSize() = 0 (incomplete types aren't supported)\n");
 
         if (isArray)
           elementSz = GetDeclSize(lastSyntaxPtr + 4);
         else
           elementSz = sz;
 
-        if (ParseLevel && !external && !ExprLevel)
+        if (ParseLevel && !external && !Static && !ExprLevel)
         {
           int oldOfs;
           // It's a local variable, let's calculate its relative on-stack location
@@ -3952,35 +4008,22 @@ int ParseDecl(int tok)
         }
       }
 
-      // TBD!!! de-uglify
-      if (!strcmp(IdentTable + SyntaxStack[lastSyntaxPtr][1], "<something>"))
-      {
-        // Disallow nameless variables and prototypes.
-        if (!ExprLevel)
-          error("Error: ParseDecl(): Identifier name expected\n");
-      }
-      else
-      {
-        // Disallow named variables and prototypes.
-        if (ExprLevel)
-          error("Error: ParseDecl(): Identifier name unexpected\n");
-      }
-
       DumpDecl(lastSyntaxPtr, 0);
 
       if (ExprLevel)
         return tok;
 
-      if ((globalAllocSize || allocSizeKnownAfterInit) && !external)
+      if ((globalAllocSize || isIncompleteArr) && !external)
       {
         if (OutputFormat != FormatFlat)
           puts2(DataHeader);
+        // TBD??? imperfect condition for alignment
         if (elementSz % SizeOfWord == 0)
           GenWordAlignment();
-        GenLabel(IdentTable + SyntaxStack[lastSyntaxPtr][1]);
+        GenLabel(IdentTable + SyntaxStack[lastSyntaxPtr][1], Static);
       }
 
-      if (external)
+      if (external && !(isFxn && tok == '{'))
       {
         GenExtern(IdentTable + SyntaxStack[lastSyntaxPtr][1]);
       }
@@ -4006,17 +4049,13 @@ int ParseDecl(int tok)
         oldssp = SyntaxStackCnt;
         undoIdents = IdentTableLen;
 
-        if (SyntaxStack[p][0] == '(' || // function
-            (isArray &&
-             (SyntaxStack[p + 3][0] == '[' || ParseLevel))) // 2+-dimensional or local array
-          error("Error: ParseDecl(): invalid/unsupported initialization of array or function\n");
-
         if (isArray)
           elementsRequired = SyntaxStack[p + 1][1];
 
         tok = GetToken();
         // Interestingly, scalars can be legally initialized with braced
         // initializers just like arrays, e.g. "int a = { 1 };".
+        // Also, "int i[];" must have 1 element.
         // Let's not support that!
         if (isArray && tok == '{')
         {
@@ -4117,7 +4156,7 @@ int ParseDecl(int tok)
             GenZeroData((elementsRequired - elementCnt) * elementSz);
 
           // The number of elements is now known
-          if (!SyntaxStack[p + 1][1])
+          if (isIncompleteArr)
             SyntaxStack[p + 1][1] = elementCnt;
         }
 
@@ -4146,7 +4185,7 @@ int ParseDecl(int tok)
 
         if (OutputFormat != FormatFlat)
           puts2(CodeHeader);
-        GenLabel(IdentTable + SyntaxStack[lastSyntaxPtr][1]);
+        GenLabel(IdentTable + SyntaxStack[lastSyntaxPtr][1], Static);
         CurFxnEpilogLabel = LabelCnt++;
         GenFxnProlog();
         GenJumpUncond(locAllocLabel + 1);
