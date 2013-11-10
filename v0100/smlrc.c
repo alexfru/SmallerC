@@ -3291,7 +3291,9 @@ int puts2(char* s)
   int res;
   if (OutFile != NULL)
   {
-    if ((res = fputs(s, OutFile)) >= 0)
+    // Turbo C++ 1.01's fputs() returns EOF if s is empty, which is wrong.
+    // Hence the workaround.
+    if (*s == '\0' || (res = fputs(s, OutFile)) >= 0)
     {
       // unlike puts(), fputs() doesn't append '\n', append it manually
       res = fputc('\n', OutFile);
