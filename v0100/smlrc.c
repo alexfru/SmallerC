@@ -250,7 +250,7 @@ EXTERN int vfprintf(FILE*, char*, void*);
 #define FormatFlat      0
 #define FormatSegmented 1
 
-#define SYNTAX_STACK_MAX 2048
+#define SYNTAX_STACK_MAX (2048+64)
 #define SymVoidSynPtr 0
 #define SymIntSynPtr 1
 #define SymUintSynPtr 2
@@ -3857,8 +3857,10 @@ int ParseDerived(int tok)
 }
 
 // DONE: support extern
+// DONE: support static
 // DONE: support basic initialization
 // DONE: support simple non-array initializations with string literals
+// DONE: support basic 1-d array initialization
 // DONE: global/static data allocations
 int ParseDecl(int tok)
 {
@@ -3939,7 +3941,6 @@ int ParseDecl(int tok)
       if (isFxn && tok == '=')
         error("Error: ParseDecl(): cannot initialize a function\n");
 
-      // TBD!!! this is actually taken care of in ParseDerived(), remove there???
       if (isFxn && tok == '{' && ParseLevel)
         error("Error: ParseDecl(): cannot define a nested function\n");
 
