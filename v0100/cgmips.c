@@ -1175,7 +1175,7 @@ void GenExpr0(void)
         int reg = GenPopReg(MipsOpRegT0);
 
         GenReadIndirect(MipsOpRegT1, reg, v);
-        if (tok == '/' || tok == '%')
+        if (tok == tokAssignDiv || tok == tokAssignMod)
           GenPrintInstr2Operands(MipsInstrDiv, 0,
                                  MipsOpRegT1, 0,
                                  MipsOpRegV0, 0);
@@ -1183,7 +1183,7 @@ void GenExpr0(void)
           GenPrintInstr2Operands(MipsInstrDivU, 0,
                                  MipsOpRegT1, 0,
                                  MipsOpRegV0, 0);
-        if (tok == '%' || tok == tokUMod)
+        if (tok == tokAssignMod || tok == tokAssignUMod)
           GenPrintInstr1Operand(MipsInstrMfHi, 0,
                                 MipsOpRegV0, 0);
         else
