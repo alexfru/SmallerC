@@ -140,10 +140,17 @@ EXTERN int vfprintf(FILE*, char*, void*);
 #define MAX_MACRO_TABLE_LEN  4096
 #define MAX_STRING_TABLE_LEN 512
 #define MAX_IDENT_TABLE_LEN  4096
-#define MAX_INCLUDES         8
 #define MAX_FILE_NAME_LEN    95
+
+#ifndef NO_PREPROCESSOR
+#define MAX_INCLUDES         8
 #define PREP_STACK_SIZE      8
 #define MAX_SEARCH_PATH      256
+#else
+#define MAX_INCLUDES         1
+#define PREP_STACK_SIZE      1
+#define MAX_SEARCH_PATH      1
+#endif
 
 /* +-~* /% &|^! << >> && || < <= > >= == !=  () *[] ++ -- = += -= ~= *= /= %= &= |= ^= <<= >>= {} ,;: -> ... */
 
