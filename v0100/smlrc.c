@@ -247,6 +247,9 @@ EXTERN int vfprintf(FILE*, char*, void*);
 #define tokLocalOfs   'Y'
 #define tokShortCirc  'Z'
 
+#define tokSChar      0x80
+#define tokUChar      0x81
+
 #define FormatFlat      0
 #define FormatSegmented 1
 
@@ -337,7 +340,7 @@ PROTO void error(char* format, ...);
 
 PROTO int FindSymbol(char* s);
 PROTO int SymType(int SynPtr);
-PROTO int GetDeclSize(int SyntaxPtr);
+PROTO int GetDeclSize(int SyntaxPtr, int SizeForDeref);
 
 PROTO int ParseExpr(int tok, int* GotUnary, int* ExprTypeSynPtr, int* ConstExpr, int* ConstVal, int commaSeparator);
 PROTO int GetFxnInfo(int ExprTypeSynPtr, int* MinParams, int* MaxParams, int* ReturnExprTypeSynPtr);
@@ -743,6 +746,7 @@ int GetTokenByWord(char* word)
   if (!strcmp(word, "return")) return tokReturn;
   if (!strcmp(word, "signed")) return tokSigned;
   if (!strcmp(word, "sizeof")) return tokSizeof;
+  if (!strcmp(word, "static")) return tokStatic;
   if (!strcmp(word, "switch")) return tokSwitch;
   if (!strcmp(word, "unsigned")) return tokUnsigned;
   if (!strcmp(word, "void")) return tokVoid;
@@ -760,7 +764,6 @@ int GetTokenByWord(char* word)
   if (!strcmp(word, "register")) return tokRegister;
   if (!strcmp(word, "restrict")) return tokRestrict;
   if (!strcmp(word, "short")) return tokShort;
-  if (!strcmp(word, "static")) return tokStatic;
   if (!strcmp(word, "struct")) return tokStruct;
   if (!strcmp(word, "typedef")) return tokTypedef;
   if (!strcmp(word, "union")) return tokUnion;
@@ -836,6 +839,8 @@ char* GetTokenName(int token)
   case tokCase: return "case";           case tokDefault: return "default";
   case tok_Bool: return "_Bool";         case tok_Complex: return "_Complex";
   case tok_Imagin: return "_Imaginary";  case tok_Asm: return "asm";
+
+  case tokSChar: return "signed char";   case tokUChar: return "unsigned char";
 
   // Helper (pseudo-)tokens:
   case tokNumInt: return "<NumInt>";     case tokNumUint: return "<NumUint>";
@@ -2174,6 +2179,8 @@ void numericTypeCheck(int ExprTypeSynPtr, int tok)
 {
   if (ExprTypeSynPtr >= 0 &&
       (SyntaxStack[ExprTypeSynPtr][0] == tokChar ||
+       SyntaxStack[ExprTypeSynPtr][0] == tokSChar ||
+       SyntaxStack[ExprTypeSynPtr][0] == tokUChar ||
        SyntaxStack[ExprTypeSynPtr][0] == tokInt ||
        SyntaxStack[ExprTypeSynPtr][0] == tokUnsigned))
     return;
@@ -2184,7 +2191,10 @@ void numericTypeCheck(int ExprTypeSynPtr, int tok)
 void promoteType(int* ExprTypeSynPtr, int* TheOtherExprTypeSynPtr)
 {
   // chars must be promoted to ints in expressions as the very first thing
-  if (*ExprTypeSynPtr >= 0 && SyntaxStack[*ExprTypeSynPtr][0] == tokChar)
+  if (*ExprTypeSynPtr >= 0 &&
+      (SyntaxStack[*ExprTypeSynPtr][0] == tokChar ||
+       SyntaxStack[*ExprTypeSynPtr][0] == tokSChar ||
+       SyntaxStack[*ExprTypeSynPtr][0] == tokUChar))
     *ExprTypeSynPtr = SymIntSynPtr;
 
   // ints must be converted to unsigned ints if they are used in binary
@@ -2349,7 +2359,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       if (type == SymLocalVar || type == SymGlobalVar)
       {
         // add implicit dereferences for local/global variables
-        ins2(*idx + 2, tokUnaryStar, GetDeclSize(synPtr));
+        ins2(*idx + 2, tokUnaryStar, GetDeclSize(synPtr, 1));
       }
 
       // return the identifier's type
@@ -2365,7 +2375,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
     s = exprval(idx, ExprTypeSynPtr, ConstExpr);
 
     if (*ExprTypeSynPtr >= 0)
-      s = GetDeclSize(*ExprTypeSynPtr);
+      s = GetDeclSize(*ExprTypeSynPtr, 0);
     else
       s = SizeOfWord;
     if (s == 0)
@@ -2433,12 +2443,13 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       // remove the dereference if that something is an array
       if (SyntaxStack[*ExprTypeSynPtr][0] == '[')
         del(oldIdxRight + 1 - (oldSpRight - sp), 1);
+      // TBD!!! why if and not else if???
       // remove the dereference if that something is a function
       if (SyntaxStack[*ExprTypeSynPtr][0] == '(')
         del(oldIdxRight + 1 - (oldSpRight - sp), 1);
       // else add dereference size in bytes
       else
-        stack[oldIdxRight + 1 - (oldSpRight - sp)][1] = GetDeclSize(*ExprTypeSynPtr);
+        stack[oldIdxRight + 1 - (oldSpRight - sp)][1] = GetDeclSize(*ExprTypeSynPtr, 1);
     }
     else if (SyntaxStack[*ExprTypeSynPtr][0] == '[')
     {
@@ -2453,10 +2464,10 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
         del(oldIdxRight + 1 - (oldSpRight - sp), 1);
       // else add dereference size in bytes
       else
-        stack[oldIdxRight + 1 - (oldSpRight - sp)][1] = GetDeclSize(*ExprTypeSynPtr);
+        stack[oldIdxRight + 1 - (oldSpRight - sp)][1] = GetDeclSize(*ExprTypeSynPtr, 1);
     }
     else
-      error("Error: exprval(): pointer/array expected before '*' or '[]'\n");
+      error("Error: exprval(): pointer/array expected after '*' / before '[]'\n");
 
     *ConstExpr = 0;
     break;
@@ -2493,7 +2504,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       // DONE: index/subscript scaling
       if (ptrmask == 1 && tok == '+') // right-hand expression
       {
-        incSize = GetDeclSize(-RightExprTypeSynPtr);
+        incSize = GetDeclSize(-RightExprTypeSynPtr, 0);
 
         if (constExpr[0])
         {
@@ -2510,7 +2521,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       }
       else if (ptrmask == 2) // left-hand expression
       {
-        incSize = GetDeclSize(-*ExprTypeSynPtr);
+        incSize = GetDeclSize(-*ExprTypeSynPtr, 0);
         if (constExpr[1])
         {
           stack[oldIdxRight - (oldSpRight - sp)][1] *= incSize;
@@ -2524,9 +2535,9 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       }
       else if (ptrmask == 3 && tok == '-')
       {
-        incSize = GetDeclSize(-*ExprTypeSynPtr);
+        incSize = GetDeclSize(-*ExprTypeSynPtr, 0);
         // TBD!!! "ptr1-ptr2": better pointer compatibility test needed
-        if (incSize != GetDeclSize(-RightExprTypeSynPtr))
+        if (incSize != GetDeclSize(-RightExprTypeSynPtr, 0))
           error("Error: exprval(): incompatible pointers\n");
         if (incSize != 1)
         {
@@ -2576,7 +2587,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       del(oldIdxRight - (oldSpRight - sp), 1);
 
       if (*ExprTypeSynPtr < 0)
-        incSize = GetDeclSize(-*ExprTypeSynPtr);
+        incSize = GetDeclSize(-*ExprTypeSynPtr, 0);
 
       if (incSize == 1)
       {
@@ -3084,7 +3095,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       // TBD??? replace +=/-= with prefix ++/-- if incSize == 1
       if (ptrmask == 2) // left-hand expression
       {
-        incSize = GetDeclSize(-*ExprTypeSynPtr);
+        incSize = GetDeclSize(-*ExprTypeSynPtr, 0);
         if (constExpr[1])
         {
           stack[oldIdxRight - (oldSpRight - sp)][1] *= incSize;
@@ -3203,8 +3214,10 @@ int ParseExpr(int tok, int* GotUnary, int* ExprTypeSynPtr, int* ConstExpr, int* 
             case tokPostInc: case tokPostDec:
             case tokAssignAdd: case tokAssignSub:
             case tokPostAdd: case tokPostSub:
-            case tokAssignMul: case tokAssignDiv: case tokAssignMod:
-            case tokAssignLSh: case tokAssignRSh:
+            case tokAssignMul:
+            case tokAssignDiv: case tokAssignMod:
+            case tokAssignUDiv: case tokAssignUMod:
+            case tokAssignLSh: case tokAssignRSh: case tokAssignURSh:
             case tokAssignAnd: case tokAssignXor: case tokAssignOr:
               printf2("(%d)", stack[i][1]);
               break;
@@ -3413,8 +3426,9 @@ void error(char* format, ...)
 
 int TokenStartsDeclaration(int t, int params)
 {
-  return t == tokVoid || t == tokChar || t == tokInt ||
-         t == tokSigned || t == tokUnsigned ||
+  return t == tokVoid ||
+         t == tokChar || t == tokSChar || t == tokUChar ||
+         t == tokInt || t == tokSigned || t == tokUnsigned ||
          (!params && (t == tokExtern || t == tokStatic));
 }
 
@@ -3511,10 +3525,11 @@ int SymType(int SynPtr)
   }
 }
 
-int GetDeclSize(int SyntaxPtr)
+int GetDeclSize(int SyntaxPtr, int SizeForDeref)
 {
   int i;
   unsigned size = 1;
+  int arr = 0;
 
   if (SyntaxPtr < 0)
     return 0;
@@ -3528,6 +3543,10 @@ int GetDeclSize(int SyntaxPtr)
     case tokLocalOfs: // skip local var offset, too
       break;
     case tokChar:
+    case tokSChar:
+      if (!arr && ((tok == tokSChar) || CharIsSigned) && SizeForDeref)
+        return -1; // 1 byte, needing sign extension when converted to int/unsigned int
+    case tokUChar:
       return uint2int(size);
     case tokInt:
     case tokUnsigned:
@@ -3549,6 +3568,7 @@ int GetDeclSize(int SyntaxPtr)
       if (size != truncUint(size))
         error("Error: Variable too big\n");
       i += 2;
+      arr = 1;
       break;
     default:
       return 0;
@@ -3675,6 +3695,8 @@ void DumpDecl(int SyntaxPtr, int IsParam)
       {
       case tokVoid:
       case tokChar:
+      case tokSChar:
+      case tokUChar:
       case tokInt:
       case tokUnsigned:
       case tokEllipsis:
@@ -3767,15 +3789,22 @@ int ParseBase(int tok, int* base)
     tok = GetToken();
 
     if (tok == tokChar)
-      error("Error: ParseBase(): 'signed char' and 'unsigned char' not supported\n");
-
-    if (tok == tokInt)
+    {
+      if (sign == tokUnsigned)
+        *base = tokUChar;
+      else
+        *base = tokSChar;
       tok = GetToken();
-
-    if (sign == tokUnsigned)
-      *base = tokUnsigned;
+    }
     else
-      *base = tokInt;
+    {
+      if (sign == tokUnsigned)
+        *base = tokUnsigned;
+      else
+        *base = tokInt;
+      if (tok == tokInt)
+        tok = GetToken();
+    }
   }
 
   // TBD!!! review/test this fxn
@@ -3980,10 +4009,10 @@ int ParseDecl(int tok)
 
       if (!isFxn)
       {
-        int sz = GetDeclSize(lastSyntaxPtr);
+        int sz = GetDeclSize(lastSyntaxPtr, 0);
 
         if (isArray)
-          elementSz = GetDeclSize(lastSyntaxPtr + 4);
+          elementSz = GetDeclSize(lastSyntaxPtr + 4, 0);
         else
           elementSz = sz;
 
@@ -4354,7 +4383,7 @@ void AddFxnParamSymbols(int SyntaxPtr)
       if (SyntaxStack[i + 1][0] == tokEllipsis) // "ident(something,...)" = no more params
         break;
 
-      sz = GetDeclSize(i);
+      sz = GetDeclSize(i, 0);
       if (sz == 0)
         error("Internal error: AddFxnParamSymbols(): GetDeclSize() = 0\n");
 

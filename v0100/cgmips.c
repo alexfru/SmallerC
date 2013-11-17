@@ -377,26 +377,23 @@ void GenPrintInstr3Operands(int instr, int instrval,
 
 void GenExtendRegIfNeeded(int reg, int opSz)
 {
-  if (opSz == 1)
+  if (opSz == -1)
   {
-    if (CharIsSigned)
-    {
-      GenPrintInstr3Operands(MipsInstrSLL, 0,
-                             reg, 0,
-                             reg, 0,
-                             MipsOpConst, 24);
-      GenPrintInstr3Operands(MipsInstrSRA, 0,
-                             reg, 0,
-                             reg, 0,
-                             MipsOpConst, 24);
-    }
-    else
-    {
-      GenPrintInstr3Operands(MipsInstrAnd, 0,
-                             reg, 0,
-                             reg, 0,
-                             MipsOpConst, 0xFF);
-    }
+    GenPrintInstr3Operands(MipsInstrSLL, 0,
+                           reg, 0,
+                           reg, 0,
+                           MipsOpConst, 24);
+    GenPrintInstr3Operands(MipsInstrSRA, 0,
+                           reg, 0,
+                           reg, 0,
+                           MipsOpConst, 24);
+  }
+  else if (opSz == 1)
+  {
+    GenPrintInstr3Operands(MipsInstrAnd, 0,
+                           reg, 0,
+                           reg, 0,
+                           MipsOpConst, 0xFF);
   }
 }
 
@@ -564,20 +561,17 @@ int GenGetBinaryOperatorInstr(int tok)
 
 void GenReadIdent(int regDst, int opSz, int label)
 {
-  if (opSz == 1)
+  if (opSz == -1)
   {
-    if (CharIsSigned)
-    {
-      GenPrintInstr2Operands(MipsInstrLB, 0,
-                             regDst, 0,
-                             MipsOpLabel, label);
-    }
-    else
-    {
-      GenPrintInstr2Operands(MipsInstrLBU, 0,
-                             regDst, 0,
-                             MipsOpLabel, label);
-    }
+    GenPrintInstr2Operands(MipsInstrLB, 0,
+                           regDst, 0,
+                           MipsOpLabel, label);
+  }
+  else if (opSz == 1)
+  {
+    GenPrintInstr2Operands(MipsInstrLBU, 0,
+                           regDst, 0,
+                           MipsOpLabel, label);
   }
   else
   {
@@ -589,20 +583,17 @@ void GenReadIdent(int regDst, int opSz, int label)
 
 void GenReadLocal(int regDst, int opSz, int ofs)
 {
-  if (opSz == 1)
+  if (opSz == -1)
   {
-    if (CharIsSigned)
-    {
-      GenPrintInstr2Operands(MipsInstrLB, 0,
-                             regDst, 0,
-                             MipsOpIndRegFp, ofs);
-    }
-    else
-    {
-      GenPrintInstr2Operands(MipsInstrLBU, 0,
-                             regDst, 0,
-                             MipsOpIndRegFp, ofs);
-    }
+    GenPrintInstr2Operands(MipsInstrLB, 0,
+                           regDst, 0,
+                           MipsOpIndRegFp, ofs);
+  }
+  else if (opSz == 1)
+  {
+    GenPrintInstr2Operands(MipsInstrLBU, 0,
+                           regDst, 0,
+                           MipsOpIndRegFp, ofs);
   }
   else
   {
@@ -614,20 +605,17 @@ void GenReadLocal(int regDst, int opSz, int ofs)
 
 void GenReadIndirect(int regDst, int regSrc, int opSz)
 {
-  if (opSz == 1)
+  if (opSz == -1)
   {
-    if (CharIsSigned)
-    {
-      GenPrintInstr2Operands(MipsInstrLB, 0,
-                             regDst, 0,
-                             regSrc + MipsOpIndRegZero, 0);
-    }
-    else
-    {
-      GenPrintInstr2Operands(MipsInstrLBU, 0,
-                             regDst, 0,
-                             regSrc + MipsOpIndRegZero, 0);
-    }
+    GenPrintInstr2Operands(MipsInstrLB, 0,
+                           regDst, 0,
+                           regSrc + MipsOpIndRegZero, 0);
+  }
+  else if (opSz == 1)
+  {
+    GenPrintInstr2Operands(MipsInstrLBU, 0,
+                           regDst, 0,
+                           regSrc + MipsOpIndRegZero, 0);
   }
   else
   {
@@ -639,7 +627,7 @@ void GenReadIndirect(int regDst, int regSrc, int opSz)
 
 void GenWriteIdent(int regSrc, int opSz, int label)
 {
-  if (opSz == 1)
+  if (opSz != SizeOfWord)
   {
     GenPrintInstr2Operands(MipsInstrSB, 0,
                            regSrc, 0,
@@ -655,7 +643,7 @@ void GenWriteIdent(int regSrc, int opSz, int label)
 
 void GenWriteLocal(int regSrc, int opSz, int ofs)
 {
-  if (opSz == 1)
+  if (opSz != SizeOfWord)
   {
     GenPrintInstr2Operands(MipsInstrSB, 0,
                            regSrc, 0,
@@ -671,7 +659,7 @@ void GenWriteLocal(int regSrc, int opSz, int ofs)
 
 void GenWriteIndirect(int regDst, int regSrc, int opSz)
 {
-  if (opSz == 1)
+  if (opSz != SizeOfWord)
   {
     GenPrintInstr2Operands(MipsInstrSB, 0,
                            regSrc, 0,
