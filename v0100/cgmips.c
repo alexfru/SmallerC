@@ -37,6 +37,8 @@ either expressed or implied, of the FreeBSD Project.
 /*                                                                           */
 /*****************************************************************************/
 
+int UseGp = 0;
+
 void GenInit(void)
 {
   // initialization of target-specific code generator
@@ -51,10 +53,13 @@ int GenInitParams(int argc, char** argv, int* idx)
 {
 #ifndef __SMALLER_C__
   (void)argc;
-  (void)argv;
-  (void)idx;
 #endif
   // initialization of target-specific code generator with parameters
+  if (!strcmp(argv[*idx], "-use-gp"))
+  {
+    UseGp = 1;
+    return 1;
+  }
   return 0;
 }
 
@@ -290,6 +295,7 @@ void GenPrintInstr(int instr, int val)
 #define MipsOpConst                      0x80
 #define MipsOpLabel                      0x81
 #define MipsOpNumLabel                   0x82
+#define MipsOpLabelGpOption              0x83
 #define MipsOpIndLocal                   MipsOpIndRegFp
 
 void GenPrintOperand(int op, int val)
@@ -307,6 +313,15 @@ void GenPrintOperand(int op, int val)
     switch (op)
     {
     case MipsOpConst: printf2("%d", truncInt(val)); break;
+    case MipsOpLabelGpOption:
+      if (UseGp)
+      {
+        printf2("%%gp_rel(");
+        GenPrintLabel(IdentTable + val);
+        printf2(")($28)");
+        break;
+      }
+      // fallthrough
     case MipsOpLabel: GenPrintLabel(IdentTable + val); break;
     case MipsOpNumLabel: GenPrintNumLabel(val); break;
     default: error("WTF!\n"); break;
@@ -565,19 +580,19 @@ void GenReadIdent(int regDst, int opSz, int label)
   {
     GenPrintInstr2Operands(MipsInstrLB, 0,
                            regDst, 0,
-                           MipsOpLabel, label);
+                           MipsOpLabelGpOption, label);
   }
   else if (opSz == 1)
   {
     GenPrintInstr2Operands(MipsInstrLBU, 0,
                            regDst, 0,
-                           MipsOpLabel, label);
+                           MipsOpLabelGpOption, label);
   }
   else
   {
     GenPrintInstr2Operands(MipsInstrLW, 0,
                            regDst, 0,
-                           MipsOpLabel, label);
+                           MipsOpLabelGpOption, label);
   }
 }
 
@@ -631,13 +646,13 @@ void GenWriteIdent(int regSrc, int opSz, int label)
   {
     GenPrintInstr2Operands(MipsInstrSB, 0,
                            regSrc, 0,
-                           MipsOpLabel, label);
+                           MipsOpLabelGpOption, label);
   }
   else
   {
     GenPrintInstr2Operands(MipsInstrSW, 0,
                            regSrc, 0,
-                           MipsOpLabel, label);
+                           MipsOpLabelGpOption, label);
   }
 }
 
