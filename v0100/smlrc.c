@@ -354,6 +354,9 @@ PROTO int GetFxnInfo(int ExprTypeSynPtr, int* MinParams, int* MaxParams, int* Re
 
 // all data
 
+int verbose = 0;
+int warnCnt = 0;
+
 // avoids signed-to-unsigned comparison warnings with unsigned sizeof(int)
 int intSize = sizeof(int);
 
@@ -737,47 +740,39 @@ void DumpIdentTable(void)
 #endif
 }
 
+unsigned char rwtk[] =
+{
+  tokBreak, tokCase, tokChar, tokCont, tokDefault, tokDo, tokElse,
+  tokExtern, tokFor, tokIf, tokInt, tokReturn, tokSigned, tokSizeof,
+  tokStatic, tokSwitch, tokUnsigned, tokVoid, tokWhile, tok_Asm, tokAuto,
+  tokConst, tokDouble, tokEnum, tokFloat, tokGoto, tokInline, tokLong,
+  tokRegister, tokRestrict, tokShort, tokStruct, tokTypedef, tokUnion,
+  tokVolatile, tok_Bool, tok_Complex, tok_Imagin
+};
+
 int GetTokenByWord(char* word)
 {
-  if (!strcmp(word, "break")) return tokBreak;
-  if (!strcmp(word, "case")) return tokCase;
-  if (!strcmp(word, "char")) return tokChar;
-  if (!strcmp(word, "continue")) return tokCont;
-  if (!strcmp(word, "default")) return tokDefault;
-  if (!strcmp(word, "do")) return tokDo;
-  if (!strcmp(word, "else")) return tokElse;
-  if (!strcmp(word, "extern")) return tokExtern;
-  if (!strcmp(word, "for")) return tokFor;
-  if (!strcmp(word, "if")) return tokIf;
-  if (!strcmp(word, "int")) return tokInt;
-  if (!strcmp(word, "return")) return tokReturn;
-  if (!strcmp(word, "signed")) return tokSigned;
-  if (!strcmp(word, "sizeof")) return tokSizeof;
-  if (!strcmp(word, "static")) return tokStatic;
-  if (!strcmp(word, "switch")) return tokSwitch;
-  if (!strcmp(word, "unsigned")) return tokUnsigned;
-  if (!strcmp(word, "void")) return tokVoid;
-  if (!strcmp(word, "while")) return tokWhile;
-  if (!strcmp(word, "asm")) return tok_Asm;
+  unsigned i, j = 0;
+  char* rws[3];
 
-  if (!strcmp(word, "auto")) return tokAuto;
-  if (!strcmp(word, "const")) return tokConst;
-  if (!strcmp(word, "double")) return tokDouble;
-  if (!strcmp(word, "enum")) return tokEnum;
-  if (!strcmp(word, "float")) return tokFloat;
-  if (!strcmp(word, "goto")) return tokGoto;
-  if (!strcmp(word, "inline")) return tokInline;
-  if (!strcmp(word, "long")) return tokLong;
-  if (!strcmp(word, "register")) return tokRegister;
-  if (!strcmp(word, "restrict")) return tokRestrict;
-  if (!strcmp(word, "short")) return tokShort;
-  if (!strcmp(word, "struct")) return tokStruct;
-  if (!strcmp(word, "typedef")) return tokTypedef;
-  if (!strcmp(word, "union")) return tokUnion;
-  if (!strcmp(word, "volatile")) return tokVolatile;
-  if (!strcmp(word, "_Bool")) return tok_Bool;
-  if (!strcmp(word, "_Complex")) return tok_Complex;
-  if (!strcmp(word, "_Imaginary")) return tok_Imagin;
+  rws[0] = "\7break\0\6case\0\6char\0\12continue\0\11default\0\4do\0\6else\0"
+           "\10extern\0\5for\0\4if\0\5int\0\10return\0\10signed\0\10sizeof\0\0";
+  rws[1] = "\10static\0\10switch\0\12unsigned\0\6void\0\7while\0\5asm\0\6auto\0"
+           "\7const\0\10double\0\6enum\0\7float\0\6goto\0\10inline\0\6long\0\0";
+  rws[2] = "\12register\0\12restrict\0\7short\0\10struct\0\11typedef\0\7union\0"
+           "\12volatile\0\7_Bool\0\12_Complex\0\14_Imaginary\0\0";
+
+  for (i = 0; i < sizeof rws / sizeof rws[0]; i++)
+  {
+    char* p = rws[i];
+    while (*p)
+    {
+      if (!strcmp(p + 1, word))
+        return rwtk[j];
+      p += *p;
+      j++;
+    }
+  }
 
   return tokIdent;
 }
@@ -1040,6 +1035,7 @@ void SkipSpace(int SkipNewLines)
       continue;
     }
 
+#ifndef NO_PREPROCESSOR
     if (*p == '/')
     {
       if (p[1] == '/')
@@ -1079,6 +1075,7 @@ void SkipSpace(int SkipNewLines)
         continue;
       }
     } // endof if (*p == '/')
+#endif
 
     break;
   } // endof while (*p != '\0')
@@ -1965,10 +1962,7 @@ int exprUnary(int tok, int* gotUnary, int commaSeparator)
     }
     else if (tok == tokIdent)
     {
-      int synPtr = FindSymbol(GetTokenIdentName());
-      if (synPtr < 0)
-        error("exprUnary(): undefined identifier '%s'\n", GetTokenIdentName());
-      push2(tok, SyntaxStack[synPtr][1]);
+      push2(tok, AddIdent(GetTokenIdentName()));
       *gotUnary = 1;
       tok = GetToken();
     }
@@ -2350,7 +2344,27 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
   case tokIdent:
     {
       int synPtr = FindSymbol(IdentTable + s);
-      int type = SymType(synPtr);
+      int type;
+      if (synPtr < 0)
+      {
+        if ((*idx + 2 >= sp) || stack[*idx + 2][0] != ')')
+          error("Error: exprval(): undefined identifier '%s'\n", IdentTable + s);
+        else
+        {
+          warnCnt++;
+          if (verbose && OutFile)
+            printf("Warning in \"%s\" (%d:%d): calling undeclared function %s()\n",
+                   FileNames[FileCnt - 1], LineNo, LinePos, IdentTable + s);
+          // Implicitly declare "extern int ident();"
+          GenExtern(IdentTable + s);
+          PushSyntax2(tokIdent, s);
+          PushSyntax('(');
+          PushSyntax(')');
+          PushSyntax(tokInt);
+          synPtr = FindSymbol(IdentTable + s);
+        }
+      }
+      type = SymType(synPtr);
 
       if (!strncmp(IdentTable + SyntaxStack[synPtr][1], "<something", sizeof "<something>" - 1 - 1) &&
           ((*idx + 2 >= sp) || stack[*idx + 2][0] != tokSizeof))
@@ -3779,7 +3793,7 @@ int ParseArrayDimension(int AllowEmptyDimension)
   return tok;
 }
 
-void ParseFxnParams(void);
+void ParseFxnParams(int tok);
 int ParseBlock(int BrkCntSwchTarget[4], int switchBody);
 void AddFxnParamSymbols(int SyntaxPtr);
 
@@ -3830,6 +3844,7 @@ int ParseBase(int tok, int* base)
 int ParseDerived(int tok)
 {
   int stars = 0;
+  int params = 0;
 
   while (tok == '*')
   {
@@ -3840,10 +3855,17 @@ int ParseDerived(int tok)
   if (tok == '(')
   {
     tok = GetToken();
-    tok = ParseDerived(tok);
-    if (tok != ')')
-      error("Error: ParseDerived(): ')' expected\n");
-    tok = GetToken();
+    if (tok != ')' && !TokenStartsDeclaration(tok, 1))
+    {
+      tok = ParseDerived(tok);
+      if (tok != ')')
+        error("Error: ParseDerived(): ')' expected\n");
+      tok = GetToken();
+    }
+    else
+    {
+      params = 1;
+    }
   }
   else if (tok == tokIdent)
   {
@@ -3855,7 +3877,20 @@ int ParseDerived(int tok)
     PushSyntax2(tokIdent, AddIdent("<something>"));
   }
 
-  if (tok == '[')
+  if (params || tok == '(')
+  {
+    if (!params)
+      tok = GetToken();
+    else
+      PushSyntax2(tokIdent, AddIdent("<something>"));
+    PushSyntax('(');
+    ParseLevel++;
+    ParseFxnParams(tok);
+    ParseLevel--;
+    PushSyntax(')');
+    tok = GetToken();
+  }
+  else if (tok == '[')
   {
     // DONE!!! allow the first [] without the dimension in function parameters
     int allowEmptyDimension = 1;
@@ -3872,15 +3907,6 @@ int ParseDerived(int tok)
       DeleteSyntax(oldsp, 1);
       allowEmptyDimension = 0;
     }
-  }
-  else if (tok == '(')
-  {
-    PushSyntax(tok);
-    ParseLevel++;
-    ParseFxnParams();
-    ParseLevel--;
-    PushSyntax(')');
-    tok = GetToken();
   }
 
   while (stars--)
@@ -4219,6 +4245,9 @@ int ParseDecl(int tok)
         int undoIdents = IdentTableLen;
         int locAllocLabel = (LabelCnt += 2) - 2;
 
+        if (verbose && OutFile)
+          printf("%s()\n", IdentTable + SyntaxStack[lastSyntaxPtr][1]);
+
         ParseLevel++;
         GetFxnInfo(lastSyntaxPtr, &CurFxnParamCntMin, &CurFxnParamCntMax, &CurFxnReturnExprTypeSynPtr); // get return type
 
@@ -4267,9 +4296,9 @@ int ParseDecl(int tok)
   return tok;
 }
 
-void ParseFxnParams(void)
+void ParseFxnParams(int tok)
 {
-  int tok, base;
+  int base;
   int lastSyntaxPtr;
   int cnt = 0;
   int ellCnt = 0;
@@ -4277,8 +4306,6 @@ void ParseFxnParams(void)
   for (;;)
   {
     lastSyntaxPtr = SyntaxStackCnt;
-
-    tok = GetToken();
 
     if (tok == ')') /* unspecified params */
       break;
@@ -4348,6 +4375,7 @@ void ParseFxnParams(void)
       if (tok == ')')
         break;
 
+      tok = GetToken();
       continue;
     }
 
@@ -4975,7 +5003,7 @@ int ParseBlock(int BrkCntSwchTarget[4], int switchBody)
     {
       tok = ParseDecl(tok);
     }
-    else if (ParseLevel > 0)
+    else if (ParseLevel > 0 || tok == tok_Asm)
     {
       tok = ParseStatement(tok, BrkCntSwchTarget, switchBody);
     }
@@ -5033,6 +5061,11 @@ int main(int argc, char** argv)
     {
       // this is the default option for MIPS
       UseLeadingUnderscores = 0;
+      continue;
+    }
+    else if (!strcmp(argv[i], "-verbose"))
+    {
+      verbose = 1;
       continue;
     }
 #ifndef NO_PREPROCESSOR
@@ -5154,6 +5187,8 @@ int main(int argc, char** argv)
 #endif
   DumpIdentTable();
 
+  if (verbose && warnCnt && OutFile)
+    printf("%d warnings\n", warnCnt);
   GenStartCommentLine(); printf2("Compilation succeeded.\n");
 
   if (OutFile != NULL)

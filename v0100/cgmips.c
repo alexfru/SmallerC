@@ -156,18 +156,18 @@ void GenAddrData(int Size, char* Label)
 #define MipsInstrMov    0x01
 #define MipsInstrMfLo   0x02
 #define MipsInstrMfHi   0x03
-#define MipsInstrMovZ   0x04
-#define MipsInstrMovN   0x05
+//#define MipsInstrMovZ   0x04
+//#define MipsInstrMovN   0x05
 #define MipsInstrLA     0x06
 #define MipsInstrLI     0x07
-#define MipsInstrLUI    0x08
+//#define MipsInstrLUI    0x08
 #define MipsInstrLB     0x09
 #define MipsInstrLBU    0x0A
-#define MipsInstrLH     0x0B
-#define MipsInstrLHU    0x0C
+//#define MipsInstrLH     0x0B
+//#define MipsInstrLHU    0x0C
 #define MipsInstrLW     0x0D
 #define MipsInstrSB     0x0E
-#define MipsInstrSH     0x0F
+//#define MipsInstrSH     0x0F
 #define MipsInstrSW     0x10
 #define MipsInstrAddU   0x11
 #define MipsInstrSubU   0x12
@@ -187,11 +187,11 @@ void GenAddrData(int Size, char* Label)
 #define MipsInstrJAL    0x20
 #define MipsInstrBEQ    0x21
 #define MipsInstrBNE    0x22
-#define MipsInstrBLTZ   0x23
-#define MipsInstrBGEZ   0x24
-#define MipsInstrBLEZ   0x25
-#define MipsInstrBGTZ   0x26
-#define MipsInstrBreak  0x27
+//#define MipsInstrBLTZ   0x23
+//#define MipsInstrBGEZ   0x24
+//#define MipsInstrBLEZ   0x25
+//#define MipsInstrBGTZ   0x26
+//#define MipsInstrBreak  0x27
 
 void GenPrintInstr(int instr, int val)
 {
@@ -207,18 +207,18 @@ void GenPrintInstr(int instr, int val)
   case MipsInstrMov  : p = "move"; break;
   case MipsInstrMfLo : p = "mflo"; break;
   case MipsInstrMfHi : p = "mfhi"; break;
-  case MipsInstrMovZ : p = "movz"; break;
-  case MipsInstrMovN : p = "movn"; break;
+//  case MipsInstrMovZ : p = "movz"; break;
+//  case MipsInstrMovN : p = "movn"; break;
   case MipsInstrLA   : p = "la"; break;
   case MipsInstrLI   : p = "li"; break;
-  case MipsInstrLUI  : p = "lui"; break;
+//  case MipsInstrLUI  : p = "lui"; break;
   case MipsInstrLB   : p = "lb"; break;
   case MipsInstrLBU  : p = "lbu"; break;
-  case MipsInstrLH   : p = "lh"; break;
-  case MipsInstrLHU  : p = "lhu"; break;
+//  case MipsInstrLH   : p = "lh"; break;
+//  case MipsInstrLHU  : p = "lhu"; break;
   case MipsInstrLW   : p = "lw"; break;
   case MipsInstrSB   : p = "sb"; break;
-  case MipsInstrSH   : p = "sh"; break;
+//  case MipsInstrSH   : p = "sh"; break;
   case MipsInstrSW   : p = "sw"; break;
   case MipsInstrAddU : p = "addu"; break;
   case MipsInstrSubU : p = "subu"; break;
@@ -238,11 +238,11 @@ void GenPrintInstr(int instr, int val)
   case MipsInstrJAL  : p = "jal"; break;
   case MipsInstrBEQ  : p = "beq"; break;
   case MipsInstrBNE  : p = "bne"; break;
-  case MipsInstrBLTZ : p = "bltz"; break;
-  case MipsInstrBGEZ : p = "bgez"; break;
-  case MipsInstrBLEZ : p = "blez"; break;
-  case MipsInstrBGTZ : p = "bgtz"; break;
-  case MipsInstrBreak: p = "break"; break;
+//  case MipsInstrBLTZ : p = "bltz"; break;
+//  case MipsInstrBGEZ : p = "bgez"; break;
+//  case MipsInstrBLEZ : p = "blez"; break;
+//  case MipsInstrBGTZ : p = "bgtz"; break;
+//  case MipsInstrBreak: p = "break"; break;
   }
 
   printf2("\t%s\t", p);
