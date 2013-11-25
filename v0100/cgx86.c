@@ -501,7 +501,7 @@ void GenPrintInstr1Operand(int instr, int instrval, int operand, int operandval)
 
 void GenPrintInstr2Operands(int instr, int instrval, int operand1, int operand1val, int operand2, int operand2val)
 {
-  if (operand2 == X86OpConst && operand2val == 0 &&
+  if (operand2 == X86OpConst && truncUint(operand2val) == 0 &&
       (instr == X86InstrAdd || instr == X86InstrSub))
     return;
 
