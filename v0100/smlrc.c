@@ -2734,18 +2734,22 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
           {
             sl = truncInt(sl);
             sr = truncInt(sr);
+            // TBD!!! add warning
             if (sr == 0 || (sl == INT_MIN && sr == -1) || sl / sr != truncInt(sl / sr))
-              error("Error: exprval(): division overflow\n");
-            if (tok == '/')
+              //error("exprval(): division overflow\n");
+              *ConstExpr = sl = 0;
+            else if (tok == '/')
               sl /= sr;
             else
               sl %= sr;
           }
           else
           {
+            // TBD!!! add warning
             if (truncUint(sr) == 0)
-              error("Error: exprval(): division overflow\n");
-            if (tok == '/')
+              //error("exprval(): division overflow\n");
+              *ConstExpr = sl = 0;
+            else if (tok == '/')
               sl = uint2int(truncUint(sl) / truncUint(sr));
             else
               sl = uint2int(truncUint(sl) % truncUint(sr));
@@ -2908,7 +2912,8 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
 
   // implicit pseudo-conversion to _Bool of operands of && and ||
   case tok_Bool:
-    s = exprval(idx, ExprTypeSynPtr, ConstExpr) != 0;
+    s = exprval(idx, ExprTypeSynPtr, ConstExpr);
+    s = truncInt(s) != 0;
     nonVoidTypeCheck(*ExprTypeSynPtr, tok);
     decayArray(ExprTypeSynPtr, 0);
     *ExprTypeSynPtr = SymIntSynPtr;
@@ -2980,13 +2985,25 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       sl = exprval(idx, ExprTypeSynPtr, &constExpr[0]);
 
       if (tok == tokLogAnd)
-        sl = sl && sr;
+        s = sl && sr;
       else
-        sl = sl || sr;
+        s = sl || sr;
 
-      s = sl;
       *ExprTypeSynPtr = SymIntSynPtr;
       *ConstExpr = constExpr[0] && constExpr[1] && canSimplify;
+      if (constExpr[0])
+      {
+        if (tok == tokLogAnd)
+        {
+          if (!sl)
+            *ConstExpr = 1, s = 0;
+        }
+        else
+        {
+          if (sl)
+            *ConstExpr = s = 1;
+        }
+      }
       simplifyConstExpr(s, *ConstExpr, ExprTypeSynPtr, oldIdxRight + 1 - (oldSpRight - sp), *idx + 1);
     }
     break;
