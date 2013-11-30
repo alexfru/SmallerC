@@ -324,7 +324,11 @@ void GenPrintOperand(int op, int val)
       // fallthrough
     case MipsOpLabel: GenPrintLabel(IdentTable + val); break;
     case MipsOpNumLabel: GenPrintNumLabel(val); break;
-    default: error("WTF!\n"); break;
+
+    default:
+      //error("WTF!\n");
+      errorInternal(100);
+      break;
     }
   }
 }
@@ -569,7 +573,8 @@ int GenGetBinaryOperatorInstr(int tok)
     return MipsInstrSRL;
 
   default:
-    error("Error: Invalid operator\n");
+    //error("Error: Invalid operator\n");
+    errorInternal(101);
     return 0;
   }
 }
@@ -1372,7 +1377,8 @@ void GenExpr0(void)
       break;
 
     default:
-      error("Error: Internal Error: GenExpr0(): unexpected token %s\n", GetTokenName(tok));
+      //error("Error: Internal Error: GenExpr0(): unexpected token %s\n", GetTokenName(tok));
+      errorInternal(102);
       break;
     }
   }

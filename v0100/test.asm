@@ -2915,14 +2915,14 @@ L283:
 ; loc     xx : (@-20): int
 ; RPN'ized expression: "xx sizeof "
 ; Expanded expression: "2u "
-; Expression value: 2
+; Expression value: 2u
 ; RPN'ized expression: "2 "
 ; Expanded expression: "2 "
 ; Expression value: 2
 ; loc     yy : (@-28): [2u] [2u] int
 ; RPN'ized expression: "L284 sizeof "
 ; Expanded expression: "3u "
-; Expression value: 3
+; Expression value: 3u
 ; RPN'ized expression: "2 "
 ; Expanded expression: "2 "
 ; Expression value: 2
@@ -3167,11 +3167,11 @@ L316:
 ; loc     <something> : [3u] int
 ; RPN'ized expression: "( , L318 printf <something322> sizeof "
 ; Expanded expression: "  L318 printf 6u "
-; Expression value: 6
+; Expression value: 6u
 ; loc     <something> : [6u] int
 ; RPN'ized expression: "( , L318 printf <something321> sizeof "
 ; Expanded expression: "  L318 printf 12u "
-; Expression value: 12
+; Expression value: 12u
 ; loc     <something> : [12u] int
 ; RPN'ized expression: "( <something320> sizeof , L318 printf ) "
 ; Expanded expression: " 24u  L318  printf ()4 "
@@ -3190,15 +3190,15 @@ L319:
 ; loc     <something> : [3u] int
 ; RPN'ized expression: "<something325> sizeof "
 ; Expanded expression: "6u "
-; Expression value: 6
+; Expression value: 6u
 ; loc     <something> : [6u] int
 ; RPN'ized expression: "<something324> sizeof "
 ; Expanded expression: "12u "
-; Expression value: 12
+; Expression value: 12u
 ; loc     <something> : [12u] int
 ; RPN'ized expression: "<something323> sizeof "
 ; Expanded expression: "24u "
-; Expression value: 24
+; Expression value: 24u
 ; loc     yui : (@-70): [24u] char
 ; loc     <something> : * () char
 ; RPN'ized expression: "( <something328> sizeof , L326 printf ) "
@@ -3307,11 +3307,11 @@ L346:
 ; loc     <something> : [5u] int
 ; RPN'ized expression: "( , L352 , L350 , L348 printf <something357> sizeof <something358> sizeof + "
 ; Expanded expression: "  L352  L350  L348 printf 16u "
-; Expression value: 16
+; Expression value: 16u
 ; loc     <something> : [16u] int
 ; RPN'ized expression: "( , L352 , L350 , L348 printf <something356> sizeof "
 ; Expanded expression: "  L352  L350  L348 printf 32u "
-; Expression value: 32
+; Expression value: 32u
 ; loc     <something> : [32u] int
 ; RPN'ized expression: "( , L352 , L350 , L348 printf <something355> sizeof 7 "
 ; Expanded expression: "  L352  L350  L348 printf <something355> sizeof 7 "
@@ -3323,15 +3323,15 @@ L346:
 ; loc     <something> : [9u] int
 ; RPN'ized expression: "( , L352 , L350 , L348 printf <something355> sizeof <something361> sizeof <something362> sizeof + "
 ; Expanded expression: "  L352  L350  L348 printf <something355> sizeof 32u "
-; Expression value: 32
+; Expression value: 32u
 ; loc     <something> : [32u] int
 ; RPN'ized expression: "( , L352 , L350 , L348 printf <something355> sizeof <something360> sizeof "
 ; Expanded expression: "  L352  L350  L348 printf <something355> sizeof 64u "
-; Expression value: 64
+; Expression value: 64u
 ; loc     <something> : [64u] int
 ; RPN'ized expression: "( , L352 , L350 , L348 printf <something355> sizeof <something359> sizeof + "
 ; Expanded expression: "  L352  L350  L348 printf 192u "
-; Expression value: 192
+; Expression value: 192u
 ; loc     <something> : [192u] int
 ; RPN'ized expression: "( <something354> sizeof , L352 , L350 , L348 printf ) "
 ; Expanded expression: " 384u  L352  L350  L348  printf ()8 "
@@ -4593,7 +4593,7 @@ L430:
 	jmp	L429
 
 ; Syntax/declaration table/stack:
-; Bytes used: 2024/16896
+; Bytes used: 2024/18432
 
 
 ; Macro table:
@@ -4650,6 +4650,6 @@ L430:
 ; Ident macros
 ; Ident Hola
 ; Ident Switch
-; Bytes used: 301/4096
+; Bytes used: 301/4224
 
 ; Compilation succeeded.

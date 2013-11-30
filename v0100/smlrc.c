@@ -139,7 +139,7 @@ EXTERN int vfprintf(FILE*, char*, void*);
 #define MAX_CHAR_QUEUE_LEN   256
 #define MAX_MACRO_TABLE_LEN  4096
 #define MAX_STRING_TABLE_LEN 512
-#define MAX_IDENT_TABLE_LEN  4096
+#define MAX_IDENT_TABLE_LEN  (4096+128)
 #define MAX_FILE_NAME_LEN    95
 
 #ifndef NO_PREPROCESSOR
@@ -260,7 +260,7 @@ EXTERN int vfprintf(FILE*, char*, void*);
 #define FormatFlat      0
 #define FormatSegmented 1
 
-#define SYNTAX_STACK_MAX (2048+64)
+#define SYNTAX_STACK_MAX (2048+256)
 #define SymVoidSynPtr 0
 #define SymIntSynPtr 1
 #define SymUintSynPtr 2
@@ -343,7 +343,24 @@ PROTO int ParseDecl(int tok);
 PROTO void ShiftChar(void);
 PROTO int puts2(char*);
 PROTO int printf2(char*, ...);
+
 PROTO void error(char* format, ...);
+PROTO void warning(char* format, ...);
+PROTO void errorFile(char* n);
+PROTO void errorFileName(void);
+PROTO void errorInternal(int n);
+PROTO void errorChrStr(void);
+PROTO void errorUnexpectedToken(int tok);
+PROTO void errorDirective(void);
+PROTO void errorCtrlOutOfScope(void);
+PROTO void errorDecl(void);
+PROTO void errorVarSize(void);
+PROTO void errorInit(void);
+PROTO void errorUnexpectedVoid(void);
+PROTO void errorOpType(void);
+PROTO void errorNotLvalue(void);
+PROTO void errorNotConst(void);
+PROTO void errorLongExpr(void);
 
 PROTO int FindSymbol(char* s);
 PROTO int SymType(int SynPtr);
@@ -585,10 +602,10 @@ void AddMacroIdent(char* name)
   int l = strlen(name);
 
   if (l >= 127)
-    error("Error: Macro identifier too long '%s'\n", name);
+    error("Macro identifier too long '%s'\n", name);
 
   if (MAX_MACRO_TABLE_LEN - MacroTableLen < l + 3)
-    error("Error: Macro table full\n");
+    error("Macro table exhausted\n");
 
   MacroTable[MacroTableLen++] = l + 1; // idlen
   strcpy(MacroTable + MacroTableLen, name);
@@ -611,10 +628,10 @@ void AddMacroExpansionChar(char e)
   }
 
   if (MacroTableLen + 1 + MacroTable[MacroTableLen] >= MAX_MACRO_TABLE_LEN)
-    error("Error: Macro table full\n");
+    error("Macro table exhausted\n");
 
   if (MacroTable[MacroTableLen] >= 127)
-    error("Error: Macro definition too long\n");
+    error("Macro definition too long\n");
 
   MacroTable[MacroTableLen + 1 + MacroTable[MacroTableLen]] = e;
   MacroTable[MacroTableLen]++;
@@ -658,10 +675,10 @@ void PurgeStringTable(void)
 void AddString(int label, char* str, int len)
 {
   if (len > 127)
-    error("Error: String too long\n");
+    error("String literal too long\n");
 
   if (MAX_STRING_TABLE_LEN - StringTableLen < /*sizeof(label)*/intSize + 1 + len)
-    error("Error: String table full\n");
+    error("String table exhausted\n");
 
   memcpy(StringTable + StringTableLen, &label, sizeof(label));
   StringTableLen += sizeof(label);
@@ -713,10 +730,10 @@ int AddIdent(char* name)
   len = strlen(name);
 
   if (len >= 127)
-    error("Error: Identifier table too long\n");
+    error("Identifier too long\n");
 
   if (MAX_IDENT_TABLE_LEN - IdentTableLen < len + 2)
-    error("Error: Identifier table full\n");
+    error("Identifier table exhausted\n");
 
   strcpy(IdentTable + IdentTableLen, name);
   IdentTableLen += len + 1;
@@ -850,7 +867,8 @@ char* GetTokenName(int token)
   case tokLocalOfs: return "<LocalOfs>"; case tokShortCirc: return "<ShortCirc>";
   }
 
-  error("Internal Error: GetTokenName(): Invalid token %d\n", token);
+  //error("Internal Error: GetTokenName(): Invalid token %d\n", token);
+  errorInternal(1);
   return "";
 }
 
@@ -926,10 +944,11 @@ void IncludeFile(int quot)
   int nlen = strlen(TokenValueString);
 
   if (CharQueueLen != 3)
-    error("Error: #include parsing error\n");
+    //error("#include parsing error\n");
+    errorInternal(2);
 
   if (FileCnt >= MAX_INCLUDES)
-    error("Error: Too many include files\n");
+    error("Too many include files\n");
 
   // store the including file's position and buffered chars
   LineNos[FileCnt - 1] = LineNo;
@@ -939,7 +958,8 @@ void IncludeFile(int quot)
   // open the included file
 
   if (nlen > MAX_FILE_NAME_LEN)
-    error("Error: File name too long\n");
+    //error("File name too long\n");
+    errorFileName();
 
   // DONE: differentiate between quot == '\"' and quot == '<'
 
@@ -978,10 +998,11 @@ void IncludeFile(int quot)
 
   if (Files[FileCnt] == NULL)
   {
-    if (quot == '<' && !SearchPathsLen)
-      error("Error: Cannot open file \"%s\", include search path unspecified\n", TokenValueString);
+    //if (quot == '<' && !SearchPathsLen)
+    //  error("Cannot open file \"%s\", include search path unspecified\n", TokenValueString);
 
-    error("Error: Cannot open file \"%s\"\n", TokenValueString);
+    //error("Cannot open file \"%s\"\n", TokenValueString);
+    errorFile(TokenValueString);
   }
 
   // reset line/pos and empty the char queue
@@ -1055,7 +1076,7 @@ void SkipSpace(int SkipNewLines)
           if (strchr("\r\n", *p))
           {
             if (!SkipNewLines)
-              error("Error: Invalid comment\n");
+              error("Invalid comment\n");
 
             if (*p == '\r' && p[1] == '\n')
               ShiftChar();
@@ -1070,7 +1091,7 @@ void SkipSpace(int SkipNewLines)
           }
         }
         if (*p == '\0')
-          error("Error: Invalid comment\n");
+          error("Invalid comment\n");
         ShiftCharN(2);
         continue;
       }
@@ -1086,11 +1107,12 @@ void GetIdent(void)
   char* p = CharQueue;
 
   if (*p != '_' && !isalpha(*p))
-    error("Error: Identifier expected\n");
+    error("Identifier expected\n");
 
   if ((*p == 'L' || *p == 'l') &&
       (p[1] == '\'' || p[1] == '\"'))
-    error("Error: Wide characters and strings not supported\n");
+    //error("Wide characters and strings not supported\n");
+    errorChrStr();
 
   TokenIdentNameLen = 0;
   TokenIdentName[TokenIdentNameLen++] = *p;
@@ -1100,7 +1122,7 @@ void GetIdent(void)
   while (*p == '_' || isalnum(*p))
   {
     if (TokenIdentNameLen == MAX_IDENT_LEN)
-      error("Error: Identifier name too long '%s'\n", TokenIdentName);
+      error("Identifier too long '%s'\n", TokenIdentName);
     TokenIdentName[TokenIdentNameLen++] = *p;
     TokenIdentName[TokenIdentNameLen] = '\0';
     ShiftCharN(1);
@@ -1153,7 +1175,8 @@ void GetString(char terminator, int SkipNewLines)
               cnt++;
             }
             if (!cnt)
-              error("Error: Unsupported or invalid character/string constant\n");
+              //error("Unsupported or invalid character/string constant\n");
+              errorChrStr();
             c -= (c >= 0x80 && CHAR_MIN) * 0x100;
             ch = c;
           }
@@ -1172,7 +1195,8 @@ void GetString(char terminator, int SkipNewLines)
               cnt++;
             }
             if (!cnt)
-              error("Error: Unsupported or invalid character/string constant\n");
+              //error("Unsupported or invalid character/string constant\n");
+              errorChrStr();
             c -= (c >= 0x80 && CHAR_MIN) * 0x100;
             ch = c;
           }
@@ -1191,17 +1215,19 @@ void GetString(char terminator, int SkipNewLines)
       if (terminator == '\'')
       {
         if (TokenStringLen != 0)
-          error("Error: Character constant too long\n");
+          //error("Character constant too long\n");
+          errorChrStr();
       }
       else if (TokenStringLen == MAX_STRING_LEN)
-        error("Error: String constant too long\n");
+        error("String literal too long\n");
 
       TokenValueString[TokenStringLen++] = ch;
       TokenValueString[TokenStringLen] = '\0';
     } // endof while (!(*p == '\0' || *p == terminator || strchr("\a\b\f\n\r\t\v", *p)))
 
     if (*p != terminator)
-      error("Error: Unsupported or invalid character/string constant\n");
+      //error("Unsupported or invalid character/string constant\n");
+      errorChrStr();
 
     ShiftCharN(1);
 
@@ -1219,7 +1245,8 @@ void GetString(char terminator, int SkipNewLines)
 #ifndef NO_PREPROCESSOR
 void pushPrep(int NoSkip)
 {
-  if (PrepSp >= PREP_STACK_SIZE) error("Error: too many #if(n)def's\n");
+  if (PrepSp >= PREP_STACK_SIZE)
+    error("Too many #if(n)def's\n");
   PrepStack[PrepSp][0] = PrepDontSkipTokens;
   PrepStack[PrepSp++][1] = NoSkip;
   PrepDontSkipTokens &= NoSkip;
@@ -1227,7 +1254,8 @@ void pushPrep(int NoSkip)
 
 int popPrep(void)
 {
-  if (PrepSp <= 0) error("Error: #else or #endif without #if(n)def\n");
+  if (PrepSp <= 0)
+    error("#else or #endif without #if(n)def\n");
   PrepDontSkipTokens = PrepStack[--PrepSp][0];
   return PrepStack[PrepSp][1];
 }
@@ -1240,6 +1268,7 @@ int GetNumber(void)
   unsigned n = 0;
   int type = 0;
   int uSuffix = 0;
+  char* eTooBig = "Constant too big\n";
 
   if (ch == '0')
   {
@@ -1257,13 +1286,13 @@ int GetNumber(void)
         else if (ch >= 'A') ch -= 'A' - 10;
         else ch -= '0';
         if (PrepDontSkipTokens && (n * 16 / 16 != n || n * 16 + ch < n * 16))
-          error("Error: Constant too big\n");
+          error(eTooBig);
         n = n * 16 + ch;
         ShiftCharN(1);
         cnt++;
       }
       if (!cnt)
-        error("Error: Invalid hexadecimal constant\n");
+        error("Invalid hexadecimal constant\n");
       type = 'h';
     }
     // this is an octal constant
@@ -1271,7 +1300,7 @@ int GetNumber(void)
     {
       ch -= '0';
       if (PrepDontSkipTokens && (n * 8 / 8 != n || n * 8 + ch < n * 8))
-        error("Error: Constant too big\n");
+        error(eTooBig);
       n = n * 8 + ch;
       ShiftCharN(1);
     }
@@ -1284,7 +1313,7 @@ int GetNumber(void)
     {
       ch -= '0';
       if (PrepDontSkipTokens && (n * 10 / 10 != n || n * 10 + ch < n * 10))
-        error("Error: Constant too big\n");
+        error(eTooBig);
       n = n * 10 + ch;
       ShiftCharN(1);
     }
@@ -1306,7 +1335,7 @@ int GetNumber(void)
   // Ensure the constant fits into 16(32) bits
   if ((SizeOfWord == 2 && n >> 8 >> 8) || // equiv. to SizeOfWord == 2 && n > 0xFFFF
       (SizeOfWord == 4 && n >> 8 >> 12 >> 12)) // equiv. to SizeOfWord == 4 && n > 0xFFFFFFFF
-    error("Error: Constant too big for %d-bit type\n", SizeOfWord * 8);
+    error("Constant too big for %d-bit type\n", SizeOfWord * 8);
 
   TokenValueInt = uint2int(n);
 
@@ -1322,7 +1351,7 @@ int GetNumber(void)
   // into an int since currently there's no next bigger signed type
   // (e.g. long) to use instead of int.
   if (!uSuffix && type == 'd')
-    error("Error: Constant too big for %d-bit signed type\n", SizeOfWord * 8);
+    error("Constant too big for %d-bit signed type\n", SizeOfWord * 8);
 
   return tokNumUint;
 }
@@ -1405,7 +1434,8 @@ int GetTokenInner(void)
     if (ch == '\'')
     {
       if (TokenStringLen != 1)
-        error("Error: Character constant too short\n");
+        //error("Character constant too short\n");
+        errorChrStr();
 
       TokenValueInt = TokenValueString[0] & 0xFF;
       TokenValueInt -= (CharIsSigned && TokenValueInt >= 0x80) * 0x100;
@@ -1472,7 +1502,7 @@ int GetToken(void)
         int len = MacroTable[midx];
 
         if (MAX_CHAR_QUEUE_LEN - CharQueueLen < len + 1)
-          error("Error: Macro expansion is too long at '%s'\n", TokenIdentName);
+          error("Too long expansion of macro '%s'\n", TokenIdentName);
 
         memmove(CharQueue + len + 1, CharQueue, CharQueueLen);
 
@@ -1513,9 +1543,10 @@ int GetToken(void)
         }
 
         if (FindMacro(TokenIdentName) >= 0)
-          error("Error: Redefinition of macro '%s'\n", TokenIdentName);
+          error("Redefinition of macro '%s'\n", TokenIdentName);
         if (*p == '(')
-          error("Error: Unsupported type of macro '%s'\n", TokenIdentName);
+          //error("Unsupported type of macro '%s'\n", TokenIdentName);
+          errorDirective();
 
         AddMacroIdent(TokenIdentName);
 
@@ -1547,7 +1578,8 @@ int GetToken(void)
 
         SkipSpace(0);
         if (!strchr("\r\n", *p))
-          error("Error: Invalid preprocessor directive\n");
+          //error("Invalid preprocessor directive\n");
+          errorDirective();
         continue;
       }
       else if (!strcmp(TokenIdentName, "include"))
@@ -1563,11 +1595,13 @@ int GetToken(void)
         else if (*p == '<')
           GetString('>', 0);
         else
-          error("Error: Invalid file name\n");
+          //error("Invalid file name\n");
+          errorFileName();
 
         SkipSpace(0);
         if (!strchr("\r\n", *p))
-          error("Error: Unsupported or invalid preprocessor directive\n");
+          //error("Unsupported or invalid preprocessor directive\n");
+          errorDirective();
 
         if (PrepDontSkipTokens)
           IncludeFile(quot);
@@ -1583,7 +1617,8 @@ int GetToken(void)
         def = FindMacro(TokenIdentName) >= 0;
         SkipSpace(0);
         if (!strchr("\r\n", *p))
-          error("Error: Invalid preprocessor directive\n");
+          //error("Invalid preprocessor directive\n");
+          errorDirective();
         pushPrep(def);
         continue;
       }
@@ -1596,7 +1631,8 @@ int GetToken(void)
         def = FindMacro(TokenIdentName) >= 0;
         SkipSpace(0);
         if (!strchr("\r\n", *p))
-          error("Error: Invalid preprocessor directive\n");
+          //error("Invalid preprocessor directive\n");
+          errorDirective();
         pushPrep(!def);
         continue;
       }
@@ -1605,10 +1641,11 @@ int GetToken(void)
         int def;
         SkipSpace(0);
         if (!strchr("\r\n", *p))
-          error("Error: Invalid preprocessor directive\n");
+          //error("Invalid preprocessor directive\n");
+          errorDirective();
         def = popPrep();
         if (def >= 2)
-          error("Error: #else without #if(n)def\n");
+          error("#else or #endif without #if(n)def\n");
         pushPrep(2 + !def); // #else works in opposite way to its preceding #if(n)def
         continue;
       }
@@ -1616,12 +1653,14 @@ int GetToken(void)
       {
         SkipSpace(0);
         if (!strchr("\r\n", *p))
-          error("Error: Invalid preprocessor directive\n");
+          //error("Invalid preprocessor directive\n");
+          errorDirective();
         popPrep();
         continue;
       }
 
-      error("Error: Unsupported or invalid preprocessor directive\n");
+      //error("Unsupported or invalid preprocessor directive\n");
+      errorDirective();
     } // endof if (ch == '#')
 #else // #ifndef NO_PREPROCESSOR
     if (ch == '#')
@@ -1640,7 +1679,8 @@ int GetToken(void)
       SkipSpace(0);
 
       if (!isdigit(*p) || GetNumber() != tokNumInt)
-        error("Error: Invalid line number in preprocessor output\n");
+        //error("Invalid line number in preprocessor output\n");
+        errorDirective();
       line = GetTokenValueInt();
 
       SkipSpace(0);
@@ -1650,17 +1690,20 @@ int GetToken(void)
       else if (*p == '<')
         GetString('>', 0);
       else
-        error("Error: Invalid file name in preprocessor output\n");
+        //error("Invalid file name in preprocessor output\n");
+        errorFileName();
 
       if (strlen(GetTokenValueString()) > MAX_FILE_NAME_LEN)
-        error("Error: File name too long in preprocessor output\n");
+        //error("File name too long in preprocessor output\n");
+        errorFileName();
 
       SkipSpace(0);
 
       while (!strchr("\r\n", *p))
       {
         if (!isdigit(*p) || GetNumber() != tokNumInt)
-          error("Error: Invalid flag in preprocessor output\n");
+          //error("Invalid flag in preprocessor output\n");
+          errorDirective();
         SkipSpace(0);
       }
 
@@ -1672,7 +1715,7 @@ int GetToken(void)
     } // endof if (ch == '#')
 #endif // #ifndef NO_PREPROCESSOR
 
-    error("Error: Unsupported or invalid character '%c'\n", *p);
+    error("Invalid or unsupported character with code 0x%02X\n", *p & 0xFFu);
   } // endof for (;;)
 
   return tokEof;
@@ -1688,7 +1731,9 @@ int GetToken(void)
 
 void push2(int v, int v2)
 {
-  if (sp >= STACK_SIZE) error("Error: expression stack overflow!\n");
+  if (sp >= STACK_SIZE)
+    //error("expression stack overflow!\n");
+    errorLongExpr();
   stack[sp][0] = v;
   stack[sp++][1] = v2;
 }
@@ -1700,7 +1745,9 @@ void push(int v)
 
 int stacktop()
 {
-  if (sp == 0) error("Error: expression stack underflow!\n");
+  if (sp == 0)
+    //error("expression stack underflow!\n");
+    errorInternal(3);
   return stack[sp - 1][0];
 }
 
@@ -1720,7 +1767,9 @@ int pop()
 
 void ins2(int pos, int v, int v2)
 {
-  if (sp >= STACK_SIZE) error("Error: expression stack overflow!\n");
+  if (sp >= STACK_SIZE)
+    //error("expression stack overflow!\n");
+    errorLongExpr();
   memmove(&stack[pos + 1], &stack[pos], sizeof(stack[0]) * (sp - pos));
   stack[pos][0] = v;
   stack[pos][1] = v2;
@@ -1742,7 +1791,9 @@ void del(int pos, int cnt)
 
 void pushop2(int v, int v2)
 {
-  if (opsp >= OPERATOR_STACK_SIZE) error("Error: operator stack overflow!\n");
+  if (opsp >= OPERATOR_STACK_SIZE)
+    //error("operator stack overflow!\n");
+    errorLongExpr();
   opstack[opsp][0] = v;
   opstack[opsp++][1] = v2;
 }
@@ -1754,7 +1805,9 @@ void pushop(int v)
 
 int opstacktop()
 {
-  if (opsp == 0) error("Error: operator stack underflow!\n");
+  if (opsp == 0)
+    //error("operator stack underflow!\n");
+    errorInternal(4);
   return opstack[opsp - 1][0];
 }
 
@@ -1857,7 +1910,8 @@ int exprUnary(int tok, int* gotUnary, int commaSeparator)
     int lastTok = tok;
     tok = exprUnary(GetToken(), gotUnary, commaSeparator);
     if (!*gotUnary)
-      error("exprUnary(): primary expression expected after token %s\n", GetTokenName(lastTok));
+      //error("exprUnary(): primary expression expected after token %s\n", GetTokenName(lastTok));
+      errorUnexpectedToken(tok);
     switch (lastTok)
     {
     // DONE: remove all collapsing of all unary operators.
@@ -1937,7 +1991,8 @@ int exprUnary(int tok, int* gotUnary, int commaSeparator)
 
       tok = ParseDecl(tok);
       if (tok != ')')
-        error("exprUnary(): ')' expected, unexpected token %s\n", GetTokenName(tok));
+        //error("exprUnary(): ')' expected, unexpected token %s\n", GetTokenName(tok));
+        errorUnexpectedToken(tok);
       synPtr = FindSymbol("<something>");
 
       // Rename "<something>" to "<something#>", where # is lbl.
@@ -1970,9 +2025,11 @@ int exprUnary(int tok, int* gotUnary, int commaSeparator)
     {
       tok = expr(GetToken(), gotUnary, 0);
       if (tok != ')')
-        error("exprUnary(): ')' expected, unexpected token %s\n", GetTokenName(tok));
+        //error("exprUnary(): ')' expected, unexpected token %s\n", GetTokenName(tok));
+        errorUnexpectedToken(tok);
       if (!*gotUnary)
-        error("exprUnary(): primary expression expected in '()'\n");
+        //error("exprUnary(): primary expression expected in '()'\n");
+        errorUnexpectedToken(tok);
       tok = GetToken();
     }
 
@@ -2020,7 +2077,8 @@ int exprUnary(int tok, int* gotUnary, int commaSeparator)
             if (tok == ',')
             {
               if (!*gotUnary)
-                error("exprUnary(): primary expression (fxn argument) expected before ','\n");
+                //error("exprUnary(): primary expression (fxn argument) expected before ','\n");
+                errorUnexpectedToken(tok);
               acnt++;
               ins(inspos + 1, ','); // helper argument separator (hint for expression evaluator)
               continue; // off to next arg
@@ -2028,12 +2086,14 @@ int exprUnary(int tok, int* gotUnary, int commaSeparator)
             if (tok == ')')
             {
               if (acnt && !*gotUnary)
-                error("exprUnary(): primary expression (fxn argument) expected between ',' and ')'\n");
+                //error("exprUnary(): primary expression (fxn argument) expected between ',' and ')'\n");
+                errorUnexpectedToken(tok);
               *gotUnary = 1; // don't fail for 0 args in ()
               break; // end of args
             }
             // DONE: think of inserting special arg pseudo tokens for verification purposes
-            error("exprUnary(): ',' or ')' expected, unexpected token %s\n", GetTokenName(tok));
+            //error("exprUnary(): ',' or ')' expected, unexpected token %s\n", GetTokenName(tok));
+            errorUnexpectedToken(tok);
           } // endof for(;;) for fxn args
         }
         else // if (brak == '[')
@@ -2043,9 +2103,11 @@ int exprUnary(int tok, int* gotUnary, int commaSeparator)
             tok = GetToken();
             tok = expr(tok, gotUnary, 0);
             if (!*gotUnary)
-              error("exprUnary(): primary expression expected in '[]'\n");
+              //error("exprUnary(): primary expression expected in '[]'\n");
+              errorUnexpectedToken(tok);
             if (tok == ']') break; // end of index
-            error("exprUnary(): ']' expected, unexpected token %s\n", GetTokenName(tok));
+            //error("exprUnary(): ']' expected, unexpected token %s\n", GetTokenName(tok));
+            errorUnexpectedToken(tok);
           }
         }
 
@@ -2097,7 +2159,7 @@ int expr(int tok, int* gotUnary, int commaSeparator)
   {
     if (isop(tok) && !isunary(tok))
     {
-      int lastTok = tok;
+      //int lastTok = tok;
 
       while (precedGEQ(opstacktop(), tok))
       {
@@ -2112,11 +2174,13 @@ int expr(int tok, int* gotUnary, int commaSeparator)
       tok = exprUnary(GetToken(), gotUnary, commaSeparator);
       // DONE: figure out a check to see if exprUnary() fails to add a rhs operand
       if (!*gotUnary)
-        error("expr(): primary expression expected after token %s\n", GetTokenName(lastTok));
+        //error("expr(): primary expression expected after token %s\n", GetTokenName(lastTok));
+        errorUnexpectedToken(tok);
       continue;
     }
 
-    error("expr(): Unexpected token %s\n", GetTokenName(tok));
+    //error("expr(): Unexpected token %s\n", GetTokenName(tok));
+    errorUnexpectedToken(tok);
   }
 
   while (opstacktop() != tokEof)
@@ -2157,27 +2221,36 @@ void decayArray(int* ExprTypeSynPtr, int arithmetic)
     if (*ExprTypeSynPtr < 0)
     {
       if (SyntaxStack[-*ExprTypeSynPtr][0] == tokVoid)
-        error("Error: decayArray(): cannot do pointer arithmetic on a pointer to 'void'\n");
+        //error("decayArray(): cannot do pointer arithmetic on a pointer to 'void'\n");
+        errorUnexpectedVoid();
       if (SyntaxStack[-*ExprTypeSynPtr][0] == '(')
-        error("Error: decayArray(): cannot do pointer arithmetic on a pointer to a function\n");
+        //error("decayArray(): cannot do pointer arithmetic on a pointer to a function\n");
+        errorOpType();
     }
     else
     {
       if (SyntaxStack[*ExprTypeSynPtr][0] == '(')
-        error("Error: decayArray(): cannot do arithmetic on a function\n");
+        //error("decayArray(): cannot do arithmetic on a function\n");
+        errorOpType();
     }
   }
 }
 
 void nonVoidTypeCheck(int ExprTypeSynPtr, int tok)
 {
+#ifndef __SMALLER_C__
+  (void)tok;
+#endif
   if (ExprTypeSynPtr >= 0 && SyntaxStack[ExprTypeSynPtr][0] == tokVoid)
-    error("Error: nonVoidTypeCheck(): unexpected operand type 'void' for operator '%s'\n",
-          GetTokenName(tok));
+    //error("nonVoidTypeCheck(): unexpected operand type 'void' for operator '%s'\n", GetTokenName(tok));
+    errorUnexpectedVoid();
 }
 
 void numericTypeCheck(int ExprTypeSynPtr, int tok)
 {
+#ifndef __SMALLER_C__
+  (void)tok;
+#endif
   if (ExprTypeSynPtr >= 0 &&
       (SyntaxStack[ExprTypeSynPtr][0] == tokChar ||
        SyntaxStack[ExprTypeSynPtr][0] == tokSChar ||
@@ -2185,8 +2258,8 @@ void numericTypeCheck(int ExprTypeSynPtr, int tok)
        SyntaxStack[ExprTypeSynPtr][0] == tokInt ||
        SyntaxStack[ExprTypeSynPtr][0] == tokUnsigned))
     return;
-  error("Error: numericTypeCheck(): unexpected operand type for operator '%s', numeric type expected\n",
-        GetTokenName(tok));
+  //error("numericTypeCheck(): unexpected operand type for operator '%s', numeric type expected\n", GetTokenName(tok));
+  errorOpType();
 }
 
 void promoteType(int* ExprTypeSynPtr, int* TheOtherExprTypeSynPtr)
@@ -2316,7 +2389,8 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
   int constExpr[2];
 
   if (*idx < 0)
-    error("exprval(): idx < 0\n");
+    //error("exprval(): idx < 0\n");
+    errorInternal(5);
 
   tok = stack[*idx][0];
   s = stack[*idx][1];
@@ -2348,13 +2422,10 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       if (synPtr < 0)
       {
         if ((*idx + 2 >= sp) || stack[*idx + 2][0] != ')')
-          error("Error: exprval(): undefined identifier '%s'\n", IdentTable + s);
+          error("Undeclared identifier '%s'\n", IdentTable + s);
         else
         {
-          warnCnt++;
-          if (verbose && OutFile)
-            printf("Warning in \"%s\" (%d:%d): calling undeclared function %s()\n",
-                   FileNames[FileCnt - 1], LineNo, LinePos, IdentTable + s);
+          warning("Call to undeclared function %s()\n", IdentTable + s);
           // Implicitly declare "extern int ident();"
           GenExtern(IdentTable + s);
           PushSyntax2(tokIdent, s);
@@ -2368,7 +2439,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
 
       if (!strncmp(IdentTable + SyntaxStack[synPtr][1], "<something", sizeof "<something>" - 1 - 1) &&
           ((*idx + 2 >= sp) || stack[*idx + 2][0] != tokSizeof))
-        error("Error: exprval(): unexpected type declaration\n");
+        error("exprval(): unexpected type declaration\n");
 
       if (type == SymLocalVar || type == SymLocalArr)
       {
@@ -2400,7 +2471,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
     else
       s = SizeOfWord;
     if (s == 0)
-      error("Error: exprval(): sizeof of incomplete type (e.g. 'void')\n");
+      error("sizeof of incomplete type\n");
 
     // replace sizeof with its numeric value
     stack[oldIdxRight + 1 - (oldSpRight - sp)][0] = tokNumUint;
@@ -2442,7 +2513,8 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       del(oldIdxRight - (oldSpRight - sp), 2);
     }
     else
-      error("Error: exprval(): lvalue expected after '&'\n");
+      //error("exprval(): lvalue expected after '&'\n");
+      errorNotLvalue();
 
     *ConstExpr = 0;
     break;
@@ -2460,11 +2532,11 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       else
         ++*ExprTypeSynPtr;
       if (SyntaxStack[*ExprTypeSynPtr][0] == tokVoid)
-        error("Error: exprval(): cannot dereference a pointer to 'void'\n");
+        //error("exprval(): cannot dereference a pointer to 'void'\n");
+        errorUnexpectedVoid();
       // remove the dereference if that something is an array
       if (SyntaxStack[*ExprTypeSynPtr][0] == '[')
         del(oldIdxRight + 1 - (oldSpRight - sp), 1);
-      // TBD!!! why if and not else if???
       // remove the dereference if that something is a function
       if (SyntaxStack[*ExprTypeSynPtr][0] == '(')
         del(oldIdxRight + 1 - (oldSpRight - sp), 1);
@@ -2488,7 +2560,8 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
         stack[oldIdxRight + 1 - (oldSpRight - sp)][1] = GetDeclSize(*ExprTypeSynPtr, 1);
     }
     else
-      error("Error: exprval(): pointer/array expected after '*' / before '[]'\n");
+      //error("exprval(): pointer/array expected after '*' / before '[]'\n");
+      errorOpType();
 
     *ConstExpr = 0;
     break;
@@ -2559,7 +2632,8 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
         incSize = GetDeclSize(-*ExprTypeSynPtr, 0);
         // TBD!!! "ptr1-ptr2": better pointer compatibility test needed
         if (incSize != GetDeclSize(-RightExprTypeSynPtr, 0))
-          error("Error: exprval(): incompatible pointers\n");
+          //error("exprval(): incompatible pointers\n");
+          errorOpType();
         if (incSize != 1)
         {
           ins2(oldIdxRight + 2 - (oldSpRight - sp), tokNumInt, incSize);
@@ -2568,7 +2642,8 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
         *ExprTypeSynPtr = SymIntSynPtr;
       }
       else if (ptrmask)
-        error("Error: exprval(): invalid combination of operands for '+' or '-'\n");
+        //error("exprval(): invalid combination of operands for '+' or '-'\n");
+        errorOpType();
 
       // Promote the result from char to int (and from int to unsigned) if necessary
       promoteType(ExprTypeSynPtr, &RightExprTypeSynPtr);
@@ -2598,7 +2673,8 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       // lvalue check for ++, --
       if (!(oldIdxRight - (oldSpRight - sp) >= 0 &&
             stack[oldIdxRight - (oldSpRight - sp)][0] == tokUnaryStar))
-        error("Error: exprval(): lvalue expected for '++' or '--'\n");
+        //error("exprval(): lvalue expected for '++' or '--'\n");
+        errorNotLvalue();
 
       // "remove" the lvalue dereference as we don't need
       // to read the value and forget its location. We need to
@@ -2661,7 +2737,8 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
 
       if (!(oldIdxLeft - (oldSpLeft - sp) >= 0 &&
             stack[oldIdxLeft - (oldSpLeft - sp)][0] == tokUnaryStar))
-        error("Error: exprval(): lvalue expected before '='\n");
+        //error("exprval(): lvalue expected before '='\n");
+        errorNotLvalue();
 
       // "remove" the lvalue dereference as we don't need
       // to read the value and forget its location. We need to
@@ -2730,14 +2807,17 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       case '%':
         if (*ConstExpr)
         {
+          int div0 = 0;
           if (!Unsigned)
           {
             sl = truncInt(sl);
             sr = truncInt(sr);
-            // TBD!!! add warning
             if (sr == 0 || (sl == INT_MIN && sr == -1) || sl / sr != truncInt(sl / sr))
+            {
               //error("exprval(): division overflow\n");
+              div0 = 1;
               *ConstExpr = sl = 0;
+            }
             else if (tok == '/')
               sl /= sr;
             else
@@ -2745,15 +2825,19 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
           }
           else
           {
-            // TBD!!! add warning
             if (truncUint(sr) == 0)
+            {
               //error("exprval(): division overflow\n");
+              div0 = 1;
               *ConstExpr = sl = 0;
+            }
             else if (tok == '/')
               sl = uint2int(truncUint(sl) / truncUint(sr));
             else
               sl = uint2int(truncUint(sl) % truncUint(sr));
           }
+          if (div0)
+            warning("Division by 0 or division overflow\n");
         }
 
         if (Unsigned)
@@ -2782,8 +2866,14 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
           if ((SyntaxStack[RightExprTypeSynPtr][0] != tokUnsigned && sr < 0) ||
               (sr + 0u) >= CHAR_BIT * sizeof(int) ||
               (sr + 0u) >= 8u * SizeOfWord)
-            error("Error: exprval(): Invalid shift count\n");
-          if (tok == tokLShift)
+          {
+            //error("exprval(): Invalid shift count\n");
+            warning("Shift count out of range\n");
+            *ConstExpr = sl = sr = 0;
+            // truncate the count, so the assembler doesn't get an invalid count
+            stack[oldIdxRight - (oldSpRight - sp)][1] &= SizeOfWord * 8 - 1;
+          }
+          else if (tok == tokLShift)
           {
             // left shift is the same for signed and unsigned ints
             sl = uint2int((sl + 0u) << sr);
@@ -2850,7 +2940,8 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       // Disallow >, <, >=, <= between a pointer and a number
       if (ptrmask >= 1 && ptrmask <= 2 &&
           tok != tokEQ && tok != tokNEQ)
-        error("Error: exprval(): Invalid/unsupported combination of compared operands\n");
+        //error("exprval(): Invalid/unsupported combination of compared operands\n");
+        errorOpType();
 
       *ConstExpr = constExpr[0] && constExpr[1] && canSimplify;
 
@@ -3016,7 +3107,8 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       exprval(idx, ExprTypeSynPtr, ConstExpr);
 
       if (!GetFxnInfo(*ExprTypeSynPtr, &minParams, &maxParams, ExprTypeSynPtr))
-        error("exprval(): function or function pointer expected\n");
+        //error("exprval(): function or function pointer expected\n");
+        errorOpType();
 
       // DONE: validate the number of function parameters
       // TBD??? warnings/errors on int<->pointer substitution in params
@@ -3033,10 +3125,11 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
         exprval(idx, &tmpSynPtr, ConstExpr);
 
         if (tmpSynPtr >= 0 && SyntaxStack[tmpSynPtr][0] == tokVoid)
-          error("exprval(): function parameters cannot be of type 'void'\n");
+          //error("exprval(): function parameters cannot be of type 'void'\n");
+          errorUnexpectedVoid();
 
         if (++c > maxParams)
-          error("exprval(): too many function parameters\n");
+          error("Too many function parameters\n");
 
         if (stack[*idx][0] == ',')
           --*idx;
@@ -3044,7 +3137,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       --*idx;
 
       if (c < minParams)
-        error("exprval(): too few function parameters\n");
+        error("Too few function parameters\n");
 
       // store the cumulative parameter size in the function call operators
       stack[1 + *idx][1] = stack[oldIdxRight + 1 - (oldSpRight - sp)][1] = c * SizeOfWord;
@@ -3103,7 +3196,8 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
 
       if (!(oldIdxLeft - (oldSpLeft - sp) >= 0 &&
             stack[oldIdxLeft - (oldSpLeft - sp)][0] == tokUnaryStar))
-        error("Error: exprval(): lvalue expected before %s\n", GetTokenName(tok));
+        //error("exprval(): lvalue expected before %s\n", GetTokenName(tok));
+        errorNotLvalue();
 
       // "remove" the lvalue dereference as we don't need
       // to read the value and forget its location. We need to
@@ -3121,13 +3215,15 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       if (tok != tokAssignAdd && tok != tokAssignSub)
       {
         if (ptrmask)
-          error("Error: exprval(): invalid combination of operands for %s\n", GetTokenName(tok));
+          //error("exprval(): invalid combination of operands for %s\n", GetTokenName(tok));
+          errorOpType();
       }
       else
       {
         // No pointer to the right of += and -=
         if (ptrmask & 1)
-          error("Error: exprval(): invalid combination of operands for %s\n", GetTokenName(tok));
+          //error("exprval(): invalid combination of operands for %s\n", GetTokenName(tok));
+          errorOpType();
       }
 
       // TBD??? replace +=/-= with prefix ++/-- if incSize == 1
@@ -3162,7 +3258,8 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
     break;
 
   default:
-    error("exprval(): Unexpected token %s\n", GetTokenName(tok));
+    //error("exprval(): Unexpected token %s\n", GetTokenName(tok));
+    errorUnexpectedToken(tok);
   }
 
   return s;
@@ -3182,7 +3279,8 @@ int ParseExpr(int tok, int* GotUnary, int* ExprTypeSynPtr, int* ConstExpr, int* 
   tok = expr(tok, GotUnary, commaSeparator);
 
   if (tok == tokEof || strchr(",;:)]}", tok) == NULL)
-    error("Error: ParseExpr(): Unexpected token %s\n", GetTokenName(tok));
+    //error("ParseExpr(): Unexpected token %s\n", GetTokenName(tok));
+    errorUnexpectedToken(tok);
 
   if (*GotUnary)
   {
@@ -3276,7 +3374,16 @@ int ParseExpr(int tok, int* GotUnary, int* ExprTypeSynPtr, int* ConstExpr, int* 
       else if (*ConstExpr)
       {
         GenStartCommentLine();
-        printf2("Expression value: %d\n", *ConstVal);
+
+        switch (*ExprTypeSynPtr)
+        {
+        case tokNumInt:
+          printf2("Expression value: %d\n", truncInt(*ConstVal));
+          break;
+        case tokNumUint:
+          printf2("Expression value: %uu\n", truncUint(*ConstVal));
+          break;
+        }
       }
 #endif
     }
@@ -3329,7 +3436,7 @@ void DetermineVaListType(void)
   {
     // va_list is something else, and
     // the code may have long crashed by now
-    printf("Internal Error: va_list type indeterminate.\n");
+    printf("Internal error: Indeterminate va_list type\n");
     exit(-1);
   }
 }
@@ -3462,6 +3569,119 @@ void error(char* format, ...)
   exit(-1);
 }
 
+void warning(char* format, ...)
+{
+  int fidx = FileCnt - 1 + !FileCnt;
+#ifndef __SMALLER_C__
+  va_list vl;
+  va_start(vl, format);
+#else
+  void* vl = &format + 1;
+#endif
+
+  warnCnt++;
+
+  if (!(verbose && OutFile))
+    return;
+
+  printf("Warning in \"%s\" (%d:%d)\n", FileNames[fidx], LineNo, LinePos);
+
+#ifndef __SMALLER_C__
+  vprintf(format, vl);
+#else
+  // TBD!!! This is not good. Really need the va_something macros.
+  if (VaListType == 1)
+  {
+    // va_list is a pointer
+    vprintf(format, vl);
+  }
+  else // if (VaListType == 2)
+  {
+    // va_list is a one-element array containing a pointer
+    vprintf(format, &vl);
+  }
+#endif
+
+#ifndef __SMALLER_C__
+  va_end(vl);
+#endif
+}
+
+void errorFile(char* n)
+{
+  error("Unable to open, read, write or close file \"%s\"\n", n);
+}
+
+void errorFileName(void)
+{
+  error("Invalid or too long file name or path name\n");
+}
+
+void errorInternal(int n)
+{
+  error("%d (internal)\n", n);
+}
+
+void errorChrStr(void)
+{
+  error("Invalid or unsupported character constant or string literal\n");
+}
+
+void errorUnexpectedToken(int tok)
+{
+  error("Unexpected token %s\n", GetTokenName(tok));
+}
+
+void errorDirective(void)
+{
+  error("Invalid or unsupported preprocessor directive\n");
+}
+
+void errorCtrlOutOfScope(void)
+{
+  error("break, continue, case or default in wrong scope\n");
+}
+
+void errorDecl(void)
+{
+  error("Invalid or unsupported declaration\n");
+}
+
+void errorVarSize(void)
+{
+  error("Variable(s) take(s) too much space\n");
+}
+
+void errorInit(void)
+{
+  error("Invalid or unsupported initialization\n");
+}
+
+void errorUnexpectedVoid(void)
+{
+  error("Unexpected declaration or expression of type void\n");
+}
+
+void errorOpType(void)
+{
+  error("Unexpected operand type\n");
+}
+
+void errorNotLvalue(void)
+{
+  error("lvalue expected\n");
+}
+
+void errorNotConst(void)
+{
+  error("Non-constant expression\n");
+}
+
+void errorLongExpr(void)
+{
+  error("Too long expression\n");
+}
+
 int TokenStartsDeclaration(int t, int params)
 {
   return t == tokVoid ||
@@ -3473,7 +3693,7 @@ int TokenStartsDeclaration(int t, int params)
 void PushSyntax2(int t, int v)
 {
   if (SyntaxStackCnt >= SYNTAX_STACK_MAX)
-    error("Internal error: Too many declarations\n");
+    error("Symbol table exhausted\n");
   SyntaxStack[SyntaxStackCnt][0] = t;
   SyntaxStack[SyntaxStackCnt++][1] = v;
 }
@@ -3486,7 +3706,7 @@ void PushSyntax(int t)
 void InsertSyntax2(int pos, int t, int v)
 {
   if (SyntaxStackCnt >= SYNTAX_STACK_MAX)
-    error("Internal error: Too many declarations\n");
+    error("Symbol table exhausted\n");
   memmove(SyntaxStack[pos + 1],
           SyntaxStack[pos],
           sizeof(SyntaxStack[0]) * (SyntaxStackCnt - pos));
@@ -3591,20 +3811,24 @@ int GetDeclSize(int SyntaxPtr, int SizeForDeref)
     case '*':
     case '(': // size of fxn = size of ptr for now
       if (size * SizeOfWord / SizeOfWord != size)
-        error("Error: Variable too big\n");
+        //error("Variable too big\n");
+        errorVarSize();
       size *= SizeOfWord;
       if (size != truncUint(size))
-        error("Error: Variable too big\n");
+        //error("Variable too big\n");
+        errorVarSize();
       return uint2int(size);
     case '[':
       if (SyntaxStack[i + 1][0] != tokNumInt && SyntaxStack[i + 1][0] != tokNumUint)
         return 0;
       if (SyntaxStack[i + 1][1] &&
           size * SyntaxStack[i + 1][1] / SyntaxStack[i + 1][1] != size)
-        error("Error: Variable too big\n");
+        //error("Variable too big\n");
+        errorVarSize();
       size *= SyntaxStack[i + 1][1];
       if (size != truncUint(size))
-        error("Error: Variable too big\n");
+        //error("Variable too big\n");
+        errorVarSize();
       i += 2;
       arr = 1;
       break;
@@ -3783,27 +4007,28 @@ int ParseArrayDimension(int AllowEmptyDimension)
   sp = oldesp;
 
   if (tok != ']')
-    error("Error: ParseArrayDimension(): Unsupported or invalid array dimension (token %s)\n",
-          GetTokenName(tok));
+    //error("ParseArrayDimension(): Unsupported or invalid array dimension (token %s)\n", GetTokenName(tok));
+    errorUnexpectedToken(tok);
 
   if (!gotUnary)
   {
     if (!AllowEmptyDimension)
-      error("Error: ParseArrayDimension(): missing array dimension\n");
+      //error("ParseArrayDimension(): missing array dimension\n");
+      errorUnexpectedToken(tok);
     // Empty dimension is dimension of 0
     exprVal = 0;
   }
   else
   {
     if (!constExpr)
-      error("Error: ParseArrayDimension(): non-constant array dimension\n");
+      //error("ParseArrayDimension(): non-constant array dimension\n");
+      errorNotConst();
 
-    exprValU = exprVal;
+    exprValU = truncUint(exprVal);
+    exprVal = truncInt(exprVal);
+
     if ((synPtr == SymIntSynPtr && exprVal < 1) || (synPtr == SymUintSynPtr && exprValU < 1))
-      error("Error: ParseArrayDimension(): array dimension less than 1\n");
-
-    if (exprValU != truncUint(exprValU))
-      error("Error: ParseArrayDimension(): array dimension too big\n");
+      error("Array dimension less than 1\n");
   }
 
   PushSyntax2(tokNumUint, exprVal);
@@ -3816,6 +4041,7 @@ void AddFxnParamSymbols(int SyntaxPtr);
 
 int ParseBase(int tok, int* base)
 {
+  int valid = 1;
   if (tok == tokVoid || tok == tokChar || tok == tokInt)
   {
     *base = tok;
@@ -3844,10 +4070,15 @@ int ParseBase(int tok, int* base)
         tok = GetToken();
     }
   }
+  else
+  {
+    valid = 0;
+  }
 
   // TBD!!! review/test this fxn
-  if (!tok || !(strchr("*([,)", tok) || tok == tokIdent))
-    error("Error: ParseBase(): Invalid or unsupported type\n");
+  if (!valid || !tok || !(strchr("*([,)", tok) || tok == tokIdent))
+    //error("ParseBase(): Invalid or unsupported type\n");
+    error("Invalid or unsupported type\n");
 
   return tok;
 }
@@ -3876,7 +4107,8 @@ int ParseDerived(int tok)
     {
       tok = ParseDerived(tok);
       if (tok != ')')
-        error("Error: ParseDerived(): ')' expected\n");
+        //error("ParseDerived(): ')' expected\n");
+        errorUnexpectedToken(tok);
       tok = GetToken();
     }
     else
@@ -3918,7 +4150,8 @@ int ParseDerived(int tok)
       PushSyntax(tok);
       tok = ParseArrayDimension(allowEmptyDimension);
       if (tok != ']')
-        error("Error: ParseDerived(): ']' expected\n");
+        //error("ParseDerived(): ']' expected\n");
+        errorUnexpectedToken(tok);
       PushSyntax(']');
       tok = GetToken();
       DeleteSyntax(oldsp, 1);
@@ -3932,7 +4165,8 @@ int ParseDerived(int tok)
   // TBD??? balance parens
 
   if (!tok || !strchr(",;{=)", tok))
-    error("Error: ParseDerived(): unexpected token %s\n", GetTokenName(tok));
+    //error("ParseDerived(): unexpected token %s\n", GetTokenName(tok));
+    errorUnexpectedToken(tok);
 
   return tok;
 }
@@ -3954,7 +4188,8 @@ int ParseDecl(int tok)
   {
     tok = GetToken();
     if (!TokenStartsDeclaration(tok, 1))
-      error("Error: ParseDecl(): unexpected token %s\n", GetTokenName(tok));
+      //error("ParseDecl(): unexpected token %s\n", GetTokenName(tok));
+      errorUnexpectedToken(tok);
   }
   tok = ParseBase(tok, &base);
 
@@ -3980,8 +4215,8 @@ int ParseDecl(int tok)
       {
         int t = SyntaxStack[SyntaxStackCnt - 2][0];
         if (t != '*' && t != ')')
-          error("Error: ParseDecl(): Cannot declare a variable ('%s') of type 'void'\n",
-                IdentTable + SyntaxStack[lastSyntaxPtr][1]);
+          //error("ParseDecl(): Cannot declare a variable ('%s') of type 'void'\n", IdentTable + SyntaxStack[lastSyntaxPtr][1]);
+          errorUnexpectedVoid();
       }
 
       isFxn = SyntaxStack[lastSyntaxPtr + 1][0] == '(';
@@ -4020,41 +4255,49 @@ int ParseDecl(int tok)
       //                     +             +     +       +            +                 +
 
       if (isFxn && tok == '=')
-        error("Error: ParseDecl(): cannot initialize a function\n");
+        //error("ParseDecl(): cannot initialize a function\n");
+        errorInit();
 
       if (isFxn && tok == '{' && ParseLevel)
-        error("Error: ParseDecl(): cannot define a nested function\n");
+        //error("ParseDecl(): cannot define a nested function\n");
+        errorDecl();
 
       if (isFxn && Static && ParseLevel)
-        error("Error: ParseDecl(): cannot declare a static function in this scope\n");
+        //error("ParseDecl(): cannot declare a static function in this scope\n");
+        errorDecl();
 
       if (external && tok == '=')
-        error("Error: ParseDecl(): cannot initialize an external variable\n");
+        //error("ParseDecl(): cannot initialize an external variable\n");
+        errorInit();
 
       if (isIncompleteArr && !(external || tok == '='))
-        error("Error: ParseDecl(): cannot define an array of incomplete type\n");
+        //error("ParseDecl(): cannot define an array of incomplete type\n");
+        errorDecl();
 
       if (Static && ParseLevel)
-        error("Error: ParseDecl(): static not supported in this scope\n");
+        //error("ParseDecl(): static not supported in this scope\n");
+        errorDecl();
 
       if (isMultiDimArray && tok == '=')
-        error("Error: ParseDecl(): multidimensional array initialization not supported\n");
+        //error("ParseDecl(): multidimensional array initialization not supported\n");
+        errorInit();
 
       if (isArray && tok == '=' && ParseLevel)
-        error("Error: ParseDecl(): array initialization not supported in this scope\n");
+        //error("ParseDecl(): array initialization not supported in this scope\n");
+        errorInit();
 
       // TBD!!! de-uglify
       if (!strcmp(IdentTable + SyntaxStack[lastSyntaxPtr][1], "<something>"))
       {
         // Disallow nameless variables and prototypes.
         if (!ExprLevel)
-          error("Error: ParseDecl(): Identifier name expected\n");
+          error("ParseDecl(): Identifier name expected\n");
       }
       else
       {
         // Disallow named variables and prototypes.
         if (ExprLevel)
-          error("Error: ParseDecl(): Identifier name unexpected\n");
+          error("ParseDecl(): Identifier name unexpected\n");
       }
 
       if (!isFxn)
@@ -4074,7 +4317,8 @@ int ParseDecl(int tok)
 
           CurFxnLocalOfs = uint2int((CurFxnLocalOfs + 0u - sz) & ~(SizeOfWord - 1u));
           if (CurFxnLocalOfs >= oldOfs || CurFxnLocalOfs != truncInt(CurFxnLocalOfs))
-            error("Error: ParseDecl(): Local variables take too much space\n");
+            //error("ParseDecl(): Local variables take too much space\n");
+            errorVarSize();
 
           // Insert a local var offset token
           InsertSyntax2(lastSyntaxPtr + 1, tokLocalOfs, CurFxnLocalOfs);
@@ -4153,24 +4397,28 @@ int ParseDecl(int tok)
           {
             tok = GetToken();
             if (!tok || !strchr(",;", tok))
-              error("Error: ParseDecl(): unexpected token %s\n", GetTokenName(tok));
+              //error("ParseDecl(): unexpected token %s\n", GetTokenName(tok));
+              errorUnexpectedToken(tok);
             break;
           }
 
           tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 1);
           if (!gotUnary)
-            error("Error: ParseDecl(): missing initialization expression\n");
+            //error("ParseDecl(): missing initialization expression\n");
+            errorUnexpectedToken(tok);
           if (!tok ||
               (braces && !strchr(",}", tok)) ||
               (!braces && !strchr(",;", tok)))
-            error("Error: ParseDecl(): unexpected token %s\n", GetTokenName(tok));
+            //error("ParseDecl(): unexpected token %s\n", GetTokenName(tok));
+            errorUnexpectedToken(tok);
 
           strLitInitializer = stack[sp - 1][0] == tokIdent &&
                               isdigit(IdentTable[stack[sp - 1][1]]);
 
           // Prohibit initializers like in "int a[1] = 1;"
           if (isArray && !strLitInitializer && !braces)
-            error("Error: ParseDecl(): array initializers must be in braces\n");
+            //error("ParseDecl(): array initializers must be in braces\n");
+            errorInit();
 
           // Prohibit initializers like { 'a', "b" }, { "a", 'b' }, { "a", "b" }
           if (!strLitInitializer)
@@ -4179,14 +4427,15 @@ int ParseDecl(int tok)
             nonStrLitAllowed = 0;
           if ((strLitInitializer && !strLitAllowed) ||
               (!strLitInitializer && !nonStrLitAllowed))
-            error("Error: ParseDecl(): invalid initialization\n");
+            //error("ParseDecl(): invalid initialization\n");
+            errorInit();
           if (strLitInitializer)
             strLitAllowed = 0;
 
           elementCnt++;
 
           if (braces && elementsRequired && elementCnt > elementsRequired)
-            error("Error: ParseDecl(): excess array initializers\n");
+            error("Too many array initializers\n");
 
           if (!ParseLevel)
           {
@@ -4197,7 +4446,8 @@ int ParseDecl(int tok)
             else if (elementSz == SizeOfWord + 0u && stack[sp - 1][0] == tokIdent)
             {
               if (isArray && strLitInitializer)
-                error("Error: ParseDecl(): not an array of char\n");
+                //error("ParseDecl(): not an array of char\n");
+                errorInit();
               GenAddrData(elementSz, IdentTable + stack[sp - 1][1]);
               // if the initializer is a string literal, also generate string data
               if (strLitInitializer)
@@ -4208,12 +4458,14 @@ int ParseDecl(int tok)
               elementCnt = GenStrData(0, elementsRequired);
             }
             else
-              error("Error: ParseDecl(): cannot initialize a global variable with a non-constant expression\n");
+              //error("ParseDecl(): cannot initialize a global variable with a non-constant expression\n");
+              errorNotConst();
           }
           else
           {
             if (synPtr >= 0 && SyntaxStack[synPtr][0] == tokVoid)
-              error("Error: ParseDecl(): cannot initialize a variable with a 'void' expression\n");
+              //error("ParseDecl(): cannot initialize a variable with a 'void' expression\n");
+              errorUnexpectedVoid();
             // transform the current expression stack into:
             //   tokLocalOfs(...), original expression stack, =(localAllocSize)
             // this will simulate assignment
@@ -4285,7 +4537,8 @@ int ParseDecl(int tok)
         tok = ParseBlock(NULL, 0);
         ParseLevel--;
         if (tok != '}')
-          error("Error: ParseDecl(): '}' expected\n");
+          //error("ParseDecl(): '}' expected\n");
+          errorUnexpectedToken(tok);
         IdentTableLen = undoIdents; // remove all identifier names
         SyntaxStackCnt = undoSymbolsPtr; // remove all params and locals
 
@@ -4306,7 +4559,8 @@ int ParseDecl(int tok)
       continue;
     }
 
-    error("Error: ParseDecl(): unexpected token %s\n", GetTokenName(tok));
+    //error("ParseDecl(): unexpected token %s\n", GetTokenName(tok));
+    errorUnexpectedToken(tok);
   }
 
   tok = GetToken();
@@ -4334,11 +4588,13 @@ void ParseFxnParams(int tok)
         // "..." cannot be the first parameter and
         // it can be only one
         if (!cnt || ellCnt)
-          error("Error: ParseFxnParams(): '...' unexpected here\n");
+          //error("ParseFxnParams(): '...' unexpected here\n");
+          errorUnexpectedToken(tok);
         ellCnt++;
       }
       else
-        error("Error: ParseFxnParams(): Unexpected token %s\n", GetTokenName(tok));
+        //error("ParseFxnParams(): Unexpected token %s\n", GetTokenName(tok));
+        errorUnexpectedToken(tok);
       base = tok; // "..."
       PushSyntax2(tokIdent, AddIdent("<something>"));
       tok = GetToken();
@@ -4346,7 +4602,8 @@ void ParseFxnParams(int tok)
     else
     {
       if (ellCnt)
-        error("Error: ParseFxnParams(): '...' must be the last in the parameter list\n");
+        //error("ParseFxnParams(): '...' must be the last in the parameter list\n");
+        errorUnexpectedToken(tok);
 
       /* base type */
       tok = ParseBase(tok, &base);
@@ -4385,8 +4642,8 @@ void ParseFxnParams(int tok)
         // Disallow void variables and arrays of void. TBD!!! de-uglify
         if (t != '*' && t != ')' &&
             !(cnt == 1 && tok == ')' && !strcmp(IdentTable + SyntaxStack[lastSyntaxPtr][1], "<something>")))
-          error("Error: ParseFxnParams(): Cannot declare a variable ('%s') of type 'void'\n",
-                IdentTable + SyntaxStack[lastSyntaxPtr][1]);
+          //error("ParseFxnParams(): Cannot declare a variable ('%s') of type 'void'\n", IdentTable + SyntaxStack[lastSyntaxPtr][1]);
+          errorUnexpectedVoid();
       }
 
       if (tok == ')')
@@ -4396,7 +4653,8 @@ void ParseFxnParams(int tok)
       continue;
     }
 
-    error("Error: ParseFxnParams(): Unexpected token %s\n", GetTokenName(tok));
+    //error("ParseFxnParams(): Unexpected token %s\n", GetTokenName(tok));
+    errorUnexpectedToken(tok);
   }
 }
 
@@ -4408,7 +4666,8 @@ void AddFxnParamSymbols(int SyntaxPtr)
       SyntaxPtr > SyntaxStackCnt - 3 ||
       SyntaxStack[SyntaxPtr][0] != tokIdent ||
       SyntaxStack[SyntaxPtr + 1][0] != '(')
-    error("Internal error: AddFxnParamSymbols(): Invalid input\n");
+    //error("Internal error: AddFxnParamSymbols(): Invalid input\n");
+    errorInternal(6);
 
   CurFxnSyntaxPtr = SyntaxPtr;
   CurFxnParamCnt = 0;
@@ -4428,7 +4687,8 @@ void AddFxnParamSymbols(int SyntaxPtr)
       int paramPtr;
 
       if (i + 1 >= SyntaxStackCnt)
-        error("Internal error: AddFxnParamSymbols(): Invalid input\n");
+        //error("Internal error: AddFxnParamSymbols(): Invalid input\n");
+        errorInternal(7);
 
       if (SyntaxStack[i + 1][0] == tokVoid) // "ident(void)" = no params
         break;
@@ -4437,7 +4697,8 @@ void AddFxnParamSymbols(int SyntaxPtr)
 
       sz = GetDeclSize(i, 0);
       if (sz == 0)
-        error("Internal error: AddFxnParamSymbols(): GetDeclSize() = 0\n");
+        //error("Internal error: AddFxnParamSymbols(): GetDeclSize() = 0\n");
+        errorInternal(8);
 
       // Let's calculate this parameter's relative on-stack location
       CurFxnParamOfs = (CurFxnParamOfs + SizeOfWord - 1) / SizeOfWord * SizeOfWord;
@@ -4481,7 +4742,8 @@ void AddFxnParamSymbols(int SyntaxPtr)
     else if (tok == ')') // endof "ident(" ... ")"
       break;
     else
-      error("Internal error: AddFxnParamSymbols(): Unexpected token %s\n", GetTokenName(tok));
+      //error("Internal error: AddFxnParamSymbols(): Unexpected token %s\n", GetTokenName(tok));
+      errorInternal(9);
   }
 }
 
@@ -4535,7 +4797,8 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
     tok = ParseBlock(BrkCntSwchTarget, switchBody / 2);
     ParseLevel--;
     if (tok != '}')
-      error("Error: ParseStatement(): '}' expected. Unexpected token %s\n", GetTokenName(tok));
+      //error("ParseStatement(): '}' expected. Unexpected token %s\n", GetTokenName(tok));
+      errorUnexpectedToken(tok);
     IdentTableLen = undoIdents; // remove all identifier names
     SyntaxStackCnt = undoSymbolsPtr; // remove all params and locals
     CurFxnLocalOfs = undoLocalOfs; // destroy on-stack local variables
@@ -4547,22 +4810,33 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
   else if (tok == tokReturn)
   {
     // DONE: functions returning void vs non-void
+    // TBD??? functions returning void should be able to return void
+    //        return values from other functions returning void
+    int retVoid = CurFxnReturnExprTypeSynPtr >= 0 &&
+                  SyntaxStack[CurFxnReturnExprTypeSynPtr][0] == tokVoid;
 #ifndef NO_ANNOTATIONS
     GenStartCommentLine(); printf2("return\n");
 #endif
     tok = GetToken();
-    if (ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0) != ';')
-      error("Error: ParseStatement(): ';' expected\n");
-    if (CurFxnReturnExprTypeSynPtr >= 0 &&
-        SyntaxStack[CurFxnReturnExprTypeSynPtr][0] == tokVoid)
+    if (tok == ';')
     {
-      if (gotUnary)
-        error("Error: ParseStatement(): cannot return a value from a function returning 'void'\n");
+      gotUnary = 0;
+      if (!retVoid)
+        //error("ParseStatement(): missing return value\n");
+        errorUnexpectedToken(tok);
     }
     else
     {
-      if (!gotUnary)
-        error("Error: ParseStatement(): missing return value\n");
+      if (retVoid)
+        //error("Error: ParseStatement(): cannot return a value from a function returning 'void'\n");
+        errorUnexpectedToken(tok);
+      if ((tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0)) != ';')
+        //error("ParseStatement(): ';' expected\n");
+        errorUnexpectedToken(tok);
+      if (gotUnary &&
+          synPtr >= 0 && SyntaxStack[synPtr][0] == tokVoid)
+          //error("ParseStatement(): cannot return a value of type 'void'\n");
+          errorUnexpectedVoid();
     }
     if (gotUnary)
       GenExpr();
@@ -4579,18 +4853,22 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
 
     tok = GetToken();
     if (tok != '(')
-      error("Error: ParseStatement(): '(' expected after 'while'\n");
+      //error("ParseStatement(): '(' expected after 'while'\n");
+      errorUnexpectedToken(tok);
 
     tok = GetToken();
-    if (ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0) != ')')
-      error("Error: ParseStatement(): ')' expected after 'while ( expression'\n");
+    if ((tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0)) != ')')
+      //error("ParseStatement(): ')' expected after 'while ( expression'\n");
+      errorUnexpectedToken(tok);
 
     if (!gotUnary)
-      error("Error: ParseStatement(): expression expected in 'while ( expression )'\n");
+      //error("ParseStatement(): expression expected in 'while ( expression )'\n");
+      errorUnexpectedToken(tok);
 
     // DONE: void control expressions
     if (synPtr >= 0 && SyntaxStack[synPtr][0] == tokVoid)
-      error("Error: ParseStatement(): unexpected 'void' expression in 'while ( expression )'\n");
+      //error("ParseStatement(): unexpected 'void' expression in 'while ( expression )'\n");
+      errorUnexpectedVoid();
 
     GenNumLabel(labelBefore);
 
@@ -4638,29 +4916,35 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
     brkCntSwchTarget[1] = labelWhile; // continue target
     tok = ParseStatement(tok, brkCntSwchTarget, 0);
     if (tok != tokWhile)
-      error("Error: ParseStatement(): 'while' expected after 'do statement'\n");
+      //error("ParseStatement(): 'while' expected after 'do statement'\n");
+      errorUnexpectedToken(tok);
 
 #ifndef NO_ANNOTATIONS
     GenStartCommentLine(); printf2("while\n");
 #endif
     tok = GetToken();
     if (tok != '(')
-      error("Error: ParseStatement(): '(' expected after 'while'\n");
+      //error("ParseStatement(): '(' expected after 'while'\n");
+      errorUnexpectedToken(tok);
 
     tok = GetToken();
-    if (ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0) != ')')
-      error("Error: ParseStatement(): ')' expected after 'while ( expression'\n");
+    if ((tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0)) != ')')
+      //error("ParseStatement(): ')' expected after 'while ( expression'\n");
+      errorUnexpectedToken(tok);
 
     if (!gotUnary)
-      error("Error: ParseStatement(): expression expected in 'while ( expression )'\n");
+      //error("ParseStatement(): expression expected in 'while ( expression )'\n");
+      errorUnexpectedToken(tok);
 
     tok = GetToken();
     if (tok != ';')
-      error("Error: ParseStatement(): ';' expected after 'do statement while ( expression )'\n");
+      //error("ParseStatement(): ';' expected after 'do statement while ( expression )'\n");
+      errorUnexpectedToken(tok);
 
     // DONE: void control expressions
     if (synPtr >= 0 && SyntaxStack[synPtr][0] == tokVoid)
-      error("Error: ParseStatement(): unexpected 'void' expression in 'while ( expression )'\n");
+      //error("ParseStatement(): unexpected 'void' expression in 'while ( expression )'\n");
+      errorUnexpectedVoid();
 
     GenNumLabel(labelWhile);
 
@@ -4699,18 +4983,22 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
 
     tok = GetToken();
     if (tok != '(')
-      error("Error: ParseStatement(): '(' expected after 'if'\n");
+      //error("ParseStatement(): '(' expected after 'if'\n");
+      errorUnexpectedToken(tok);
 
     tok = GetToken();
-    if (ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0) != ')')
-      error("Error: ParseStatement(): ')' expected after 'if ( expression'\n");
+    if ((tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0)) != ')')
+      //error("ParseStatement(): ')' expected after 'if ( expression'\n");
+      errorUnexpectedToken(tok);
 
     if (!gotUnary)
-      error("Error: ParseStatement(): expression expected in 'if ( expression )'\n");
+      //error("ParseStatement(): expression expected in 'if ( expression )'\n");
+      errorUnexpectedToken(tok);
 
     // DONE: void control expressions
     if (synPtr >= 0 && SyntaxStack[synPtr][0] == tokVoid)
-      error("Error: ParseStatement(): unexpected 'void' expression in 'if ( expression )'\n");
+      //error("ParseStatement(): unexpected 'void' expression in 'if ( expression )'\n");
+      errorUnexpectedVoid();
 
     switch (stack[sp - 1][0])
     {
@@ -4764,11 +5052,13 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
 #endif
     tok = GetToken();
     if (tok != '(')
-      error("Error: ParseStatement(): '(' expected after 'for'\n");
+      //error("ParseStatement(): '(' expected after 'for'\n");
+      errorUnexpectedToken(tok);
 
     tok = GetToken();
-    if (ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0) != ';')
-      error("Error: ParseStatement(): ';' expected after 'for ( expression'\n");
+    if ((tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0)) != ';')
+      //error("ParseStatement(): ';' expected after 'for ( expression'\n");
+      errorUnexpectedToken(tok);
     if (gotUnary)
     {
       GenExpr();
@@ -4776,13 +5066,15 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
 
     GenNumLabel(labelBefore);
     tok = GetToken();
-    if (ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0) != ';')
-      error("Error: ParseStatement(): ';' expected after 'for ( expression ; expression'\n");
+    if ((tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0)) != ';')
+      //error("ParseStatement(): ';' expected after 'for ( expression ; expression'\n");
+      errorUnexpectedToken(tok);
     if (gotUnary)
     {
       // DONE: void control expressions
       if (synPtr >= 0 && SyntaxStack[synPtr][0] == tokVoid)
-        error("Error: ParseStatement(): unexpected 'void' expression in 'for ( ; expression ; )'\n");
+        //error("ParseStatement(): unexpected 'void' expression in 'for ( ; expression ; )'\n");
+        errorUnexpectedVoid();
 
       switch (stack[sp - 1][0])
       {
@@ -4809,8 +5101,9 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
 
     GenNumLabel(labelExpr3);
     tok = GetToken();
-    if (ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0) != ')')
-      error("Error: ParseStatement(): ')' expected after 'for ( expression ; expression ; expression'\n");
+    if ((tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0)) != ')')
+      //error("ParseStatement(): ')' expected after 'for ( expression ; expression ; expression'\n");
+      errorUnexpectedToken(tok);
     if (gotUnary)
     {
       GenExpr();
@@ -4831,11 +5124,13 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
 #ifndef NO_ANNOTATIONS
     GenStartCommentLine(); printf2("break\n");
 #endif
-    if (GetToken() != ';')
-      error("Error: ParseStatement(): ';' expected\n");
+    if ((tok = GetToken()) != ';')
+      //error("ParseStatement(): ';' expected\n");
+      errorUnexpectedToken(tok);
     tok = GetToken();
     if (BrkCntSwchTarget == NULL)
-      error("Error: ParseStatement(): 'break' must be within 'while', 'for' or 'switch' statement\n");
+      //error("ParseStatement(): 'break' must be within 'while', 'for' or 'switch' statement\n");
+      errorCtrlOutOfScope();
     GenJumpUncond(BrkCntSwchTarget[0]);
   }
   else if (tok == tokCont)
@@ -4843,11 +5138,13 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
 #ifndef NO_ANNOTATIONS
     GenStartCommentLine(); printf2("continue\n");
 #endif
-    if (GetToken() != ';')
-      error("Error: ParseStatement(): ';' expected\n");
+    if ((tok = GetToken()) != ';')
+      //error("ParseStatement(): ';' expected\n");
+      errorUnexpectedToken(tok);
     tok = GetToken();
     if (BrkCntSwchTarget == NULL || BrkCntSwchTarget[1] == 0)
-      error("Error: ParseStatement(): 'continue' must be within 'while' or 'for' statement\n");
+      //error("ParseStatement(): 'continue' must be within 'while' or 'for' statement\n");
+      errorCtrlOutOfScope();
     GenJumpUncond(BrkCntSwchTarget[1]);
   }
   else if (tok == tokSwitch)
@@ -4858,24 +5155,29 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
 
     tok = GetToken();
     if (tok != '(')
-      error("Error: ParseStatement(): '(' expected after 'switch'\n");
+      //error("ParseStatement(): '(' expected after 'switch'\n");
+      errorUnexpectedToken(tok);
 
     tok = GetToken();
-    if (ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0) != ')')
-      error("Error: ParseStatement(): ')' expected after 'switch ( expression'\n");
+    if ((tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0)) != ')')
+      //error("ParseStatement(): ')' expected after 'switch ( expression'\n");
+      errorUnexpectedToken(tok);
 
     if (!gotUnary)
-      error("Error: ParseStatement(): expression expected in 'switch ( expression )'\n");
+      //error("ParseStatement(): expression expected in 'switch ( expression )'\n");
+      errorUnexpectedToken(tok);
 
     // DONE: void control expressions
     if (synPtr >= 0 && SyntaxStack[synPtr][0] == tokVoid)
-      error("Error: ParseStatement(): unexpected 'void' expression in 'switch ( expression )'\n");
+      //error("ParseStatement(): unexpected 'void' expression in 'switch ( expression )'\n");
+      errorUnexpectedVoid();
 
     GenExpr();
 
     tok = GetToken();
     if (tok != '{')
-      error("Error: ParseStatement(): '{' expected after 'switch ( expression )'\n");
+      //error("ParseStatement(): '{' expected after 'switch ( expression )'\n");
+      errorUnexpectedToken(tok);
 
     brkCntSwchTarget[0] = LabelCnt++; // break target
     brkCntSwchTarget[1] = 0; // continue target
@@ -4925,14 +5227,17 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
 #endif
 
     if (!switchBody)
-      error("Error: ParseStatement(): 'case' must be within 'switch' statement\n");
+      //error("ParseStatement(): 'case' must be within 'switch' statement\n");
+      errorCtrlOutOfScope();
 
     tok = GetToken();
-    if (ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0) != ':')
-      error("Error: ParseStatement(): ':' expected after 'case expression'\n");
+    if ((tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0)) != ':')
+      //error("ParseStatement(): ':' expected after 'case expression'\n");
+      errorUnexpectedToken(tok);
 
     if (!gotUnary || !constExpr || (synPtr >= 0 && SyntaxStack[synPtr][0] == tokVoid))
-      error("Error: ParseStatement(): constant integer expression expected in 'case expression :'\n");
+      //error("ParseStatement(): constant integer expression expected in 'case expression :'\n");
+      errorNotConst();
 
     tok = GetToken();
 
@@ -4952,14 +5257,17 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
 #endif
 
     if (!switchBody)
-      error("Error: ParseStatement(): 'default' must be within 'switch' statement\n");
+      //error("ParseStatement(): 'default' must be within 'switch' statement\n");
+      errorCtrlOutOfScope();
 
     tok = GetToken();
     if (tok != ':')
-      error("Error: ParseStatement(): ':' expected after 'default'\n");
+      //error("ParseStatement(): ':' expected after 'default'\n");
+      errorUnexpectedToken(tok);
 
     if (BrkCntSwchTarget[2] < 0)
-      error("Error: ParseStatement(): only one 'default' allowed in 'switch'\n");
+      //error("ParseStatement(): only one 'default' allowed in 'switch'\n");
+      errorUnexpectedToken(tokDefault);
 
     tok = GetToken();
 
@@ -4971,28 +5279,33 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
   {
     tok = GetToken();
     if (tok != '(')
-      error("Error: ParseStatement(): '(' expected after 'asm'\n");
+      //error("ParseStatement(): '(' expected after 'asm'\n");
+      errorUnexpectedToken(tok);
 
     tok = GetToken();
     if (tok != tokLitStr)
-      error("Error: ParseStatement(): string literal expression expected in 'asm ( expression )'\n");
+      //error("ParseStatement(): string literal expression expected in 'asm ( expression )'\n");
+      errorUnexpectedToken(tok);
 
     puts2(GetTokenValueString());
 
     tok = GetToken();
     if (tok != ')')
-      error("Error: ParseStatement(): ')' expected after 'asm ( expression'\n");
+      //error("ParseStatement(): ')' expected after 'asm ( expression'\n");
+      errorUnexpectedToken(tok);
 
     tok = GetToken();
     if (tok != ';')
-      error("Error: ParseStatement(): ';' expected after 'asm ( expression )'\n");
+      //error("ParseStatement(): ';' expected after 'asm ( expression )'\n");
+      errorUnexpectedToken(tok);
 
     tok = GetToken();
   }
   else
   {
-    if (ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0) != ';')
-      error("Error: ParseStatement(): ';' expected\n");
+    if ((tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0)) != ';')
+      //error("ParseStatement(): ';' expected\n");
+      errorUnexpectedToken(tok);
     if (gotUnary)
     {
       GenExpr();
@@ -5025,7 +5338,8 @@ int ParseBlock(int BrkCntSwchTarget[4], int switchBody)
       tok = ParseStatement(tok, BrkCntSwchTarget, switchBody);
     }
     else
-      error("Error: ParseBlock(): Unexpected token %s\n", GetTokenName(tok));
+      //error("ParseBlock(): Unexpected token %s\n", GetTokenName(tok));
+      errorUnexpectedToken(tok);
   }
 }
 
@@ -5092,7 +5406,8 @@ int main(int argc, char** argv)
       {
         int len = strlen(argv[++i]);
         if (MAX_SEARCH_PATH - SearchPathsLen < len + 1)
-          error("Error: Path name too long\n");
+          //error("Path name too long\n");
+          errorFileName();
         strcpy(SearchPaths + SearchPathsLen, argv[i]);
         SearchPathsLen += len + 1;
         continue;
@@ -5138,10 +5453,12 @@ int main(int argc, char** argv)
       // If it's none of the known options,
       // assume it's the source code file name
       if (strlen(argv[i]) > MAX_FILE_NAME_LEN)
-        error("Error: File name too long\n");
+        //error("File name too long\n");
+        errorFileName();
       strcpy(FileNames[0], argv[i]);
       if ((Files[0] = fopen(FileNames[0], "r")) == NULL)
-        error("Error: Cannot open file \"%s\"\n", FileNames[0]);
+        //error("Cannot open file \"%s\"\n", FileNames[0]);
+        errorFile(FileNames[0]);
       LineNos[0] = LineNo;
       LinePoss[0] = LinePos;
       FileCnt++;
@@ -5151,15 +5468,16 @@ int main(int argc, char** argv)
     {
       // This should be the output file name
       if ((OutFile = fopen(argv[i], "w")) == NULL)
-        error("Error: Cannot open output file \"%s\"\n", argv[i]);
+        //error("Cannot open output file \"%s\"\n", argv[i]);
+        errorFile(argv[i]);
       continue;
     }  
 
-    error("Error: Invalid/unsupported command line option(s)\n");
+    error("Invalid or unsupported command line option\n");
   }
 
   if (!FileCnt)
-    error("Error: Input source code file not specified.\n");
+    error("Input file not specified\n");
 
   GenInitFinalize();
 

@@ -1931,7 +1931,7 @@ L104:
 	jmp	L103
 
 ; Syntax/declaration table/stack:
-; Bytes used: 1704/16896
+; Bytes used: 1704/18432
 
 
 ; Macro table:
@@ -2023,6 +2023,6 @@ L104:
 ; Ident seed
 ; Ident play
 ; Ident newtarget
-; Bytes used: 320/4096
+; Bytes used: 320/4224
 
 ; Compilation succeeded.

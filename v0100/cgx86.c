@@ -945,7 +945,8 @@ void GenFuse(int* idx)
   int num, lvalSize;
 
   if (*idx < 0)
-    error("GenFuse(): idx < 0\n");
+    //error("GenFuse(): idx < 0\n");
+    errorInternal(100);
 
   tok = stack[*idx][0];
 
@@ -1270,7 +1271,8 @@ void GenFuse(int* idx)
     break;
 
   default:
-    error("GenFuse: unexpected token %s\n", GetTokenName(tok));
+    //error("GenFuse: unexpected token %s\n", GetTokenName(tok));
+    errorInternal(101);
   }
 }
 
@@ -1330,7 +1332,8 @@ int GenGetBinaryOperatorInstr(int tok)
     return X86InstrShr;
 
   default:
-    error("Error: Invalid operator\n");
+    //error("Error: Invalid operator\n");
+    errorInternal(102);
     return 0;
   }
 }
@@ -2095,7 +2098,8 @@ void GenExpr1(void)
         break;
 
       default:
-        error("Error: Internal Error: GenExpr1() a: unexpected token %s\n", GetTokenName(tok));
+        //error("Error: Internal Error: GenExpr1() a: unexpected token %s\n", GetTokenName(tok));
+        errorInternal(103);
         break;
       }
 
@@ -2168,7 +2172,8 @@ void GenExpr1(void)
       break;
 
     default:
-      error("Error: Internal Error: GenExpr1() b: unexpected token %s\n", GetTokenName(tok));
+      //error("Error: Internal Error: GenExpr1() b: unexpected token %s\n", GetTokenName(tok));
+      errorInternal(104);
       break;
     }
   }
@@ -2540,7 +2545,8 @@ void GenExpr0(void)
       break;
 
     default:
-      error("Error: Internal Error: GenExpr0(): unexpected token %s\n", GetTokenName(tok));
+      //error("Error: Internal Error: GenExpr0(): unexpected token %s\n", GetTokenName(tok));
+      errorInternal(105);
       break;
     }
   }
