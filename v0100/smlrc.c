@@ -374,9 +374,6 @@ PROTO int GetFxnInfo(int ExprTypeSynPtr, int* MinParams, int* MaxParams, int* Re
 int verbose = 0;
 int warnCnt = 0;
 
-// avoids signed-to-unsigned comparison warnings with unsigned sizeof(int)
-int intSize = sizeof(int);
-
 // indicates whether or not constant subexpressions can be folded
 int canSimplify = 0;
 
@@ -406,7 +403,8 @@ int MacroTableLen = 0;
 
 /*
   String table entry format:
-    int label:      temporary identifier's (char*) label number
+    labell uchar:   temporary identifier's (char*) label number low 8 bits
+    labelh uchar:   temporary identifier's (char*) label number high 8 bits
     len char:       string length (<= 127)
     str char[len]:  string (ASCII)
 */
@@ -667,9 +665,12 @@ void DumpMacroTable(void)
 }
 #endif // #ifndef NO_PREPROCESSOR
 
+int KeepStringTable = 0;
+
 void PurgeStringTable(void)
 {
-  StringTableLen = 0;
+  if (!KeepStringTable)
+    StringTableLen = 0;
 }
 
 void AddString(int label, char* str, int len)
@@ -677,11 +678,11 @@ void AddString(int label, char* str, int len)
   if (len > 127)
     error("String literal too long\n");
 
-  if (MAX_STRING_TABLE_LEN - StringTableLen < /*sizeof(label)*/intSize + 1 + len)
+  if (MAX_STRING_TABLE_LEN - StringTableLen < 2 + 1 + len)
     error("String table exhausted\n");
 
-  memcpy(StringTable + StringTableLen, &label, sizeof(label));
-  StringTableLen += sizeof(label);
+  StringTable[StringTableLen++] = label & 0xFF;
+  StringTable[StringTableLen++] = (label >> 8) & 0xFF;
 
   StringTable[StringTableLen++] = len;
   memcpy(StringTable + StringTableLen, str, len);
@@ -696,11 +697,13 @@ char* FindString(int label)
   {
     int lab;
 
-    memcpy(&lab, StringTable + i, sizeof(lab));
-    if (lab == label)
-      return StringTable + i + sizeof(lab);
+    lab = StringTable[i] & 0xFF;
+    lab += (StringTable[i + 1] & 0xFF) << 8;
 
-    i += sizeof(lab);
+    if (lab == label)
+      return StringTable + i + 2;
+
+    i += 2;
     i += 1 + StringTable[i];
   }
 
@@ -757,6 +760,16 @@ void DumpIdentTable(void)
 #endif
 }
 
+char* rws[] =
+{
+  "break", "case", "char", "continue", "default", "do", "else",
+  "extern", "for", "if", "int", "return", "signed", "sizeof",
+  "static", "switch", "unsigned", "void", "while", "asm", "auto",
+  "const", "double", "enum", "float", "goto", "inline", "long",
+  "register", "restrict", "short", "struct", "typedef", "union",
+  "volatile", "_Bool", "_Complex", "_Imaginary"
+};
+
 unsigned char rwtk[] =
 {
   tokBreak, tokCase, tokChar, tokCont, tokDefault, tokDo, tokElse,
@@ -769,27 +782,11 @@ unsigned char rwtk[] =
 
 int GetTokenByWord(char* word)
 {
-  unsigned i, j = 0;
-  char* rws[3];
-
-  rws[0] = "\7break\0\6case\0\6char\0\12continue\0\11default\0\4do\0\6else\0"
-           "\10extern\0\5for\0\4if\0\5int\0\10return\0\10signed\0\10sizeof\0\0";
-  rws[1] = "\10static\0\10switch\0\12unsigned\0\6void\0\7while\0\5asm\0\6auto\0"
-           "\7const\0\10double\0\6enum\0\7float\0\6goto\0\10inline\0\6long\0\0";
-  rws[2] = "\12register\0\12restrict\0\7short\0\10struct\0\11typedef\0\7union\0"
-           "\12volatile\0\7_Bool\0\12_Complex\0\14_Imaginary\0\0";
+  unsigned i;
 
   for (i = 0; i < sizeof rws / sizeof rws[0]; i++)
-  {
-    char* p = rws[i];
-    while (*p)
-    {
-      if (!strcmp(p + 1, word))
-        return rwtk[j];
-      p += *p;
-      j++;
-    }
-  }
+    if (!strcmp(rws[i], word))
+      return rwtk[i];
 
   return tokIdent;
 }
@@ -1900,6 +1897,17 @@ int precedGEQ(int lfttok, int rhttok)
 
 int expr(int tok, int* gotUnary, int commaSeparator);
 
+char* lab2str(char* p, int n)
+{
+  do
+  {
+    *--p = '0' + n % 10;
+    n /= 10;
+  } while (n);
+
+  return p;
+}
+
 int exprUnary(int tok, int* gotUnary, int commaSeparator)
 {
   int decl = 0;
@@ -1953,7 +1961,7 @@ int exprUnary(int tok, int* gotUnary, int commaSeparator)
     else if (tok == tokLitStr)
     {
       int lbl = (LabelCnt += 2) - 2; // 1 extra label for the jump over the string
-      int len, i, id;
+      int len, id;
       char s[1 + (2 + CHAR_BIT * sizeof lbl) / 3];
       char *p = s + sizeof s;
 
@@ -1962,13 +1970,7 @@ int exprUnary(int tok, int* gotUnary, int commaSeparator)
       AddString(lbl, GetTokenValueString(), len = 1 + GetTokenValueStringLength());
 
       *--p = '\0';
-
-      i = lbl;
-      do
-      {
-        *--p = '0' + i % 10;
-        i /= 10;
-      } while (i);
+      p = lab2str(p, lbl);
 
       // DONE: can this break incomplete yet declarations???, e.g.: int x[sizeof("az")][5];
       PushSyntax2(tokIdent, id = AddIdent(p));
@@ -1985,7 +1987,6 @@ int exprUnary(int tok, int* gotUnary, int commaSeparator)
     {
       int synPtr;
       int lbl = LabelCnt++;
-      int i;
       char s[1 + (2 + CHAR_BIT * sizeof lbl) / 3 + sizeof "<something>" - 1];
       char *p = s + sizeof s;
 
@@ -2001,12 +2002,7 @@ int exprUnary(int tok, int* gotUnary, int commaSeparator)
       *--p = '\0';
       *--p = '>';
 
-      i = lbl;
-      do
-      {
-        *--p = '0' + i % 10;
-        i /= 10;
-      } while (i);
+      p = lab2str(p, lbl);
 
       p -= sizeof "<something>" - 1 - 1;
       memcpy(p, "<something", sizeof "<something" - 1);
@@ -4364,6 +4360,7 @@ int ParseDecl(int tok)
         unsigned elementsRequired = 0;
         int strLitAllowed = 1;
         int nonStrLitAllowed = 1;
+        int arrOfChar = isArray && elementSz == 1;
 #ifndef NO_ANNOTATIONS
         GenStartCommentLine(); printf2("=\n");
 #endif
@@ -4388,6 +4385,9 @@ int ParseDecl(int tok)
           braces = 1;
           tok = GetToken();
         }
+
+        PurgeStringTable();
+        KeepStringTable = 1;
 
         for (;;)
         {
@@ -4415,22 +4415,28 @@ int ParseDecl(int tok)
           strLitInitializer = stack[sp - 1][0] == tokIdent &&
                               isdigit(IdentTable[stack[sp - 1][1]]);
 
-          // Prohibit initializers like in "int a[1] = 1;"
-          if (isArray && !strLitInitializer && !braces)
+          // Prohibit initializers like in "int a[1] = 1;" and "char* a[1] = "abc";"
+          if (isArray && !braces && (!strLitInitializer || !arrOfChar))
             //error("ParseDecl(): array initializers must be in braces\n");
             errorInit();
 
-          // Prohibit initializers like { 'a', "b" }, { "a", 'b' }, { "a", "b" }
-          if (!strLitInitializer)
-            strLitAllowed = 0;
-          else
-            nonStrLitAllowed = 0;
-          if ((strLitInitializer && !strLitAllowed) ||
-              (!strLitInitializer && !nonStrLitAllowed))
-            //error("ParseDecl(): invalid initialization\n");
-            errorInit();
-          if (strLitInitializer)
-            strLitAllowed = 0;
+          // Prohibit the following character array initializations:
+          // char a[] = { 'a', "b" };
+          // char a[] = { "a", 'b' };
+          // char a[] = { "a", "b" };
+          if (arrOfChar)
+          {
+            if (!strLitInitializer)
+              strLitAllowed = 0;
+            else
+              nonStrLitAllowed = 0;
+            if ((strLitInitializer && !strLitAllowed) ||
+                (!strLitInitializer && !nonStrLitAllowed))
+              //error("ParseDecl(): invalid initialization\n");
+              errorInit();
+            if (strLitInitializer)
+              strLitAllowed = 0;
+          }
 
           elementCnt++;
 
@@ -4445,17 +4451,17 @@ int ParseDecl(int tok)
             }
             else if (elementSz == SizeOfWord + 0u && stack[sp - 1][0] == tokIdent)
             {
-              if (isArray && strLitInitializer)
-                //error("ParseDecl(): not an array of char\n");
-                errorInit();
               GenAddrData(elementSz, IdentTable + stack[sp - 1][1]);
-              // if the initializer is a string literal, also generate string data
-              if (strLitInitializer)
-                GenStrData(0, 0);
+              // Defer storage of string literal data (if any) until the end.
+              // This will let us generate the contiguous array of pointers to
+              // string literals unperturbed by the string literal data
+              // (e.g. "char* colors[] = { "red", "green", "blue" };").
             }
-            else if (elementSz == 1 && isArray && strLitInitializer)
+            else if (arrOfChar && strLitInitializer)
             {
-              elementCnt = GenStrData(0, elementsRequired);
+                // Defer storage of string literal data until the end.
+                // Now simply remember that the character array has buffered string data.
+                arrOfChar++;
             }
             else
               //error("ParseDecl(): cannot initialize a global variable with a non-constant expression\n");
@@ -4471,6 +4477,8 @@ int ParseDecl(int tok)
             // this will simulate assignment
             ins2(0, tokLocalOfs, SyntaxStack[lastSyntaxPtr + 1][1]);
             push2('=', localAllocSize);
+            // Storage of string literal data from the initializing expression
+            // occurs here.
             GenExpr();
           }
 
@@ -4481,18 +4489,62 @@ int ParseDecl(int tok)
           }
           else
             break;
-        }
+        } // for (;;)
 
-        if (isArray)
+        if (!ParseLevel)
         {
-          // Implicit initialization with 0 of what's not initialized explicitly
-          if (elementCnt < elementsRequired)
-            GenZeroData((elementsRequired - elementCnt) * elementSz);
+          if (arrOfChar == 2)
+            elementCnt = GenStrData(0, elementsRequired);
 
-          // The number of elements is now known
-          if (isIncompleteArr)
-            SyntaxStack[p + 1][1] = elementCnt;
+          if (isArray)
+          {
+            // Implicit initialization with 0 of what's not initialized explicitly
+            if (elementCnt < elementsRequired)
+              GenZeroData((elementsRequired - elementCnt) * elementSz);
+
+            // The number of elements is now known
+            if (isIncompleteArr)
+              SyntaxStack[p + 1][1] = elementCnt;
+          }
+
+          if (!arrOfChar)
+          {
+            int lab;
+            char s[1 + (2 + CHAR_BIT * sizeof lab) / 3];
+            int i = 0;
+
+            // Construct an expression for each buffered string for GenStrData()
+            sp = 1;
+            stack[0][0] = tokIdent;
+
+            // Dump all buffered strings, one by one, the ugly way
+            while (i < StringTableLen)
+            {
+              char *p = s + sizeof s;
+
+              lab = StringTable[i] & 0xFF;
+              lab += (StringTable[i + 1] & 0xFF) << 8;
+
+              // Reconstruct the identifier for the definition: char #[len] = "...";
+              *--p = '\0';
+              p = lab2str(p, lab);
+              stack[0][1] = AddIdent(p);
+
+              GenStrData(0, 0);
+
+              // Drop the identifier from the identifier table so as not to
+              // potentially overflow it when there are many initializing
+              // string literals and the table is nearly full.
+              IdentTableLen = undoIdents; // remove all temporary identifier names from e.g. "sizeof" or "str"
+
+              i += 2;
+              i += 1 + StringTable[i];
+            }
+          }
         }
+
+        PurgeStringTable();
+        KeepStringTable = 0;
 
         if (!ParseLevel && OutputFormat != FormatFlat)
           puts2(DataFooter);
@@ -5481,7 +5533,7 @@ int main(int argc, char** argv)
 
   GenInitFinalize();
 
-  // some manual initialization because there's no array initialization yet
+  // some manual initialization because there's no 2d array initialization yet
   SyntaxStack[SyntaxStackCnt][0] = tokVoid;
   SyntaxStack[SyntaxStackCnt++][1] = 0;
   SyntaxStack[SyntaxStackCnt][0] = tokInt;
