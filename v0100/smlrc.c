@@ -137,9 +137,19 @@ EXTERN int vfprintf(FILE*, char*, void*);
 #define MAX_IDENT_LEN        31
 #define MAX_STRING_LEN       127
 #define MAX_CHAR_QUEUE_LEN   256
+
+#ifndef MAX_MACRO_TABLE_LEN
 #define MAX_MACRO_TABLE_LEN  4096
+#endif
+
+#ifndef MAX_STRING_TABLE_LEN
 #define MAX_STRING_TABLE_LEN 512
-#define MAX_IDENT_TABLE_LEN  (4096+128)
+#endif
+
+#ifndef MAX_IDENT_TABLE_LEN
+#define MAX_IDENT_TABLE_LEN  (4096+256)
+#endif
+
 #define MAX_FILE_NAME_LEN    95
 
 #ifndef NO_PREPROCESSOR
@@ -260,9 +270,12 @@ EXTERN int vfprintf(FILE*, char*, void*);
 #define FormatFlat      0
 #define FormatSegmented 1
 
+#ifndef SYNTAX_STACK_MAX
 #define SYNTAX_STACK_MAX (2048+256)
+#endif
+
 #define SymVoidSynPtr 0
-#define SymIntSynPtr 1
+#define SymIntSynPtr  1
 #define SymUintSynPtr 2
 
 #define STACK_SIZE 128
@@ -698,7 +711,7 @@ char* FindString(int label)
     int lab;
 
     lab = StringTable[i] & 0xFF;
-    lab += (StringTable[i + 1] & 0xFF) << 8;
+    lab += (StringTable[i + 1] & 0xFFu) << 8;
 
     if (lab == label)
       return StringTable + i + 2;
@@ -793,6 +806,8 @@ int GetTokenByWord(char* word)
 
 char* GetTokenName(int token)
 {
+  unsigned i;
+
   switch (token)
   {
   case tokEof: return "<EOF>";
@@ -835,34 +850,18 @@ char* GetTokenName(int token)
   case tokUMod: return "%u";             case tokAssignUMod: return "%=u";
   case tokComma: return ",b";
 
-  // Reserved keywords:
-  case tokVoid: return "void";           case tokChar: return "char";
-  case tokInt: return "int";             case tokReturn: return "return";
-  case tokGoto: return "goto";           case tokIf: return "if";
-  case tokElse: return "else";           case tokWhile: return "while";
-  case tokCont: return "continue";       case tokBreak: return "break";
-  case tokSizeof: return "sizeof";       case tokFloat: return "float";
-  case tokDouble: return "double";       case tokLong: return "long";
-  case tokShort: return "short";         case tokUnsigned: return "unsigned";
-  case tokSigned: return "signed";       case tokConst: return "const";
-  case tokVolatile: return "volatile";   case tokRestrict: return "restrict";
-  case tokStatic: return "static";       case tokInline: return "inline";
-  case tokExtern: return "extern";       case tokAuto: return "auto";
-  case tokRegister: return "register";   case tokTypedef: return "typedef";
-  case tokEnum: return "enum";           case tokStruct: return "struct";
-  case tokUnion: return "union";         case tokDo: return "do";
-  case tokFor: return "for";             case tokSwitch: return "switch";
-  case tokCase: return "case";           case tokDefault: return "default";
-  case tok_Bool: return "_Bool";         case tok_Complex: return "_Complex";
-  case tok_Imagin: return "_Imaginary";  case tok_Asm: return "asm";
-
-  case tokSChar: return "signed char";   case tokUChar: return "unsigned char";
-
   // Helper (pseudo-)tokens:
   case tokNumInt: return "<NumInt>";     case tokNumUint: return "<NumUint>";
   case tokLitStr: return "<LitStr>";     case tokIdent: return "<Ident>";
   case tokLocalOfs: return "<LocalOfs>"; case tokShortCirc: return "<ShortCirc>";
+
+  case tokSChar: return "signed char";   case tokUChar: return "unsigned char";
   }
+
+  // Reserved keywords:
+  for (i = 0; i < sizeof rws / sizeof rws[0]; i++)
+    if (rwtk[i] == token)
+      return rws[i];
 
   //error("Internal Error: GetTokenName(): Invalid token %d\n", token);
   errorInternal(1);
@@ -1673,6 +1672,9 @@ int GetToken(void)
       //           flag = 2 -- return to a file after #include
       //        other flags -- uninteresting
 
+      // TBD??? should also support the following C89 form:
+      // # line linenum filename-opt
+
       SkipSpace(0);
 
       if (!isdigit(*p) || GetNumber() != tokNumInt)
@@ -1908,7 +1910,7 @@ char* lab2str(char* p, int n)
   return p;
 }
 
-int exprUnary(int tok, int* gotUnary, int commaSeparator)
+int exprUnary(int tok, int* gotUnary, int commaSeparator, int argOfSizeOf)
 {
   int decl = 0;
   *gotUnary = 0;
@@ -1916,7 +1918,7 @@ int exprUnary(int tok, int* gotUnary, int commaSeparator)
   if (isop(tok) && (isunary(tok) || strchr("&*+-", tok) != NULL))
   {
     int lastTok = tok;
-    tok = exprUnary(GetToken(), gotUnary, commaSeparator);
+    tok = exprUnary(GetToken(), gotUnary, commaSeparator, lastTok == tokSizeof);
     if (!*gotUnary)
       //error("exprUnary(): primary expression expected after token %s\n", GetTokenName(lastTok));
       errorUnexpectedToken(tok);
@@ -1983,34 +1985,6 @@ int exprUnary(int tok, int* gotUnary, int commaSeparator)
       *gotUnary = 1;
       tok = GetToken();
     }
-    else if (TokenStartsDeclaration(tok, 1))
-    {
-      int synPtr;
-      int lbl = LabelCnt++;
-      char s[1 + (2 + CHAR_BIT * sizeof lbl) / 3 + sizeof "<something>" - 1];
-      char *p = s + sizeof s;
-
-      tok = ParseDecl(tok);
-      if (tok != ')')
-        //error("exprUnary(): ')' expected, unexpected token %s\n", GetTokenName(tok));
-        errorUnexpectedToken(tok);
-      synPtr = FindSymbol("<something>");
-
-      // Rename "<something>" to "<something#>", where # is lbl.
-      // This makes the nameless declaration uniquely identifiable by name.
-
-      *--p = '\0';
-      *--p = '>';
-
-      p = lab2str(p, lbl);
-
-      p -= sizeof "<something>" - 1 - 1;
-      memcpy(p, "<something", sizeof "<something" - 1);
-
-      SyntaxStack[synPtr][1] = AddIdent(p);
-      push2(tokIdent, SyntaxStack[synPtr][1]);
-      decl = *gotUnary = 1;
-    }
     else if (tok == tokIdent)
     {
       push2(tok, AddIdent(GetTokenIdentName()));
@@ -2019,14 +1993,62 @@ int exprUnary(int tok, int* gotUnary, int commaSeparator)
     }
     else if (tok == '(')
     {
-      tok = expr(GetToken(), gotUnary, 0);
-      if (tok != ')')
-        //error("exprUnary(): ')' expected, unexpected token %s\n", GetTokenName(tok));
-        errorUnexpectedToken(tok);
-      if (!*gotUnary)
-        //error("exprUnary(): primary expression expected in '()'\n");
-        errorUnexpectedToken(tok);
       tok = GetToken();
+      decl = TokenStartsDeclaration(tok, 1);
+
+      if (decl)
+      {
+        int synPtr;
+        int lbl = LabelCnt++;
+        char s[1 + (2 + CHAR_BIT * sizeof lbl) / 3 + sizeof "<something>" - 1];
+        char *p = s + sizeof s;
+
+        tok = ParseDecl(tok);
+        if (tok != ')')
+          //error("exprUnary(): ')' expected, unexpected token %s\n", GetTokenName(tok));
+          errorUnexpectedToken(tok);
+        synPtr = FindSymbol("<something>");
+
+        // Rename "<something>" to "<something#>", where # is lbl.
+        // This makes the nameless declaration uniquely identifiable by name.
+
+        *--p = '\0';
+        *--p = '>';
+
+        p = lab2str(p, lbl);
+
+        p -= sizeof "<something>" - 1 - 1;
+        memcpy(p, "<something", sizeof "<something" - 1);
+
+        SyntaxStack[synPtr][1] = AddIdent(p);
+        tok = GetToken();
+        if (argOfSizeOf)
+        {
+          // expression: sizeof(type)
+          *gotUnary = 1;
+        }
+        else
+        {
+          // unary type cast operator: (type)
+          decl = 0;
+          tok = exprUnary(tok, gotUnary, commaSeparator, 0);
+          if (!*gotUnary)
+            //error("exprUnary(): primary expression expected after '(type)'\n");
+            errorUnexpectedToken(tok);
+        }
+        push2(tokIdent, SyntaxStack[synPtr][1]);
+      }
+      else
+      {
+        tok = expr(tok, gotUnary, 0);
+        if (tok != ')')
+          //error("exprUnary(): ')' expected, unexpected token %s\n", GetTokenName(tok));
+          errorUnexpectedToken(tok);
+        if (!*gotUnary)
+          //error("exprUnary(): primary expression expected in '()'\n");
+          errorUnexpectedToken(tok);
+        tok = GetToken();
+      }
     }
 
     while (*gotUnary && !decl)
@@ -2149,7 +2171,7 @@ int expr(int tok, int* gotUnary, int commaSeparator)
 
   pushop(tokEof);
 
-  tok = exprUnary(tok, gotUnary, commaSeparator);
+  tok = exprUnary(tok, gotUnary, commaSeparator, 0);
 
   while (tok != tokEof && strchr(",;:)]}", tok) == NULL && *gotUnary)
   {
@@ -2167,7 +2189,7 @@ int expr(int tok, int* gotUnary, int commaSeparator)
       // here: preced(postacktop()) < preced(tok)
       pushop(tok);
 
-      tok = exprUnary(GetToken(), gotUnary, commaSeparator);
+      tok = exprUnary(GetToken(), gotUnary, commaSeparator, 0);
       // DONE: figure out a check to see if exprUnary() fails to add a rhs operand
       if (!*gotUnary)
         //error("expr(): primary expression expected after token %s\n", GetTokenName(lastTok));
@@ -2256,6 +2278,80 @@ void numericTypeCheck(int ExprTypeSynPtr, int tok)
     return;
   //error("numericTypeCheck(): unexpected operand type for operator '%s', numeric type expected\n", GetTokenName(tok));
   errorOpType();
+}
+
+void shiftCountCheck(int *psr, int idx, int ExprTypeSynPtr)
+{
+  int sr = *psr;
+  // can't shift by a negative count and by a count exceeding
+  // the number of bits in int
+  if ((SyntaxStack[ExprTypeSynPtr][0] != tokUnsigned && sr < 0) ||
+      (sr + 0u) >= CHAR_BIT * sizeof(int) ||
+      (sr + 0u) >= 8u * SizeOfWord)
+  {
+    //error("exprval(): Invalid shift count\n");
+    warning("Shift count out of range\n");
+    // truncate the count, so the assembler doesn't get an invalid count
+    sr &= SizeOfWord * 8 - 1;
+    *psr = sr;
+    stack[idx][1] = sr;
+  }
+}
+
+int divCheckAndCalc(int tok, int* psl, int sr, int Unsigned, int ConstExpr[2])
+{
+  int div0 = 0;
+  int sl = *psl;
+
+  if (!ConstExpr[1])
+    return !div0;
+
+  if (Unsigned)
+  {
+    sl = uint2int(truncUint(sl));
+    sr = uint2int(truncUint(sr));
+  }
+  else
+  {
+    sl = truncInt(sl);
+    sr = truncInt(sr);
+  }
+
+  if (sr == 0)
+  {
+    div0 = 1;
+  }
+  else if (!ConstExpr[0])
+  {
+    return !div0;
+  }
+  else if (!Unsigned && ((sl == INT_MIN && sr == -1) || sl / sr != truncInt(sl / sr)))
+  {
+    div0 = 1;
+  }
+  else
+  {
+    if (Unsigned)
+    {
+      if (tok == '/')
+        sl = uint2int((sl + 0u) / sr);
+      else
+        sl = uint2int((sl + 0u) % sr);
+    }
+    else
+    {
+      if (tok == '/')
+        sl /= sr;
+      else
+        sl %= sr;
+    }
+    *psl = sl;
+  }
+
+  if (div0)
+    warning("Division by 0 or division overflow\n");
+
+  return !div0;
 }
 
 void promoteType(int* ExprTypeSynPtr, int* TheOtherExprTypeSynPtr)
@@ -2421,7 +2517,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
           error("Undeclared identifier '%s'\n", IdentTable + s);
         else
         {
-          warning("Call to undeclared function %s()\n", IdentTable + s);
+          warning("Call to undeclared function '%s()'\n", IdentTable + s);
           // Implicitly declare "extern int ident();"
           GenExtern(IdentTable + s);
           PushSyntax2(tokIdent, s);
@@ -2433,9 +2529,10 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       }
       type = SymType(synPtr);
 
+      // TBD!!! this declaration is actually a type cast
       if (!strncmp(IdentTable + SyntaxStack[synPtr][1], "<something", sizeof "<something>" - 1 - 1) &&
           ((*idx + 2 >= sp) || stack[*idx + 2][0] != tokSizeof))
-        error("exprval(): unexpected type declaration\n");
+        error("Unsupported type cast\n");
 
       if (type == SymLocalVar || type == SymLocalArr)
       {
@@ -2801,40 +2898,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       // DONE: check for division overflows
       case '/':
       case '%':
-        if (*ConstExpr)
-        {
-          int div0 = 0;
-          if (!Unsigned)
-          {
-            sl = truncInt(sl);
-            sr = truncInt(sr);
-            if (sr == 0 || (sl == INT_MIN && sr == -1) || sl / sr != truncInt(sl / sr))
-            {
-              //error("exprval(): division overflow\n");
-              div0 = 1;
-              *ConstExpr = sl = 0;
-            }
-            else if (tok == '/')
-              sl /= sr;
-            else
-              sl %= sr;
-          }
-          else
-          {
-            if (truncUint(sr) == 0)
-            {
-              //error("exprval(): division overflow\n");
-              div0 = 1;
-              *ConstExpr = sl = 0;
-            }
-            else if (tok == '/')
-              sl = uint2int(truncUint(sl) / truncUint(sr));
-            else
-              sl = uint2int(truncUint(sl) % truncUint(sr));
-          }
-          if (div0)
-            warning("Division by 0 or division overflow\n");
-        }
+        *ConstExpr &= divCheckAndCalc(tok, &sl, sr, Unsigned, constExpr);
 
         if (Unsigned)
         {
@@ -2851,25 +2915,17 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
 
       case tokLShift:
       case tokRShift:
-        if (*ConstExpr)
+        if (constExpr[1])
         {
           if (SyntaxStack[RightExprTypeSynPtr][0] != tokUnsigned)
             sr = truncInt(sr);
           else
             sr = uint2int(truncUint(sr));
-          // can't shift by a negative count and by a count exceeding
-          // the number of bits in int
-          if ((SyntaxStack[RightExprTypeSynPtr][0] != tokUnsigned && sr < 0) ||
-              (sr + 0u) >= CHAR_BIT * sizeof(int) ||
-              (sr + 0u) >= 8u * SizeOfWord)
-          {
-            //error("exprval(): Invalid shift count\n");
-            warning("Shift count out of range\n");
-            *ConstExpr = sl = sr = 0;
-            // truncate the count, so the assembler doesn't get an invalid count
-            stack[oldIdxRight - (oldSpRight - sp)][1] &= SizeOfWord * 8 - 1;
-          }
-          else if (tok == tokLShift)
+          shiftCountCheck(&sr, oldIdxRight - (oldSpRight - sp), RightExprTypeSynPtr);
+        }
+        if (*ConstExpr)
+        {
+          if (tok == tokLShift)
           {
             // left shift is the same for signed and unsigned ints
             sl = uint2int((sl + 0u) << sr);
@@ -3179,7 +3235,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       int incSize;
       int opSize;
       int Unsigned;
-      exprval(idx, &RightExprTypeSynPtr, &constExpr[1]);
+      int sr = exprval(idx, &RightExprTypeSynPtr, &constExpr[1]);
       oldIdxLeft = *idx;
       oldSpLeft = sp;
       exprval(idx, ExprTypeSynPtr, &constExpr[0]);
@@ -3220,6 +3276,28 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
         if (ptrmask & 1)
           //error("exprval(): invalid combination of operands for %s\n", GetTokenName(tok));
           errorOpType();
+      }
+
+      if (tok == tokAssignLSh || tok == tokAssignRSh)
+      {
+        if (constExpr[1])
+        {
+          if (SyntaxStack[RightExprTypeSynPtr][0] != tokUnsigned)
+            sr = truncInt(sr);
+          else
+            sr = uint2int(truncUint(sr));
+          shiftCountCheck(&sr, oldIdxRight - (oldSpRight - sp), RightExprTypeSynPtr);
+        }
+      }
+
+      if (tok == tokAssignDiv || tok == tokAssignMod)
+      {
+        int t, sl = 0;
+        if (tok == tokAssignDiv)
+          t = '/';
+        else
+          t = '%';
+        divCheckAndCalc(t, &sl, sr, 1, constExpr);
       }
 
       // TBD??? replace +=/-= with prefix ++/-- if incSize == 1
@@ -3432,7 +3510,7 @@ void DetermineVaListType(void)
   {
     // va_list is something else, and
     // the code may have long crashed by now
-    printf("Internal error: Indeterminate va_list type\n");
+    printf("Internal error: Indeterminate underlying type of va_list\n");
     exit(-1);
   }
 }
@@ -4287,13 +4365,13 @@ int ParseDecl(int tok)
       {
         // Disallow nameless variables and prototypes.
         if (!ExprLevel)
-          error("ParseDecl(): Identifier name expected\n");
+          error("Identifier expected in declaration\n");
       }
       else
       {
         // Disallow named variables and prototypes.
         if (ExprLevel)
-          error("ParseDecl(): Identifier name unexpected\n");
+          error("Identifier unexpected in declaration\n");
       }
 
       if (!isFxn)
@@ -4523,7 +4601,7 @@ int ParseDecl(int tok)
               char *p = s + sizeof s;
 
               lab = StringTable[i] & 0xFF;
-              lab += (StringTable[i + 1] & 0xFF) << 8;
+              lab += (StringTable[i + 1] & 0xFFu) << 8;
 
               // Reconstruct the identifier for the definition: char #[len] = "...";
               *--p = '\0';

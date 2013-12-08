@@ -2023,6 +2023,6 @@ L104:
 ; Ident seed
 ; Ident play
 ; Ident newtarget
-; Bytes used: 320/4224
+; Bytes used: 320/4352
 
 ; Compilation succeeded.

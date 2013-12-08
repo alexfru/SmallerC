@@ -492,7 +492,7 @@ int main(void)
   printf("sizeof(char)=%u\n", sizeof(char));
   printf("sizeof(int)=%u\n", sizeof(int));
   printf("sizeof(char[3])=%u\n", sizeof(char[3]));
-  printf("sizeof char(*[5])()=%u\n", sizeof char(*[5])());
+  printf("sizeof(char(*[5])())=%u\n", sizeof(char(*[5])()));
   printf("sizeof(int[sizeof(int[sizeof(int[3])])])=%u\n", sizeof(int[sizeof(int[sizeof(int[3])])]));
   char yui[sizeof(int[sizeof(int[sizeof(int[3])])])];
   printf("sizeof(char(*)())=%u\n", sizeof(char(*)()));
@@ -502,7 +502,7 @@ int main(void)
   printf("sizeof main=%u\n", sizeof main);
   printf("sizeof main()=%u\n", sizeof main());
   printf("sizeof(void())=%u\n", sizeof(void()));
-  printf("sizeof((char[7]))=%u\n", sizeof((char[7])));
+  printf("sizeof(char[7])=%u\n", sizeof(char[7]));
   printf("%s%s=%u\n",
    "sizeof(int[sizeof(int[sizeof(int[sizeof(int[3])+sizeof(int[5])])])+",  // ((3*2+5*2)*2*2 +
               "sizeof(int[sizeof(int[sizeof(int[7])+sizeof(int[9])])])])", //  (7*2+9*2)*2*2) * 2 = 384

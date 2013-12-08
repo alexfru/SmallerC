@@ -3154,7 +3154,7 @@ L313:
 ; Expanded expression: " 10u  L315  printf ()4 "
 	jmp	L316
 L315:
-	db	"sizeof char(*[5])()=%u",10,0
+	db	"sizeof(char(*[5])())=%u",10,0
 L316:
 ; Fused expression:    "( 10u , L315 , printf )4 "
 	push	10
@@ -3290,7 +3290,7 @@ L343:
 ; Expanded expression: " 7u  L345  printf ()4 "
 	jmp	L346
 L345:
-	db	"sizeof((char[7]))=%u",10,0
+	db	"sizeof(char[7])=%u",10,0
 L346:
 ; Fused expression:    "( 7u , L345 , printf )4 "
 	push	7
@@ -4650,6 +4650,6 @@ L430:
 ; Ident macros
 ; Ident Hola
 ; Ident Switch
-; Bytes used: 301/4224
+; Bytes used: 301/4352
 
 ; Compilation succeeded.
