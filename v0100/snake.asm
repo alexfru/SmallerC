@@ -1931,7 +1931,7 @@ L104:
 	jmp	L103
 
 ; Syntax/declaration table/stack:
-; Bytes used: 1704/18432
+; Bytes used: 1704/19456
 
 
 ; Macro table:
@@ -2025,4 +2025,5 @@ L104:
 ; Ident newtarget
 ; Bytes used: 320/4352
 
+; Next label: L183:
 ; Compilation succeeded.

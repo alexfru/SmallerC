@@ -564,9 +564,9 @@ int main(void)
 
 void Switch(void)
 {
-  switch (1) { default: }
-  switch (1) { case 0: }
-  switch (1) { case 1: }
+  switch (1) { default:; }
+  switch (1) { case 0:; }
+  switch (1) { case 1:; }
   switch (1) { { int i; } }
   switch (1)
   {

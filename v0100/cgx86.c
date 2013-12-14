@@ -43,7 +43,7 @@ void GenInit(void)
 {
   // initialization of target-specific code generator
   SizeOfWord = 2;
-  OutputFormat = FormatSegmented;
+  OutputFormat = FormatSegTurbo;
   UseLeadingUnderscores = 1;
 }
 
@@ -56,8 +56,13 @@ int GenInitParams(int argc, char** argv, int* idx)
 
   if (!strcmp(argv[*idx], "-seg16"))
   {
-    // this is the default option for x86
     OutputFormat = FormatSegmented; SizeOfWord = 2;
+    return 1;
+  }
+  else if (!strcmp(argv[*idx], "-seg16t"))
+  {
+    // this is the default option for x86
+    OutputFormat = FormatSegTurbo; SizeOfWord = 2;
     return 1;
   }
   else if (!strcmp(argv[*idx], "-seg32"))
@@ -84,22 +89,19 @@ void GenInitFinalize(void)
   // finalization of initialization of target-specific code generator
 
   // Change the output assembly format/content according to the options
-  if (OutputFormat == FormatSegmented)
+  if (OutputFormat == FormatSegTurbo)
   {
-    if (SizeOfWord == 2)
-    {
-      FileHeader = "SEGMENT _TEXT PUBLIC CLASS=CODE USE16\n"
-                   "SEGMENT _DATA PUBLIC CLASS=DATA\n";
-      CodeHeader = "SEGMENT _TEXT";
-      CodeFooter = "; SEGMENT _TEXT";
-      DataHeader = "SEGMENT _DATA";
-      DataFooter = "; SEGMENT _DATA";
-    }
-    else
-    {
-      CodeHeader = "section .text";
-      DataHeader = "section .data";
-    }
+    FileHeader = "SEGMENT _TEXT PUBLIC CLASS=CODE USE16\n"
+                 "SEGMENT _DATA PUBLIC CLASS=DATA\n";
+    CodeHeader = "SEGMENT _TEXT";
+    CodeFooter = "; SEGMENT _TEXT";
+    DataHeader = "SEGMENT _DATA";
+    DataFooter = "; SEGMENT _DATA";
+  }
+  else if (OutputFormat == FormatSegmented)
+  {
+    CodeHeader = "section .text";
+    DataHeader = "section .data";
   }
   else
   {
@@ -124,13 +126,13 @@ void GenLabel(char* Label, int Static)
 {
   if (UseLeadingUnderscores)
   {
-    if (OutputFormat != FormatFlat && !Static)
+    if (OutputFormat != FormatFlat && !Static && GenExterns)
       printf2("\tglobal\t_%s\n", Label);
     printf2("_%s:\n", Label);
   }
   else
   {
-    if (OutputFormat != FormatFlat && !Static)
+    if (OutputFormat != FormatFlat && !Static && GenExterns)
       printf2("\tglobal\t$%s\n", Label);
     printf2("$%s:\n", Label);
   }
@@ -138,7 +140,7 @@ void GenLabel(char* Label, int Static)
 
 void GenExtern(char* Label)
 {
-  if (OutputFormat != FormatFlat)
+  if (OutputFormat != FormatFlat && GenExterns)
   {
     if (UseLeadingUnderscores)
       printf2("\textern\t_%s\n", Label);
@@ -1504,8 +1506,6 @@ void GenExpr1(void)
         GenJumpIfNotZero(-v); // ||
       break;
     case tokLogAnd:
-      GenNumLabel(v);
-      break;
     case tokLogOr:
       GenNumLabel(v);
       break;
@@ -2522,8 +2522,6 @@ void GenExpr0(void)
       break;
 
     case tokLogAnd:
-      GenNumLabel(v);
-      break;
     case tokLogOr:
       GenNumLabel(v);
       break;

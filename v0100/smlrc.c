@@ -40,11 +40,9 @@ either expressed or implied, of the FreeBSD Project.
 /*                                                                           */
 /*****************************************************************************/
 
-//#ifdef __TURBOC__
 // You need to declare __setargv__ as an extern symbol when bootstrapping with
 // Turbo C++ in order to access main()'s argc and argv params.
 extern char _setargv__;
-//#endif
 
 #define EXTERN extern
 //#define EXTERN
@@ -269,9 +267,10 @@ EXTERN int vfprintf(FILE*, char*, void*);
 
 #define FormatFlat      0
 #define FormatSegmented 1
+#define FormatSegTurbo  2
 
 #ifndef SYNTAX_STACK_MAX
-#define SYNTAX_STACK_MAX (2048+256)
+#define SYNTAX_STACK_MAX (2048+384)
 #endif
 
 #define SymVoidSynPtr 0
@@ -379,7 +378,7 @@ PROTO int FindSymbol(char* s);
 PROTO int SymType(int SynPtr);
 PROTO int GetDeclSize(int SyntaxPtr, int SizeForDeref);
 
-PROTO int ParseExpr(int tok, int* GotUnary, int* ExprTypeSynPtr, int* ConstExpr, int* ConstVal, int commaSeparator);
+PROTO int ParseExpr(int tok, int* GotUnary, int* ExprTypeSynPtr, int* ConstExpr, int* ConstVal, int commaSeparator, int label);
 PROTO int GetFxnInfo(int ExprTypeSynPtr, int* MinParams, int* MaxParams, int* ReturnExprTypeSynPtr);
 
 // all data
@@ -432,6 +431,12 @@ int StringTableLen = 0;
 char IdentTable[MAX_IDENT_TABLE_LEN];
 int IdentTableLen = 0;
 
+#define MAX_GOTO_LABELS 16
+int gotoLabels[MAX_GOTO_LABELS][2];
+// gotoLabStat[]: bit 1 = used (by "goto label;"), bit 0 = defined (with "label:")
+char gotoLabStat[MAX_GOTO_LABELS];
+int gotoLabCnt = 0;
+
 // Data structures to support #include
 int FileCnt = 0;
 char FileNames[MAX_INCLUDES][MAX_FILE_NAME_LEN + 1];
@@ -462,8 +467,8 @@ int opsp = 0;
 
 // smc.c data
 
-//int OutputFormat = FormatFlat;
 int OutputFormat = FormatSegmented;
+int GenExterns = 1;
 
 // Name of the function to call in main()'s prolog to construct C++ objects/init data.
 // gcc calls __main().
@@ -756,6 +761,43 @@ int AddIdent(char* name)
   IdentTable[IdentTableLen++] = len + 1;
 
   return i;
+}
+
+int AddGotoLabel(char* name, int label)
+{
+  int i;
+  for (i = 0; i < gotoLabCnt; i++)
+  {
+    if (!strcmp(IdentTable + gotoLabels[i][0], name))
+    {
+      if (gotoLabStat[i] & label)
+        error("Redefinition of label '%s'\n", name);
+      gotoLabStat[i] |= 2*!label + label;
+      return gotoLabels[i][1];
+    }
+  }
+  if (gotoLabCnt >= MAX_GOTO_LABELS)
+    error("Goto table exhausted\n");
+  gotoLabels[gotoLabCnt][0] = AddIdent(name);
+  gotoLabels[gotoLabCnt][1] = LabelCnt++;
+  gotoLabStat[gotoLabCnt] = 2*!label + label;
+  return gotoLabels[gotoLabCnt++][1];
+}
+
+void UndoNonLabelIdents(int len)
+{
+  int i;
+  IdentTableLen = len;
+  for (i = 0; i < gotoLabCnt; i++)
+    if (gotoLabels[i][0] > len)
+    {
+      char* pfrom = IdentTable + gotoLabels[i][0];
+      char* pto = IdentTable + IdentTableLen;
+      int l = strlen(pfrom) + 2;
+      memmove(pto, pfrom, l);
+      IdentTableLen += l;
+      gotoLabels[i][0] = pto - IdentTable;
+    }
 }
 
 void DumpIdentTable(void)
@@ -2340,6 +2382,10 @@ int divCheckAndCalc(int tok, int* psl, int sr, int Unsigned, int ConstExpr[2])
     }
     else
     {
+      // TBD!!! C89 gives freedom in how exactly division of negative integers
+      // can be implemented w.r.t. rounding and w.r.t. the sign of the remainder.
+      // A stricter, C99-conforming implementation, non-dependent on the
+      // compiler used to compile Smaller C is needed.
       if (tok == '/')
         sl /= sr;
       else
@@ -3339,7 +3385,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
   return s;
 }
 
-int ParseExpr(int tok, int* GotUnary, int* ExprTypeSynPtr, int* ConstExpr, int* ConstVal, int commaSeparator)
+int ParseExpr(int tok, int* GotUnary, int* ExprTypeSynPtr, int* ConstExpr, int* ConstVal, int commaSeparator, int label)
 {
   *ConstVal = *ConstExpr = 0;
   *ExprTypeSynPtr = SymVoidSynPtr;
@@ -3355,6 +3401,12 @@ int ParseExpr(int tok, int* GotUnary, int* ExprTypeSynPtr, int* ConstExpr, int* 
   if (tok == tokEof || strchr(",;:)]}", tok) == NULL)
     //error("ParseExpr(): Unexpected token %s\n", GetTokenName(tok));
     errorUnexpectedToken(tok);
+
+  if (label && tok == ':' && *GotUnary && sp == 1 && stack[sp - 1][0] == tokIdent)
+  {
+    ExprLevel--;
+    return tokGoto;
+  }
 
   if (*GotUnary)
   {
@@ -3815,7 +3867,7 @@ int FindSymbol(char* s)
     {
       return i;
     }
-    else if (SyntaxStack[i][0] == ')')
+    if (SyntaxStack[i][0] == ')')
     {
       // Skip over the function params
       int c = -1;
@@ -4075,7 +4127,7 @@ int ParseArrayDimension(int AllowEmptyDimension)
   oldssp = SyntaxStackCnt;
   oldesp = sp;
   undoIdents = IdentTableLen;
-  tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0);
+  tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0, 0);
   IdentTableLen = undoIdents; // remove all temporary identifier names from e.g. "sizeof"
   SyntaxStackCnt = oldssp; // undo any temporary declarations from e.g. "sizeof" in the expression
   sp = oldesp;
@@ -4480,7 +4532,7 @@ int ParseDecl(int tok)
             break;
           }
 
-          tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 1);
+          tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 1, 0);
           if (!gotUnary)
             //error("ParseDecl(): missing initialization expression\n");
             errorUnexpectedToken(tok);
@@ -4554,7 +4606,7 @@ int ParseDecl(int tok)
             //   tokLocalOfs(...), original expression stack, =(localAllocSize)
             // this will simulate assignment
             ins2(0, tokLocalOfs, SyntaxStack[lastSyntaxPtr + 1][1]);
-            push2('=', localAllocSize);
+            push2('=', localAllocSize); // TBD??? should use elementSz instead?
             // Storage of string literal data from the initializing expression
             // occurs here.
             GenExpr();
@@ -4643,6 +4695,9 @@ int ParseDecl(int tok)
         int undoSymbolsPtr = SyntaxStackCnt;
         int undoIdents = IdentTableLen;
         int locAllocLabel = (LabelCnt += 2) - 2;
+        int i;
+
+        gotoLabCnt = 0;
 
         if (verbose && OutFile)
           printf("%s()\n", IdentTable + SyntaxStack[lastSyntaxPtr][1]);
@@ -4671,6 +4726,10 @@ int ParseDecl(int tok)
           errorUnexpectedToken(tok);
         IdentTableLen = undoIdents; // remove all identifier names
         SyntaxStackCnt = undoSymbolsPtr; // remove all params and locals
+
+        for (i = 0; i < gotoLabCnt; i++)
+          if (gotoLabStat[i] == 2)
+            error("Undeclared label '%s'\n", IdentTable + gotoLabels[i][0]);
 
         GenNumLabel(CurFxnEpilogLabel);
         GenFxnEpilog();
@@ -4881,7 +4940,7 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
 {
 /*
   labeled statements:
-  - ident : statement
+  + ident : statement
   + case const-expr : statement
   + default : statement
 
@@ -4902,309 +4961,110 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
   + for ( expression-opt ; expression-opt ; expression-opt ) statement
 
   jump statements:
-  - goto ident ;
+  + goto ident ;
   + continue ;
   + break ;
   + return expression-opt ;
 */
   int gotUnary, synPtr,  constExpr, exprVal;
   int brkCntSwchTarget[4];
+  int statementNeeded;
 
-  if (tok == ';')
+  do
   {
-    tok = GetToken();
-  }
-  else if (tok == '{')
-  {
-    // A new {} block begins in the function body
-    int undoSymbolsPtr = SyntaxStackCnt;
-    int undoLocalOfs = CurFxnLocalOfs;
-    int undoIdents = IdentTableLen;
-#ifndef NO_ANNOTATIONS
-    GenStartCommentLine(); printf2("{\n");
-#endif
-    ParseLevel++;
-    tok = ParseBlock(BrkCntSwchTarget, switchBody / 2);
-    ParseLevel--;
-    if (tok != '}')
-      //error("ParseStatement(): '}' expected. Unexpected token %s\n", GetTokenName(tok));
-      errorUnexpectedToken(tok);
-    IdentTableLen = undoIdents; // remove all identifier names
-    SyntaxStackCnt = undoSymbolsPtr; // remove all params and locals
-    CurFxnLocalOfs = undoLocalOfs; // destroy on-stack local variables
-#ifndef NO_ANNOTATIONS
-    GenStartCommentLine(); printf2("}\n");
-#endif
-    tok = GetToken();
-  }
-  else if (tok == tokReturn)
-  {
-    // DONE: functions returning void vs non-void
-    // TBD??? functions returning void should be able to return void
-    //        return values from other functions returning void
-    int retVoid = CurFxnReturnExprTypeSynPtr >= 0 &&
-                  SyntaxStack[CurFxnReturnExprTypeSynPtr][0] == tokVoid;
-#ifndef NO_ANNOTATIONS
-    GenStartCommentLine(); printf2("return\n");
-#endif
-    tok = GetToken();
+    statementNeeded = 0;
+
     if (tok == ';')
     {
-      gotUnary = 0;
-      if (!retVoid)
-        //error("ParseStatement(): missing return value\n");
+      tok = GetToken();
+    }
+    else if (tok == '{')
+    {
+      // A new {} block begins in the function body
+      int undoSymbolsPtr = SyntaxStackCnt;
+      int undoLocalOfs = CurFxnLocalOfs;
+      int undoIdents = IdentTableLen;
+#ifndef NO_ANNOTATIONS
+      GenStartCommentLine(); printf2("{\n");
+#endif
+      ParseLevel++;
+      tok = ParseBlock(BrkCntSwchTarget, switchBody / 2);
+      ParseLevel--;
+      if (tok != '}')
+        //error("ParseStatement(): '}' expected. Unexpected token %s\n", GetTokenName(tok));
         errorUnexpectedToken(tok);
-    }
-    else
-    {
-      if (retVoid)
-        //error("Error: ParseStatement(): cannot return a value from a function returning 'void'\n");
-        errorUnexpectedToken(tok);
-      if ((tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0)) != ';')
-        //error("ParseStatement(): ';' expected\n");
-        errorUnexpectedToken(tok);
-      if (gotUnary &&
-          synPtr >= 0 && SyntaxStack[synPtr][0] == tokVoid)
-          //error("ParseStatement(): cannot return a value of type 'void'\n");
-          errorUnexpectedVoid();
-    }
-    if (gotUnary)
-      GenExpr();
-    GenJumpUncond(CurFxnEpilogLabel);
-    tok = GetToken();
-  }
-  else if (tok == tokWhile)
-  {
-    int labelBefore = LabelCnt++;
-    int labelAfter = LabelCnt++;
+      UndoNonLabelIdents(undoIdents); // remove all identifier names, except those of labels
+      SyntaxStackCnt = undoSymbolsPtr; // remove all params and locals
+      CurFxnLocalOfs = undoLocalOfs; // destroy on-stack local variables
 #ifndef NO_ANNOTATIONS
-    GenStartCommentLine(); printf2("while\n");
-#endif
-
-    tok = GetToken();
-    if (tok != '(')
-      //error("ParseStatement(): '(' expected after 'while'\n");
-      errorUnexpectedToken(tok);
-
-    tok = GetToken();
-    if ((tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0)) != ')')
-      //error("ParseStatement(): ')' expected after 'while ( expression'\n");
-      errorUnexpectedToken(tok);
-
-    if (!gotUnary)
-      //error("ParseStatement(): expression expected in 'while ( expression )'\n");
-      errorUnexpectedToken(tok);
-
-    // DONE: void control expressions
-    if (synPtr >= 0 && SyntaxStack[synPtr][0] == tokVoid)
-      //error("ParseStatement(): unexpected 'void' expression in 'while ( expression )'\n");
-      errorUnexpectedVoid();
-
-    GenNumLabel(labelBefore);
-
-    switch (stack[sp - 1][0])
-    {
-    case '<':
-    case '>':
-    case tokEQ:
-    case tokNEQ:
-    case tokLEQ:
-    case tokGEQ:
-    case tokULess:
-    case tokUGreater:
-    case tokULEQ:
-    case tokUGEQ:
-      push2(tokIfNot, labelAfter);
-      GenExpr();
-      break;
-    default:
-      GenExpr();
-      GenJumpIfZero(labelAfter);
-      break;
-    }
-
-    tok = GetToken();
-    brkCntSwchTarget[0] = labelAfter; // break target
-    brkCntSwchTarget[1] = labelBefore; // continue target
-    tok = ParseStatement(tok, brkCntSwchTarget, 0);
-
-    GenJumpUncond(labelBefore);
-    GenNumLabel(labelAfter);
-  }
-  else if (tok == tokDo)
-  {
-    int labelBefore = LabelCnt++;
-    int labelWhile = LabelCnt++;
-    int labelAfter = LabelCnt++;
-#ifndef NO_ANNOTATIONS
-    GenStartCommentLine(); printf2("do\n");
-#endif
-    GenNumLabel(labelBefore);
-
-    tok = GetToken();
-    brkCntSwchTarget[0] = labelAfter; // break target
-    brkCntSwchTarget[1] = labelWhile; // continue target
-    tok = ParseStatement(tok, brkCntSwchTarget, 0);
-    if (tok != tokWhile)
-      //error("ParseStatement(): 'while' expected after 'do statement'\n");
-      errorUnexpectedToken(tok);
-
-#ifndef NO_ANNOTATIONS
-    GenStartCommentLine(); printf2("while\n");
-#endif
-    tok = GetToken();
-    if (tok != '(')
-      //error("ParseStatement(): '(' expected after 'while'\n");
-      errorUnexpectedToken(tok);
-
-    tok = GetToken();
-    if ((tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0)) != ')')
-      //error("ParseStatement(): ')' expected after 'while ( expression'\n");
-      errorUnexpectedToken(tok);
-
-    if (!gotUnary)
-      //error("ParseStatement(): expression expected in 'while ( expression )'\n");
-      errorUnexpectedToken(tok);
-
-    tok = GetToken();
-    if (tok != ';')
-      //error("ParseStatement(): ';' expected after 'do statement while ( expression )'\n");
-      errorUnexpectedToken(tok);
-
-    // DONE: void control expressions
-    if (synPtr >= 0 && SyntaxStack[synPtr][0] == tokVoid)
-      //error("ParseStatement(): unexpected 'void' expression in 'while ( expression )'\n");
-      errorUnexpectedVoid();
-
-    GenNumLabel(labelWhile);
-
-    switch (stack[sp - 1][0])
-    {
-    case '<':
-    case '>':
-    case tokEQ:
-    case tokNEQ:
-    case tokLEQ:
-    case tokGEQ:
-    case tokULess:
-    case tokUGreater:
-    case tokULEQ:
-    case tokUGEQ:
-      push2(tokIf, labelBefore);
-      GenExpr();
-      break;
-    default:
-      GenExpr();
-      GenJumpIfNotZero(labelBefore);
-      break;
-    }
-
-    GenNumLabel(labelAfter);
-
-    tok = GetToken();
-  }
-  else if (tok == tokIf)
-  {
-    int labelAfterIf = LabelCnt++;
-    int labelAfterElse = LabelCnt++;
-#ifndef NO_ANNOTATIONS
-    GenStartCommentLine(); printf2("if\n");
-#endif
-
-    tok = GetToken();
-    if (tok != '(')
-      //error("ParseStatement(): '(' expected after 'if'\n");
-      errorUnexpectedToken(tok);
-
-    tok = GetToken();
-    if ((tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0)) != ')')
-      //error("ParseStatement(): ')' expected after 'if ( expression'\n");
-      errorUnexpectedToken(tok);
-
-    if (!gotUnary)
-      //error("ParseStatement(): expression expected in 'if ( expression )'\n");
-      errorUnexpectedToken(tok);
-
-    // DONE: void control expressions
-    if (synPtr >= 0 && SyntaxStack[synPtr][0] == tokVoid)
-      //error("ParseStatement(): unexpected 'void' expression in 'if ( expression )'\n");
-      errorUnexpectedVoid();
-
-    switch (stack[sp - 1][0])
-    {
-    case '<':
-    case '>':
-    case tokEQ:
-    case tokNEQ:
-    case tokLEQ:
-    case tokGEQ:
-    case tokULess:
-    case tokUGreater:
-    case tokULEQ:
-    case tokUGEQ:
-      push2(tokIfNot, labelAfterIf);
-      GenExpr();
-      break;
-    default:
-      GenExpr();
-      GenJumpIfZero(labelAfterIf);
-      break;
-    }
-
-    tok = GetToken();
-    tok = ParseStatement(tok, BrkCntSwchTarget, 0);
-
-    // DONE: else
-    if (tok == tokElse)
-    {
-      GenJumpUncond(labelAfterElse);
-      GenNumLabel(labelAfterIf);
-#ifndef NO_ANNOTATIONS
-      GenStartCommentLine(); printf2("else\n");
+      GenStartCommentLine(); printf2("}\n");
 #endif
       tok = GetToken();
-      tok = ParseStatement(tok, BrkCntSwchTarget, 0);
-      GenNumLabel(labelAfterElse);
     }
-    else
+    else if (tok == tokReturn)
     {
-      GenNumLabel(labelAfterIf);
-    }
-  }
-  else if (tok == tokFor)
-  {
-    int labelBefore = LabelCnt++;
-    int labelExpr3 = LabelCnt++;
-    int labelBody = LabelCnt++;
-    int labelAfter = LabelCnt++;
+      // DONE: functions returning void vs non-void
+      // TBD??? functions returning void should be able to return void
+      //        return values from other functions returning void
+      int retVoid = CurFxnReturnExprTypeSynPtr >= 0 &&
+                    SyntaxStack[CurFxnReturnExprTypeSynPtr][0] == tokVoid;
 #ifndef NO_ANNOTATIONS
-    GenStartCommentLine(); printf2("for\n");
+      GenStartCommentLine(); printf2("return\n");
 #endif
-    tok = GetToken();
-    if (tok != '(')
-      //error("ParseStatement(): '(' expected after 'for'\n");
-      errorUnexpectedToken(tok);
-
-    tok = GetToken();
-    if ((tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0)) != ';')
-      //error("ParseStatement(): ';' expected after 'for ( expression'\n");
-      errorUnexpectedToken(tok);
-    if (gotUnary)
-    {
-      GenExpr();
+      tok = GetToken();
+      if (tok == ';')
+      {
+        gotUnary = 0;
+        if (!retVoid)
+          //error("ParseStatement(): missing return value\n");
+          errorUnexpectedToken(tok);
+      }
+      else
+      {
+        if (retVoid)
+          //error("Error: ParseStatement(): cannot return a value from a function returning 'void'\n");
+          errorUnexpectedToken(tok);
+        if ((tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0, 0)) != ';')
+          //error("ParseStatement(): ';' expected\n");
+          errorUnexpectedToken(tok);
+        if (gotUnary &&
+            synPtr >= 0 && SyntaxStack[synPtr][0] == tokVoid)
+            //error("ParseStatement(): cannot return a value of type 'void'\n");
+            errorUnexpectedVoid();
+      }
+      if (gotUnary)
+        GenExpr();
+      GenJumpUncond(CurFxnEpilogLabel);
+      tok = GetToken();
     }
-
-    GenNumLabel(labelBefore);
-    tok = GetToken();
-    if ((tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0)) != ';')
-      //error("ParseStatement(): ';' expected after 'for ( expression ; expression'\n");
-      errorUnexpectedToken(tok);
-    if (gotUnary)
+    else if (tok == tokWhile)
     {
+      int labelBefore = LabelCnt++;
+      int labelAfter = LabelCnt++;
+#ifndef NO_ANNOTATIONS
+      GenStartCommentLine(); printf2("while\n");
+#endif
+
+      tok = GetToken();
+      if (tok != '(')
+        //error("ParseStatement(): '(' expected after 'while'\n");
+        errorUnexpectedToken(tok);
+
+      tok = GetToken();
+      if ((tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0, 0)) != ')')
+        //error("ParseStatement(): ')' expected after 'while ( expression'\n");
+        errorUnexpectedToken(tok);
+
+      if (!gotUnary)
+        //error("ParseStatement(): expression expected in 'while ( expression )'\n");
+        errorUnexpectedToken(tok);
+
       // DONE: void control expressions
       if (synPtr >= 0 && SyntaxStack[synPtr][0] == tokVoid)
-        //error("ParseStatement(): unexpected 'void' expression in 'for ( ; expression ; )'\n");
+        //error("ParseStatement(): unexpected 'void' expression in 'while ( expression )'\n");
         errorUnexpectedVoid();
+
+      GenNumLabel(labelBefore);
 
       switch (stack[sp - 1][0])
       {
@@ -5226,222 +5086,457 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
         GenJumpIfZero(labelAfter);
         break;
       }
-    }
-    GenJumpUncond(labelBody);
 
-    GenNumLabel(labelExpr3);
-    tok = GetToken();
-    if ((tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0)) != ')')
-      //error("ParseStatement(): ')' expected after 'for ( expression ; expression ; expression'\n");
-      errorUnexpectedToken(tok);
-    if (gotUnary)
+      tok = GetToken();
+      brkCntSwchTarget[0] = labelAfter; // break target
+      brkCntSwchTarget[1] = labelBefore; // continue target
+      tok = ParseStatement(tok, brkCntSwchTarget, 0);
+
+      GenJumpUncond(labelBefore);
+      GenNumLabel(labelAfter);
+    }
+    else if (tok == tokDo)
     {
+      int labelBefore = LabelCnt++;
+      int labelWhile = LabelCnt++;
+      int labelAfter = LabelCnt++;
+#ifndef NO_ANNOTATIONS
+      GenStartCommentLine(); printf2("do\n");
+#endif
+      GenNumLabel(labelBefore);
+
+      tok = GetToken();
+      brkCntSwchTarget[0] = labelAfter; // break target
+      brkCntSwchTarget[1] = labelWhile; // continue target
+      tok = ParseStatement(tok, brkCntSwchTarget, 0);
+      if (tok != tokWhile)
+        //error("ParseStatement(): 'while' expected after 'do statement'\n");
+        errorUnexpectedToken(tok);
+
+#ifndef NO_ANNOTATIONS
+      GenStartCommentLine(); printf2("while\n");
+#endif
+      tok = GetToken();
+      if (tok != '(')
+        //error("ParseStatement(): '(' expected after 'while'\n");
+        errorUnexpectedToken(tok);
+
+      tok = GetToken();
+      if ((tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0, 0)) != ')')
+        //error("ParseStatement(): ')' expected after 'while ( expression'\n");
+        errorUnexpectedToken(tok);
+
+      if (!gotUnary)
+        //error("ParseStatement(): expression expected in 'while ( expression )'\n");
+        errorUnexpectedToken(tok);
+
+      tok = GetToken();
+      if (tok != ';')
+        //error("ParseStatement(): ';' expected after 'do statement while ( expression )'\n");
+        errorUnexpectedToken(tok);
+
+      // DONE: void control expressions
+      if (synPtr >= 0 && SyntaxStack[synPtr][0] == tokVoid)
+        //error("ParseStatement(): unexpected 'void' expression in 'while ( expression )'\n");
+        errorUnexpectedVoid();
+
+      GenNumLabel(labelWhile);
+
+      switch (stack[sp - 1][0])
+      {
+      case '<':
+      case '>':
+      case tokEQ:
+      case tokNEQ:
+      case tokLEQ:
+      case tokGEQ:
+      case tokULess:
+      case tokUGreater:
+      case tokULEQ:
+      case tokUGEQ:
+        push2(tokIf, labelBefore);
+        GenExpr();
+        break;
+      default:
+        GenExpr();
+        GenJumpIfNotZero(labelBefore);
+        break;
+      }
+
+      GenNumLabel(labelAfter);
+
+      tok = GetToken();
+    }
+    else if (tok == tokIf)
+    {
+      int labelAfterIf = LabelCnt++;
+      int labelAfterElse = LabelCnt++;
+#ifndef NO_ANNOTATIONS
+      GenStartCommentLine(); printf2("if\n");
+#endif
+
+      tok = GetToken();
+      if (tok != '(')
+        //error("ParseStatement(): '(' expected after 'if'\n");
+        errorUnexpectedToken(tok);
+
+      tok = GetToken();
+      if ((tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0, 0)) != ')')
+        //error("ParseStatement(): ')' expected after 'if ( expression'\n");
+        errorUnexpectedToken(tok);
+
+      if (!gotUnary)
+        //error("ParseStatement(): expression expected in 'if ( expression )'\n");
+        errorUnexpectedToken(tok);
+
+      // DONE: void control expressions
+      if (synPtr >= 0 && SyntaxStack[synPtr][0] == tokVoid)
+        //error("ParseStatement(): unexpected 'void' expression in 'if ( expression )'\n");
+        errorUnexpectedVoid();
+
+      switch (stack[sp - 1][0])
+      {
+      case '<':
+      case '>':
+      case tokEQ:
+      case tokNEQ:
+      case tokLEQ:
+      case tokGEQ:
+      case tokULess:
+      case tokUGreater:
+      case tokULEQ:
+      case tokUGEQ:
+        push2(tokIfNot, labelAfterIf);
+        GenExpr();
+        break;
+      default:
+        GenExpr();
+        GenJumpIfZero(labelAfterIf);
+        break;
+      }
+
+      tok = GetToken();
+      tok = ParseStatement(tok, BrkCntSwchTarget, 0);
+
+      // DONE: else
+      if (tok == tokElse)
+      {
+        GenJumpUncond(labelAfterElse);
+        GenNumLabel(labelAfterIf);
+#ifndef NO_ANNOTATIONS
+        GenStartCommentLine(); printf2("else\n");
+#endif
+        tok = GetToken();
+        tok = ParseStatement(tok, BrkCntSwchTarget, 0);
+        GenNumLabel(labelAfterElse);
+      }
+      else
+      {
+        GenNumLabel(labelAfterIf);
+      }
+    }
+    else if (tok == tokFor)
+    {
+      int labelBefore = LabelCnt++;
+      int labelExpr3 = LabelCnt++;
+      int labelBody = LabelCnt++;
+      int labelAfter = LabelCnt++;
+#ifndef NO_ANNOTATIONS
+      GenStartCommentLine(); printf2("for\n");
+#endif
+      tok = GetToken();
+      if (tok != '(')
+        //error("ParseStatement(): '(' expected after 'for'\n");
+        errorUnexpectedToken(tok);
+
+      tok = GetToken();
+      if ((tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0, 0)) != ';')
+        //error("ParseStatement(): ';' expected after 'for ( expression'\n");
+        errorUnexpectedToken(tok);
+      if (gotUnary)
+      {
+        GenExpr();
+      }
+
+      GenNumLabel(labelBefore);
+      tok = GetToken();
+      if ((tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0, 0)) != ';')
+        //error("ParseStatement(): ';' expected after 'for ( expression ; expression'\n");
+        errorUnexpectedToken(tok);
+      if (gotUnary)
+      {
+        // DONE: void control expressions
+        if (synPtr >= 0 && SyntaxStack[synPtr][0] == tokVoid)
+          //error("ParseStatement(): unexpected 'void' expression in 'for ( ; expression ; )'\n");
+          errorUnexpectedVoid();
+
+        switch (stack[sp - 1][0])
+        {
+        case '<':
+        case '>':
+        case tokEQ:
+        case tokNEQ:
+        case tokLEQ:
+        case tokGEQ:
+        case tokULess:
+        case tokUGreater:
+        case tokULEQ:
+        case tokUGEQ:
+          push2(tokIfNot, labelAfter);
+          GenExpr();
+          break;
+        default:
+          GenExpr();
+          GenJumpIfZero(labelAfter);
+          break;
+        }
+      }
+      GenJumpUncond(labelBody);
+
+      GenNumLabel(labelExpr3);
+      tok = GetToken();
+      if ((tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0, 0)) != ')')
+        //error("ParseStatement(): ')' expected after 'for ( expression ; expression ; expression'\n");
+        errorUnexpectedToken(tok);
+      if (gotUnary)
+      {
+        GenExpr();
+      }
+      GenJumpUncond(labelBefore);
+
+      GenNumLabel(labelBody);
+      tok = GetToken();
+      brkCntSwchTarget[0] = labelAfter; // break target
+      brkCntSwchTarget[1] = labelExpr3; // continue target
+      tok = ParseStatement(tok, brkCntSwchTarget, 0);
+      GenJumpUncond(labelExpr3);
+
+      GenNumLabel(labelAfter);
+    }
+    else if (tok == tokBreak)
+    {
+#ifndef NO_ANNOTATIONS
+      GenStartCommentLine(); printf2("break\n");
+#endif
+      if ((tok = GetToken()) != ';')
+        //error("ParseStatement(): ';' expected\n");
+        errorUnexpectedToken(tok);
+      tok = GetToken();
+      if (BrkCntSwchTarget == NULL)
+        //error("ParseStatement(): 'break' must be within 'while', 'for' or 'switch' statement\n");
+        errorCtrlOutOfScope();
+      GenJumpUncond(BrkCntSwchTarget[0]);
+    }
+    else if (tok == tokCont)
+    {
+#ifndef NO_ANNOTATIONS
+      GenStartCommentLine(); printf2("continue\n");
+#endif
+      if ((tok = GetToken()) != ';')
+        //error("ParseStatement(): ';' expected\n");
+        errorUnexpectedToken(tok);
+      tok = GetToken();
+      if (BrkCntSwchTarget == NULL || BrkCntSwchTarget[1] == 0)
+        //error("ParseStatement(): 'continue' must be within 'while' or 'for' statement\n");
+        errorCtrlOutOfScope();
+      GenJumpUncond(BrkCntSwchTarget[1]);
+    }
+    else if (tok == tokSwitch)
+    {
+#ifndef NO_ANNOTATIONS
+      GenStartCommentLine(); printf2("switch\n");
+#endif
+
+      tok = GetToken();
+      if (tok != '(')
+        //error("ParseStatement(): '(' expected after 'switch'\n");
+        errorUnexpectedToken(tok);
+
+      tok = GetToken();
+      if ((tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0, 0)) != ')')
+        //error("ParseStatement(): ')' expected after 'switch ( expression'\n");
+        errorUnexpectedToken(tok);
+
+      if (!gotUnary)
+        //error("ParseStatement(): expression expected in 'switch ( expression )'\n");
+        errorUnexpectedToken(tok);
+
+      // DONE: void control expressions
+      if (synPtr >= 0 && SyntaxStack[synPtr][0] == tokVoid)
+        //error("ParseStatement(): unexpected 'void' expression in 'switch ( expression )'\n");
+        errorUnexpectedVoid();
+
       GenExpr();
-    }
-    GenJumpUncond(labelBefore);
 
-    GenNumLabel(labelBody);
-    tok = GetToken();
-    brkCntSwchTarget[0] = labelAfter; // break target
-    brkCntSwchTarget[1] = labelExpr3; // continue target
-    tok = ParseStatement(tok, brkCntSwchTarget, 0);
-    GenJumpUncond(labelExpr3);
+      tok = GetToken();
+      if (tok != '{')
+        //error("ParseStatement(): '{' expected after 'switch ( expression )'\n");
+        errorUnexpectedToken(tok);
 
-    GenNumLabel(labelAfter);
-  }
-  else if (tok == tokBreak)
-  {
-#ifndef NO_ANNOTATIONS
-    GenStartCommentLine(); printf2("break\n");
-#endif
-    if ((tok = GetToken()) != ';')
-      //error("ParseStatement(): ';' expected\n");
-      errorUnexpectedToken(tok);
-    tok = GetToken();
-    if (BrkCntSwchTarget == NULL)
-      //error("ParseStatement(): 'break' must be within 'while', 'for' or 'switch' statement\n");
-      errorCtrlOutOfScope();
-    GenJumpUncond(BrkCntSwchTarget[0]);
-  }
-  else if (tok == tokCont)
-  {
-#ifndef NO_ANNOTATIONS
-    GenStartCommentLine(); printf2("continue\n");
-#endif
-    if ((tok = GetToken()) != ';')
-      //error("ParseStatement(): ';' expected\n");
-      errorUnexpectedToken(tok);
-    tok = GetToken();
-    if (BrkCntSwchTarget == NULL || BrkCntSwchTarget[1] == 0)
-      //error("ParseStatement(): 'continue' must be within 'while' or 'for' statement\n");
-      errorCtrlOutOfScope();
-    GenJumpUncond(BrkCntSwchTarget[1]);
-  }
-  else if (tok == tokSwitch)
-  {
-#ifndef NO_ANNOTATIONS
-    GenStartCommentLine(); printf2("switch\n");
-#endif
-
-    tok = GetToken();
-    if (tok != '(')
-      //error("ParseStatement(): '(' expected after 'switch'\n");
-      errorUnexpectedToken(tok);
-
-    tok = GetToken();
-    if ((tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0)) != ')')
-      //error("ParseStatement(): ')' expected after 'switch ( expression'\n");
-      errorUnexpectedToken(tok);
-
-    if (!gotUnary)
-      //error("ParseStatement(): expression expected in 'switch ( expression )'\n");
-      errorUnexpectedToken(tok);
-
-    // DONE: void control expressions
-    if (synPtr >= 0 && SyntaxStack[synPtr][0] == tokVoid)
-      //error("ParseStatement(): unexpected 'void' expression in 'switch ( expression )'\n");
-      errorUnexpectedVoid();
-
-    GenExpr();
-
-    tok = GetToken();
-    if (tok != '{')
-      //error("ParseStatement(): '{' expected after 'switch ( expression )'\n");
-      errorUnexpectedToken(tok);
-
-    brkCntSwchTarget[0] = LabelCnt++; // break target
-    brkCntSwchTarget[1] = 0; // continue target
-    if (BrkCntSwchTarget != NULL)
-    {
-      // preserve the continue target
-      brkCntSwchTarget[1] = BrkCntSwchTarget[1]; // continue target
-    }
-    brkCntSwchTarget[2] = LabelCnt++; // default target
-    brkCntSwchTarget[3] = (LabelCnt += 2) - 2; // next case target
+      brkCntSwchTarget[0] = LabelCnt++; // break target
+      brkCntSwchTarget[1] = 0; // continue target
+      if (BrkCntSwchTarget != NULL)
+      {
+        // preserve the continue target
+        brkCntSwchTarget[1] = BrkCntSwchTarget[1]; // continue target
+      }
+      brkCntSwchTarget[2] = LabelCnt++; // default target
+      brkCntSwchTarget[3] = (LabelCnt += 2) - 2; // next case target
 /*
-  ParseBlock(0)
-    ParseStatement(0)
-      switch
-        ParseStatement(2)            // 2 needed to disallow new locals
-          {                          // { in switch(expr){
-            ParseBlock(1)            // new locals are allocated here
-              ParseStatement(1)      // 1 needed for case/default
-                {                    // inner {} in switch(expr){{}}
-                  ParseBlock(0)
-                  ...
-                switch               // another switch
-                  ParseStatement(2)  // needed to disallow new locals
-                  ...
+    ParseBlock(0)
+      ParseStatement(0)
+        switch
+          ParseStatement(2)            // 2 needed to disallow new locals
+            {                          // { in switch(expr){
+              ParseBlock(1)            // new locals are allocated here
+                ParseStatement(1)      // 1 needed for case/default
+                  {                    // inner {} in switch(expr){{}}
+                    ParseBlock(0)
+                    ...
+                  switch               // another switch
+                    ParseStatement(2)  // needed to disallow new locals
+                    ...
 */
-    GenJumpUncond(brkCntSwchTarget[3]); // next case target
+      GenJumpUncond(brkCntSwchTarget[3]); // next case target
 
-    tok = ParseStatement(tok, brkCntSwchTarget, 2);
+      tok = ParseStatement(tok, brkCntSwchTarget, 2);
 
-    // force 'break' if the last 'case'/'default' doesn't end with 'break'
-    GenJumpUncond(brkCntSwchTarget[0]);
+      // force 'break' if the last 'case'/'default' doesn't end with 'break'
+      GenJumpUncond(brkCntSwchTarget[0]);
 
-    // next, non-existent case (reached after none of the 'cases' have matched)
-    GenNumLabel(brkCntSwchTarget[3]);
+      // next, non-existent case (reached after none of the 'cases' have matched)
+      GenNumLabel(brkCntSwchTarget[3]);
 
-    // if there's 'default', 'goto default;' after all unmatched 'cases'
-    if (brkCntSwchTarget[2] < 0)
-      GenJumpUncond(-brkCntSwchTarget[2]);
+      // if there's 'default', 'goto default;' after all unmatched 'cases'
+      if (brkCntSwchTarget[2] < 0)
+        GenJumpUncond(-brkCntSwchTarget[2]);
 
-    GenNumLabel(brkCntSwchTarget[0]); // break label
-  }
-  else if (tok == tokCase)
-  {
-    int lnext;
-#ifndef NO_ANNOTATIONS
-    GenStartCommentLine(); printf2("case\n");
-#endif
-
-    if (!switchBody)
-      //error("ParseStatement(): 'case' must be within 'switch' statement\n");
-      errorCtrlOutOfScope();
-
-    tok = GetToken();
-    if ((tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0)) != ':')
-      //error("ParseStatement(): ':' expected after 'case expression'\n");
-      errorUnexpectedToken(tok);
-
-    if (!gotUnary || !constExpr || (synPtr >= 0 && SyntaxStack[synPtr][0] == tokVoid))
-      //error("ParseStatement(): constant integer expression expected in 'case expression :'\n");
-      errorNotConst();
-
-    tok = GetToken();
-
-    lnext = (LabelCnt += 2) - 2;
-
-    GenJumpUncond(BrkCntSwchTarget[3] + 1); // fallthrough
-    GenNumLabel(BrkCntSwchTarget[3]);
-    GenJumpIfNotEqual(exprVal, lnext);
-    GenNumLabel(BrkCntSwchTarget[3] + 1);
-
-    BrkCntSwchTarget[3] = lnext;
-  }
-  else if (tok == tokDefault)
-  {
-#ifndef NO_ANNOTATIONS
-    GenStartCommentLine(); printf2("default\n");
-#endif
-
-    if (!switchBody)
-      //error("ParseStatement(): 'default' must be within 'switch' statement\n");
-      errorCtrlOutOfScope();
-
-    tok = GetToken();
-    if (tok != ':')
-      //error("ParseStatement(): ':' expected after 'default'\n");
-      errorUnexpectedToken(tok);
-
-    if (BrkCntSwchTarget[2] < 0)
-      //error("ParseStatement(): only one 'default' allowed in 'switch'\n");
-      errorUnexpectedToken(tokDefault);
-
-    tok = GetToken();
-
-    GenNumLabel(BrkCntSwchTarget[2]); // default:
-
-    BrkCntSwchTarget[2] *= -1; // remember presence of default:
-  }
-  else if (tok == tok_Asm)
-  {
-    tok = GetToken();
-    if (tok != '(')
-      //error("ParseStatement(): '(' expected after 'asm'\n");
-      errorUnexpectedToken(tok);
-
-    tok = GetToken();
-    if (tok != tokLitStr)
-      //error("ParseStatement(): string literal expression expected in 'asm ( expression )'\n");
-      errorUnexpectedToken(tok);
-
-    puts2(GetTokenValueString());
-
-    tok = GetToken();
-    if (tok != ')')
-      //error("ParseStatement(): ')' expected after 'asm ( expression'\n");
-      errorUnexpectedToken(tok);
-
-    tok = GetToken();
-    if (tok != ';')
-      //error("ParseStatement(): ';' expected after 'asm ( expression )'\n");
-      errorUnexpectedToken(tok);
-
-    tok = GetToken();
-  }
-  else
-  {
-    if ((tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0)) != ';')
-      //error("ParseStatement(): ';' expected\n");
-      errorUnexpectedToken(tok);
-    if (gotUnary)
-    {
-      GenExpr();
+      GenNumLabel(brkCntSwchTarget[0]); // break label
     }
-    tok = GetToken();
-  }
+    else if (tok == tokCase)
+    {
+      int lnext;
+#ifndef NO_ANNOTATIONS
+      GenStartCommentLine(); printf2("case\n");
+#endif
+
+      if (!switchBody)
+        //error("ParseStatement(): 'case' must be within 'switch' statement\n");
+        errorCtrlOutOfScope();
+
+      tok = GetToken();
+      if ((tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0, 0)) != ':')
+        //error("ParseStatement(): ':' expected after 'case expression'\n");
+        errorUnexpectedToken(tok);
+
+      if (!gotUnary || !constExpr || (synPtr >= 0 && SyntaxStack[synPtr][0] == tokVoid))
+        //error("ParseStatement(): constant integer expression expected in 'case expression :'\n");
+        errorNotConst();
+
+      tok = GetToken();
+
+      lnext = (LabelCnt += 2) - 2;
+
+      GenJumpUncond(BrkCntSwchTarget[3] + 1); // fallthrough
+      GenNumLabel(BrkCntSwchTarget[3]);
+      GenJumpIfNotEqual(exprVal, lnext);
+      GenNumLabel(BrkCntSwchTarget[3] + 1);
+
+      BrkCntSwchTarget[3] = lnext;
+
+      // a statement is needed after "case:"
+      statementNeeded = 1;
+    }
+    else if (tok == tokDefault)
+    {
+#ifndef NO_ANNOTATIONS
+      GenStartCommentLine(); printf2("default\n");
+#endif
+
+      if (!switchBody)
+        //error("ParseStatement(): 'default' must be within 'switch' statement\n");
+        errorCtrlOutOfScope();
+
+      tok = GetToken();
+      if (tok != ':')
+        //error("ParseStatement(): ':' expected after 'default'\n");
+        errorUnexpectedToken(tok);
+
+      if (BrkCntSwchTarget[2] < 0)
+        //error("ParseStatement(): only one 'default' allowed in 'switch'\n");
+        errorUnexpectedToken(tokDefault);
+
+      tok = GetToken();
+
+      GenNumLabel(BrkCntSwchTarget[2]); // default:
+
+      BrkCntSwchTarget[2] *= -1; // remember presence of default:
+
+      // a statement is needed after "default:"
+      statementNeeded = 1;
+    }
+    else if (tok == tok_Asm)
+    {
+      tok = GetToken();
+      if (tok != '(')
+        //error("ParseStatement(): '(' expected after 'asm'\n");
+        errorUnexpectedToken(tok);
+
+      tok = GetToken();
+      if (tok != tokLitStr)
+        //error("ParseStatement(): string literal expression expected in 'asm ( expression )'\n");
+        errorUnexpectedToken(tok);
+
+      puts2(GetTokenValueString());
+
+      tok = GetToken();
+      if (tok != ')')
+        //error("ParseStatement(): ')' expected after 'asm ( expression'\n");
+        errorUnexpectedToken(tok);
+
+      tok = GetToken();
+      if (tok != ';')
+        //error("ParseStatement(): ';' expected after 'asm ( expression )'\n");
+        errorUnexpectedToken(tok);
+
+      tok = GetToken();
+    }
+    else if (tok == tokGoto)
+    {
+      if ((tok = GetToken()) != tokIdent)
+        errorUnexpectedToken(tok);
+#ifndef NO_ANNOTATIONS
+      GenStartCommentLine(); printf2("goto %s\n", GetTokenIdentName());
+#endif
+      GenJumpUncond(AddGotoLabel(GetTokenIdentName(), 0));
+      if ((tok = GetToken()) != ';')
+        errorUnexpectedToken(tok);
+      tok = GetToken();
+    }
+    else
+    {
+      tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0, 1);
+      if (tok == tokGoto)
+      {
+        // found a label
+#ifndef NO_ANNOTATIONS
+        GenStartCommentLine(); printf2("%s:\n", IdentTable + stack[0][1]);
+#endif
+        GenNumLabel(AddGotoLabel(IdentTable + stack[0][1], 1));
+        // a statement is needed after "label:"
+        statementNeeded = 1;
+      }
+      else
+      {
+        if (tok != ';')
+          //error("ParseStatement(): ';' expected\n");
+          errorUnexpectedToken(tok);
+        if (gotUnary)
+          GenExpr();
+      }
+      tok = GetToken();
+    }
+  } while (statementNeeded);
 
   return tok;
 }
@@ -5522,6 +5617,19 @@ int main(int argc, char** argv)
     {
       // this is the default option for MIPS
       UseLeadingUnderscores = 0;
+      continue;
+    }
+    else if (!strcmp(argv[i], "-label"))
+    {
+      if (i + 1 < argc)
+      {
+        LabelCnt = atoi(argv[++i]);
+        continue;
+      }
+    }
+    else if (!strcmp(argv[i], "-no-externs"))
+    {
+      GenExterns = 0;
       continue;
     }
     else if (!strcmp(argv[i], "-verbose"))
@@ -5651,6 +5759,8 @@ int main(int argc, char** argv)
   DumpMacroTable();
 #endif
   DumpIdentTable();
+
+  GenStartCommentLine(); printf2("Next label: "); GenNumLabel(LabelCnt);
 
   if (verbose && warnCnt && OutFile)
     printf("%d warnings\n", warnCnt);

@@ -4593,7 +4593,7 @@ L430:
 	jmp	L429
 
 ; Syntax/declaration table/stack:
-; Bytes used: 2024/18432
+; Bytes used: 2024/19456
 
 
 ; Macro table:
@@ -4652,4 +4652,5 @@ L430:
 ; Ident Switch
 ; Bytes used: 301/4352
 
+; Next label: L554:
 ; Compilation succeeded.

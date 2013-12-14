@@ -81,7 +81,7 @@ void GenWordAlignment(void)
 void GenLabel(char* Label, int Static)
 {
   {
-    if (OutputFormat != FormatFlat && !Static)
+    if (OutputFormat != FormatFlat && !Static && GenExterns)
       printf2("\t.globl\t%s\n", Label);
     printf2("%s:\n", Label);
   }
@@ -91,7 +91,7 @@ void GenExtern(char* Label)
 {
   // GNU as doesn't need an explicit .extern,
   // it treats all undefined symbols as external by default.
-  // if (OutputFormat != FormatFlat)
+  // if (OutputFormat != FormatFlat && !Static && GenExterns)
   // {
   //   printf2("\t.extern\t%s\n", Label);
   // }
@@ -1356,8 +1356,6 @@ void GenExpr0(void)
       break;
 
     case tokLogAnd:
-      GenNumLabel(v);
-      break;
     case tokLogOr:
       GenNumLabel(v);
       break;
