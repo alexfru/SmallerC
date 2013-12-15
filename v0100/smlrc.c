@@ -1144,7 +1144,7 @@ void GetIdent(void)
 {
   char* p = CharQueue;
 
-  if (*p != '_' && !isalpha(*p))
+  if (*p != '_' && !isalpha(*p & 0xFFu))
     error("Identifier expected\n");
 
   if ((*p == 'L' || *p == 'l') &&
@@ -1157,7 +1157,7 @@ void GetIdent(void)
   TokenIdentName[TokenIdentNameLen] = '\0';
   ShiftCharN(1);
 
-  while (*p == '_' || isalnum(*p))
+  while (*p == '_' || isalnum(*p & 0xFFu))
   {
     if (TokenIdentNameLen == MAX_IDENT_LEN)
       error("Identifier too long '%s'\n", TokenIdentName);
@@ -1203,7 +1203,7 @@ void GetString(char terminator, int SkipNewLines)
             int cnt = 0;
             int c = 0;
             ShiftCharN(1);
-            while (*p != '\0' && (isdigit(*p) || strchr("abcdefABCDEF", *p)))
+            while (*p != '\0' && (isdigit(*p & 0xFFu) || strchr("abcdefABCDEF", *p)))
             {
               c = (c * 16) & 0xFF;
               if (*p >= 'a') c += *p - 'a' + 10;
@@ -1318,7 +1318,7 @@ int GetNumber(void)
       // this is a hex constant
       int cnt = 0;
       ShiftCharN(1);
-      while ((ch = *p) != '\0' && (isdigit(ch) || strchr("abcdefABCDEF", ch)))
+      while ((ch = *p) != '\0' && (isdigit(ch & 0xFFu) || strchr("abcdefABCDEF", ch)))
       {
         if (ch >= 'a') ch -= 'a' - 10;
         else if (ch >= 'A') ch -= 'A' - 10;
@@ -1461,7 +1461,7 @@ int GetTokenInner(void)
   }
 
   // DONE: hex and octal constants
-  if (isdigit(ch))
+  if (isdigit(ch & 0xFFu))
     return GetNumber();
 
   // parse character and string constants
@@ -1518,7 +1518,7 @@ int GetToken(void)
     }
 
     // parse identifiers and reserved keywords
-    if (ch == '_' || isalpha(ch))
+    if (ch == '_' || isalpha(ch & 0xFFu))
     {
 #ifndef NO_PREPROCESSOR
       int midx;
@@ -1719,7 +1719,7 @@ int GetToken(void)
 
       SkipSpace(0);
 
-      if (!isdigit(*p) || GetNumber() != tokNumInt)
+      if (!isdigit(*p & 0xFFu) || GetNumber() != tokNumInt)
         //error("Invalid line number in preprocessor output\n");
         errorDirective();
       line = GetTokenValueInt();
@@ -1742,7 +1742,7 @@ int GetToken(void)
 
       while (!strchr("\r\n", *p))
       {
-        if (!isdigit(*p) || GetNumber() != tokNumInt)
+        if (!isdigit(*p & 0xFFu) || GetNumber() != tokNumInt)
           //error("Invalid flag in preprocessor output\n");
           errorDirective();
         SkipSpace(0);
@@ -2055,12 +2055,14 @@ int exprUnary(int tok, int* gotUnary, int commaSeparator, int argOfSizeOf)
         // This makes the nameless declaration uniquely identifiable by name.
 
         *--p = '\0';
-        *--p = '>';
+        *--p = ")>"[argOfSizeOf]; // differentiate casts (something#) from not casts <something#>
 
         p = lab2str(p, lbl);
 
-        p -= sizeof "<something>" - 1 - 1;
-        memcpy(p, "<something", sizeof "<something" - 1);
+        p -= sizeof "<something>" - 2 - 1;
+        memcpy(p, "something", sizeof "something" - 1);
+
+        *--p = "(<"[argOfSizeOf]; // differentiate casts (something#) from not casts <something#>
 
         SyntaxStack[synPtr][1] = AddIdent(p);
         tok = GetToken();
@@ -2576,8 +2578,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       type = SymType(synPtr);
 
       // TBD!!! this declaration is actually a type cast
-      if (!strncmp(IdentTable + SyntaxStack[synPtr][1], "<something", sizeof "<something>" - 1 - 1) &&
-          ((*idx + 2 >= sp) || stack[*idx + 2][0] != tokSizeof))
+      if (!strncmp(IdentTable + SyntaxStack[synPtr][1], "(something", sizeof "(something)" - 1 - 1))
         error("Unsupported type cast\n");
 
       if (type == SymLocalVar || type == SymLocalArr)
@@ -5675,7 +5676,7 @@ int main(int argc, char** argv)
           memcpy(id, argv[i], len);
           id[len] = '\0';
           for (j = 0; j < len; j++)
-            if ((bad = !(id[j] == '_' || (!j * isalpha(id[j]) + j * isalnum(id[j])))) != 0)
+            if ((bad = !(id[j] == '_' || (!j * isalpha(id[j] & 0xFFu) + j * isalnum(id[j] & 0xFFu)))) != 0)
               break;
           if (!bad)
           {
