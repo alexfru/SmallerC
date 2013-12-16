@@ -966,6 +966,7 @@ void GenFuse(int* idx)
     break;
 
   case tokShortCirc:
+  case tokGoto:
     GenFuse(idx);
     break;
 
@@ -1385,6 +1386,9 @@ void GenExpr1(void)
       else
         printf2("[sh||->%d]", -stack[i][1]);
       break;
+    case tokGoto:
+        printf2("[goto->%d]", stack[i][1]);
+      break;
     case tokLocalOfs:
     case tokOpLocalOfs:
       printf2("(@%d)", stack[i][1]);
@@ -1504,6 +1508,9 @@ void GenExpr1(void)
         GenJumpIfZero(v); // &&
       else
         GenJumpIfNotZero(-v); // ||
+      break;
+    case tokGoto:
+      GenJumpUncond(v);
       break;
     case tokLogAnd:
     case tokLogOr:
@@ -2202,6 +2209,7 @@ void GenExpr0(void)
     case tokUnaryStar: printf2("; * (read dereference)\n"); break;
     case '=': printf2("; = (write dereference)\n"); break;
     case tokShortCirc: printf2("; short-circuit "); break;
+    case tokGoto: printf2("; sh-circ-goto "); break;
     case tokLogAnd: printf2("; short-circuit && target\n"); break;
     case tokLogOr: printf2("; short-circuit || target\n"); break;
     case tokIf: case tokIfNot: break;
@@ -2520,7 +2528,13 @@ void GenExpr0(void)
         GenJumpIfNotZero(-v); // ||
       gotUnary = 0;
       break;
-
+    case tokGoto:
+#ifndef NO_ANNOTATIONS
+      printf2("goto\n");
+#endif
+      GenJumpUncod(v);
+      gotUnary = 0;
+      break;
     case tokLogAnd:
     case tokLogOr:
       GenNumLabel(v);

@@ -145,7 +145,7 @@ EXTERN int vfprintf(FILE*, char*, void*);
 #endif
 
 #ifndef MAX_IDENT_TABLE_LEN
-#define MAX_IDENT_TABLE_LEN  (4096+256)
+#define MAX_IDENT_TABLE_LEN  (4096+272)
 #endif
 
 #define MAX_FILE_NAME_LEN    95
@@ -1400,7 +1400,7 @@ int GetTokenInner(void)
   int ch = *p;
 
   // these single-character tokens/operators need no further processing
-  if (strchr(",;:()[]{}~", ch) != NULL)
+  if (strchr(",;:()[]{}~?", ch) != NULL)
   {
     ShiftCharN(1);
     return ch;
@@ -1890,6 +1890,7 @@ int isop(int tok)
   case tokAssignLSh: case tokAssignRSh:
   case tokAssignAnd: case tokAssignXor: case tokAssignOr:
   case tokComma:
+  case '?':
     return 1;
   default:
     return 0;
@@ -1905,16 +1906,17 @@ int preced(int tok)
 {
   switch (tok)
   {
-  case '*': case '/': case '%': return 12;
-  case '+': case '-': return 11;
-  case tokLShift: case tokRShift: return 10;
-  case '<': case '>': case tokLEQ: case tokGEQ: return 9;
-  case tokEQ: case tokNEQ: return 8;
-  case '&': return 7;
-  case '^': return 6;
-  case '|': return 5;
-  case tokLogAnd: return 4;
-  case tokLogOr: return 3;
+  case '*': case '/': case '%': return 13;
+  case '+': case '-': return 12;
+  case tokLShift: case tokRShift: return 11;
+  case '<': case '>': case tokLEQ: case tokGEQ: return 10;
+  case tokEQ: case tokNEQ: return 9;
+  case '&': return 8;
+  case '^': return 7;
+  case '|': return 6;
+  case tokLogAnd: return 5;
+  case tokLogOr: return 4;
+  case '?': case ':': return 3;
   case '=':
   case tokAssignMul: case tokAssignDiv: case tokAssignMod:
   case tokAssignAdd: case tokAssignSub:
@@ -1933,6 +1935,9 @@ int precedGEQ(int lfttok, int rhttok)
   // DONE: is this correct:???
   int pl = preced(lfttok);
   int pr = preced(rhttok);
+  // ternary/conditional operator ?: is right-associative
+  if (pl == 3 && pr >= 3)
+    pl = 0;
   // assignment is right-associative
   if (pl == 2 && pr >= 2)
     pl = 0;
@@ -2226,18 +2231,47 @@ int expr(int tok, int* gotUnary, int commaSeparator)
       while (precedGEQ(opstacktop(), tok))
       {
         int v, v2;
-        v = popop2(&v2);
-        push2(v, v2);
+        int c = 0;
+        // move ?expr: as a whole to the expression stack as "expr?"
+        do
+        {
+          v = popop2(&v2);
+          if (v != ':')
+            push2(v, v2);
+          c += (v == ':') - (v == '?');
+        } while (c);
       }
 
       // here: preced(postacktop()) < preced(tok)
       pushop(tok);
+
+      // treat the ternary/conditional operator ?expr: as a pseudo binary operator
+      if (tok == '?')
+      {
+        int ssp = sp;
+
+        tok = expr(GetToken(), gotUnary, 0);
+        if (!*gotUnary || tok != ':')
+          errorUnexpectedToken(tok);
+
+        // move ?expr: as a whole to the operator stack
+        // this is beautiful and ugly at the same time
+        while (sp > ssp)
+        {
+          int v, v2;
+          v = pop2(&v2);
+          pushop2(v, v2);
+        }
+
+        pushop(tok);
+      }
 
       tok = exprUnary(GetToken(), gotUnary, commaSeparator, 0);
       // DONE: figure out a check to see if exprUnary() fails to add a rhs operand
       if (!*gotUnary)
         //error("expr(): primary expression expected after token %s\n", GetTokenName(lastTok));
         errorUnexpectedToken(tok);
+
       continue;
     }
 
@@ -2249,7 +2283,8 @@ int expr(int tok, int* gotUnary, int commaSeparator)
   {
     int v, v2;
     v = popop2(&v2);
-    push2(v, v2);
+    if (v != ':')
+      push2(v, v2);
   }
 
   popop();
@@ -2322,6 +2357,101 @@ void numericTypeCheck(int ExprTypeSynPtr, int tok)
     return;
   //error("numericTypeCheck(): unexpected operand type for operator '%s', numeric type expected\n", GetTokenName(tok));
   errorOpType();
+}
+
+void compatCheck(int* ExprTypeSynPtr, int TheOtherExprTypeSynPtr, int ConstExpr[2])
+{
+  int exprTypeSynPtr = *ExprTypeSynPtr;
+  int c = 0;
+  int lptr, rptr, lnum, rnum;
+
+  // convert functions to pointers to functions
+  if (exprTypeSynPtr >= 0 && SyntaxStack[exprTypeSynPtr][0] == '(')
+    *ExprTypeSynPtr = exprTypeSynPtr = -exprTypeSynPtr;
+  if (TheOtherExprTypeSynPtr >= 0 && SyntaxStack[TheOtherExprTypeSynPtr][0] == '(')
+    TheOtherExprTypeSynPtr = -TheOtherExprTypeSynPtr;
+
+  lptr = exprTypeSynPtr < 0;
+  rptr = TheOtherExprTypeSynPtr < 0;
+  lnum = !lptr && (SyntaxStack[exprTypeSynPtr][0] == tokInt ||
+                   SyntaxStack[exprTypeSynPtr][0] == tokUnsigned);
+  rnum = !rptr && (SyntaxStack[TheOtherExprTypeSynPtr][0] == tokInt ||
+                   SyntaxStack[TheOtherExprTypeSynPtr][0] == tokUnsigned);
+
+  // both operands have arithmetic type
+  // (arithmetic operands have been already promoted):
+  if (lnum && rnum)
+    return;
+
+  // both operands have void type:
+  if (!lptr && SyntaxStack[exprTypeSynPtr][0] == tokVoid &&
+      !rptr && SyntaxStack[TheOtherExprTypeSynPtr][0] == tokVoid)
+    return;
+
+  // one operand is a pointer and the other is NULL constant
+  // ((void*)0 is also a valid null pointer constant),
+  // the type of the expression is that of the pointer:
+  if (lptr &&
+      (rnum ||
+       (rptr && SyntaxStack[-TheOtherExprTypeSynPtr][0] == tokVoid)) &&
+      ConstExpr[1])
+    return;
+  if (rptr &&
+      (lnum ||
+       (lptr && SyntaxStack[-exprTypeSynPtr][0] == tokVoid)) &&
+      ConstExpr[0])
+  {
+    *ExprTypeSynPtr = TheOtherExprTypeSynPtr;
+    return;
+  }
+
+  // not expecting non-pointers beyond this point
+  if (!(lptr && rptr))
+    errorOpType();
+
+  // one operand is a pointer and the other is a pointer to void
+  // (except (void*)0, which is different from other pointers to void),
+  // the type of the expression is pointer to void:
+  if (SyntaxStack[-exprTypeSynPtr][0] == tokVoid)
+    return;
+  if (SyntaxStack[-TheOtherExprTypeSynPtr][0] == tokVoid)
+  {
+    *ExprTypeSynPtr = TheOtherExprTypeSynPtr;
+    return;
+  }
+
+  // both operands are pointers to compatible types:
+
+  if (exprTypeSynPtr == TheOtherExprTypeSynPtr)
+    return;
+
+  exprTypeSynPtr = -exprTypeSynPtr;
+  TheOtherExprTypeSynPtr = -TheOtherExprTypeSynPtr;
+
+  for (;;)
+  {
+    int tok = SyntaxStack[exprTypeSynPtr][0];
+    if (tok != SyntaxStack[TheOtherExprTypeSynPtr][0])
+      errorOpType();
+
+    if (tok != tokIdent &&
+        SyntaxStack[exprTypeSynPtr][1] != SyntaxStack[TheOtherExprTypeSynPtr][1])
+      errorOpType();
+
+    c += (tok == '(') - (tok == ')') + (tok == '[') - (tok == ']');
+
+    switch (tok)
+    {
+    case tokVoid:
+    case tokChar: case tokSChar: case tokUChar:
+    case tokInt: case tokUnsigned:
+      if (!c)
+        return;
+    }
+
+    exprTypeSynPtr++;
+    TheOtherExprTypeSynPtr++;
+  }
 }
 
 void shiftCountCheck(int *psr, int idx, int ExprTypeSynPtr)
@@ -2526,7 +2656,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
   int RightExprTypeSynPtr;
   int oldIdxRight;
   int oldSpRight;
-  int constExpr[2];
+  int constExpr[3];
 
   if (*idx < 0)
     //error("exprval(): idx < 0\n");
@@ -3187,11 +3317,13 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
         {
           if (!sl)
             *ConstExpr = 1, s = 0;
+          // TBD??? else can drop LHS expression
         }
         else
         {
           if (sl)
             *ConstExpr = s = 1;
+          // TBD??? else can drop LHS expression
         }
       }
       simplifyConstExpr(s, *ConstExpr, ExprTypeSynPtr, oldIdxRight + 1 - (oldSpRight - sp), *idx + 1);
@@ -3375,6 +3507,56 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       }
 
       *ConstExpr = 0;
+    }
+    break;
+
+  case '?':
+    {
+      int sr, sl, smid;
+      int condTypeSynPtr;
+      int sc = (LabelCnt += 2) - 2;
+
+      // sl ? smid : sr
+
+      stack[*idx + 1][0] = tokLogAnd; // piggyback on && for CG (ugly, but simple)
+      stack[*idx + 1][1] = sc + 1;
+      smid = exprval(idx, ExprTypeSynPtr, &constExpr[1]);
+
+      ins2(*idx + 1, tokLogAnd, sc); // piggyback on && for CG (ugly, but simple)
+
+      ins2(*idx + 1, tokGoto, sc + 1); // jump to end of ?:
+      sr = exprval(idx, &RightExprTypeSynPtr, &constExpr[2]);
+
+      ins2(*idx + 1, tokShortCirc, -sc); // jump to mid if left is non-zero
+      sl = exprval(idx, &condTypeSynPtr, &constExpr[0]);
+
+      nonVoidTypeCheck(condTypeSynPtr, '?');
+
+      decayArray(&RightExprTypeSynPtr, 0);
+      decayArray(ExprTypeSynPtr, 0);
+      promoteType(&RightExprTypeSynPtr, ExprTypeSynPtr);
+      promoteType(ExprTypeSynPtr, &RightExprTypeSynPtr);
+
+      compatCheck(ExprTypeSynPtr, RightExprTypeSynPtr, &constExpr[1]);
+
+      *ConstExpr = s = 0;
+
+      if (constExpr[0])
+      {
+        if (truncUint(sl))
+        {
+          if (constExpr[1])
+            *ConstExpr = 1, s = smid;
+          // TBD??? else can drop LHS and RHS expressions
+        }
+        else
+        {
+          if (constExpr[2])
+            *ConstExpr = 1, s = sr;
+          // TBD??? else can drop LHS and MID expressions
+        }
+      }
+      simplifyConstExpr(s, *ConstExpr, ExprTypeSynPtr, oldIdxRight + 1 - (oldSpRight - sp), *idx + 1);
     }
     break;
 
@@ -3861,6 +4043,10 @@ int FindSymbol(char* s)
 
   // TBD!!! return declaration scope number so
   // redeclarations can be reported if occur in the same scope.
+
+  // TBD??? Also, I could first use FindIdent() and then just look for the
+  // index into IdentTable[] instead of doing strcmp()
+
   for (i = SyntaxStackCnt - 1; i >= 0; i--)
   {
     if (SyntaxStack[i][0] == tokIdent &&
@@ -3868,6 +4054,7 @@ int FindSymbol(char* s)
     {
       return i;
     }
+
     if (SyntaxStack[i][0] == ')')
     {
       // Skip over the function params
