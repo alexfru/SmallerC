@@ -51,9 +51,7 @@ void GenInit(void)
 
 int GenInitParams(int argc, char** argv, int* idx)
 {
-#ifndef __SMALLER_C__
   (void)argc;
-#endif
   // initialization of target-specific code generator with parameters
   if (!strcmp(argv[*idx], "-use-gp"))
   {
@@ -95,9 +93,7 @@ void GenExtern(char* Label)
   // {
   //   printf2("\t.extern\t%s\n", Label);
   // }
-#ifndef __SMALLER_C__
   (void)Label;
-#endif
 }
 
 void GenPrintLabel(char* Label)
@@ -197,9 +193,7 @@ void GenPrintInstr(int instr, int val)
 {
   char* p = "";
 
-#ifndef __SMALLER_C__
   (void)val;
-#endif
 
   switch (instr)
   {
@@ -1340,6 +1334,23 @@ void GenExpr0(void)
                              MipsOpRegV0, 0,
                              MipsOpRegZero, 0,
                              MipsOpRegV0, 0);
+      break;
+
+    case tokSChar:
+      GenPrintInstr3Operands(MipsInstrSLL, 0,
+                             MipsOpRegV0, 0,
+                             MipsOpRegV0, 0,
+                             MipsOpConst, 24);
+      GenPrintInstr3Operands(MipsInstrSRA, 0,
+                             MipsOpRegV0, 0,
+                             MipsOpRegV0, 0,
+                             MipsOpConst, 24);
+      break;
+    case tokUChar:
+      GenPrintInstr3Operands(MipsInstrAnd, 0,
+                             MipsOpRegV0, 0,
+                             MipsOpRegV0, 0,
+                             MipsOpConst, 0xFF);
       break;
 
     case tokShortCirc:

@@ -145,7 +145,7 @@ EXTERN int vfprintf(FILE*, char*, void*);
 #endif
 
 #ifndef MAX_IDENT_TABLE_LEN
-#define MAX_IDENT_TABLE_LEN  (4096+272)
+#define MAX_IDENT_TABLE_LEN  (4096+288)
 #endif
 
 #define MAX_FILE_NAME_LEN    95
@@ -350,7 +350,7 @@ PROTO void ins(int pos, int v);
 PROTO void del(int pos, int cnt);
 
 PROTO int TokenStartsDeclaration(int t, int params);
-PROTO int ParseDecl(int tok);
+PROTO int ParseDecl(int tok, int cast);
 
 PROTO void ShiftChar(void);
 PROTO int puts2(char*);
@@ -457,7 +457,7 @@ int PrepSp = 0;
 
 int ExprLevel = 0;
 
-// TBD!!! merge expression and operator stacks into one
+// TBD??? merge expression and operator stacks into one
 int stack[STACK_SIZE][2];
 int sp = 0;
 
@@ -488,7 +488,7 @@ char* DataFooter = "";
 int CharIsSigned = 1;
 int SizeOfWord = 2; // in chars (char can be a multiple of octets); ints and pointers are of word size
 
-// TBD!!! implement a function to allocate N labels with overflow checks
+// TBD??? implement a function to allocate N labels with overflow checks
 int LabelCnt = 1; // label counter for jumps
 
 // call stack (from higher to lower addresses):
@@ -1486,7 +1486,7 @@ int GetTokenInner(void)
   return tokEof;
 }
 
-// TBD!!! implement file I/O for input source code and output code (use fxn ptrs/wrappers to make librarization possible)
+// TBD??? implement file I/O for input source code and output code (use fxn ptrs/wrappers to make librarization possible)
 // DONE: support string literals
 int GetToken(void)
 {
@@ -1714,7 +1714,7 @@ int GetToken(void)
       //           flag = 2 -- return to a file after #include
       //        other flags -- uninteresting
 
-      // TBD??? should also support the following C89 form:
+      // TBD!!! should also support the following C89 form:
       // # line linenum filename-opt
 
       SkipSpace(0);
@@ -2050,7 +2050,7 @@ int exprUnary(int tok, int* gotUnary, int commaSeparator, int argOfSizeOf)
         char s[1 + (2 + CHAR_BIT * sizeof lbl) / 3 + sizeof "<something>" - 1];
         char *p = s + sizeof s;
 
-        tok = ParseDecl(tok);
+        tok = ParseDecl(tok, !argOfSizeOf);
         if (tok != ')')
           //error("exprUnary(): ')' expected, unexpected token %s\n", GetTokenName(tok));
           errorUnexpectedToken(tok);
@@ -2335,9 +2335,7 @@ void decayArray(int* ExprTypeSynPtr, int arithmetic)
 
 void nonVoidTypeCheck(int ExprTypeSynPtr, int tok)
 {
-#ifndef __SMALLER_C__
   (void)tok;
-#endif
   if (ExprTypeSynPtr >= 0 && SyntaxStack[ExprTypeSynPtr][0] == tokVoid)
     //error("nonVoidTypeCheck(): unexpected operand type 'void' for operator '%s'\n", GetTokenName(tok));
     errorUnexpectedVoid();
@@ -2345,9 +2343,7 @@ void nonVoidTypeCheck(int ExprTypeSynPtr, int tok)
 
 void numericTypeCheck(int ExprTypeSynPtr, int tok)
 {
-#ifndef __SMALLER_C__
   (void)tok;
-#endif
   if (ExprTypeSynPtr >= 0 &&
       (SyntaxStack[ExprTypeSynPtr][0] == tokChar ||
        SyntaxStack[ExprTypeSynPtr][0] == tokSChar ||
@@ -2359,7 +2355,7 @@ void numericTypeCheck(int ExprTypeSynPtr, int tok)
   errorOpType();
 }
 
-void compatCheck(int* ExprTypeSynPtr, int TheOtherExprTypeSynPtr, int ConstExpr[2])
+void compatCheck(int* ExprTypeSynPtr, int TheOtherExprTypeSynPtr, int ConstExpr[2], int lidx, int ridx)
 {
   int exprTypeSynPtr = *ExprTypeSynPtr;
   int c = 0;
@@ -2388,18 +2384,21 @@ void compatCheck(int* ExprTypeSynPtr, int TheOtherExprTypeSynPtr, int ConstExpr[
       !rptr && SyntaxStack[TheOtherExprTypeSynPtr][0] == tokVoid)
     return;
 
+  // TBD??? check for exact 0?
   // one operand is a pointer and the other is NULL constant
   // ((void*)0 is also a valid null pointer constant),
   // the type of the expression is that of the pointer:
   if (lptr &&
-      (rnum ||
-       (rptr && SyntaxStack[-TheOtherExprTypeSynPtr][0] == tokVoid)) &&
-      ConstExpr[1])
+      ((rnum && ConstExpr[1]) ||
+       (rptr && SyntaxStack[-TheOtherExprTypeSynPtr][0] == tokVoid &&
+        stack[ridx][0] == tokUnaryPlus && // "(type*)constant" appears as "constant +(unary)"
+        (stack[ridx - 1][0] == tokNumInt || stack[ridx - 1][0] == tokNumUint))))
     return;
   if (rptr &&
-      (lnum ||
-       (lptr && SyntaxStack[-exprTypeSynPtr][0] == tokVoid)) &&
-      ConstExpr[0])
+      ((lnum && ConstExpr[0]) ||
+       (lptr && SyntaxStack[-exprTypeSynPtr][0] == tokVoid &&
+        stack[lidx][0] == tokUnaryPlus && // "(type*)constant" appears as "constant +(unary)"
+        (stack[lidx - 1][0] == tokNumInt || stack[lidx - 1][0] == tokNumUint))))
   {
     *ExprTypeSynPtr = TheOtherExprTypeSynPtr;
     return;
@@ -2705,11 +2704,54 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
           synPtr = FindSymbol(IdentTable + s);
         }
       }
-      type = SymType(synPtr);
 
-      // TBD!!! this declaration is actually a type cast
+      // DONE: this declaration is actually a type cast
       if (!strncmp(IdentTable + SyntaxStack[synPtr][1], "(something", sizeof "(something)" - 1 - 1))
-        error("Unsupported type cast\n");
+      {
+        if (SyntaxStack[++synPtr][0] == tokLocalOfs) // TBD!!! is this really needed???
+          synPtr++;
+
+        s = exprval(idx, ExprTypeSynPtr, ConstExpr);
+
+        // can't cast void to anything (except void)
+        if (*ExprTypeSynPtr >= 0 && SyntaxStack[*ExprTypeSynPtr][0] == tokVoid &&
+            SyntaxStack[synPtr][0] != tokVoid)
+          errorOpType();
+
+        // can't cast to a function or an array
+        if (SyntaxStack[synPtr][0] == '(' || SyntaxStack[synPtr][0] == '[')
+          errorOpType();
+
+        // insertion of tokUChar, tokSChar and tokUnaryPlus
+        // transforms lvalues into rvalues, just as casts should do
+        switch (GetDeclSize(synPtr, 1))
+        {
+        case 1:
+          // cast to unsigned char, resulting type is int
+          stack[oldIdxRight + 1 - (oldSpRight - sp)][0] = tokUChar;
+          *ExprTypeSynPtr = SymIntSynPtr;
+          s &= 0xFFu;
+          break;
+        case -1:
+          // cast to signed char, resulting type is int
+          stack[oldIdxRight + 1 - (oldSpRight - sp)][0] = tokSChar;
+          *ExprTypeSynPtr = SymIntSynPtr;
+          if ((s &= 0xFFu) >= 0x80)
+            s -= 0x100;
+          break;
+        default:
+          // don't do anything, but indicate rvalue/cast
+          stack[oldIdxRight + 1 - (oldSpRight - sp)][0] = tokUnaryPlus;
+          *ExprTypeSynPtr = synPtr;
+          break;
+        }
+
+        *ConstExpr &= SyntaxStack[*ExprTypeSynPtr][0] == tokInt || SyntaxStack[*ExprTypeSynPtr][0] == tokUnsigned;
+        simplifyConstExpr(s, *ConstExpr, ExprTypeSynPtr, oldIdxRight + 1 - (oldSpRight - sp), *idx + 1);
+        break;
+      }
+
+      type = SymType(synPtr);
 
       if (type == SymLocalVar || type == SymLocalArr)
       {
@@ -3512,11 +3554,13 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
 
   case '?':
     {
+      int oldIdxLeft, oldSpLeft;
       int sr, sl, smid;
       int condTypeSynPtr;
       int sc = (LabelCnt += 2) - 2;
 
-      // sl ? smid : sr
+      // "exprL ? exprMID : exprR" appears on the stack as
+      // "exprL exprR exprMID ?"
 
       stack[*idx + 1][0] = tokLogAnd; // piggyback on && for CG (ugly, but simple)
       stack[*idx + 1][1] = sc + 1;
@@ -3525,6 +3569,8 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       ins2(*idx + 1, tokLogAnd, sc); // piggyback on && for CG (ugly, but simple)
 
       ins2(*idx + 1, tokGoto, sc + 1); // jump to end of ?:
+      oldIdxLeft = *idx;
+      oldSpLeft = sp;
       sr = exprval(idx, &RightExprTypeSynPtr, &constExpr[2]);
 
       ins2(*idx + 1, tokShortCirc, -sc); // jump to mid if left is non-zero
@@ -3537,7 +3583,11 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       promoteType(&RightExprTypeSynPtr, ExprTypeSynPtr);
       promoteType(ExprTypeSynPtr, &RightExprTypeSynPtr);
 
-      compatCheck(ExprTypeSynPtr, RightExprTypeSynPtr, &constExpr[1]);
+      compatCheck(ExprTypeSynPtr,
+                  RightExprTypeSynPtr,
+                  &constExpr[1],
+                  oldIdxRight - (oldSpRight - sp),
+                  oldIdxLeft - (oldSpLeft - sp));
 
       *ConstExpr = s = 0;
 
@@ -3678,18 +3728,27 @@ int ParseExpr(int tok, int* GotUnary, int* ExprTypeSynPtr, int* ConstExpr, int* 
       {
         int idx = sp - 1;
         *ConstVal = exprval(&idx, ExprTypeSynPtr, ConstExpr);
+        // remove the unneeded unary +'s that have served their cast-substitute purpose
+        for (idx = sp - 1; idx >= 0; idx--)
+          if (stack[idx][0] == tokUnaryPlus)
+            del(idx, 1);
+        // if the expression has reduced to an integer, enforce it being a const expression
+        // to aid variable initialization and code generation
+        if (sp)
+          *ConstExpr |= stack[sp - 1][0] == tokNumInt || stack[sp - 1][0] == tokNumUint;
       }
 #ifndef NO_ANNOTATIONS
       else if (*ConstExpr)
       {
         GenStartCommentLine();
 
-        switch (*ExprTypeSynPtr)
+        switch (SyntaxStack[*ExprTypeSynPtr][0])
         {
-        case tokNumInt:
+        case tokInt:
           printf2("Expression value: %d\n", truncInt(*ConstVal));
           break;
-        case tokNumUint:
+        default:
+        case tokUnsigned:
           printf2("Expression value: %uu\n", truncUint(*ConstVal));
           break;
         }
@@ -4286,10 +4345,8 @@ void DumpDecl(int SyntaxPtr, int IsParam)
     }
   }
 #endif
-#ifndef __SMALLER_C__
   (void)SyntaxPtr;
   (void)IsParam;
-#endif
 }
 
 void DumpSynDecls(void)
@@ -4476,8 +4533,6 @@ int ParseDerived(int tok)
   while (stars--)
     PushSyntax('*');
 
-  // TBD??? balance parens
-
   if (!tok || !strchr(",;{=)", tok))
     //error("ParseDerived(): unexpected token %s\n", GetTokenName(tok));
     errorUnexpectedToken(tok);
@@ -4491,7 +4546,7 @@ int ParseDerived(int tok)
 // DONE: support simple non-array initializations with string literals
 // DONE: support basic 1-d array initialization
 // DONE: global/static data allocations
-int ParseDecl(int tok)
+int ParseDecl(int tok, int cast)
 {
   int base;
   int lastSyntaxPtr;
@@ -4525,7 +4580,7 @@ int ParseDecl(int tok)
       unsigned elementSz = 0;
 
       // Disallow void variables and arrays of void
-      if (base == tokVoid)
+      if (base == tokVoid && !cast)
       {
         int t = SyntaxStack[SyntaxStackCnt - 2][0];
         if (t != '*' && t != ')')
@@ -4724,6 +4779,9 @@ int ParseDecl(int tok)
           if (!gotUnary)
             //error("ParseDecl(): missing initialization expression\n");
             errorUnexpectedToken(tok);
+
+          nonVoidTypeCheck(synPtr, '=');
+
           if (!tok ||
               (braces && !strchr(",}", tok)) ||
               (!braces && !strchr(",;", tok)))
@@ -5744,7 +5802,7 @@ int ParseBlock(int BrkCntSwchTarget[4], int switchBody)
 
     if (TokenStartsDeclaration(tok, 0))
     {
-      tok = ParseDecl(tok);
+      tok = ParseDecl(tok, 0);
     }
     else if (ParseLevel > 0 || tok == tok_Asm)
     {

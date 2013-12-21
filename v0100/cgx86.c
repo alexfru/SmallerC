@@ -49,9 +49,7 @@ void GenInit(void)
 
 int GenInitParams(int argc, char** argv, int* idx)
 {
-#ifndef __SMALLER_C__
   (void)argc;
-#endif
   // initialization of target-specific code generator with parameters
 
   if (!strcmp(argv[*idx], "-seg16"))
@@ -1024,6 +1022,8 @@ void GenFuse(int* idx)
   case tokUnaryMinus:
   case tok_Bool:
   case tokVoid:
+  case tokUChar:
+  case tokSChar:
     GenFuse(idx);
     oldIdxRight -= oldSpRight - sp;
     if (tok == tokUnaryPlus)
@@ -1495,12 +1495,19 @@ void GenExpr1(void)
                              X86OpRegAWord, 0);
       GenPrintInstr1Operand(X86InstrSetCc, tokNEQ,
                             X86OpRegAByte, 0);
+      // fallthrough
+    case tokSChar:
       if (SizeOfWord == 2)
         GenPrintInstrNoOperand(X86InstrCbw);
       else
         GenPrintInstr2Operands(X86InstrMovZx, 0,
                                X86OpRegAWord, 0,
                                X86OpRegAByte, 0);
+      break;
+    case tokUChar:
+      GenPrintInstr2Operands(X86InstrAnd, 0,
+                             X86OpRegAWord, 0,
+                             X86OpConst, 0xFF);
       break;
 
     case tokShortCirc:
@@ -2507,12 +2514,19 @@ void GenExpr0(void)
                              X86OpRegAWord, 0);
       GenPrintInstr1Operand(X86InstrSetCc, tokNEQ,
                             X86OpRegAByte, 0);
+      // fallthrough
+    case tokSChar:
       if (SizeOfWord == 2)
         GenPrintInstrNoOperand(X86InstrCbw);
       else
         GenPrintInstr2Operands(X86InstrMovZx, 0,
                                X86OpRegAWord, 0,
                                X86OpRegAByte, 0);
+      break;
+    case tokUChar:
+      GenPrintInstr2Operands(X86InstrAnd, 0,
+                             X86OpRegAWord, 0,
+                             X86OpConst, 0xFF);
       break;
 
     case tokShortCirc:
