@@ -789,7 +789,7 @@ void UndoNonLabelIdents(int len)
   int i;
   IdentTableLen = len;
   for (i = 0; i < gotoLabCnt; i++)
-    if (gotoLabels[i][0] > len)
+    if (gotoLabels[i][0] >= len)
     {
       char* pfrom = IdentTable + gotoLabels[i][0];
       char* pto = IdentTable + IdentTableLen;
