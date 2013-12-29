@@ -35,14 +35,16 @@ either expressed or implied, of the FreeBSD Project.
 /*                                                                           */
 /*****************************************************************************/
 
-#define USE_ASM
+#ifndef __SMALLER_C__
+#error must be compiled with Smaller C
+#endif
 
 #define NULL 0
 #define EOF (-1)
 #define FILE void
 
 void __setargs__(int* pargc, char*** pargv);
-int main(int argc, char** argv);
+extern int main(int argc, char** argv);
 void exit(int);
 
 void __start__(void)
@@ -109,7 +111,7 @@ int atoi(char* s)
 
 unsigned strlen(char* str)
 {
-#ifndef USE_ASM
+#ifndef __SMALLER_C_16__
   char* s;
 
   if (str == NULL)
@@ -132,7 +134,7 @@ unsigned strlen(char* str)
 
 char* strcpy(char* dst, char* src)
 {
-#ifndef USE_ASM
+#ifndef __SMALLER_C_16__
   char* p = dst;
 
   while ((*p++ = *src++) != 0);
@@ -153,7 +155,7 @@ char* strcpy(char* dst, char* src)
 
 char* strchr(char* s, int c)
 {
-#ifndef USE_ASM
+#ifndef __SMALLER_C_16__
   char ch = c;
 
   while (*s)
@@ -178,7 +180,7 @@ char* strchr(char* s, int c)
       "je strchrmch\n"
       "or al, al\n"
       "jnz strchrlp\n"
-      "jmp strchrend\n");
+      "jmp strchrend");
   asm("strchrmch:\n"
       "lea ax, [si-1]\n"
       "strchrend:");
@@ -187,7 +189,7 @@ char* strchr(char* s, int c)
 
 int strcmp(char* s1, char* s2)
 {
-#ifndef USE_ASM
+#ifndef __SMALLER_C_16__
   while (*s1 == *s2)
   {
     if (!*s1)
@@ -205,7 +207,7 @@ int strcmp(char* s1, char* s2)
       "mov bx, ax\n"
       "cld\n"
       "repnz scasb\n"
-      "not cx\n");
+      "not cx");
   asm("mov di, [bp+4]\n"
       "repe cmpsb\n"
       "mov al, [di-1]\n"
@@ -216,7 +218,7 @@ int strcmp(char* s1, char* s2)
 
 int strncmp(char* s1, char* s2, unsigned n)
 {
-#ifndef USE_ASM
+#ifndef __SMALLER_C_16__
   if (!n)
     return 0;
 
@@ -239,7 +241,7 @@ int strncmp(char* s1, char* s2, unsigned n)
       "cld\n"
       "repnz scasb\n"
       "sub cx, [bp+8]\n"
-      "neg cx\n");
+      "neg cx");
   asm("mov di, [bp+4]\n"
       "repe cmpsb\n"
       "mov al, [di-1]\n"
@@ -251,7 +253,7 @@ int strncmp(char* s1, char* s2, unsigned n)
 
 void* memmove(void* dst, void* src, unsigned n)
 {
-#ifndef USE_ASM
+#ifndef __SMALLER_C_16__
   char* d = dst;
   char* s = src;
 
@@ -294,7 +296,7 @@ void* memmove(void* dst, void* src, unsigned n)
 
 void* memcpy(void* dst, void* src, unsigned n)
 {
-#ifndef USE_ASM
+#ifndef __SMALLER_C_16__
   char* p1 = dst;
   char* p2 = src;
 
@@ -315,7 +317,7 @@ void* memcpy(void* dst, void* src, unsigned n)
 
 void* memset(void* s, int c, unsigned n)
 {
-#ifndef USE_ASM
+#ifndef __SMALLER_C_16__
   char* p = s;
 
   while (n--)
@@ -356,6 +358,7 @@ int __putchar__(char** buf, FILE* stream, int c)
 
 int __vsprintf__(char** buf, FILE* stream, char* fmt, void* vl)
 {
+  // Simplified version!
   // No I/O error checking!
   int* pp = vl;
   int cnt = 0;
@@ -553,88 +556,172 @@ int sprintf(char* buf, char* fmt, ...)
 
 void pokeb(unsigned seg, unsigned ofs, unsigned char val)
 {
+#ifndef __SMALLER_C_16__
+  *((unsigned char*)(seg * 16 + ofs)) = val;
+#else
   asm("push ds\n"
       "mov  ds, [bp + 4]\n"
       "mov  bx, [bp + 6]\n"
       "mov  al, [bp + 8]\n"
       "mov  [bx], al\n"
       "pop  ds");
+#endif
 }
 
 unsigned char peekb(unsigned seg, unsigned ofs)
 {
+#ifndef __SMALLER_C_16__
+  return *((unsigned char*)(seg * 16 + ofs));
+#else
   asm("push ds\n"
       "mov  ds, [bp + 4]\n"
       "mov  bx, [bp + 6]\n"
       "mov  al, [bx]\n"
       "mov  ah, 0\n"
       "pop  ds");
+#endif
 }
 
 void poke(unsigned seg, unsigned ofs, unsigned val)
 {
+#ifndef __SMALLER_C_16__
+  unsigned char* p = seg * 16 + ofs;
+  p[0] = val;
+  p[1] = val >> 8;
+#else
   asm("push ds\n"
       "mov  ds, [bp + 4]\n"
       "mov  bx, [bp + 6]\n"
       "mov  ax, [bp + 8]\n"
       "mov  [bx], ax\n"
       "pop  ds");
+#endif
 }
 
 unsigned peek(unsigned seg, unsigned ofs)
 {
+#ifndef __SMALLER_C_16__
+  unsigned char* p = seg * 16 + ofs;
+  return (p[1] << 8) + p[0];
+#else
   asm("push ds\n"
       "mov  ds, [bp + 4]\n"
       "mov  bx, [bp + 6]\n"
       "mov  ax, [bx]\n"
       "pop  ds");
+#endif
 }
 
 int DosCreateOrTruncate(char* name)
 {
+#ifndef __SMALLER_C_16__
+  asm("mov ah, 0x3c\n"
+      "xor cx, cx\n"
+      "mov edx, [bp + 8]\n"
+      "ror edx, 4\n"
+      "mov ds, dx\n"
+      "shr edx, 28\n"
+      "int 0x21\n"
+      "sbb ebx, ebx\n"
+      "and eax, 0xffff\n"
+      "or  eax, ebx");
+#else
   asm("mov ah, 0x3c\n"
       "xor cx, cx\n"
       "mov dx, [bp + 4]\n"
       "int 0x21\n"
       "sbb bx, bx\n"
-      "or  ax, bx\n");
+      "or  ax, bx");
+#endif
 }
 
 int DosOpen(char* name)
 {
+#ifndef __SMALLER_C_16__
+  asm("mov ax, 0x3d00\n"
+      "mov edx, [bp + 8]\n"
+      "ror edx, 4\n"
+      "mov ds, dx\n"
+      "shr edx, 28\n"
+      "int 0x21\n"
+      "sbb ebx, ebx\n"
+      "and eax, 0xffff\n"
+      "or  eax, ebx");
+#else
   asm("mov ax, 0x3d00\n"
       "mov dx, [bp + 4]\n"
       "int 0x21\n"
       "sbb bx, bx\n"
-      "or  ax, bx\n");
+      "or  ax, bx");
+#endif
 }
 
 int DosClose(int fd)
 {
+#ifndef __SMALLER_C_16__
+  asm("mov ah, 0x3e\n"
+      "mov bx, [bp + 8]\n"
+      "int 0x21\n"
+      "sbb eax, eax");
+#else
   asm("mov ah, 0x3e\n"
       "mov bx, [bp + 4]\n"
       "int 0x21\n"
-      "sbb ax, ax\n");
+      "sbb ax, ax");
+#endif
 }
 
 int DosRead(int fd, void* p, unsigned s)
 {
+#ifndef __SMALLER_C_16__
+  asm("mov ah, 0x3f\n"
+      "mov bx, [bp + 8]\n"
+      "mov edx, [bp + 12]\n"
+      "ror edx, 4\n"
+      "mov ds, dx\n"
+      "shr edx, 28\n"
+      "mov cx, [bp + 16]\n"
+      "int 0x21");
+  asm("sbb ebx, ebx\n"
+      "and eax, 0xffff\n"
+      "or  eax, ebx");
+#else
   asm("mov ah, 0x3f\n"
       "mov bx, [bp + 4]\n"
       "mov dx, [bp + 6]\n"
       "mov cx, [bp + 8]\n"
       "int 0x21\n"
       "sbb bx, bx\n"
-      "or  ax, bx\n");
+      "or  ax, bx");
+#endif
 }
 
 int DosWrite(int fd, void* p, unsigned s)
 {
+#ifndef __SMALLER_C_16__
+  asm("mov cx, [bp + 16]\n"
+      "test cx, cx\n"
+      "jnz DosWriteCont\n"
+      "xor eax, eax\n"
+      "jmp DosWriteEnd");
+  asm("DosWriteCont:\n"
+      "mov ah, 0x40\n"
+      "mov bx, [bp + 8]\n"
+      "mov edx, [bp + 12]\n"
+      "ror edx, 4\n"
+      "mov ds, dx\n"
+      "shr edx, 28\n"
+      "int 0x21");
+  asm("sbb ebx, ebx\n"
+      "and eax, 0xffff\n"
+      "or  eax, ebx\n"
+      "DosWriteEnd:");
+#else
   asm("mov cx, [bp + 8]\n"
       "test cx, cx\n"
       "jnz DosWriteCont\n"
       "xor ax, ax\n"
-      "jmp DosWriteEnd\n");
+      "jmp DosWriteEnd");
   asm("DosWriteCont:\n"
       "mov ah, 0x40\n"
       "mov bx, [bp + 4]\n"
@@ -642,21 +729,34 @@ int DosWrite(int fd, void* p, unsigned s)
       "int 0x21\n"
       "sbb bx, bx\n"
       "or  ax, bx\n"
-      "DosWriteEnd:\n");
+      "DosWriteEnd:");
+#endif
 }
 
 unsigned DosGetPspSeg(void)
 {
+#ifndef __SMALLER_C_16__
   asm("mov ah, 0x51\n"
       "int 0x21\n"
-      "mov ax, bx\n");
+      "movzx eax, bx");
+#else
+  asm("mov ah, 0x51\n"
+      "int 0x21\n"
+      "mov ax, bx");
+#endif
 }
 
 void exit(int e)
 {
+#ifndef __SMALLER_C_16__
+  asm("mov ah, 0x4c\n"
+      "mov al, [bp + 8]\n"
+      "int 0x21");
+#else
   asm("mov ah, 0x4c\n"
       "mov al, [bp + 4]\n"
-      "int 0x21\n");
+      "int 0x21");
+#endif
 }
 
 char __ProgName__[128];

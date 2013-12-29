@@ -36,9 +36,9 @@
 ; /*****************************************************************************/
 ; 
 ; Compile:
-;   smlrc -verbose -seg16 -no-externs lbdos.c lbdos.asm
-;   smlrc -verbose -seg16 -no-externs -label 1001 smlrc.c smlrc.asm
-;   nasm -f bin smlrcdos.asm -o smlrcdos.exe
+;   smlrc -seg16 -no-externs lbdos.c lbdos.asm
+;   smlrc -seg16 -no-externs -label 1001 smlrc.c smlrc.asm
+;   nasm -f bin smlrc16.asm -o smlrc16.exe
 ; 
 
 bits 16

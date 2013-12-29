@@ -60,6 +60,10 @@ extern char _setargv__;
 #include <ctype.h>
 #include <stdio.h>
 
+#if UINT_MAX >= 0xFFFFFFFF
+#define CAN_COMPILE_32BIT
+#endif
+
 #else // #ifndef __SMALLER_C__
 
 #define NULL 0
@@ -76,6 +80,12 @@ extern char _setargv__;
 #define CHAR_MAX (255)
 #endif
 
+#ifndef __SMALLER_C_SCHAR__
+#ifndef __SMALLER_C_UCHAR__
+#error __SMALLER_C_SCHAR__ or __SMALLER_C_UCHAR__ must be defined
+#endif
+#endif
+
 #ifdef __SMALLER_C_16__
 #define INT_MAX (32767)
 #define INT_MIN (-32767-1)
@@ -87,6 +97,13 @@ extern char _setargv__;
 #define INT_MIN (-2147483647-1)
 #define UINT_MAX (4294967295u)
 #define UINT_MIN (0u)
+#define CAN_COMPILE_32BIT
+#endif
+
+#ifndef __SMALLER_C_16__
+#ifndef __SMALLER_C_32__
+#error __SMALLER_C_16__ or __SMALLER_C_32__ must be defined
+#endif
 #endif
 
 EXTERN void exit(int);
@@ -145,7 +162,7 @@ EXTERN int vfprintf(FILE*, char*, void*);
 #endif
 
 #ifndef MAX_IDENT_TABLE_LEN
-#define MAX_IDENT_TABLE_LEN  (4096+288)
+#define MAX_IDENT_TABLE_LEN  (4096+384)
 #endif
 
 #define MAX_FILE_NAME_LEN    95
@@ -268,6 +285,7 @@ EXTERN int vfprintf(FILE*, char*, void*);
 #define FormatFlat      0
 #define FormatSegmented 1
 #define FormatSegTurbo  2
+#define FormatSegHuge   3
 
 #ifndef SYNTAX_STACK_MAX
 #define SYNTAX_STACK_MAX (2048+384)
@@ -385,9 +403,6 @@ PROTO int GetFxnInfo(int ExprTypeSynPtr, int* MinParams, int* MaxParams, int* Re
 
 int verbose = 0;
 int warnCnt = 0;
-
-// indicates whether or not constant subexpressions can be folded
-int canSimplify = 0;
 
 // prep.c data
 
@@ -1140,6 +1155,31 @@ void SkipSpace(int SkipNewLines)
   } // endof while (*p != '\0')
 }
 
+#ifndef NO_PREPROCESSOR
+void SkipLine(void)
+{
+  char* p = CharQueue;
+
+  while (*p != '\0')
+  {
+    if (strchr("\r\n", *p))
+    {
+      if (*p == '\r' && p[1] == '\n')
+        ShiftChar();
+
+      ShiftChar();
+      LineNo++;
+      LinePos = 1;
+      break;
+    }
+    else
+    {
+      ShiftCharN(1);
+    }
+  }
+}
+#endif
+
 void GetIdent(void)
 {
   char* p = CharQueue;
@@ -1697,6 +1737,18 @@ int GetToken(void)
         continue;
       }
 
+      if (!PrepDontSkipTokens)
+      {
+        // If skipping code and directives under #ifdef/#ifndef/#else,
+        // ignore unsupported directives #if, #elif, #error (no error checking)
+        if (!strcmp(TokenIdentName, "if"))
+          pushPrep(0);
+        else if (!strcmp(TokenIdentName, "elif"))
+          popPrep(), pushPrep(0);
+        SkipLine();
+        continue;
+      }
+
       //error("Unsupported or invalid preprocessor directive\n");
       errorDirective();
     } // endof if (ch == '#')
@@ -1763,6 +1815,9 @@ int GetToken(void)
 }
 
 #ifdef MIPS
+#ifndef CAN_COMPILE_32BIT
+#error MIPS target requires a 32-bit compiler
+#endif
 #include "cgmips.c"
 #else
 #include "cgx86.c"
@@ -2960,7 +3015,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       // Promote the result from char to int (and from int to unsigned) if necessary
       promoteType(ExprTypeSynPtr, &RightExprTypeSynPtr);
 
-      *ConstExpr = constExpr[0] && constExpr[1] && canSimplify;
+      *ConstExpr = constExpr[0] && constExpr[1];
       simplifyConstExpr(s, *ConstExpr, ExprTypeSynPtr, oldIdxRight + 1 - (oldSpRight - sp), *idx + 1);
     }
     break;
@@ -3080,7 +3135,6 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
     case tokUnaryMinus: s = uint2int(~(s - 1u)); break;
     }
     promoteType(ExprTypeSynPtr, ExprTypeSynPtr);
-    *ConstExpr &= canSimplify;
     simplifyConstExpr(s, *ConstExpr, ExprTypeSynPtr, oldIdxRight + 1 - (oldSpRight - sp), *idx + 1);
     break;
 
@@ -3108,7 +3162,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       numericTypeCheck(RightExprTypeSynPtr, tok);
       numericTypeCheck(*ExprTypeSynPtr, tok);
 
-      *ConstExpr = constExpr[0] && constExpr[1] && canSimplify;
+      *ConstExpr = constExpr[0] && constExpr[1];
 
       Unsigned = SyntaxStack[*ExprTypeSynPtr][0] == tokUnsigned || SyntaxStack[RightExprTypeSynPtr][0] == tokUnsigned;
 
@@ -3214,7 +3268,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
         //error("exprval(): Invalid/unsupported combination of compared operands\n");
         errorOpType();
 
-      *ConstExpr = constExpr[0] && constExpr[1] && canSimplify;
+      *ConstExpr = constExpr[0] && constExpr[1];
 
       Unsigned = !ptrmask &&
         (SyntaxStack[*ExprTypeSynPtr][0] == tokUnsigned || SyntaxStack[RightExprTypeSynPtr][0] == tokUnsigned);
@@ -3279,7 +3333,6 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
     nonVoidTypeCheck(*ExprTypeSynPtr, tok);
     decayArray(ExprTypeSynPtr, 0);
     *ExprTypeSynPtr = SymIntSynPtr;
-    *ConstExpr &= canSimplify;
     simplifyConstExpr(s, *ConstExpr, ExprTypeSynPtr, oldIdxRight + 1 - (oldSpRight - sp), *idx + 1);
     break;
 
@@ -3352,7 +3405,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
         s = sl || sr;
 
       *ExprTypeSynPtr = SymIntSynPtr;
-      *ConstExpr = constExpr[0] && constExpr[1] && canSimplify;
+      *ConstExpr = constExpr[0] && constExpr[1];
       if (constExpr[0])
       {
         if (tok == tokLogAnd)
@@ -4688,6 +4741,10 @@ int ParseDecl(int tok, int cast)
           if (CurFxnLocalOfs >= oldOfs || CurFxnLocalOfs != truncInt(CurFxnLocalOfs))
             //error("ParseDecl(): Local variables take too much space\n");
             errorVarSize();
+#ifdef CAN_COMPILE_32BIT
+          if (OutputFormat == FormatSegHuge && CurFxnLocalOfs <= -0x8000)
+            errorVarSize();
+#endif
 
           // Insert a local var offset token
           InsertSyntax2(lastSyntaxPtr + 1, tokLocalOfs, CurFxnLocalOfs);
@@ -4953,6 +5010,7 @@ int ParseDecl(int tok, int cast)
 
         if (OutputFormat != FormatFlat)
           puts2(CodeHeader);
+
         GenLabel(IdentTable + SyntaxStack[lastSyntaxPtr][1], Static);
         CurFxnEpilogLabel = LabelCnt++;
         GenFxnProlog();
@@ -5985,12 +6043,6 @@ int main(int argc, char** argv)
   else
     DefineMacro("__SMALLER_C_UCHAR__", "");
 #endif
-
-  // When generating 32-bit assembly code with 16-bit compiler
-  // output may be incorrect if constant subexpressions are folded
-  // (because 32-bit constants get truncated to 16-bit).
-  // Disable constant subexpression simplification if needed.
-  canSimplify = !(SizeOfWord == 4 && sizeof(int) * CHAR_BIT < 32u);
 
   // populate CharQueue[] with the initial file characters
   ShiftChar();
