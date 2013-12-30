@@ -1187,7 +1187,7 @@ void GetIdent(void)
   if (*p != '_' && !isalpha(*p & 0xFFu))
     error("Identifier expected\n");
 
-  if ((*p == 'L' || *p == 'l') &&
+  if (*p == 'L' &&
       (p[1] == '\'' || p[1] == '\"'))
     //error("Wide characters and strings not supported\n");
     errorChrStr();
@@ -1596,16 +1596,82 @@ int GetToken(void)
       return tok;
     } // endof if (ch == '_' || isalpha(ch))
 
-#ifndef NO_PREPROCESSOR
     // parse preprocessor directives
     if (ch == '#')
     {
+      int line = 0;
+
       ShiftCharN(1);
 
-      // Skip space and get preprocessor directive
+      // Skip space
       SkipSpace(0);
-      GetIdent();
 
+      // Allow # not followed by a directive
+      if (strchr("\r\n", *p))
+        continue;
+
+      // Get preprocessor directive
+      if (isdigit(*p & 0xFFu))
+      {
+        // gcc-style #line directive without "line"
+        line = 1;
+      }
+      else
+      {
+        GetIdent();
+        if (!strcmp(TokenIdentName, "line"))
+        {
+          // C89-style #line directive
+          SkipSpace(0);
+          if (!isdigit(*p & 0xFFu))
+            errorDirective();
+          line = 1;
+        }
+      }
+
+      if (line)
+      {
+        // Support for external, gcc-like, preprocessor output:
+        //   # linenum filename flags
+        //
+        // no flags, flag = 1 -- start of a file
+        //           flag = 2 -- return to a file after #include
+        //        other flags -- uninteresting
+
+        // DONE: should also support the following C89 form:
+        // # line linenum filename-opt
+
+        if (GetNumber() != tokNumInt)
+          //error("Invalid line number in preprocessor output\n");
+          errorDirective();
+        line = GetTokenValueInt();
+
+        SkipSpace(0);
+
+        if (*p == '\"' || *p == '<')
+        {
+          if (*p == '\"')
+            GetString('\"', 0);
+          else
+            GetString('>', 0);
+
+          if (strlen(GetTokenValueString()) > MAX_FILE_NAME_LEN)
+            //error("File name too long in preprocessor output\n");
+            errorFileName();
+          strcpy(FileNames[0], GetTokenValueString());
+        }
+
+        // Ignore gcc-style #line's flags, if any
+        while (!strchr("\r\n", *p))
+          ShiftCharN(1);
+        
+        LineNo = line - 1; // "line" is the number of the next line
+        LinePos = 1;
+
+        continue;
+      } // endof if (line)
+
+#ifndef NO_PREPROCESSOR
       if (!strcmp(TokenIdentName, "define"))
       {
         // Skip space and get macro name
@@ -1748,65 +1814,11 @@ int GetToken(void)
         SkipLine();
         continue;
       }
+#endif // #ifndef NO_PREPROCESSOR
 
       //error("Unsupported or invalid preprocessor directive\n");
       errorDirective();
     } // endof if (ch == '#')
-#else // #ifndef NO_PREPROCESSOR
-    if (ch == '#')
-    {
-      int line;
-
-      ShiftCharN(1);
-
-      // Support for external, gcc-like, preprocessor output:
-      //   # linenum filename flags
-      //
-      // no flags, flag = 1 -- start of a file
-      //           flag = 2 -- return to a file after #include
-      //        other flags -- uninteresting
-
-      // TBD!!! should also support the following C89 form:
-      // # line linenum filename-opt
-
-      SkipSpace(0);
-
-      if (!isdigit(*p & 0xFFu) || GetNumber() != tokNumInt)
-        //error("Invalid line number in preprocessor output\n");
-        errorDirective();
-      line = GetTokenValueInt();
-
-      SkipSpace(0);
-
-      if (*p == '\"')
-        GetString('\"', 0);
-      else if (*p == '<')
-        GetString('>', 0);
-      else
-        //error("Invalid file name in preprocessor output\n");
-        errorFileName();
-
-      if (strlen(GetTokenValueString()) > MAX_FILE_NAME_LEN)
-        //error("File name too long in preprocessor output\n");
-        errorFileName();
-
-      SkipSpace(0);
-
-      while (!strchr("\r\n", *p))
-      {
-        if (!isdigit(*p & 0xFFu) || GetNumber() != tokNumInt)
-          //error("Invalid flag in preprocessor output\n");
-          errorDirective();
-        SkipSpace(0);
-      }
-
-      LineNo = line - 1; // "line" is the number of the next line
-      LinePos = 1;
-      strcpy(FileNames[0], GetTokenValueString());
-
-      continue;
-    } // endof if (ch == '#')
-#endif // #ifndef NO_PREPROCESSOR
 
     error("Invalid or unsupported character with code 0x%02X\n", *p & 0xFFu);
   } // endof for (;;)
