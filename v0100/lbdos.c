@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2013, Alexey Frunze
+Copyright (c) 2013-2014, Alexey Frunze
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -876,6 +876,12 @@ int putchar(int c)
 {
   unsigned char ch = c;
 
+  if (c == '\n')
+  {
+    if (putchar('\r') == EOF)
+      return EOF;
+  }
+
   if (DosWrite(1, &ch, 1) != 1)
     return EOF;
 
@@ -942,6 +948,12 @@ int fputc(int c, FILE* stream)
 {
   unsigned char ch = c;
   unsigned i = stream, fd, pos;
+
+  if (c == '\n')
+  {
+    if (fputc('\r', stream) == EOF)
+      return EOF;
+  }
 
   fd = __FileHandles__[--i];
 

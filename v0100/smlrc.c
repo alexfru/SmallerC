@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2012-2013, Alexey Frunze
+Copyright (c) 2012-2014, Alexey Frunze
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -1658,7 +1658,7 @@ int GetToken(void)
           if (strlen(GetTokenValueString()) > MAX_FILE_NAME_LEN)
             //error("File name too long in preprocessor output\n");
             errorFileName();
-          strcpy(FileNames[0], GetTokenValueString());
+          strcpy(FileNames[FileCnt - 1], GetTokenValueString());
         }
 
         // Ignore gcc-style #line's flags, if any
@@ -6070,7 +6070,7 @@ int main(int argc, char** argv)
 #endif
   DumpIdentTable();
 
-  GenStartCommentLine(); printf2("Next label: "); GenNumLabel(LabelCnt);
+  GenStartCommentLine(); printf2("Next label number: %d\n", LabelCnt);
 
   if (verbose && warnCnt && OutFile)
     printf("%d warnings\n", warnCnt);
