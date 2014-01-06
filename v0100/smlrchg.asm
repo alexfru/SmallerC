@@ -36,7 +36,7 @@
 ; /*****************************************************************************/
 ; 
 ; Compile:
-;   smlrc -huge -no-externs lbdos.c lbdos.asm
+;   smlrc -huge -no-externs lb.c lb.asm
 ;   smlrc -huge -no-externs -label 1001 smlrc.c smlrc.asm
 ;   nasm -f bin smlrchg.asm -o smlrchg.exe
 ;
@@ -157,7 +157,7 @@ _relo_data_start_:
 
 ;;;;;;;;;;;;;;;;
 
-%include "lbdos.asm"
+%include "lb.asm"
 %include "smlrc.asm"
 
 ;;;;;;;;;;;;;;;;

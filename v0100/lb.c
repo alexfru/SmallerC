@@ -31,12 +31,19 @@ either expressed or implied, of the FreeBSD Project.
 /*                                                                           */
 /*                             minimal stdlibc                               */
 /*                                                                           */
-/*  Just enough code for Smaller C to compile itself into a 16-bit DOS .EXE. */
+/*         Just enough code for Smaller C to compile itself into a           */
+/*                       16/32-bit DOS/Windows .EXE.                         */
 /*                                                                           */
 /*****************************************************************************/
 
 #ifndef __SMALLER_C__
 #error must be compiled with Smaller C
+#endif
+
+#ifndef _WIN32
+#ifndef _DOS
+#define _DOS
+#endif
 #endif
 
 #define NULL 0
@@ -554,6 +561,7 @@ int sprintf(char* buf, char* fmt, ...)
   return vsprintf(buf, fmt, pp + 1);
 }
 
+#ifdef _DOS
 void pokeb(unsigned seg, unsigned ofs, unsigned char val)
 {
 #ifndef __SMALLER_C_16__
@@ -611,9 +619,121 @@ unsigned peek(unsigned seg, unsigned ofs)
       "pop  ds");
 #endif
 }
+#endif // _DOS
 
-int DosCreateOrTruncate(char* name)
+#ifdef _WIN32
+#define INVALID_HANDLE_VALUE  (-1)
+#define GENERIC_WRITE         0x40000000u
+#define GENERIC_READ          0x80000000u
+#define FILE_SHARE_READ       1
+#define CREATE_ALWAYS         2
+#define OPEN_EXISTING         3
+#define FILE_ATTRIBUTE_NORMAL 0x80
+#define STD_OUTPUT_HANDLE     (-11u)
+
+extern void (*_imp__ExitProcess)(unsigned ExitCode);
+void ExitProcess(unsigned ExitCode)
 {
+  asm("push dword [ebp+8]\n"
+      "call [__imp__ExitProcess]");
+}
+
+extern char* (*_imp__GetCommandLineA)(void);
+char* GetCommandLineA(void)
+{
+  asm("call [__imp__GetCommandLineA]");
+}
+
+extern unsigned (*_imp__GetStdHandle)(unsigned nStdHandle);
+unsigned GetStdHandle(unsigned nStdHandle)
+{
+  asm("push dword [ebp+8]\n"
+      "call [__imp__GetStdHandle]");
+}
+
+extern unsigned (*_imp__CreateFileA)(char* FileName,
+                                     unsigned DesiredAccess,
+                                     unsigned ShareMode,
+                                     void* SecurityAttributes,
+                                     unsigned CreationDisposition,
+                                     unsigned FlagsAndAttributes,
+                                     unsigned TemplateFile);
+unsigned CreateFileA(char* FileName,
+                     unsigned DesiredAccess,
+                     unsigned ShareMode,
+                     void* SecurityAttributes,
+                     unsigned CreationDisposition,
+                     unsigned FlagsAndAttributes,
+                     unsigned TemplateFile)
+{
+  asm("push dword [ebp+32]\n"
+      "push dword [ebp+28]\n"
+      "push dword [ebp+24]\n"
+      "push dword [ebp+20]");
+  asm("push dword [ebp+16]\n"
+      "push dword [ebp+12]\n"
+      "push dword [ebp+8]\n"
+      "call [__imp__CreateFileA]");
+}
+
+extern int (*_imp__CloseHandle)(unsigned Handle);
+int CloseHandle(unsigned Handle)
+{
+  asm("push dword [ebp+8]\n"
+      "call [__imp__CloseHandle]");
+}
+
+extern int (*_imp__ReadFile)(unsigned Handle,
+                             void* Buffer,
+                             unsigned NumberOfBytesToRead,
+                             unsigned* NumberOfBytesRead,
+                             void* Overlapped);
+int ReadFile(unsigned Handle,
+             void* Buffer,
+             unsigned NumberOfBytesToRead,
+             unsigned* NumberOfBytesRead,
+             void* Overlapped)
+{
+  asm("push dword [ebp+24]\n"
+      "push dword [ebp+20]\n"
+      "push dword [ebp+16]\n"
+      "push dword [ebp+12]\n"
+      "push dword [ebp+8]\n"
+      "call [__imp__ReadFile]");
+}
+
+extern int (*_imp__WriteFile)(unsigned Handle,
+                              void* Buffer,
+                              unsigned NumberOfBytesToWrite,
+                              unsigned* NumberOfBytesWritten,
+                              void* Overlapped);
+int WriteFile(unsigned Handle,
+              void* Buffer,
+              unsigned NumberOfBytesToWrite,
+              unsigned* NumberOfBytesWritten,
+              void* Overlapped)
+{
+  asm("push dword [ebp+24]\n"
+      "push dword [ebp+20]\n"
+      "push dword [ebp+16]\n"
+      "push dword [ebp+12]\n"
+      "push dword [ebp+8]\n"
+      "call [__imp__WriteFile]");
+}
+#endif // _WIN32
+
+int OsCreateOrTruncate(char* name)
+{
+#ifdef _WIN32
+  unsigned h = CreateFileA(name,
+                           GENERIC_WRITE,
+                           FILE_SHARE_READ,
+                           NULL,
+                           CREATE_ALWAYS,
+                           FILE_ATTRIBUTE_NORMAL,
+                           NULL);
+  return h;
+#else
 #ifndef __SMALLER_C_16__
   asm("mov ah, 0x3c\n"
       "xor cx, cx\n"
@@ -633,10 +753,21 @@ int DosCreateOrTruncate(char* name)
       "sbb bx, bx\n"
       "or  ax, bx");
 #endif
+#endif
 }
 
-int DosOpen(char* name)
+int OsOpen(char* name)
 {
+#ifdef _WIN32
+  unsigned h = CreateFileA(name,
+                           GENERIC_READ,
+                           FILE_SHARE_READ,
+                           NULL,
+                           OPEN_EXISTING,
+                           FILE_ATTRIBUTE_NORMAL,
+                           NULL);
+  return h;
+#else
 #ifndef __SMALLER_C_16__
   asm("mov ax, 0x3d00\n"
       "mov edx, [bp + 8]\n"
@@ -654,10 +785,14 @@ int DosOpen(char* name)
       "sbb bx, bx\n"
       "or  ax, bx");
 #endif
+#endif
 }
 
-int DosClose(int fd)
+int OsClose(int fd)
 {
+#ifdef _WIN32
+  return CloseHandle(fd) ? 0 : -1;
+#else
 #ifndef __SMALLER_C_16__
   asm("mov ah, 0x3e\n"
       "mov bx, [bp + 8]\n"
@@ -669,10 +804,20 @@ int DosClose(int fd)
       "int 0x21\n"
       "sbb ax, ax");
 #endif
+#endif
 }
 
-int DosRead(int fd, void* p, unsigned s)
+int OsRead(int fd, void* p, unsigned s)
 {
+#ifdef _WIN32
+  unsigned NumberOfBytesRead;
+  ReadFile(fd,
+           p,
+           s,
+           &NumberOfBytesRead,
+           NULL);
+  return NumberOfBytesRead;
+#else
 #ifndef __SMALLER_C_16__
   asm("mov ah, 0x3f\n"
       "mov bx, [bp + 8]\n"
@@ -694,10 +839,20 @@ int DosRead(int fd, void* p, unsigned s)
       "sbb bx, bx\n"
       "or  ax, bx");
 #endif
+#endif
 }
 
-int DosWrite(int fd, void* p, unsigned s)
+int OsWrite(int fd, void* p, unsigned s)
 {
+#ifdef _WIN32
+  unsigned NumberOfBytesWritten;
+  WriteFile(fd,
+            p,
+            s,
+            &NumberOfBytesWritten,
+            NULL);
+  return NumberOfBytesWritten;
+#else
 #ifndef __SMALLER_C_16__
   asm("mov cx, [bp + 16]\n"
       "test cx, cx\n"
@@ -731,8 +886,10 @@ int DosWrite(int fd, void* p, unsigned s)
       "or  ax, bx\n"
       "DosWriteEnd:");
 #endif
+#endif
 }
 
+#ifdef _DOS
 unsigned DosGetPspSeg(void)
 {
 #ifndef __SMALLER_C_16__
@@ -745,9 +902,13 @@ unsigned DosGetPspSeg(void)
       "mov ax, bx");
 #endif
 }
+#endif // _DOS
 
 void exit(int e)
 {
+#ifdef _WIN32
+  ExitProcess(e);
+#else
 #ifndef __SMALLER_C_16__
   asm("mov ah, 0x4c\n"
       "mov al, [bp + 8]\n"
@@ -757,16 +918,28 @@ void exit(int e)
       "mov al, [bp + 4]\n"
       "int 0x21");
 #endif
+#endif
 }
 
 char __ProgName__[128];
+#ifdef _DOS
 char __ProgParams__[128];
+#else
+char __ProgParams__[1024];
+#endif
 
 int __argc__ = 1;
+#ifdef _DOS
 char* __argv__[64] = { "" };
+#else
+char* __argv__[512] = { "" };
+#endif
+
+int __StdOutHandle__ = 1; // 1 for DOS, GetStdHandle(STD_OUTPUT_HANDLE) for Windows
 
 void __setargs__(int* pargc, char*** pargv)
 {
+#ifdef _DOS
   unsigned psp = DosGetPspSeg();
   unsigned env = peek(psp, 0x2c);
   unsigned i, j, len;
@@ -819,7 +992,35 @@ void __setargs__(int* pargc, char*** pargv)
     }
     __ProgParams__[j++] = 0;
   }
+#else
+  unsigned i, j, len;
+  char* p = GetCommandLineA();
+  j = i = 0;
+  len = strlen(p);
+  __argc__ = 0;
+  while (i < len)
+  {
+    char c;
+    if ((c = p[i]) == ' ')
+    {
+      ++i;
+      continue;
+    }
+    __argv__[__argc__++] = __ProgParams__ + j;
+    __ProgParams__[j++] = c;
+    ++i;
+    while (i < len)
+    {
+      if ((c = p[i]) == ' ')
+        break;
+      __ProgParams__[j++] = c;
+      ++i;
+    }
+    __ProgParams__[j++] = 0;
+  }
 
+  __StdOutHandle__ = GetStdHandle(STD_OUTPUT_HANDLE);
+#endif
   *pargc = __argc__;
   *pargv = __argv__;
 }
@@ -839,7 +1040,7 @@ FILE* fopen(char* name, char* mode)
   FILE* f = NULL;
   unsigned i, fd = -1;
 
-  if (strchr(mode, 'a') || strchr(mode, '+'))
+  if (strchr(mode, 'a') || strchr(mode, '+') || strchr(mode, 'b'))
     return f;
 
   if (__FileCnt__ >= MAX_FILES)
@@ -847,11 +1048,11 @@ FILE* fopen(char* name, char* mode)
 
   if (strchr(mode, 'r'))
   {
-    fd = DosOpen(name);
+    fd = OsOpen(name);
   }
   else if (strchr(mode, 'w'))
   {
-    fd = DosCreateOrTruncate(name);
+    fd = OsCreateOrTruncate(name);
   }
 
   if (fd != -1)
@@ -882,7 +1083,7 @@ int putchar(int c)
       return EOF;
   }
 
-  if (DosWrite(1, &ch, 1) != 1)
+  if (OsWrite(__StdOutHandle__, &ch, 1) != 1)
     return EOF;
 
   return ch;
@@ -931,7 +1132,7 @@ int fgetc(FILE* stream)
   if ((pos = __FileBufPos__[i]) >= __FileBufSize__[i])
   {
     unsigned sz;
-    sz = DosRead(fd, __FileBufs__[i], FILE_BUF_SIZE);
+    sz = OsRead(fd, __FileBufs__[i], FILE_BUF_SIZE);
     if (!sz || sz == -1)
       return EOF;
     __FileBufSize__[i] = sz;
@@ -963,7 +1164,7 @@ int fputc(int c, FILE* stream)
 
   if (pos >= FILE_BUF_SIZE)
   {
-    if (DosWrite(fd, __FileBufs__[i], FILE_BUF_SIZE) != FILE_BUF_SIZE)
+    if (OsWrite(fd, __FileBufs__[i], FILE_BUF_SIZE) != FILE_BUF_SIZE)
       return EOF;
     __FileBufDirty__[i] = 0;
     __FileBufSize__[i] = -1;
@@ -985,16 +1186,16 @@ int fclose(FILE* stream)
   if (__FileBufDirty__[i])
   {
     unsigned sz = __FileBufSize__[i];
-    if (DosWrite(fd, __FileBufs__[i], sz) != sz)
+    if (OsWrite(fd, __FileBufs__[i], sz) != sz)
     {
       __FileHandles__[i] = 0;
       --__FileCnt__;
-      DosClose(fd);
+      OsClose(fd);
       return EOF;
     }
   }
 
   __FileHandles__[i] = 0;
   --__FileCnt__;
-  return DosClose(fd);
+  return OsClose(fd);
 }
