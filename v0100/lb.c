@@ -31,8 +31,8 @@ either expressed or implied, of the FreeBSD Project.
 /*                                                                           */
 /*                             minimal stdlibc                               */
 /*                                                                           */
-/*         Just enough code for Smaller C to compile itself into a           */
-/*                       16/32-bit DOS/Windows .EXE.                         */
+/*            Just enough code for Smaller C to compile into a               */
+/*               16/32-bit DOS/Windows/Linux/RetroBSD "EXE".                 */
 /*                                                                           */
 /*****************************************************************************/
 
@@ -40,9 +40,25 @@ either expressed or implied, of the FreeBSD Project.
 #error must be compiled with Smaller C
 #endif
 
+#ifndef __SMALLER_C_SCHAR__
+#ifndef __SMALLER_C_UCHAR__
+#error __SMALLER_C_SCHAR__ or __SMALLER_C_UCHAR__ must be defined
+#endif
+#endif
+
+#ifndef __SMALLER_C_16__
+#ifndef __SMALLER_C_32__
+#error __SMALLER_C_16__ or __SMALLER_C_32__ must be defined
+#endif
+#endif
+
+#ifndef _RETROBSD
+#ifndef _LINUX
 #ifndef _WIN32
 #ifndef _DOS
 #define _DOS
+#endif
+#endif
 #endif
 #endif
 
@@ -50,9 +66,22 @@ either expressed or implied, of the FreeBSD Project.
 #define EOF (-1)
 #define FILE void
 
-void __setargs__(int* pargc, char*** pargv);
 extern int main(int argc, char** argv);
 void exit(int);
+
+#ifdef _RETROBSD
+void __start__(int argc, char** argv)
+{
+  exit(main(argc, argv));
+}
+#else
+#ifdef _LINUX
+void __start__(int argc, char** argv)
+{
+  exit(main(argc, argv));
+}
+#else
+void __setargs__(int* pargc, char*** pargv);
 
 void __start__(void)
 {
@@ -61,6 +90,8 @@ void __start__(void)
   __setargs__(&argc, &argv);
   exit(main(argc, argv));
 }
+#endif
+#endif
 
 unsigned char __chartype__[1 + 256] =
 {
@@ -418,7 +449,7 @@ int __vsprintf__(char** buf, FILE* stream, char* fmt, void* vl)
       ++cnt;
       break;
     case 's':
-      pc = *pp++;
+      pc = (char*)*pp++;
       len = 0;
       if (pc)
         len = strlen(pc);
@@ -546,7 +577,7 @@ int vprintf(char* fmt, void* vl)
 
 int printf(char* fmt, ...)
 {
-  void** pp = &fmt;
+  void** pp = (void**)&fmt;
   return vprintf(fmt, pp + 1);
 }
 
@@ -557,7 +588,7 @@ int vsprintf(char* buf, char* fmt, void* vl)
 
 int sprintf(char* buf, char* fmt, ...)
 {
-  void** pp = &fmt;
+  void** pp = (void**)&fmt;
   return vsprintf(buf, fmt, pp + 1);
 }
 
@@ -722,8 +753,48 @@ int WriteFile(unsigned Handle,
 }
 #endif // _WIN32
 
+#ifdef _RETROBSD
+// flags for RetroBSD's open():
+#define O_RDONLY 0x0000
+#define O_WRONLY 0x0001
+#define O_RDWR   0x0002
+#define O_APPEND 0x0008
+#define O_CREAT  0x0200
+#define O_TRUNC  0x0400
+#define O_TEXT   0x0000
+#define O_BINARY 0x0000
+#endif
+
 int OsCreateOrTruncate(char* name)
 {
+#ifdef _RETROBSD
+  int fd;
+  int oflags = O_TRUNC | O_CREAT | O_WRONLY;
+  int mode = 0664; // rw-rw-r--
+  asm volatile ("move $4, %1\n"
+                "move $5, %2\n"
+                "move $6, %3\n"
+                "syscall 5\n" // SYS_open
+                "nop\n"
+                "nop\n"
+                "move %0, $2\n"
+                : "=r" (fd)
+                : "r" (name), "r" (oflags), "r" (mode)
+                : "$2", "$4", "$5", "$6");
+  if (fd < 0)
+    fd = -1;
+  return fd;
+#else
+#ifdef _LINUX
+  asm("mov eax, 5\n" // sys_open
+      "mov ebx, [ebp + 8]\n"
+      "mov ecx, 0x641\n" // truncate if exists, else create, writing only
+      "mov edx, 664o\n" // rw-rw-r--
+      "int 0x80\n"
+      "mov ebx, eax\n"
+      "sar ebx, 31\n"
+      "or  eax, ebx");
+#else
 #ifdef _WIN32
   unsigned h = CreateFileA(name,
                            GENERIC_WRITE,
@@ -754,10 +825,40 @@ int OsCreateOrTruncate(char* name)
       "or  ax, bx");
 #endif
 #endif
+#endif
+#endif
 }
 
 int OsOpen(char* name)
 {
+#ifdef _RETROBSD
+  int fd;
+  int oflags = O_RDONLY;
+  int mode = 0444; // r--r--r-- (ignored)
+  asm volatile ("move $4, %1\n"
+                "move $5, %2\n"
+                "move $6, %3\n"
+                "syscall 5\n" // SYS_open
+                "nop\n"
+                "nop\n"
+                "move %0, $2\n"
+                : "=r" (fd)
+                : "r" (name), "r" (oflags), "r" (mode)
+                : "$2", "$4", "$5", "$6");
+  if (fd < 0)
+    fd = -1;
+  return fd;
+#else
+#ifdef _LINUX
+  asm("mov eax, 5\n" // sys_open
+      "mov ebx, [ebp + 8]\n"
+      "mov ecx, 0\n" // reading only
+      "mov edx, 444o\n" // r--r--r-- (ignored)
+      "int 0x80\n"
+      "mov ebx, eax\n"
+      "sar ebx, 31\n"
+      "or  eax, ebx");
+#else
 #ifdef _WIN32
   unsigned h = CreateFileA(name,
                            GENERIC_READ,
@@ -786,10 +887,29 @@ int OsOpen(char* name)
       "or  ax, bx");
 #endif
 #endif
+#endif
+#endif
 }
 
 int OsClose(int fd)
 {
+#ifdef _RETROBSD
+  int err;
+  asm volatile ("move $4, %1\n"
+                "syscall 6\n" // SYS_close
+                "nop\n"
+                "nop\n"
+                "move %0, $2\n"
+                : "=r" (err)
+                : "r" (fd)
+                : "$2", "$4");
+  return err;
+#else
+#ifdef _LINUX
+  asm("mov eax, 6\n" // sys_close
+      "mov ebx, [ebp + 8]\n"
+      "int 0x80");
+#else
 #ifdef _WIN32
   return CloseHandle(fd) ? 0 : -1;
 #else
@@ -805,10 +925,33 @@ int OsClose(int fd)
       "sbb ax, ax");
 #endif
 #endif
+#endif
+#endif
 }
 
 int OsRead(int fd, void* p, unsigned s)
 {
+#ifdef _RETROBSD
+  int sz;
+  asm volatile ("move $4, %1\n"
+                "move $5, %2\n"
+                "move $6, %3\n"
+                "syscall 3\n" // SYS_read
+                "nop\n"
+                "nop\n"
+                "move %0, $2\n"
+                : "=r" (sz)
+                : "r" (fd), "r" (p), "r" (s)
+                : "$2", "$4", "$5", "$6", "memory");
+  return sz;
+#else
+#ifdef _LINUX
+  asm("mov eax, 3\n" // sys_read
+      "mov ebx, [ebp + 8]\n"
+      "mov ecx, [ebp + 12]\n"
+      "mov edx, [ebp + 16]\n"
+      "int 0x80");
+#else
 #ifdef _WIN32
   unsigned NumberOfBytesRead;
   ReadFile(fd,
@@ -840,10 +983,33 @@ int OsRead(int fd, void* p, unsigned s)
       "or  ax, bx");
 #endif
 #endif
+#endif
+#endif
 }
 
 int OsWrite(int fd, void* p, unsigned s)
 {
+#ifdef _RETROBSD
+  int sz;
+  asm volatile ("move $4, %1\n"
+                "move $5, %2\n"
+                "move $6, %3\n"
+                "syscall 4\n" // SYS_write
+                "nop\n"
+                "nop\n"
+                "move %0, $2\n"
+                : "=r" (sz)
+                : "r" (fd), "r" (p), "r" (s)
+                : "$2", "$4", "$5", "$6", "memory"); // WTF? I shouldn't need "memory" here !!!
+  return sz;
+#else
+#ifdef _LINUX
+  asm("mov eax, 4\n" // sys_write
+      "mov ebx, [ebp + 8]\n"
+      "mov ecx, [ebp + 12]\n"
+      "mov edx, [ebp + 16]\n"
+      "int 0x80");
+#else
 #ifdef _WIN32
   unsigned NumberOfBytesWritten;
   WriteFile(fd,
@@ -887,6 +1053,8 @@ int OsWrite(int fd, void* p, unsigned s)
       "DosWriteEnd:");
 #endif
 #endif
+#endif
+#endif
 }
 
 #ifdef _DOS
@@ -906,6 +1074,18 @@ unsigned DosGetPspSeg(void)
 
 void exit(int e)
 {
+#ifdef _RETROBSD
+  asm volatile ("move $4, %0\n"
+                "syscall 1" // SYS_exit
+                :
+                : "r" (e)
+                : "$2", "$4");
+#else
+#ifdef _LINUX
+  asm("mov eax, 1\n"
+      "mov ebx, [ebp + 8]\n"
+      "int 0x80");
+#else
 #ifdef _WIN32
   ExitProcess(e);
 #else
@@ -919,27 +1099,27 @@ void exit(int e)
       "int 0x21");
 #endif
 #endif
+#endif
+#endif
 }
 
+#ifdef _DOS
 char __ProgName__[128];
-#ifdef _DOS
 char __ProgParams__[128];
-#else
-char __ProgParams__[1024];
-#endif
-
 int __argc__ = 1;
-#ifdef _DOS
 char* __argv__[64] = { "" };
-#else
+#endif
+#ifdef _WIN32
+char __ProgParams__[1024];
+int __argc__ = 1;
 char* __argv__[512] = { "" };
 #endif
 
-int __StdOutHandle__ = 1; // 1 for DOS, GetStdHandle(STD_OUTPUT_HANDLE) for Windows
+int __StdOutHandle__ = 1; // 1 for DOS/Linux/RetroBSD, GetStdHandle(STD_OUTPUT_HANDLE) for Windows
 
+#ifdef _DOS
 void __setargs__(int* pargc, char*** pargv)
 {
-#ifdef _DOS
   unsigned psp = DosGetPspSeg();
   unsigned env = peek(psp, 0x2c);
   unsigned i, j, len;
@@ -992,7 +1172,14 @@ void __setargs__(int* pargc, char*** pargv)
     }
     __ProgParams__[j++] = 0;
   }
-#else
+
+  *pargc = __argc__;
+  *pargv = __argv__;
+}
+#endif
+#ifdef _WIN32
+void __setargs__(int* pargc, char*** pargv)
+{
   unsigned i, j, len;
   char* p = GetCommandLineA();
   j = i = 0;
@@ -1019,14 +1206,19 @@ void __setargs__(int* pargc, char*** pargv)
     __ProgParams__[j++] = 0;
   }
 
-  __StdOutHandle__ = GetStdHandle(STD_OUTPUT_HANDLE);
-#endif
   *pargc = __argc__;
   *pargv = __argv__;
+
+  __StdOutHandle__ = GetStdHandle(STD_OUTPUT_HANDLE);
 }
+#endif
 
 // TBD??? Not sure if this limited buffering actually improves performance.
+#ifndef NO_PREPROCESSOR
 #define MAX_FILES 10
+#else
+#define MAX_FILES 2
+#endif
 #define FILE_BUF_SIZE (512*1)
 unsigned __FileCnt__ = 0;
 unsigned __FileHandles__[MAX_FILES];
@@ -1065,7 +1257,7 @@ FILE* fopen(char* name, char* mode)
         __FileBufSize__[i] = 0;
         __FileBufPos__[i] = 0;
         ++__FileCnt__;
-        f = i + 1;
+        f = (FILE*)(i + 1);
         break;
       }
   }
@@ -1077,11 +1269,15 @@ int putchar(int c)
 {
   unsigned char ch = c;
 
+#ifndef _RETROBSD
+#ifndef _LINUX
   if (c == '\n')
   {
     if (putchar('\r') == EOF)
       return EOF;
   }
+#endif
+#endif
 
   if (OsWrite(__StdOutHandle__, &ch, 1) != 1)
     return EOF;
@@ -1118,14 +1314,14 @@ int vfprintf(FILE* stream, char* fmt, void* vl)
 
 int fprintf(FILE* stream, char* fmt, ...)
 {
-  void** pp = &fmt;
+  void** pp = (void**)&fmt;
   return vfprintf(stream, fmt, pp + 1);
 }
 
 int fgetc(FILE* stream)
 {
   unsigned char ch;
-  unsigned i = stream, fd, pos;
+  unsigned i = (unsigned)stream, fd, pos;
 
   fd = __FileHandles__[--i];
 
@@ -1148,13 +1344,17 @@ int fgetc(FILE* stream)
 int fputc(int c, FILE* stream)
 {
   unsigned char ch = c;
-  unsigned i = stream, fd, pos;
+  unsigned i = (unsigned)stream, fd, pos;
 
+#ifndef _RETROBSD
+#ifndef _LINUX
   if (c == '\n')
   {
     if (fputc('\r', stream) == EOF)
       return EOF;
   }
+#endif
+#endif
 
   fd = __FileHandles__[--i];
 
@@ -1179,7 +1379,7 @@ int fputc(int c, FILE* stream)
 
 int fclose(FILE* stream)
 {
-  unsigned i = stream, fd;
+  unsigned i = (unsigned)stream, fd;
 
   fd = __FileHandles__[--i];
 
