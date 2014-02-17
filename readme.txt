@@ -1,8 +1,8 @@
 Smaller C is a simple and small single-pass C compiler.
 
 Currently it generates 16-bit and 32-bit 80386+ assembly code for NASM
-that can then be assembled and linked into DOS, Windows, Linux and
-RetroBSD programs.
+that can then be assembled and linked into DOS, Windows and Linux (and
+also RetroBSD) programs.
 
 Code generation for MIPS CPUs is also supported.
 
