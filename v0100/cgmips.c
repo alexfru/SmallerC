@@ -313,9 +313,13 @@ void GenPrintOperand(int op, int val)
         printf2("%%gp_rel(");
         GenPrintLabel(IdentTable + val);
         printf2(")($28)");
-        break;
       }
-      // fallthrough
+      else
+      {
+        GenPrintLabel(IdentTable + val);
+        printf2("($0)");
+      }
+      break;
     case MipsOpLabel: GenPrintLabel(IdentTable + val); break;
     case MipsOpNumLabel: GenPrintNumLabel(val); break;
 
