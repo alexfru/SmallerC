@@ -47,6 +47,11 @@ void GenInit(void)
   CodeHeader = "\t.text";
   DataHeader = "\t.data";
   UseLeadingUnderscores = 0;
+#ifndef NO_REORDER_WORKAROUND
+  FileHeader = "\t.set\tnoreorder";
+#else
+  FileHeader = "\t.set\treorder";
+#endif
 }
 
 int GenInitParams(int argc, char** argv, int* idx)
@@ -292,6 +297,13 @@ void GenPrintInstr(int instr, int val)
 #define MipsOpLabelGpOption              0x83
 #define MipsOpIndLocal                   MipsOpIndRegFp
 
+#ifndef NO_REORDER_WORKAROUND
+void GenNop(void)
+{
+  puts2("\tnop");
+}
+#endif
+
 void GenPrintOperand(int op, int val)
 {
   if (op >= MipsOpRegZero && op <= MipsOpRegRa)
@@ -352,6 +364,9 @@ void GenPrintCallFxn(char* name)
   GenPrintInstr(MipsInstrJAL, 0);
   GenPrintLabel(name);
   GenPrintNewLine();
+#ifndef NO_REORDER_WORKAROUND
+  GenNop();
+#endif
 }
 
 void GenPrintInstr1Operand(int instr, int instrval, int operand, int operandval)
@@ -359,6 +374,11 @@ void GenPrintInstr1Operand(int instr, int instrval, int operand, int operandval)
   GenPrintInstr(instr, instrval);
   GenPrintOperand(operand, operandval);
   GenPrintNewLine();
+
+#ifndef NO_REORDER_WORKAROUND
+  if (instr == MipsInstrJ || instr == MipsInstrJAL)
+    GenNop();
+#endif
 }
 
 void GenPrintInstr2Operands(int instr, int instrval, int operand1, int operand1val, int operand2, int operand2val)
@@ -390,6 +410,11 @@ void GenPrintInstr3Operands(int instr, int instrval,
   GenPrintOperandSeparator();
   GenPrintOperand(operand3, operand3val);
   GenPrintNewLine();
+
+#ifndef NO_REORDER_WORKAROUND
+  if (instr == MipsInstrBEQ || instr == MipsInstrBNE)
+    GenNop();
+#endif
 }
 
 void GenExtendRegIfNeeded(int reg, int opSz)
@@ -1530,7 +1555,14 @@ void GenFin(void)
           "\tsb\t$6, 0($3)\n"
           "\taddiu\t$3, $3, 1");
     printf2("\tbne\t$4, $0, "); GenPrintNumLabel(lbl);
-    puts2("\n\tj\t$31");
+    puts2("");
+#ifndef NO_REORDER_WORKAROUND
+    GenNop();
+#endif
+    puts2("\tj\t$31");
+#ifndef NO_REORDER_WORKAROUND
+    GenNop();
+#endif
 
     if (OutputFormat != FormatFlat)
       puts2(CodeFooter);
