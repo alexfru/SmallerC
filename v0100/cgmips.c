@@ -1498,3 +1498,37 @@ void GenExpr(void)
   GenStrData(1, 0);
   GenExpr0();
 }
+
+void GenFin(void)
+{
+  if (StructCpyLabel)
+  {
+    char s[1 + 2 + (2 + CHAR_BIT * sizeof StructCpyLabel) / 3];
+    char *p = s + sizeof s;
+    int lbl = LabelCnt++;
+
+    *--p = '\0';
+    p = lab2str(p, StructCpyLabel);
+    *--p = '_';
+    *--p = '_';
+
+    if (OutputFormat != FormatFlat)
+      puts2(CodeHeader);
+
+    GenLabel(p, 1);
+
+    puts2("\tmove\t$2, $6\n"
+          "\tmove\t$3, $6");
+    GenNumLabel(lbl);
+    puts2("\tlbu\t$6, 0($5)\n"
+          "\taddiu\t$5, $5, 1\n"
+          "\taddiu\t$4, $4, -1\n"
+          "\tsb\t$6, 0($3)\n"
+          "\taddiu\t$3, $3, 1");
+    printf2("\tbne\t$4, $0, "); GenPrintNumLabel(lbl);
+    puts2("\n\tj\t$31");
+
+    if (OutputFormat != FormatFlat)
+      puts2(CodeFooter);
+  }
+}

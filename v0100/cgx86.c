@@ -566,11 +566,20 @@ void GenPrintInstr2Operands(int instr, int instrval, int operand1, int operand1v
   {
     if (instr == X86InstrLea)
     {
-      if (operand1 == X86OpRegAWord && operand2 == X86OpIndLocal)
+      if (operand2 == X86OpIndLocal)
       {
-        puts2("\txor\teax, eax\n\tmov\tax, ss"); // mov r32, sreg leaves top 16 bits undefined on pre-Pentium CPUs
-        printf2("\tshl\teax, 4\n\tlea\teax, [ebp + eax %+d]\n", truncInt(operand2val));
-        return;
+        if (operand1 == X86OpRegAWord)
+        {
+          puts2("\txor\teax, eax\n\tmov\tax, ss"); // mov r32, sreg leaves top 16 bits undefined on pre-Pentium CPUs
+          printf2("\tshl\teax, 4\n\tlea\teax, [ebp+eax%+d]\n", truncInt(operand2val));
+          return;
+        }
+        else if (operand1 == X86OpRegCWord)
+        {
+          puts2("\txor\tecx, ecx\n\tmov\tcx, ss"); // mov r32, sreg leaves top 16 bits undefined on pre-Pentium CPUs
+          printf2("\tshl\tecx, 4\n\tlea\tecx, [ebp+ecx%+d]\n", truncInt(operand2val));
+          return;
+        }
       }
       errorInternal(106);
     }
@@ -2947,4 +2956,93 @@ void GenExpr(void)
 #else
   GenExpr0();
 #endif
+}
+
+void GenFin(void)
+{
+  if (StructCpyLabel)
+  {
+    char s[1 + 2 + (2 + CHAR_BIT * sizeof StructCpyLabel) / 3];
+    char *p = s + sizeof s;
+
+    *--p = '\0';
+    p = lab2str(p, StructCpyLabel);
+    *--p = '_';
+    *--p = '_';
+
+    if (OutputFormat != FormatFlat)
+      puts2(CodeHeader);
+
+    GenLabel(p, 1);
+    GenFxnProlog();
+
+    if (SizeOfWord == 2)
+    {
+      puts2("\tmov\tdi, [bp+8]\n"
+            "\tmov\tsi, [bp+6]\n"
+            "\tmov\tcx, [bp+4]\n"
+            "\tcld\n"
+            "\trep\tmovsb\n"
+            "\tmov\tax, [bp+8]");
+    }
+#ifdef CAN_COMPILE_32BIT
+    else if (OutputFormat != FormatSegHuge)
+    {
+      puts2("\tmov\tedi, [ebp+16]\n"
+            "\tmov\tesi, [ebp+12]\n"
+            "\tmov\tecx, [ebp+8]\n"
+            "\tcld\n"
+            "\trep\tmovsb\n"
+            "\tmov\teax, [ebp+16]");
+    }
+    else
+    {
+      int lbl = (LabelCnt += 2) - 2;
+
+      puts2("\tmov\tedi, [ebp+16]\n"
+            "\tror\tedi, 4\n"
+            "\tmov\tes, di\n"
+            "\tshr\tedi, 28\n"
+            "\tmov\tesi, [ebp+12]\n"
+            "\tror\tesi, 4\n"
+            "\tmov\tds, si\n"
+            "\tshr\tesi, 28");
+      puts2("\tmov\tebx, [ebp+8]\n"
+            "\tcld");
+
+      GenNumLabel(lbl); // L1:
+
+      puts2("\tmov\tecx, 32768\n"
+            "\tcmp\tebx, ecx");
+
+      printf2("\tjc\t"); GenPrintNumLabel(lbl + 1); // jc L2
+
+      puts2("\n"
+            "\tsub\tebx, ecx\n"
+            "\trep\tmovsb\n"
+            "\tand\tdi, 15\n"
+            "\tmov\tax, es\n"
+            "\tadd\tax, 2048\n"
+            "\tmov\tes, ax\n"
+            "\tand\tsi, 15\n"
+            "\tmov\tax, ds\n"
+            "\tadd\tax, 2048\n"
+            "\tmov\tds, ax");
+
+      printf2("\tjmp\t"); GenPrintNumLabel(lbl); // jmp L1
+      puts2("");
+
+      GenNumLabel(lbl + 1); // L2:
+
+      puts2("\tmov\tcx, bx\n"
+            "\trep\tmovsb\n"
+            "\tmov\teax, [ebp+16]");
+    }
+#endif
+
+    GenFxnEpilog();
+
+    if (OutputFormat != FormatFlat)
+      puts2(CodeFooter);
+  }
 }
