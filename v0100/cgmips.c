@@ -328,8 +328,9 @@ void GenPrintOperand(int op, int val)
       }
       else
       {
+        printf2("%%lo(");
         GenPrintLabel(IdentTable + val);
-        printf2("($0)");
+        printf2(")($1)");
       }
       break;
     case MipsOpLabel: GenPrintLabel(IdentTable + val); break;
@@ -602,8 +603,25 @@ int GenGetBinaryOperatorInstr(int tok)
   }
 }
 
+void GenPreIdentAccess(int label)
+{
+  if (UseGp)
+    return;
+  printf2("\t.set\tnoat\n\tlui\t$1, %%hi(");
+  GenPrintLabel(IdentTable + label);
+  puts2(")");
+}
+
+void GenPostIdentAccess(void)
+{
+  if (UseGp)
+    return;
+  puts2("\t.set\tat");
+}
+
 void GenReadIdent(int regDst, int opSz, int label)
 {
+  GenPreIdentAccess(label);
   if (opSz == -1)
   {
     GenPrintInstr2Operands(MipsInstrLB, 0,
@@ -622,6 +640,7 @@ void GenReadIdent(int regDst, int opSz, int label)
                            regDst, 0,
                            MipsOpLabelGpOption, label);
   }
+  GenPostIdentAccess();
 }
 
 void GenReadLocal(int regDst, int opSz, int ofs)
@@ -670,6 +689,7 @@ void GenReadIndirect(int regDst, int regSrc, int opSz)
 
 void GenWriteIdent(int regSrc, int opSz, int label)
 {
+  GenPreIdentAccess(label);
   if (opSz != SizeOfWord)
   {
     GenPrintInstr2Operands(MipsInstrSB, 0,
@@ -682,6 +702,7 @@ void GenWriteIdent(int regSrc, int opSz, int label)
                            regSrc, 0,
                            MipsOpLabelGpOption, label);
   }
+  GenPostIdentAccess();
 }
 
 void GenWriteLocal(int regSrc, int opSz, int ofs)
