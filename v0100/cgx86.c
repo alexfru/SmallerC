@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2012-2013, Alexey Frunze
+Copyright (c) 2012-2014, Alexey Frunze
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -103,17 +103,17 @@ void GenInitFinalize(void)
     DataHeader = "SEGMENT _DATA";
     DataFooter = "; SEGMENT _DATA";
   }
-  else if (OutputFormat == FormatSegmented || OutputFormat == FormatSegHuge)
-  {
-    CodeHeader = "section .text";
-    DataHeader = "section .data";
-  }
   else
   {
-    if (SizeOfWord == 2)
-      FileHeader = "BITS 16";
+    if (OutputFormat == FormatSegmented || OutputFormat == FormatSegHuge)
+    {
+      CodeHeader = "section .text";
+      DataHeader = "section .data";
+    }
+    if (SizeOfWord == 2 || OutputFormat == FormatSegHuge)
+      FileHeader = "bits 16\n";
     else
-      FileHeader = "bits 32";
+      FileHeader = "bits 32\n";
   }
 }
 
@@ -200,8 +200,10 @@ void GenIntData(int Size, int Val)
     printf2("\tdb\t%d\n", Val);
   else if (Size == 2)
     printf2("\tdw\t%d\n", Val);
+#ifdef CAN_COMPILE_32BIT
   else if (Size == 4)
     printf2("\tdd\t%d\n", Val);
+#endif
 }
 
 void GenStartAsciiString(void)
@@ -224,8 +226,10 @@ void GenAddrData(int Size, char* Label)
     printf2("\tdb\t");
   else if (Size == 2)
     printf2("\tdw\t");
+#ifdef CAN_COMPILE_32BIT
   else if (Size == 4)
     printf2("\tdd\t");
+#endif
   GenPrintLabel(Label); puts2("");
 }
 
@@ -265,44 +269,54 @@ void GenAddrData(int Size, char* Label)
 #define X86InstrRet    0x21
 #define X86InstrJmp    0x22
 
+char* winstrs[] =
+{
+  "mov",
+  "movsx",
+  "movzx",
+  "xchg",
+  "lea",
+  "push",
+  "pop",
+  "inc",
+  "dec",
+  "add",
+  "sub",
+  "and",
+  "xor",
+  "or",
+  "cmp",
+  "test",
+  "mul",
+  "imul",
+  "idiv",
+  "div",
+  "shl",
+  "sar",
+  "shr",
+  "neg",
+  "not",
+  "cbw",
+  "cwd",
+  "cdq",
+  0, // setcc
+  0, // jcc
+  0, // j!cc
+  0, // leave
+  "call",
+  0, // ret
+  "jmp",
+};
+
 void GenPrintInstr(int instr, int val)
 {
   char* p = "";
 
   switch (instr)
   {
-  case X86InstrMov: p = "mov"; break;
-  case X86InstrMovSx: p = "movsx"; break;
-  case X86InstrMovZx: p = "movzx"; break;
-  case X86InstrXchg: p = "xchg"; break;
-  case X86InstrLea: p = "lea"; break;
-  case X86InstrPush: p = "push"; break;
-  case X86InstrPop: p = "pop"; break;
-  case X86InstrInc: p = "inc"; break;
-  case X86InstrDec: p = "dec"; break;
-  case X86InstrAdd: p = "add"; break;
-  case X86InstrSub: p = "sub"; break;
-  case X86InstrAnd: p = "and"; break;
-  case X86InstrXor: p = "xor"; break;
-  case X86InstrOr: p = "or"; break;
-  case X86InstrCmp: p = "cmp"; break;
-  case X86InstrTest: p = "test"; break;
-  case X86InstrMul: p = "mul"; break;
-  case X86InstrImul: p = "imul"; break;
-  case X86InstrIdiv: p = "idiv"; break;
-  case X86InstrDiv: p = "div"; break;
-  case X86InstrShl: p = "shl"; break;
-  case X86InstrSar: p = "sar"; break;
-  case X86InstrShr: p = "shr"; break;
-  case X86InstrNeg: p = "neg"; break;
-  case X86InstrNot: p = "not"; break;
-  case X86InstrCbw: p = "cbw"; break;
-  case X86InstrCwd: p = "cwd"; break;
-  case X86InstrCdq: p = "cdq"; break;
   case X86InstrLeave: p = (OutputFormat != FormatSegHuge) ? "leave" : "db\t0x66\n\tleave"; break;
-  case X86InstrCall: p = "call"; break;
+
   case X86InstrRet: p = (OutputFormat != FormatSegHuge) ? "ret" : "retf"; break;
-  case X86InstrJmp: p = "jmp"; break;
 
   case X86InstrJcc:
     switch (val)
@@ -350,13 +364,19 @@ void GenPrintInstr(int instr, int val)
     case tokNEQ:      p = "setne"; break;
     }
     break;
+
+  default:
+    p = winstrs[instr];
+    break;
   }
 
   switch (instr)
   {
   case X86InstrCbw:
   case X86InstrCwd:
+#ifdef CAN_COMPILE_32BIT
   case X86InstrCdq:
+#endif
   case X86InstrLeave:
   case X86InstrRet:
     printf2("\t%s", p);
@@ -374,25 +394,30 @@ void GenPrintInstr(int instr, int val)
 #define X86OpRegBWord                   0x04
 #define X86OpRegCWord                   0x05
 #define X86OpRegDWord                   0x06
-#define X86OpRegBpWord                  0x07
-#define X86OpRegSpWord                  0x08
-#define X86OpRegAByteOrWord             0x09
-#define X86OpRegCByteOrWord             0x0A
-#define X86OpConst                      0x0B
-#define X86OpLabel                      0x0C
-#define X86OpNumLabel                   0x0D
-#define X86OpIndLabel                   0x0E
-#define X86OpIndLabelExplicitByte       0x0F
-#define X86OpIndLabelExplicitWord       0x10
-#define X86OpIndLabelExplicitByteOrWord 0x11
-#define X86OpIndLocal                   0x12
-#define X86OpIndLocalExplicitByte       0x13
-#define X86OpIndLocalExplicitWord       0x14
-#define X86OpIndLocalExplicitByteOrWord 0x15
-#define X86OpIndRegB                    0x16
-#define X86OpIndRegBExplicitByte        0x17
-#define X86OpIndRegBExplicitWord        0x18
-#define X86OpIndRegBExplicitByteOrWord  0x19
+#define X86OpRegAHalfWord               0x07
+#define X86OpRegCHalfWord               0x08
+#define X86OpRegBpWord                  0x09
+#define X86OpRegSpWord                  0x0A
+#define X86OpRegAByteOrWord             0x0B
+#define X86OpRegCByteOrWord             0x0C
+#define X86OpConst                      0x0D
+#define X86OpLabel                      0x0E
+#define X86OpNumLabel                   0x0F
+#define X86OpIndLabel                   0x10
+#define X86OpIndLabelExplicitByte       0x11
+#define X86OpIndLabelExplicitWord       0x12
+#define X86OpIndLabelExplicitHalfWord   0x13
+#define X86OpIndLabelExplicitByteOrWord 0x14
+#define X86OpIndLocal                   0x15
+#define X86OpIndLocalExplicitByte       0x16
+#define X86OpIndLocalExplicitWord       0x17
+#define X86OpIndLocalExplicitHalfWord   0x18
+#define X86OpIndLocalExplicitByteOrWord 0x19
+#define X86OpIndRegB                    0x1A
+#define X86OpIndRegBExplicitByte        0x1B
+#define X86OpIndRegBExplicitWord        0x1C
+#define X86OpIndRegBExplicitHalfWord    0x1D
+#define X86OpIndRegBExplicitByteOrWord  0x1E
 
 int GenSelectByteOrWord(int op, int opSz)
 {
@@ -402,26 +427,46 @@ int GenSelectByteOrWord(int op, int opSz)
     op = X86OpRegAByte;
     if (opSz == SizeOfWord)
       op = X86OpRegAWord;
+#ifdef CAN_COMPILE_32BIT
+    else if (opSz == 2 || opSz == -2)
+      op = X86OpRegAHalfWord;
+#endif
     break;
   case X86OpRegCByteOrWord:
     op = X86OpRegCByte;
     if (opSz == SizeOfWord)
       op = X86OpRegCWord;
+#ifdef CAN_COMPILE_32BIT
+    else if (opSz == 2 || opSz == -2)
+      op = X86OpRegCHalfWord;
+#endif
     break;
   case X86OpIndLabelExplicitByteOrWord:
     op = X86OpIndLabelExplicitByte;
     if (opSz == SizeOfWord)
       op = X86OpIndLabelExplicitWord;
+#ifdef CAN_COMPILE_32BIT
+    else if (opSz == 2 || opSz == -2)
+      op = X86OpIndLabelExplicitHalfWord;
+#endif
     break;
   case X86OpIndLocalExplicitByteOrWord:
     op = X86OpIndLocalExplicitByte;
     if (opSz == SizeOfWord)
       op = X86OpIndLocalExplicitWord;
+#ifdef CAN_COMPILE_32BIT
+    else if (opSz == 2 || opSz == -2)
+      op = X86OpIndLocalExplicitHalfWord;
+#endif
     break;
   case X86OpIndRegBExplicitByteOrWord:
     op = X86OpIndRegBExplicitByte;
     if (opSz == SizeOfWord)
       op = X86OpIndRegBExplicitWord;
+#ifdef CAN_COMPILE_32BIT
+    else if (opSz == 2 || opSz == -2)
+      op = X86OpIndRegBExplicitHalfWord;
+#endif
     break;
   }
   return op;
@@ -470,6 +515,8 @@ void GenPrintOperand(int op, int val)
     case X86OpRegBWord: printf2("ebx"); break;
     case X86OpRegCWord: printf2("ecx"); break;
     case X86OpRegDWord: printf2("edx"); break;
+    case X86OpRegAHalfWord: printf2("ax"); break;
+    case X86OpRegCHalfWord: printf2("cx"); break;
     case X86OpRegBpWord: printf2("ebp"); break;
     case X86OpRegSpWord: printf2("esp"); break;
     case X86OpConst: printf2("%d", truncInt(val)); break;
@@ -478,12 +525,15 @@ void GenPrintOperand(int op, int val)
     case X86OpIndLabel: printf2("["); GenPrintLabel(IdentTable + val); printf2("]"); break;
     case X86OpIndLabelExplicitByte: printf2("byte ["); GenPrintLabel(IdentTable + val); printf2("]"); break;
     case X86OpIndLabelExplicitWord: printf2("dword ["); GenPrintLabel(IdentTable + val); printf2("]"); break;
+    case X86OpIndLabelExplicitHalfWord: printf2("word ["); GenPrintLabel(IdentTable + val); printf2("]"); break;
     case X86OpIndLocal: printf2("[%s%+d]", frame, val); break;
     case X86OpIndLocalExplicitByte: printf2("byte [%s%+d]", frame, val); break;
     case X86OpIndLocalExplicitWord: printf2("dword [%s%+d]", frame, val); break;
+    case X86OpIndLocalExplicitHalfWord: printf2("word [%s%+d]", frame, val); break;
     case X86OpIndRegB: printf2("[%s]", base); break;
     case X86OpIndRegBExplicitByte: printf2("byte [%s]", base); break;
     case X86OpIndRegBExplicitWord: printf2("dword [%s]", base); break;
+    case X86OpIndRegBExplicitHalfWord: printf2("word [%s]", base); break;
     }
   }
 #endif
@@ -645,6 +695,7 @@ void GenExtendRegAIfNeeded(int opSz)
                              X86OpRegAByteHigh, 0,
                              X86OpConst, 0);
   }
+#ifdef CAN_COMPILE_32BIT
   else
   {
     if (opSz == -1)
@@ -655,7 +706,16 @@ void GenExtendRegAIfNeeded(int opSz)
       GenPrintInstr2Operands(X86InstrMovZx, 0,
                              X86OpRegAWord, 0,
                              X86OpRegAByte, 0);
+    else if (opSz == -2)
+      GenPrintInstr2Operands(X86InstrMovSx, 0,
+                             X86OpRegAWord, 0,
+                             X86OpRegAHalfWord, 0);
+    else if (opSz == 2)
+      GenPrintInstr2Operands(X86InstrMovZx, 0,
+                             X86OpRegAWord, 0,
+                             X86OpRegAHalfWord, 0);
   }
+#endif
 }
 
 void GenJumpUncond(int label)
@@ -763,6 +823,19 @@ void GenReadCRegIdent(int opSz, int label)
     GenPrintInstr2Operands(X86InstrMovZx, 0,
                            X86OpRegCWord, 0,
                            X86OpIndLabelExplicitByte, label);
+#ifdef CAN_COMPILE_32BIT
+  else if (opSz != SizeOfWord && -opSz != SizeOfWord)
+  {
+    if (opSz == -2)
+      GenPrintInstr2Operands(X86InstrMovSx, 0,
+                             X86OpRegCWord, 0,
+                             X86OpIndLabelExplicitHalfWord, label);
+    else if (opSz == 2)
+      GenPrintInstr2Operands(X86InstrMovZx, 0,
+                             X86OpRegCWord, 0,
+                             X86OpIndLabelExplicitHalfWord, label);
+  }
+#endif
   else
     GenPrintInstr2Operands(X86InstrMov, 0,
                            X86OpRegCWord, 0,
@@ -779,6 +852,19 @@ void GenReadCRegLocal(int opSz, int ofs)
     GenPrintInstr2Operands(X86InstrMovZx, 0,
                            X86OpRegCWord, 0,
                            X86OpIndLocalExplicitByte, ofs);
+#ifdef CAN_COMPILE_32BIT
+  else if (opSz != SizeOfWord && -opSz != SizeOfWord)
+  {
+    if (opSz == -2)
+      GenPrintInstr2Operands(X86InstrMovSx, 0,
+                             X86OpRegCWord, 0,
+                             X86OpIndLocalExplicitHalfWord, ofs);
+    else if (opSz == 2)
+      GenPrintInstr2Operands(X86InstrMovZx, 0,
+                             X86OpRegCWord, 0,
+                             X86OpIndLocalExplicitHalfWord, ofs);
+  }
+#endif
   else
     GenPrintInstr2Operands(X86InstrMov, 0,
                            X86OpRegCWord, 0,
@@ -802,6 +888,19 @@ void GenReadCRegIndirect(int opSz)
     GenPrintInstr2Operands(X86InstrMovZx, 0,
                            X86OpRegCWord, 0,
                            X86OpIndRegBExplicitByte, 0);
+#ifdef CAN_COMPILE_32BIT
+  else if (opSz != SizeOfWord && -opSz != SizeOfWord)
+  {
+    if (opSz == -2)
+      GenPrintInstr2Operands(X86InstrMovSx, 0,
+                             X86OpRegCWord, 0,
+                             X86OpIndRegBExplicitHalfWord, 0);
+    else if (opSz == 2)
+      GenPrintInstr2Operands(X86InstrMovZx, 0,
+                             X86OpRegCWord, 0,
+                             X86OpIndRegBExplicitHalfWord, 0);
+  }
+#endif
   else
     GenPrintInstr2Operands(X86InstrMov, 0,
                            X86OpRegCWord, 0,
@@ -1181,6 +1280,10 @@ l2:
   case tokVoid:
   case tokUChar:
   case tokSChar:
+#ifdef CAN_COMPILE_32BIT
+  case tokShort:
+  case tokUShort:
+#endif
     GenFuse(idx);
     oldIdxRight -= oldSpRight - sp;
     if (tok == tokUnaryPlus)
@@ -1663,16 +1766,30 @@ void GenExpr1(void)
     case tokSChar:
       if (SizeOfWord == 2)
         GenPrintInstrNoOperand(X86InstrCbw);
+#ifdef CAN_COMPILE_32BIT
       else
-        GenPrintInstr2Operands(X86InstrMovZx, 0,
+        GenPrintInstr2Operands(X86InstrMovSx, 0,
                                X86OpRegAWord, 0,
                                X86OpRegAByte, 0);
+#endif
       break;
     case tokUChar:
       GenPrintInstr2Operands(X86InstrAnd, 0,
                              X86OpRegAWord, 0,
                              X86OpConst, 0xFF);
       break;
+#ifdef CAN_COMPILE_32BIT
+    case tokShort:
+      GenPrintInstr2Operands(X86InstrMovSx, 0,
+                             X86OpRegAWord, 0,
+                             X86OpRegAHalfWord, 0);
+      break;
+    case tokUShort:
+      GenPrintInstr2Operands(X86InstrMovZx, 0,
+                             X86OpRegAWord, 0,
+                             X86OpRegAHalfWord, 0);
+      break;
+#endif
 
     case tokShortCirc:
       if (v >= 0)
@@ -2065,10 +2182,12 @@ void GenExpr1(void)
                                   X86OpRegAByte, 0);
             if (SizeOfWord == 2)
               GenPrintInstrNoOperand(X86InstrCbw);
+#ifdef CAN_COMPILE_32BIT
             else
               GenPrintInstr2Operands(X86InstrMovZx, 0,
                                      X86OpRegAWord, 0,
                                      X86OpRegAByte, 0);
+#endif
             break;
           }
         }
@@ -2153,8 +2272,10 @@ void GenExpr1(void)
         case tokAssignMod:
           if (SizeOfWord == 2)
             GenPrintInstrNoOperand(X86InstrCwd);
+#ifdef CAN_COMPILE_32BIT
           else
             GenPrintInstrNoOperand(X86InstrCdq);
+#endif
           break;
         default:
           GenPrintInstr2Operands(X86InstrMov, 0,
@@ -2541,8 +2662,10 @@ void GenExpr0(void)
       {
         if (SizeOfWord == 2)
           GenPrintInstrNoOperand(X86InstrCwd);
+#ifdef CAN_COMPILE_32BIT
         else
           GenPrintInstrNoOperand(X86InstrCdq);
+#endif
         GenPrintInstr1Operand(X86InstrIdiv, 0,
                               X86OpRegBWord, 0);
       }
@@ -2674,8 +2797,10 @@ void GenExpr0(void)
       {
         if (SizeOfWord == 2)
           GenPrintInstrNoOperand(X86InstrCwd);
+#ifdef CAN_COMPILE_32BIT
         else
           GenPrintInstrNoOperand(X86InstrCdq);
+#endif
         GenPrintInstr1Operand(X86InstrIdiv, 0,
                               X86OpRegCWord, 0);
       }
@@ -2762,10 +2887,12 @@ void GenExpr0(void)
                             X86OpRegAByte, 0);
       if (SizeOfWord == 2)
         GenPrintInstrNoOperand(X86InstrCbw);
+#ifdef CAN_COMPILE_32BIT
       else
         GenPrintInstr2Operands(X86InstrMovZx, 0,
                                X86OpRegAWord, 0,
                                X86OpRegAByte, 0);
+#endif
       break;
 
     case tok_Bool:
@@ -2778,10 +2905,12 @@ void GenExpr0(void)
     case tokSChar:
       if (SizeOfWord == 2)
         GenPrintInstrNoOperand(X86InstrCbw);
+#ifdef CAN_COMPILE_32BIT
       else
-        GenPrintInstr2Operands(X86InstrMovZx, 0,
+        GenPrintInstr2Operands(X86InstrMovSx, 0,
                                X86OpRegAWord, 0,
                                X86OpRegAByte, 0);
+#endif
       break;
     case tokUChar:
       GenPrintInstr2Operands(X86InstrAnd, 0,

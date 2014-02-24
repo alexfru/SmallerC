@@ -406,7 +406,7 @@ int __vsprintf__(char** buf, FILE* stream, char* fmt, void* vl)
   char* pc;
   int n, sign, msign;
   int minlen, len;
-  int leadchar;
+  int leadchar = ' ';
 
   for (p = fmt; *p != '\0'; ++p)
   {
@@ -624,9 +624,7 @@ unsigned char peekb(unsigned seg, unsigned ofs)
 void poke(unsigned seg, unsigned ofs, unsigned val)
 {
 #ifndef __SMALLER_C_16__
-  unsigned char* p = seg * 16 + ofs;
-  p[0] = val;
-  p[1] = val >> 8;
+  *((unsigned short*)(seg * 16 + ofs)) = val;
 #else
   asm("push ds\n"
       "mov  ds, [bp + 4]\n"
@@ -640,8 +638,7 @@ void poke(unsigned seg, unsigned ofs, unsigned val)
 unsigned peek(unsigned seg, unsigned ofs)
 {
 #ifndef __SMALLER_C_16__
-  unsigned char* p = seg * 16 + ofs;
-  return (p[1] << 8) + p[0];
+  return *((unsigned short*)(seg * 16 + ofs));
 #else
   asm("push ds\n"
       "mov  ds, [bp + 4]\n"
@@ -1247,7 +1244,7 @@ FILE* fopen(char* name, char* mode)
     fd = OsCreateOrTruncate(name);
   }
 
-  if (fd != -1)
+  if (fd != (unsigned)-1)
   {
     for (i = 0; i < MAX_FILES; ++i)
       if (!__FileHandles__[i])
@@ -1298,7 +1295,7 @@ int puts(char *s)
 
 int fputs(char* s, FILE* stream)
 {
-  int c, err = 0;
+  int c;
 
   while ((c = *s++) != '\0')
     if (fputc(c, stream) == EOF)
@@ -1329,7 +1326,7 @@ int fgetc(FILE* stream)
   {
     unsigned sz;
     sz = OsRead(fd, __FileBufs__[i], FILE_BUF_SIZE);
-    if (!sz || sz == -1)
+    if (!sz || sz == (unsigned)-1)
       return EOF;
     __FileBufSize__[i] = sz;
     pos = 0;
@@ -1386,7 +1383,7 @@ int fclose(FILE* stream)
   if (__FileBufDirty__[i])
   {
     unsigned sz = __FileBufSize__[i];
-    if (OsWrite(fd, __FileBufs__[i], sz) != sz)
+    if ((unsigned)OsWrite(fd, __FileBufs__[i], sz) != sz)
     {
       __FileHandles__[i] = 0;
       --__FileCnt__;

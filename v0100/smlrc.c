@@ -287,8 +287,8 @@ EXTERN int vfprintf(FILE*, char*, void*);
 
 #define tokSChar      0x80
 #define tokUChar      0x81
-//#define tokUShort     0x82
-//#define tokULong      0x83
+#define tokUShort     0x82
+#define tokULong      0x83
 //#define tokLongLong   0x84
 //#define tokULongLong  0x85
 //#define tokLongDbl    0x86
@@ -931,6 +931,8 @@ char* GetTokenName(int token)
   case tokLocalOfs: return "<LocalOfs>"; case tokShortCirc: return "<ShortCirc>";
 
   case tokSChar: return "signed char";   case tokUChar: return "unsigned char";
+  case tokShort: return "short";         case tokUShort: return "unsigned short";
+  case tokLong: return "long";           case tokULong: return "unsigned long";
   }
 
   // Reserved keywords:
@@ -1364,6 +1366,9 @@ int GetNumber(void)
   unsigned n = 0;
   int type = 0;
   int uSuffix = 0;
+#ifdef CAN_COMPILE_32BIT
+  int lSuffix = 0;
+#endif
   char* eTooBig = "Constant too big\n";
 
   if (ch == '0')
@@ -1415,11 +1420,29 @@ int GetNumber(void)
     }
   }
 
+  // possible combinations of suffixes:
+  //   none
+  //   U
+  //   UL
+  //   L
+  //   LU
   if ((ch = *p) == 'u' || ch == 'U')
   {
     uSuffix = 1;
     ShiftCharN(1);
   }
+#ifdef CAN_COMPILE_32BIT
+  if ((ch = *p) == 'l' || ch == 'L')
+  {
+    lSuffix = 1;
+    ShiftCharN(1);
+    if (!uSuffix && ((ch = *p) == 'u' || ch == 'U'))
+    {
+      uSuffix = 1;
+      ShiftCharN(1);
+    }
+  }
+#endif
 
   if (!PrepDontSkipTokens)
   {
@@ -1430,6 +1453,9 @@ int GetNumber(void)
 
   // Ensure the constant fits into 16(32) bits
   if ((SizeOfWord == 2 && n >> 8 >> 8) || // equiv. to SizeOfWord == 2 && n > 0xFFFF
+#ifdef CAN_COMPILE_32BIT
+      (SizeOfWord == 2 && lSuffix) || // long (which must have at least 32 bits) isn't supported in 16-bit models
+#endif
       (SizeOfWord == 4 && n >> 8 >> 12 >> 12)) // equiv. to SizeOfWord == 4 && n > 0xFFFFFFFF
     error("Constant too big for %d-bit type\n", SizeOfWord * 8);
 
@@ -2443,6 +2469,10 @@ void numericTypeCheck(int ExprTypeSynPtr)
       (SyntaxStack[ExprTypeSynPtr][0] == tokChar ||
        SyntaxStack[ExprTypeSynPtr][0] == tokSChar ||
        SyntaxStack[ExprTypeSynPtr][0] == tokUChar ||
+#ifdef CAN_COMPILE_32BIT
+       SyntaxStack[ExprTypeSynPtr][0] == tokShort ||
+       SyntaxStack[ExprTypeSynPtr][0] == tokUShort ||
+#endif
        SyntaxStack[ExprTypeSynPtr][0] == tokInt ||
        SyntaxStack[ExprTypeSynPtr][0] == tokUnsigned))
     return;
@@ -2538,6 +2568,9 @@ void compatCheck(int* ExprTypeSynPtr, int TheOtherExprTypeSynPtr, int ConstExpr[
     {
     case tokVoid:
     case tokChar: case tokSChar: case tokUChar:
+#ifdef CAN_COMPILE_32BIT
+    case tokShort: case tokUShort:
+#endif
     case tokInt: case tokUnsigned:
     case tokStructPtr:
       if (!c)
@@ -2632,6 +2665,10 @@ void promoteType(int* ExprTypeSynPtr, int* TheOtherExprTypeSynPtr)
   // chars must be promoted to ints in expressions as the very first thing
   if (*ExprTypeSynPtr >= 0 &&
       (SyntaxStack[*ExprTypeSynPtr][0] == tokChar ||
+#ifdef CAN_COMPILE_32BIT
+       SyntaxStack[*ExprTypeSynPtr][0] == tokShort ||
+       SyntaxStack[*ExprTypeSynPtr][0] == tokUShort ||
+#endif
        SyntaxStack[*ExprTypeSynPtr][0] == tokSChar ||
        SyntaxStack[*ExprTypeSynPtr][0] == tokUChar))
     *ExprTypeSynPtr = SymIntSynPtr;
@@ -2782,6 +2819,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
   // Identifiers
   case tokIdent:
     {
+      // TBD!!! support __func__
       int synPtr = FindSymbol(IdentTable + s);
       int type;
       if (synPtr < 0)
@@ -2804,6 +2842,8 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       // DONE: this declaration is actually a type cast
       if (!strncmp(IdentTable + SyntaxStack[synPtr][1], "(something", sizeof "(something)" - 1 - 1))
       {
+        int castSize;
+
         if (SyntaxStack[++synPtr][0] == tokLocalOfs) // TBD!!! is this really needed???
           synPtr++;
 
@@ -2831,10 +2871,12 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
           *ConstExpr = 1;
         }
 
+        castSize = GetDeclSize(synPtr, 1);
+
         // insertion of tokUChar, tokSChar and tokUnaryPlus transforms
         // lvalues (values formed by dereferences) into rvalues
         // (by hiding the dereferences), just as casts should do
-        switch (GetDeclSize(synPtr, 1))
+        switch (castSize)
         {
         case 1:
           // cast to unsigned char
@@ -2848,13 +2890,34 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
             s -= 0x100;
           break;
         default:
-          // cast to int/unsigned/pointer
-          if (stack[oldIdxRight - (oldSpRight - sp)][0] == tokUnaryStar)
-            // hide the dereference
-            stack[oldIdxRight + 1 - (oldSpRight - sp)][0] = tokUnaryPlus;
+#ifdef CAN_COMPILE_32BIT
+          if (castSize && castSize != SizeOfWord && -castSize != SizeOfWord)
+          {
+            if (castSize == 2)
+            {
+              // cast to unsigned short
+              stack[oldIdxRight + 1 - (oldSpRight - sp)][0] = tokUShort;
+              s &= 0xFFFFu;
+            }
+            else
+            {
+              // cast to signed short
+              stack[oldIdxRight + 1 - (oldSpRight - sp)][0] = tokShort;
+              if ((s &= 0xFFFFu) >= 0x8000)
+                s -= 0x10000;
+            }
+          }
           else
-            // nothing to hide, remove the cast
-            del(oldIdxRight + 1 - (oldSpRight - sp), 1);
+#endif
+          {
+            // cast to int/unsigned/pointer
+            if (stack[oldIdxRight - (oldSpRight - sp)][0] == tokUnaryStar)
+              // hide the dereference
+              stack[oldIdxRight + 1 - (oldSpRight - sp)][0] = tokUnaryPlus;
+            else
+              // nothing to hide, remove the cast
+              del(oldIdxRight + 1 - (oldSpRight - sp), 1);
+          }
           break;
         }
 
@@ -2863,6 +2926,10 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
         case tokChar:
         case tokSChar:
         case tokUChar:
+#ifdef CAN_COMPILE_32BIT
+        case tokShort:
+        case tokUShort:
+#endif
         case tokInt:
         case tokUnsigned:
           break;
@@ -3844,7 +3911,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
   // Postfix indirect structure/union member selection operator
   case tokArrow:
     {
-      int member, i, j = 0, c = 1, ofs;
+      int member, i, j = 0, c = 1, ofs = 0;
 
       stack[*idx + 1][0] = '+'; // replace -> with +
       member = stack[*idx][1]; // keep the member name, it will be replaced with member offset
@@ -4044,6 +4111,13 @@ int ParseExpr(int tok, int* GotUnary, int* ExprTypeSynPtr, int* ConstExpr, int* 
 
         switch (SyntaxStack[*ExprTypeSynPtr][0])
         {
+        case tokChar:
+        case tokSChar:
+        case tokUChar:
+#ifdef CAN_COMPILE_32BIT
+        case tokShort:
+        case tokUShort:
+#endif
         case tokInt:
           printf2("Expression value: %d\n", truncInt(*ConstVal));
           break;
@@ -4360,6 +4434,10 @@ int TokenStartsDeclaration(int t, int params)
   return t == tokVoid ||
          t == tokChar || t == tokSChar || t == tokUChar ||
          t == tokInt || t == tokSigned || t == tokUnsigned ||
+         t == tokShort ||
+#ifdef CAN_COMPILE_32BIT
+         (SizeOfWord != 2 && t == tokLong) ||
+#endif
          t == tokStruct || t == tokUnion ||
          (!params && (t == tokExtern || t == tokStatic));
 }
@@ -4519,6 +4597,21 @@ int GetDeclSize(int SyntaxPtr, int SizeForDeref)
       // fallthrough
     case tokUChar:
       return uint2int(size);
+#ifdef CAN_COMPILE_32BIT
+    case tokShort:
+      if (!arr && SizeForDeref)
+        return -2; // 2 bytes, needing sign extension when converted to int/unsigned int
+      // fallthrough
+    case tokUShort:
+      if (size * 2 / 2 != size)
+        //error("Variable too big\n");
+        errorVarSize();
+      size *= 2;
+      if (size != truncUint(size))
+        //error("Variable too big\n");
+        errorVarSize();
+      return uint2int(size);
+#endif
     case tokInt:
     case tokUnsigned:
     case '*':
@@ -4592,6 +4685,11 @@ int GetDeclAlignment(int SyntaxPtr)
     case tokSChar:
     case tokUChar:
       return 1;
+#ifdef CAN_COMPILE_32BIT
+    case tokShort:
+    case tokUShort:
+      return 2;
+#endif
     case tokInt:
     case tokUnsigned:
     case '*':
@@ -4747,6 +4845,10 @@ void DumpDecl(int SyntaxPtr, int IsParam)
       case tokChar:
       case tokSChar:
       case tokUChar:
+#ifdef CAN_COMPILE_32BIT
+      case tokShort:
+      case tokUShort:
+#endif
       case tokInt:
       case tokUnsigned:
       case tokEllipsis:
@@ -4843,16 +4945,17 @@ int ParseBase(int tok, int base[2])
     *base = tok;
     tok = GetToken();
   }
-/*
-  else if (tok == tokShort ||
-           tok == tokLong)
+  else if (tok == tokShort
+#ifdef CAN_COMPILE_32BIT
+           || tok == tokLong
+#endif
+          )
   {
     *base = tok;
     tok = GetToken();
     if (tok == tokInt)
       tok = GetToken();
   }
-*/
   else if (tok == tokSigned ||
            tok == tokUnsigned)
   {
@@ -4867,7 +4970,6 @@ int ParseBase(int tok, int base[2])
         *base = tokSChar;
       tok = GetToken();
     }
-/*
     else if (tok == tokShort)
     {
       if (sign == tokUnsigned)
@@ -4878,6 +4980,7 @@ int ParseBase(int tok, int base[2])
       if (tok == tokInt)
         tok = GetToken();
     }
+#ifdef CAN_COMPILE_32BIT
     else if (tok == tokLong)
     {
       if (sign == tokUnsigned)
@@ -4888,7 +4991,7 @@ int ParseBase(int tok, int base[2])
       if (tok == tokInt)
         tok = GetToken();
     }
-*/
+#endif
     else
     {
       if (sign == tokUnsigned)
@@ -5045,6 +5148,28 @@ int ParseBase(int tok, int base[2])
   else
   {
     valid = 0;
+  }
+
+#ifdef CAN_COMPILE_32BIT
+  if (SizeOfWord == 2 &&
+      (*base == tokLong || *base == tokULong))
+    valid = 0;
+  // to simplify matters, treat long and unsigned long as aliases for int and unsigned int
+  // in 32-bit and huge mode(l)s
+  if (*base == tokLong)
+    *base = tokInt;
+  if (*base == tokULong)
+    *base = tokUnsigned;
+#endif
+
+  if (SizeOfWord == 2)
+  {
+    // to simplify matters, treat short and unsigned short as aliases for int and unsigned int
+    // in 16-bit mode
+    if (*base == tokShort)
+      *base = tokInt;
+    if (*base == tokUShort)
+      *base = tokUnsigned;
   }
 
   // TBD!!! review/test this fxn

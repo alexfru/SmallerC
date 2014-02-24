@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2012-2013, Alexey Frunze
+Copyright (c) 2012-2014, Alexey Frunze
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -164,11 +164,11 @@ void GenAddrData(int Size, char* Label)
 //#define MipsInstrLUI    0x08
 #define MipsInstrLB     0x09
 #define MipsInstrLBU    0x0A
-//#define MipsInstrLH     0x0B
-//#define MipsInstrLHU    0x0C
+#define MipsInstrLH     0x0B
+#define MipsInstrLHU    0x0C
 #define MipsInstrLW     0x0D
 #define MipsInstrSB     0x0E
-//#define MipsInstrSH     0x0F
+#define MipsInstrSH     0x0F
 #define MipsInstrSW     0x10
 #define MipsInstrAddU   0x11
 #define MipsInstrSubU   0x12
@@ -213,11 +213,11 @@ void GenPrintInstr(int instr, int val)
 //  case MipsInstrLUI  : p = "lui"; break;
   case MipsInstrLB   : p = "lb"; break;
   case MipsInstrLBU  : p = "lbu"; break;
-//  case MipsInstrLH   : p = "lh"; break;
-//  case MipsInstrLHU  : p = "lhu"; break;
+  case MipsInstrLH   : p = "lh"; break;
+  case MipsInstrLHU  : p = "lhu"; break;
   case MipsInstrLW   : p = "lw"; break;
   case MipsInstrSB   : p = "sb"; break;
-//  case MipsInstrSH   : p = "sh"; break;
+  case MipsInstrSH   : p = "sh"; break;
   case MipsInstrSW   : p = "sw"; break;
   case MipsInstrAddU : p = "addu"; break;
   case MipsInstrSubU : p = "subu"; break;
@@ -438,6 +438,24 @@ void GenExtendRegIfNeeded(int reg, int opSz)
                            reg, 0,
                            MipsOpConst, 0xFF);
   }
+  else if (opSz == -2)
+  {
+    GenPrintInstr3Operands(MipsInstrSLL, 0,
+                           reg, 0,
+                           reg, 0,
+                           MipsOpConst, 16);
+    GenPrintInstr3Operands(MipsInstrSRA, 0,
+                           reg, 0,
+                           reg, 0,
+                           MipsOpConst, 16);
+  }
+  else if (opSz == 2)
+  {
+    GenPrintInstr3Operands(MipsInstrAnd, 0,
+                           reg, 0,
+                           reg, 0,
+                           MipsOpConst, 0xFFFF);
+  }
 }
 
 void GenJumpUncond(int label)
@@ -621,120 +639,126 @@ void GenPostIdentAccess(void)
 
 void GenReadIdent(int regDst, int opSz, int label)
 {
+  int instr = MipsInstrLW;
   GenPreIdentAccess(label);
   if (opSz == -1)
   {
-    GenPrintInstr2Operands(MipsInstrLB, 0,
-                           regDst, 0,
-                           MipsOpLabelGpOption, label);
+    instr = MipsInstrLB;
   }
   else if (opSz == 1)
   {
-    GenPrintInstr2Operands(MipsInstrLBU, 0,
-                           regDst, 0,
-                           MipsOpLabelGpOption, label);
+    instr = MipsInstrLBU;
   }
-  else
+  else if (opSz == -2)
   {
-    GenPrintInstr2Operands(MipsInstrLW, 0,
-                           regDst, 0,
-                           MipsOpLabelGpOption, label);
+    instr = MipsInstrLH;
   }
+  else if (opSz == 2)
+  {
+    instr = MipsInstrLHU;
+  }
+  GenPrintInstr2Operands(instr, 0,
+                         regDst, 0,
+                         MipsOpLabelGpOption, label);
   GenPostIdentAccess();
 }
 
 void GenReadLocal(int regDst, int opSz, int ofs)
 {
+  int instr = MipsInstrLW;
   if (opSz == -1)
   {
-    GenPrintInstr2Operands(MipsInstrLB, 0,
-                           regDst, 0,
-                           MipsOpIndRegFp, ofs);
+    instr = MipsInstrLB;
   }
   else if (opSz == 1)
   {
-    GenPrintInstr2Operands(MipsInstrLBU, 0,
-                           regDst, 0,
-                           MipsOpIndRegFp, ofs);
+    instr = MipsInstrLBU;
   }
-  else
+  else if (opSz == -2)
   {
-    GenPrintInstr2Operands(MipsInstrLW, 0,
-                           regDst, 0,
-                           MipsOpIndRegFp, ofs);
+    instr = MipsInstrLH;
   }
+  else if (opSz == 2)
+  {
+    instr = MipsInstrLHU;
+  }
+  GenPrintInstr2Operands(instr, 0,
+                         regDst, 0,
+                         MipsOpIndRegFp, ofs);
 }
 
 void GenReadIndirect(int regDst, int regSrc, int opSz)
 {
+  int instr = MipsInstrLW;
   if (opSz == -1)
   {
-    GenPrintInstr2Operands(MipsInstrLB, 0,
-                           regDst, 0,
-                           regSrc + MipsOpIndRegZero, 0);
+    instr = MipsInstrLB;
   }
   else if (opSz == 1)
   {
-    GenPrintInstr2Operands(MipsInstrLBU, 0,
-                           regDst, 0,
-                           regSrc + MipsOpIndRegZero, 0);
+    instr = MipsInstrLBU;
   }
-  else
+  else if (opSz == -2)
   {
-    GenPrintInstr2Operands(MipsInstrLW, 0,
-                           regDst, 0,
-                           regSrc + MipsOpIndRegZero, 0);
+    instr = MipsInstrLH;
   }
+  else if (opSz == 2)
+  {
+    instr = MipsInstrLHU;
+  }
+  GenPrintInstr2Operands(instr, 0,
+                         regDst, 0,
+                         regSrc + MipsOpIndRegZero, 0);
 }
 
 void GenWriteIdent(int regSrc, int opSz, int label)
 {
+  int instr = MipsInstrSW;
   GenPreIdentAccess(label);
-  if (opSz != SizeOfWord)
+  if (opSz == -1 || opSz == 1)
   {
-    GenPrintInstr2Operands(MipsInstrSB, 0,
-                           regSrc, 0,
-                           MipsOpLabelGpOption, label);
+    instr = MipsInstrSB;
   }
-  else
+  else if (opSz == -2 || opSz == 2)
   {
-    GenPrintInstr2Operands(MipsInstrSW, 0,
-                           regSrc, 0,
-                           MipsOpLabelGpOption, label);
+    instr = MipsInstrSH;
   }
+  GenPrintInstr2Operands(instr, 0,
+                         regSrc, 0,
+                         MipsOpLabelGpOption, label);
   GenPostIdentAccess();
 }
 
 void GenWriteLocal(int regSrc, int opSz, int ofs)
 {
-  if (opSz != SizeOfWord)
+  int instr = MipsInstrSW;
+  if (opSz == -1 || opSz == 1)
   {
-    GenPrintInstr2Operands(MipsInstrSB, 0,
-                           regSrc, 0,
-                           MipsOpIndRegFp, ofs);
+    instr = MipsInstrSB;
   }
-  else
+  else if (opSz == -2 || opSz == 2)
   {
-    GenPrintInstr2Operands(MipsInstrSW, 0,
-                           regSrc, 0,
-                           MipsOpIndRegFp, ofs);
+    instr = MipsInstrSH;
   }
+  GenPrintInstr2Operands(instr, 0,
+                         regSrc, 0,
+                         MipsOpIndRegFp, ofs);
 }
 
 void GenWriteIndirect(int regDst, int regSrc, int opSz)
 {
-  if (opSz != SizeOfWord)
+  int instr = MipsInstrSW;
+  if (opSz == -1 || opSz == 1)
   {
-    GenPrintInstr2Operands(MipsInstrSB, 0,
-                           regSrc, 0,
-                           regDst + MipsOpIndRegZero, 0);
+    instr = MipsInstrSB;
   }
-  else
+  else if (opSz == -2 || opSz == 2)
   {
-    GenPrintInstr2Operands(MipsInstrSW, 0,
-                           regSrc, 0,
-                           regDst + MipsOpIndRegZero, 0);
+    instr = MipsInstrSH;
   }
+  GenPrintInstr2Operands(instr, 0,
+                         regSrc, 0,
+                         regDst + MipsOpIndRegZero, 0);
 }
 
 void GenIncDecIdent(int regDst, int opSz, int label, int tok)
@@ -1401,6 +1425,22 @@ void GenExpr0(void)
                              MipsOpRegV0, 0,
                              MipsOpRegV0, 0,
                              MipsOpConst, 0xFF);
+      break;
+    case tokShort:
+      GenPrintInstr3Operands(MipsInstrSLL, 0,
+                             MipsOpRegV0, 0,
+                             MipsOpRegV0, 0,
+                             MipsOpConst, 16);
+      GenPrintInstr3Operands(MipsInstrSRA, 0,
+                             MipsOpRegV0, 0,
+                             MipsOpRegV0, 0,
+                             MipsOpConst, 16);
+      break;
+    case tokUShort:
+      GenPrintInstr3Operands(MipsInstrAnd, 0,
+                             MipsOpRegV0, 0,
+                             MipsOpRegV0, 0,
+                             MipsOpConst, 0xFFFF);
       break;
 
     case tokShortCirc:
