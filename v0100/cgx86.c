@@ -39,6 +39,42 @@ either expressed or implied, of the FreeBSD Project.
 
 // TBD!!! compress/clean up
 
+#define MAX_GLOBALS_TABLE_LEN MAX_IDENT_TABLE_LEN
+
+/*
+  Globals table entry format:
+    use char:       use: bit 0 = defined, bit 1 = used
+    idlen char:     string length (<= 127)
+    id char[idlen]: string (ASCIIZ)
+*/
+char GlobalsTable[MAX_GLOBALS_TABLE_LEN];
+int GlobalsTableLen = 0;
+
+void AddGlobal(char* s, int use)
+{
+  int i = 0;
+  int l;
+  if (OutputFormat != FormatFlat && GenExterns)
+  {
+    while (i < GlobalsTableLen)
+    {
+      if (!strcmp(GlobalsTable + i + 2, s))
+      {
+        GlobalsTable[i] |= use;
+        return;
+      }
+      i += GlobalsTable[i + 1] + 2;
+    }
+    l = strlen(s) + 1;
+    if (GlobalsTableLen + l + 2 > MAX_GLOBALS_TABLE_LEN)
+      error("Table of globals exhausted\n");
+    GlobalsTable[GlobalsTableLen++] = use;
+    GlobalsTable[GlobalsTableLen++] = l;
+    memcpy(GlobalsTable + GlobalsTableLen, s, l);
+    GlobalsTableLen += l;
+  }
+}
+
 void GenInit(void)
 {
   // initialization of target-specific code generator
@@ -141,17 +177,7 @@ void GenLabel(char* Label, int Static)
       printf2("\tglobal\t$%s\n", Label);
     printf2("$%s:\n", Label);
   }
-}
-
-void GenExtern(char* Label)
-{
-  if (OutputFormat != FormatFlat && GenExterns)
-  {
-    if (UseLeadingUnderscores)
-      printf2("\textern\t_%s\n", Label);
-    else
-      printf2("\textern\t$%s\n", Label);
-  }
+  AddGlobal(Label, 1);
 }
 
 void GenPrintLabel(char* Label)
@@ -552,14 +578,6 @@ void GenPrintNewLine(void)
 void GenPrintInstrNoOperand(int instr)
 {
   GenPrintInstr(instr, 0);
-  GenPrintNewLine();
-}
-
-void GenPrintCallFxn(char* name)
-{
-  // TBD!!!
-  GenPrintInstr(X86InstrCall, 0);
-  GenPrintLabel(name);
   GenPrintNewLine();
 }
 
@@ -3079,6 +3097,13 @@ unsigned GenStrData(int generatingCode, unsigned requiredLen)
 
 void GenExpr(void)
 {
+  if (OutputFormat != FormatFlat && GenExterns)
+  {
+    int i;
+    for (i = 0; i < sp; i++)
+      if (stack[i][0] == tokIdent && !isdigit(IdentTable[stack[i][1]]))
+        AddGlobal(IdentTable + stack[i][1], 2);
+  }
   GenStrData(1, 0);
 #ifndef CG_STACK_BASED
   GenExpr1();
@@ -3173,5 +3198,22 @@ void GenFin(void)
 
     if (OutputFormat != FormatFlat)
       puts2(CodeFooter);
+  }
+
+  if (OutputFormat != FormatFlat && GenExterns)
+  {
+    int i = 0;
+
+    puts2("");
+    while (i < GlobalsTableLen)
+    {
+      if (GlobalsTable[i] == 2)
+      {
+        printf2("\textern\t");
+        GenPrintLabel(GlobalsTable + i + 2);
+        puts2("");
+      }
+      i += GlobalsTable[i + 1] + 2;
+    }
   }
 }

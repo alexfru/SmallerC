@@ -90,17 +90,6 @@ void GenLabel(char* Label, int Static)
   }
 }
 
-void GenExtern(char* Label)
-{
-  // GNU as doesn't need an explicit .extern,
-  // it treats all undefined symbols as external by default.
-  // if (OutputFormat != FormatFlat && !Static && GenExterns)
-  // {
-  //   printf2("\t.extern\t%s\n", Label);
-  // }
-  (void)Label;
-}
-
 void GenPrintLabel(char* Label)
 {
   {

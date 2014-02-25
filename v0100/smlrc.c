@@ -42,14 +42,11 @@ either expressed or implied, of the FreeBSD Project.
 
 // You need to declare __setargv__ as an extern symbol when bootstrapping with
 // Turbo C++ in order to access main()'s argc and argv params.
-extern char _setargv__;
-
-#define EXTERN extern
-//#define EXTERN
-
-//#define PROTO extern
-#define PROTO
-
+//
+// This is no longer supported since the compiler is too big to be compiled
+// with itself into object files and then linked with Turbo C++'s standard C library.
+//
+// extern char _setargv__;
 
 #ifndef __SMALLER_C__
 
@@ -106,41 +103,41 @@ extern char _setargv__;
 #endif
 #endif
 
-EXTERN void exit(int);
-EXTERN int atoi(char*);
+void exit(int);
+int atoi(char*);
 
-EXTERN size_t strlen(char*);
-EXTERN char* strcpy(char*, char*);
-EXTERN char* strchr(char*, int);
-EXTERN int strcmp(char*, char*);
-EXTERN int strncmp(char*, char*, size_t);
-EXTERN void* memmove(void*, void*, size_t);
-EXTERN void* memcpy(void*, void*, size_t);
-EXTERN void* memset(void*, int, size_t);
+size_t strlen(char*);
+char* strcpy(char*, char*);
+char* strchr(char*, int);
+int strcmp(char*, char*);
+int strncmp(char*, char*, size_t);
+void* memmove(void*, void*, size_t);
+void* memcpy(void*, void*, size_t);
+void* memset(void*, int, size_t);
 
-EXTERN int isspace(int);
-EXTERN int isdigit(int);
-EXTERN int isalpha(int);
-EXTERN int isalnum(int);
+int isspace(int);
+int isdigit(int);
+int isalpha(int);
+int isalnum(int);
 
 #define FILE void
 #define EOF (-1)
-EXTERN FILE* fopen(char*, char*);
-EXTERN int fclose(FILE*);
-EXTERN int putchar(int);
-EXTERN int fputc(int, FILE*);
-EXTERN int fgetc(FILE*);
-EXTERN int puts(char*);
-EXTERN int fputs(char*, FILE*);
-EXTERN int sprintf(char*, char*, ...);
-//EXTERN int vsprintf(char*, char*, va_list);
-EXTERN int vsprintf(char*, char*, void*);
-EXTERN int printf(char*, ...);
-EXTERN int fprintf(FILE*, char*, ...);
-//EXTERN int vprintf(char*, va_list);
-EXTERN int vprintf(char*, void*);
-//EXTERN int vfprintf(FILE*, char*, va_list);
-EXTERN int vfprintf(FILE*, char*, void*);
+FILE* fopen(char*, char*);
+int fclose(FILE*);
+int putchar(int);
+int fputc(int, FILE*);
+int fgetc(FILE*);
+int puts(char*);
+int fputs(char*, FILE*);
+int sprintf(char*, char*, ...);
+//int vsprintf(char*, char*, va_list);
+int vsprintf(char*, char*, void*);
+int printf(char*, ...);
+int fprintf(FILE*, char*, ...);
+//int vprintf(char*, va_list);
+int vprintf(char*, void*);
+//int vfprintf(FILE*, char*, va_list);
+int vfprintf(FILE*, char*, void*);
 
 #endif // #ifndef __SMALLER_C__
 
@@ -315,103 +312,101 @@ EXTERN int vfprintf(FILE*, char*, void*);
 #define SymLocalArr  5
 
 // all public prototypes
-PROTO int uint2int(unsigned);
-PROTO unsigned truncUint(unsigned);
-PROTO int truncInt(int);
+int uint2int(unsigned);
+unsigned truncUint(unsigned);
+int truncInt(int);
 
-PROTO int GetToken(void);
-PROTO char* GetTokenName(int token);
+int GetToken(void);
+char* GetTokenName(int token);
 
-PROTO int GetTokenValueInt(void);
+int GetTokenValueInt(void);
 
-PROTO char* GetTokenValueString(void);
-PROTO int GetTokenValueStringLength(void);
+char* GetTokenValueString(void);
+int GetTokenValueStringLength(void);
 
-PROTO char* GetTokenIdentName(void);
+char* GetTokenIdentName(void);
 
 #ifndef NO_PREPROCESSOR
-PROTO void DumpMacroTable(void);
+void DumpMacroTable(void);
 #endif
 
-PROTO void PurgeStringTable(void);
-PROTO void AddString(int label, char* str, int len);
-PROTO char* FindString(int label);
+void PurgeStringTable(void);
+void AddString(int label, char* str, int len);
+char* FindString(int label);
 
-PROTO int AddIdent(char* name);
-PROTO int FindIdent(char* name);
-PROTO void DumpIdentTable(void);
-PROTO char* lab2str(char* p, int n);
+int AddIdent(char* name);
+int FindIdent(char* name);
+void DumpIdentTable(void);
+char* lab2str(char* p, int n);
 
-PROTO void GenInit(void);
-PROTO void GenFin(void);
-PROTO int GenInitParams(int argc, char** argv, int* idx);
-PROTO void GenInitFinalize(void);
-PROTO void GenStartCommentLine(void);
-PROTO void GenWordAlignment(void);
-PROTO void GenLabel(char* Label, int Static);
-PROTO void GenExtern(char* Label);
-PROTO void GenNumLabel(int Label);
-PROTO void GenZeroData(unsigned Size);
-PROTO void GenIntData(int Size, int Val);
-PROTO void GenStartAsciiString(void);
-PROTO void GenAddrData(int Size, char* Label);
+void GenInit(void);
+void GenFin(void);
+int GenInitParams(int argc, char** argv, int* idx);
+void GenInitFinalize(void);
+void GenStartCommentLine(void);
+void GenWordAlignment(void);
+void GenLabel(char* Label, int Static);
+void GenNumLabel(int Label);
+void GenZeroData(unsigned Size);
+void GenIntData(int Size, int Val);
+void GenStartAsciiString(void);
+void GenAddrData(int Size, char* Label);
 
-PROTO void GenJumpUncond(int Label);
-PROTO void GenJumpIfZero(int Label);
-PROTO void GenJumpIfNotZero(int Label);
-PROTO void GenJumpIfNotEqual(int val, int Label);
+void GenJumpUncond(int Label);
+void GenJumpIfZero(int Label);
+void GenJumpIfNotZero(int Label);
+void GenJumpIfNotEqual(int val, int Label);
 
-PROTO void GenFxnProlog(void);
-PROTO void GenPrintCallFxn(char* name);
-PROTO void GenFxnEpilog(void);
+void GenFxnProlog(void);
+void GenFxnEpilog(void);
 
-PROTO void GenLocalAlloc(int Size);
+void GenLocalAlloc(int Size);
 
-PROTO unsigned GenStrData(int generatingCode, unsigned requiredLen);
-PROTO void GenExpr(void);
+unsigned GenStrData(int generatingCode, unsigned requiredLen);
+void GenExpr(void);
 
-PROTO void PushSyntax(int t);
-PROTO void PushSyntax2(int t, int v);
+void PushSyntax(int t);
+void PushSyntax2(int t, int v);
 
-PROTO void DumpSynDecls(void);
+void DumpSynDecls(void);
 
-PROTO void push2(int v, int v2);
-PROTO void ins2(int pos, int v, int v2);
-PROTO void ins(int pos, int v);
-PROTO void del(int pos, int cnt);
+void push2(int v, int v2);
+void ins2(int pos, int v, int v2);
+void ins(int pos, int v);
+void del(int pos, int cnt);
 
-PROTO int TokenStartsDeclaration(int t, int params);
-PROTO int ParseDecl(int tok, unsigned structInfo[4], int cast);
+int TokenStartsDeclaration(int t, int params);
+int ParseDecl(int tok, unsigned structInfo[4], int cast);
 
-PROTO void ShiftChar(void);
-PROTO int puts2(char*);
-PROTO int printf2(char*, ...);
+void ShiftChar(void);
+int puts2(char*);
+int printf2(char*, ...);
 
-PROTO void error(char* format, ...);
-PROTO void warning(char* format, ...);
-PROTO void errorFile(char* n);
-PROTO void errorFileName(void);
-PROTO void errorInternal(int n);
-PROTO void errorChrStr(void);
-PROTO void errorUnexpectedToken(int tok);
-PROTO void errorDirective(void);
-PROTO void errorCtrlOutOfScope(void);
-PROTO void errorDecl(void);
-PROTO void errorVarSize(void);
-PROTO void errorInit(void);
-PROTO void errorUnexpectedVoid(void);
-PROTO void errorOpType(void);
-PROTO void errorNotLvalue(void);
-PROTO void errorNotConst(void);
-PROTO void errorLongExpr(void);
+void error(char* format, ...);
+void warning(char* format, ...);
+void errorFile(char* n);
+void errorFileName(void);
+void errorInternal(int n);
+void errorChrStr(void);
+void errorUnexpectedToken(int tok);
+void errorDirective(void);
+void errorCtrlOutOfScope(void);
+void errorDecl(void);
+void errorVarSize(void);
+void errorInit(void);
+void errorUnexpectedVoid(void);
+void errorOpType(void);
+void errorNotLvalue(void);
+void errorNotConst(void);
+void errorLongExpr(void);
 
-PROTO int FindSymbol(char* s);
-PROTO int SymType(int SynPtr);
-PROTO int FindTaggedDecl(char* s, int start, int* CurScope);
-PROTO int GetDeclSize(int SyntaxPtr, int SizeForDeref);
+int FindSymbol(char* s);
+int SymType(int SynPtr);
+int FindTaggedDecl(char* s, int start, int* CurScope);
+int GetDeclSize(int SyntaxPtr, int SizeForDeref);
 
-PROTO int ParseExpr(int tok, int* GotUnary, int* ExprTypeSynPtr, int* ConstExpr, int* ConstVal, int commaSeparator, int label);
-PROTO int GetFxnInfo(int ExprTypeSynPtr, int* MinParams, int* MaxParams, int* ReturnExprTypeSynPtr);
+int ParseExpr(int tok, int* GotUnary, int* ExprTypeSynPtr, int* ConstExpr, int* ConstVal, int commaSeparator, int label);
+int GetFxnInfo(int ExprTypeSynPtr, int* MinParams, int* MaxParams, int* ReturnExprTypeSynPtr);
 
 // all data
 
@@ -501,9 +496,11 @@ int opsp = 0;
 int OutputFormat = FormatSegmented;
 int GenExterns = 1;
 
+#ifdef CAN_COMPILE_32BIT
 // Name of the function to call in main()'s prolog to construct C++ objects/init data.
 // gcc calls __main().
 char* MainPrologCtorFxn = NULL;
+#endif
 
 // Names of C functions and variables are usually prefixed with an underscore.
 // One notable exception is the ELF format used by gcc in Linux.
@@ -2106,7 +2103,7 @@ int exprUnary(int tok, int* gotUnary, int commaSeparator, int argOfSizeOf)
       break;
     case '!':
       // replace "!" with "== 0"
-      push2(tokNumInt, 0);
+      push(tokNumInt);
       push(tokEQ);
       break;
     default:
@@ -2830,7 +2827,6 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
         {
           warning("Call to undeclared function '%s()'\n", IdentTable + s);
           // Implicitly declare "extern int ident();"
-          GenExtern(IdentTable + s);
           PushSyntax2(tokIdent, s);
           PushSyntax('(');
           PushSyntax(')');
@@ -5534,7 +5530,6 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast)
 
       if (external && !(isFxn && tok == '{'))
       {
-        GenExtern(IdentTable + SyntaxStack[lastSyntaxPtr][1]);
       }
       // Handle initialization
       else if (tok == '=')
@@ -5781,11 +5776,18 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast)
         GenNumLabel(locAllocLabel);
 
         AddFxnParamSymbols(lastSyntaxPtr);
-        if (!strcmp(IdentTable + SyntaxStack[lastSyntaxPtr][1], "main") && MainPrologCtorFxn)
+#ifdef CAN_COMPILE_32BIT
+        if (MainPrologCtorFxn &&
+            OutputFormat == FormatSegmented && SizeOfWord == 4 &&
+            !strcmp(IdentTable + SyntaxStack[lastSyntaxPtr][1], "main"))
         {
-          GenExtern(MainPrologCtorFxn);
-          GenPrintCallFxn(MainPrologCtorFxn);
+          sp = 0;
+          push('(');
+          push2(tokIdent, AddIdent(MainPrologCtorFxn));
+          push(')');
+          GenExpr();
         }
+#endif
         tok = ParseBlock(NULL, 0);
         ParseLevel--;
         if (tok != '}')
@@ -6671,6 +6673,7 @@ int main(int argc, char** argv)
       CharIsSigned = 0;
       continue;
     }
+#ifdef CAN_COMPILE_32BIT
     else if (!strcmp(argv[i], "-ctor-fxn"))
     {
       if (i + 1 < argc)
@@ -6679,6 +6682,7 @@ int main(int argc, char** argv)
         continue;
       }
     }
+#endif
     else if (!strcmp(argv[i], "-leading-underscore"))
     {
       // this is the default option for x86
