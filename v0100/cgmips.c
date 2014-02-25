@@ -349,16 +349,6 @@ void GenPrintInstrNoOperand(int instr)
   GenPrintNewLine();
 }
 
-void GenPrintCallFxn(char* name)
-{
-  GenPrintInstr(MipsInstrJAL, 0);
-  GenPrintLabel(name);
-  GenPrintNewLine();
-#ifndef NO_REORDER_WORKAROUND
-  GenNop();
-#endif
-}
-
 void GenPrintInstr1Operand(int instr, int instrval, int operand, int operandval)
 {
   GenPrintInstr(instr, instrval);
