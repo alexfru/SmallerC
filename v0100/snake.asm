@@ -918,6 +918,8 @@ L84:
 ; Fused expression:    "0 "
 	mov	ax, 0
 	jmp	L80
+; Fused expression:    "0 "
+	mov	ax, 0
 L80:
 	leave
 	ret
@@ -1892,7 +1894,7 @@ L104:
 	jmp	L103
 
 ; Syntax/declaration table/stack:
-; Bytes used: 1712/19968
+; Bytes used: 1752/19968
 
 
 ; Macro table:
@@ -1984,7 +1986,7 @@ L104:
 ; Ident seed
 ; Ident play
 ; Ident newtarget
-; Bytes used: 320/4608
+; Bytes used: 320/4672
 
 ; Next label number: 183
 ; Compilation succeeded.

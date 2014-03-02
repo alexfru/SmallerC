@@ -519,9 +519,9 @@ void GenPrintOperand(int op, int val)
     case X86OpIndLabel: printf2("["); GenPrintLabel(IdentTable + val); printf2("]"); break;
     case X86OpIndLabelExplicitByte: printf2("byte ["); GenPrintLabel(IdentTable + val); printf2("]"); break;
     case X86OpIndLabelExplicitWord: printf2("word ["); GenPrintLabel(IdentTable + val); printf2("]"); break;
-    case X86OpIndLocal: printf2("[bp%+d]", val); break;
-    case X86OpIndLocalExplicitByte: printf2("byte [bp%+d]", val); break;
-    case X86OpIndLocalExplicitWord: printf2("word [bp%+d]", val); break;
+    case X86OpIndLocal: printf2("[bp%+d]", truncInt(val)); break;
+    case X86OpIndLocalExplicitByte: printf2("byte [bp%+d]", truncInt(val)); break;
+    case X86OpIndLocalExplicitWord: printf2("word [bp%+d]", truncInt(val)); break;
     case X86OpIndRegB: printf2("[bx]"); break;
     case X86OpIndRegBExplicitByte: printf2("byte [bx]"); break;
     case X86OpIndRegBExplicitWord: printf2("word [bx]"); break;
@@ -552,10 +552,10 @@ void GenPrintOperand(int op, int val)
     case X86OpIndLabelExplicitByte: printf2("byte ["); GenPrintLabel(IdentTable + val); printf2("]"); break;
     case X86OpIndLabelExplicitWord: printf2("dword ["); GenPrintLabel(IdentTable + val); printf2("]"); break;
     case X86OpIndLabelExplicitHalfWord: printf2("word ["); GenPrintLabel(IdentTable + val); printf2("]"); break;
-    case X86OpIndLocal: printf2("[%s%+d]", frame, val); break;
-    case X86OpIndLocalExplicitByte: printf2("byte [%s%+d]", frame, val); break;
-    case X86OpIndLocalExplicitWord: printf2("dword [%s%+d]", frame, val); break;
-    case X86OpIndLocalExplicitHalfWord: printf2("word [%s%+d]", frame, val); break;
+    case X86OpIndLocal: printf2("[%s%+d]", frame, truncInt(val)); break;
+    case X86OpIndLocalExplicitByte: printf2("byte [%s%+d]", frame, truncInt(val)); break;
+    case X86OpIndLocalExplicitWord: printf2("dword [%s%+d]", frame, truncInt(val)); break;
+    case X86OpIndLocalExplicitHalfWord: printf2("word [%s%+d]", frame, truncInt(val)); break;
     case X86OpIndRegB: printf2("[%s]", base); break;
     case X86OpIndRegBExplicitByte: printf2("byte [%s]", base); break;
     case X86OpIndRegBExplicitWord: printf2("dword [%s]", base); break;
@@ -1676,10 +1676,10 @@ void GenExpr1(void)
       break;
     case tokLocalOfs:
     case tokOpLocalOfs:
-      printf2("(@%d)", stack[i][1]);
+      printf2("(@%d)", truncInt(stack[i][1]));
       break;
     case tokOpIndLocalOfs:
-      printf2("*(@%d)", stack[i][1]);
+      printf2("*(@%d)", truncInt(stack[i][1]));
       break;
     case tokUnaryStar:
       printf2("*(%d)", stack[i][1]);

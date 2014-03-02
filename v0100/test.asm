@@ -3761,13 +3761,13 @@ L412:
 	call	_printf
 	sub	sp, -4
 ; RPN'ized expression: "( arr 32768u + *u &u arr 0 + *u &u - , L413 printf ) "
-; Expanded expression: " (@65460) (@-76) - 2 /  L413  printf ()4 "
+; Expanded expression: " (@-76) (@-76) - 2 /  L413  printf ()4 "
 	jmp	L414
 L413:
 	db	"&arr[32768u]-&arr[0]=%d ",0
 L414:
-; Fused expression:    "( - (@65460) (@-76) / ax 2 , L413 , printf )4 "
-	lea	ax, [bp+65460]
+; Fused expression:    "( - (@-76) (@-76) / ax 2 , L413 , printf )4 "
+	lea	ax, [bp-76]
 	lea	cx, [bp-76]
 	sub	ax, cx
 	cwd
@@ -3778,14 +3778,14 @@ L414:
 	call	_printf
 	sub	sp, -4
 ; RPN'ized expression: "( arr 0 + *u &u arr 32768u + *u &u - , L415 printf ) "
-; Expanded expression: " (@-76) (@65460) - 2 /  L415  printf ()4 "
+; Expanded expression: " (@-76) (@-76) - 2 /  L415  printf ()4 "
 	jmp	L416
 L415:
 	db	"&arr[0]-&arr[32768u]=%d",10,0
 L416:
-; Fused expression:    "( - (@-76) (@65460) / ax 2 , L415 , printf )4 "
+; Fused expression:    "( - (@-76) (@-76) / ax 2 , L415 , printf )4 "
 	lea	ax, [bp-76]
-	lea	cx, [bp+65460]
+	lea	cx, [bp-76]
 	sub	ax, cx
 	cwd
 	mov	cx, 2
@@ -3795,13 +3795,13 @@ L416:
 	call	_printf
 	sub	sp, -4
 ; RPN'ized expression: "( arr 32769u + *u &u arr 0 + *u &u - , L417 printf ) "
-; Expanded expression: " (@65462) (@-76) - 2 /  L417  printf ()4 "
+; Expanded expression: " (@-74) (@-76) - 2 /  L417  printf ()4 "
 	jmp	L418
 L417:
 	db	"&arr[32769u]-&arr[0]=%d ",0
 L418:
-; Fused expression:    "( - (@65462) (@-76) / ax 2 , L417 , printf )4 "
-	lea	ax, [bp+65462]
+; Fused expression:    "( - (@-74) (@-76) / ax 2 , L417 , printf )4 "
+	lea	ax, [bp-74]
 	lea	cx, [bp-76]
 	sub	ax, cx
 	cwd
@@ -3812,14 +3812,14 @@ L418:
 	call	_printf
 	sub	sp, -4
 ; RPN'ized expression: "( arr 0 + *u &u arr 32769u + *u &u - , L419 printf ) "
-; Expanded expression: " (@-76) (@65462) - 2 /  L419  printf ()4 "
+; Expanded expression: " (@-76) (@-74) - 2 /  L419  printf ()4 "
 	jmp	L420
 L419:
 	db	"&arr[0]-&arr[32769u]=%d",10,0
 L420:
-; Fused expression:    "( - (@-76) (@65462) / ax 2 , L419 , printf )4 "
+; Fused expression:    "( - (@-76) (@-74) / ax 2 , L419 , printf )4 "
 	lea	ax, [bp-76]
-	lea	cx, [bp+65462]
+	lea	cx, [bp-74]
 	sub	ax, cx
 	cwd
 	mov	cx, 2
@@ -3829,13 +3829,13 @@ L420:
 	call	_printf
 	sub	sp, -4
 ; RPN'ized expression: "( arr 65535u + *u &u arr 0 + *u &u - , L421 printf ) "
-; Expanded expression: " (@130994) (@-76) - 2 /  L421  printf ()4 "
+; Expanded expression: " (@-78) (@-76) - 2 /  L421  printf ()4 "
 	jmp	L422
 L421:
 	db	"&arr[65535u]-&arr[0]=%d ",0
 L422:
-; Fused expression:    "( - (@130994) (@-76) / ax 2 , L421 , printf )4 "
-	lea	ax, [bp+130994]
+; Fused expression:    "( - (@-78) (@-76) / ax 2 , L421 , printf )4 "
+	lea	ax, [bp-78]
 	lea	cx, [bp-76]
 	sub	ax, cx
 	cwd
@@ -3846,14 +3846,14 @@ L422:
 	call	_printf
 	sub	sp, -4
 ; RPN'ized expression: "( arr 0 + *u &u arr 65535u + *u &u - , L423 printf ) "
-; Expanded expression: " (@-76) (@130994) - 2 /  L423  printf ()4 "
+; Expanded expression: " (@-76) (@-78) - 2 /  L423  printf ()4 "
 	jmp	L424
 L423:
 	db	"&arr[0]-&arr[65535u]=%d",10,0
 L424:
-; Fused expression:    "( - (@-76) (@130994) / ax 2 , L423 , printf )4 "
+; Fused expression:    "( - (@-76) (@-78) / ax 2 , L423 , printf )4 "
 	lea	ax, [bp-76]
-	lea	cx, [bp+130994]
+	lea	cx, [bp-78]
 	sub	ax, cx
 	cwd
 	mov	cx, 2
@@ -3903,6 +3903,8 @@ L428:
 ; Fused expression:    "0 "
 	mov	ax, 0
 	jmp	L251
+; Fused expression:    "0 "
+	mov	ax, 0
 L251:
 	leave
 	ret
@@ -4480,7 +4482,7 @@ L430:
 	jmp	L429
 
 ; Syntax/declaration table/stack:
-; Bytes used: 2032/19968
+; Bytes used: 2072/19968
 
 
 ; Macro table:
@@ -4537,7 +4539,7 @@ L430:
 ; Ident macros
 ; Ident Hola
 ; Ident Switch
-; Bytes used: 301/4608
+; Bytes used: 301/4672
 
 ; Next label number: 554
 ; Compilation succeeded.

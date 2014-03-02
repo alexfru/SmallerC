@@ -48,6 +48,11 @@ either expressed or implied, of the FreeBSD Project.
 //
 // extern char _setargv__;
 
+#ifdef NO_EXTRAS
+#define NO_TYPEDEF
+#define NO_FUNC_
+#endif
+
 #ifndef __SMALLER_C__
 
 #include <limits.h>
@@ -159,7 +164,7 @@ int vfprintf(FILE*, char*, void*);
 #endif
 
 #ifndef MAX_IDENT_TABLE_LEN
-#define MAX_IDENT_TABLE_LEN  (4096+512)
+#define MAX_IDENT_TABLE_LEN  (4096+576)
 #endif
 
 #ifndef SYNTAX_STACK_MAX
@@ -300,6 +305,7 @@ int vfprintf(FILE*, char*, void*);
 #define SymVoidSynPtr 0
 #define SymIntSynPtr  1
 #define SymUintSynPtr 2
+#define SymFuncPtr    3
 
 #ifndef STACK_SIZE
 #define STACK_SIZE 128
@@ -403,6 +409,9 @@ void errorLongExpr(void);
 int FindSymbol(char* s);
 int SymType(int SynPtr);
 int FindTaggedDecl(char* s, int start, int* CurScope);
+#ifndef NO_TYPEDEF
+int FindTypedef(char* s, int* CurScope);
+#endif
 int GetDeclSize(int SyntaxPtr, int SizeForDeref);
 
 int ParseExpr(int tok, int* GotUnary, int* ExprTypeSynPtr, int* ConstExpr, int* ConstVal, int commaSeparator, int label);
@@ -539,6 +548,9 @@ int CurFxnMinLocalOfs = 0; // negative
 
 int CurFxnReturnExprTypeSynPtr = 0;
 int CurFxnEpilogLabel = 0;
+
+char* CurFxnName = NULL;
+int CurFxnNameLabel = 0;
 
 int ParseLevel = 0; // Parse level/scope (file:0, fxn:1+)
 int ParamLevel = 0; // 1+ if parsing params, 0 otherwise
@@ -2561,17 +2573,19 @@ void compatCheck(int* ExprTypeSynPtr, int TheOtherExprTypeSynPtr, int ConstExpr[
 
     c += (tok == '(') - (tok == ')') + (tok == '[') - (tok == ']');
 
-    switch (tok)
+    if (!c)
     {
-    case tokVoid:
-    case tokChar: case tokSChar: case tokUChar:
+      switch (tok)
+      {
+      case tokVoid:
+      case tokChar: case tokSChar: case tokUChar:
 #ifdef CAN_COMPILE_32BIT
-    case tokShort: case tokUShort:
+      case tokShort: case tokUShort:
 #endif
-    case tokInt: case tokUnsigned:
-    case tokStructPtr:
-      if (!c)
+      case tokInt: case tokUnsigned:
+      case tokStructPtr:
         return;
+      }
     }
 
     exprTypeSynPtr++;
@@ -2816,22 +2830,35 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
   // Identifiers
   case tokIdent:
     {
-      // TBD!!! support __func__
-      int synPtr = FindSymbol(IdentTable + s);
-      int type;
+      // DONE: support __func__
+      char* ident = IdentTable + s;
+      int synPtr, type;
+#ifndef NO_FUNC_
+      if (CurFxnName && !strcmp(ident, "__func__"))
+      {
+        if (CurFxnNameLabel >= 0)
+          CurFxnNameLabel = -CurFxnNameLabel;
+        stack[*idx + 1][1] = SyntaxStack[SymFuncPtr][1];
+        synPtr = SymFuncPtr;
+      }
+      else
+#endif
+      {
+        synPtr = FindSymbol(ident);
+      }
       if (synPtr < 0)
       {
         if ((*idx + 2 >= sp) || stack[*idx + 2][0] != ')')
-          error("Undeclared identifier '%s'\n", IdentTable + s);
+          error("Undeclared identifier '%s'\n", ident);
         else
         {
-          warning("Call to undeclared function '%s()'\n", IdentTable + s);
+          warning("Call to undeclared function '%s()'\n", ident);
           // Implicitly declare "extern int ident();"
           PushSyntax2(tokIdent, s);
           PushSyntax('(');
           PushSyntax(')');
           PushSyntax(tokInt);
-          synPtr = FindSymbol(IdentTable + s);
+          synPtr = FindSymbol(ident);
         }
       }
 
@@ -4045,7 +4072,7 @@ int ParseExpr(int tok, int* GotUnary, int* ExprTypeSynPtr, int* ConstExpr, int* 
             printf2("[sh||->%d]", -stack[i][1]);
           break;
         case tokLocalOfs:
-          printf2("(@%d)", stack[i][1]);
+          printf2("(@%d)", truncInt(stack[i][1]));
           break;
         case tokUnaryStar:
           if (j) printf2("*(%d)", stack[i][1]);
@@ -4425,17 +4452,37 @@ void errorLongExpr(void)
   error("Too long expression\n");
 }
 
+int tsd[] =
+{
+  tokVoid, tokChar, tokInt,
+  tokSigned, tokUnsigned, tokShort,
+  tokStruct, tokUnion,
+};
+
 int TokenStartsDeclaration(int t, int params)
 {
-  return t == tokVoid ||
-         t == tokChar || t == tokSChar || t == tokUChar ||
-         t == tokInt || t == tokSigned || t == tokUnsigned ||
-         t == tokShort ||
+#ifndef NO_TYPEDEF
+  int CurScope;
+#endif
+  unsigned i;
+
+  for (i = 0; i < sizeof tsd / sizeof tsd[0]; i++)
+    if (tsd[i] == t)
+      return 1;
+
+  return
 #ifdef CAN_COMPILE_32BIT
          (SizeOfWord != 2 && t == tokLong) ||
 #endif
-         t == tokStruct || t == tokUnion ||
-         (!params && (t == tokExtern || t == tokStatic));
+#ifndef NO_TYPEDEF
+         (t == tokIdent &&
+          FindTypedef(GetTokenIdentName(), &CurScope) >= 0) ||
+#endif
+         (!params && (t == tokExtern ||
+#ifndef NO_TYPEDEF
+                      t == tokTypedef ||
+#endif
+                      t == tokStatic));
 }
 
 void PushSyntax2(int t, int v)
@@ -4568,6 +4615,31 @@ int FindTaggedDecl(char* s, int start, int* CurScope)
 
   return -1;
 }
+
+#ifndef NO_TYPEDEF
+int FindTypedef(char* s, int* CurScope)
+{
+  int i;
+
+  *CurScope = 1;
+
+  for (i = SyntaxStackCnt - 1; i >= 0; i--)
+  {
+    if (SyntaxStack[i][0] == tokTypedef &&
+        !strcmp(IdentTable + SyntaxStack[i][1], s))
+    {
+      return i;
+    }
+    else if (SyntaxStack[i][0] == '#')
+    {
+      // the scope has changed to the outer scope
+      *CurScope = 0;
+    }
+  }
+
+  return -1;
+}
+#endif
 
 int GetDeclSize(int SyntaxPtr, int SizeForDeref)
 {
@@ -4734,7 +4806,7 @@ void DumpDecl(int SyntaxPtr, int IsParam)
     switch (tok)
     {
     case tokLocalOfs:
-      printf2("(@%d): ", v);
+      printf2("(@%d): ", truncInt(v));
       break;
 
     case tokIdent:
@@ -4931,6 +5003,9 @@ void AddFxnParamSymbols(int SyntaxPtr);
 
 int ParseBase(int tok, int base[2])
 {
+#ifndef NO_TYPEDEF
+  int CurScope;
+#endif
   int valid = 1;
   base[1] = 0;
 
@@ -5065,8 +5140,8 @@ int ParseBase(int tok, int base[2])
       structInfo[2] = 0; // initial member offset
       structInfo[3] = 0; // initial max member size (for unions)
 
-      PushSyntax2(tokSizeof, 0); // initial structure/union size, to be updated
-      PushSyntax2(tokSizeof, 1); // initial structure/union alignment, to be updated
+      PushSyntax(tokSizeof); // 0 = initial structure/union size, to be updated
+      PushSyntax2(tokSizeof, 1); // 1 = initial structure/union alignment, to be updated
 
       PushSyntax('{');
 
@@ -5141,6 +5216,14 @@ int ParseBase(int tok, int base[2])
         }
     }
   }
+#ifndef NO_TYPEDEF
+  else if (tok == tokIdent &&
+           (base[1] = FindTypedef(GetTokenIdentName(), &CurScope)) >= 0)
+  {
+    base[0] = tokTypedef;
+    tok = GetToken();
+  }
+#endif
   else
   {
     valid = 0;
@@ -5222,6 +5305,9 @@ int ParseDerived(int tok)
 
   if (params || tok == '(')
   {
+    int t = SyntaxStack[SyntaxStackCnt - 1][0];
+    if (t == ')' || t == ']')
+      errorUnexpectedToken('('); // array of functions or function returning function
     if (!params)
       tok = GetToken();
     else
@@ -5239,6 +5325,8 @@ int ParseDerived(int tok)
   {
     // DONE!!! allow the first [] without the dimension in function parameters
     int allowEmptyDimension = 1;
+    if (SyntaxStack[SyntaxStackCnt - 1][0] == ')')
+      errorUnexpectedToken('['); // function returning array
     while (tok == '[')
     {
       int oldsp = SyntaxStackCnt;
@@ -5265,6 +5353,59 @@ int ParseDerived(int tok)
   return tok;
 }
 
+void PushBase(int base[2])
+{
+#ifndef NO_TYPEDEF
+  if (base[0] == tokTypedef)
+  {
+    int ptr = base[1];
+    int c = 0, copying = 1;
+
+    while (copying)
+    {
+      int tok = SyntaxStack[++ptr][0];
+      int t = SyntaxStack[SyntaxStackCnt - 1][0];
+
+      // Cannot have:
+      //   function returning function
+      //   array of functions
+      //   function returning array
+      if (((t == ')' || t == ']') && tok == '(') ||
+          (t == ')' && tok == '['))
+        errorDecl();
+
+      PushSyntax2(tok, SyntaxStack[ptr][1]);
+
+      c += (tok == '(') - (tok == ')') + (tok == '[') - (tok == ']');
+
+      if (!c)
+      {
+        switch (tok)
+        {
+        case tokVoid:
+        case tokChar: case tokSChar: case tokUChar:
+#ifdef CAN_COMPILE_32BIT
+        case tokShort: case tokUShort:
+#endif
+        case tokInt: case tokUnsigned:
+        case tokStructPtr:
+          copying = 0;
+        }
+      }
+    }
+  }
+  else
+#endif
+  {
+    PushSyntax2(base[0], base[1]);
+  }
+
+  // Cannot have array of void
+  if (SyntaxStack[SyntaxStackCnt - 1][0] == tokVoid &&
+      SyntaxStack[SyntaxStackCnt - 2][0] == ']')
+    errorUnexpectedVoid();
+}
+
 // DONE: support extern
 // DONE: support static
 // DONE: support basic initialization
@@ -5277,8 +5418,15 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast)
   int lastSyntaxPtr;
   int external = tok == tokExtern;
   int Static = tok == tokStatic;
+#ifndef NO_TYPEDEF
+  int typeDef = tok == tokTypedef;
+#endif
 
-  if (external || Static)
+  if (external ||
+#ifndef NO_TYPEDEF
+      typeDef ||
+#endif
+      Static)
   {
     tok = GetToken();
     if (!TokenStartsDeclaration(tok, 1))
@@ -5295,7 +5443,7 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast)
     tok = ParseDerived(tok);
 
     /* base type */
-    PushSyntax2(base[0], base[1]);
+    PushBase(base);
 
     if ((tok && strchr(",;{=", tok)) || (tok == ')' && ExprLevel))
     {
@@ -5305,18 +5453,24 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast)
       unsigned elementSz = 0;
       unsigned alignment = 0;
 
-      // Disallow void variables and arrays of void
-      if (base[0] == tokVoid && !cast)
+      // Disallow void variables
+      if (SyntaxStack[SyntaxStackCnt - 1][0] == tokVoid)
       {
-        int t = SyntaxStack[SyntaxStackCnt - 2][0];
-        if (t != '*' && t != ')')
+        if (SyntaxStack[SyntaxStackCnt - 2][0] == tokIdent &&
+            !(cast
+#ifndef NO_TYPEDEF
+              || typeDef
+#endif
+             ))
           //error("ParseDecl(): Cannot declare a variable ('%s') of type 'void'\n", IdentTable + SyntaxStack[lastSyntaxPtr][1]);
           errorUnexpectedVoid();
       }
 
       isFxn = SyntaxStack[lastSyntaxPtr + 1][0] == '(';
 
-      if (isFxn && base[0] == tokStructPtr && SyntaxStack[SyntaxStackCnt - 2][0] == ')')
+      if (isFxn &&
+          SyntaxStack[SyntaxStackCnt - 1][0] == tokStructPtr &&
+          SyntaxStack[SyntaxStackCnt - 2][0] == ')')
         // structure returning isn't supported currently
         errorDecl();
 
@@ -5326,6 +5480,9 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast)
 
       if (!ExprLevel &&
           !external && !Static &&
+#ifndef NO_TYPEDEF
+          !typeDef &&
+#endif
           !structInfo &&
           !strcmp(IdentTable + SyntaxStack[lastSyntaxPtr][1], "<something>") &&
           SyntaxStack[lastSyntaxPtr + 1][0] == tokStructPtr &&
@@ -5360,6 +5517,11 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast)
       // be incompletely typed arrays inside structure/union declarations
       if (structInfo && (tok == '=' || isFxn || tok == '{' || isIncompleteArr))
         errorDecl();
+
+#ifndef NO_TYPEDEF
+      if (typeDef && (tok == '=' || tok == '{'))
+        errorDecl();
+#endif
 
       // Error conditions in declarations(/definitions/initializations):
       // Legend:
@@ -5407,7 +5569,11 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast)
         //error("ParseDecl(): cannot initialize an external variable\n");
         errorInit();
 
-      if (isIncompleteArr && !(external || tok == '='))
+      if (isIncompleteArr && !(external ||
+#ifndef NO_TYPEDEF
+                               typeDef ||
+#endif
+                               tok == '='))
         //error("ParseDecl(): cannot define an array of incomplete type\n");
         errorDecl();
 
@@ -5426,8 +5592,12 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast)
       // TBD!!! de-uglify
       if (!strcmp(IdentTable + SyntaxStack[lastSyntaxPtr][1], "<something>"))
       {
-        // Disallow nameless variables, prototypes and structure/union members.
-        if (structInfo || !ExprLevel)
+        // Disallow nameless variables, prototypes, structure/union members and typedefs.
+        if (structInfo ||
+#ifndef NO_TYPEDEF
+            typeDef ||
+#endif
+            !ExprLevel)
           error("Identifier expected in declaration\n");
       }
       else
@@ -5437,7 +5607,11 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast)
           error("Identifier unexpected in declaration\n");
       }
 
-      if (!isFxn)
+      if (!isFxn
+#ifndef NO_TYPEDEF
+          && !typeDef
+#endif
+         )
       {
         int sz = GetDeclSize(lastSyntaxPtr, 0);
 
@@ -5453,6 +5627,8 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast)
         }
 
         alignment = GetDeclAlignment(lastSyntaxPtr);
+        //#pragma pack(1):
+        //alignment = 1;
 
         if (structInfo)
         {
@@ -5518,7 +5694,11 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast)
       if (ExprLevel && !structInfo)
         return tok;
 
-      if ((globalAllocSize || isIncompleteArr) && !external)
+      if ((globalAllocSize || isIncompleteArr) &&
+#ifndef NO_TYPEDEF
+          !typeDef &&
+#endif
+          !external)
       {
         if (OutputFormat != FormatFlat)
           puts2(DataHeader);
@@ -5528,6 +5708,18 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast)
         GenLabel(IdentTable + SyntaxStack[lastSyntaxPtr][1], Static);
       }
 
+#ifndef NO_TYPEDEF
+      if (typeDef)
+      {
+        int CurScope;
+        char* s = IdentTable + SyntaxStack[lastSyntaxPtr][1];
+        if (FindTypedef(s, &CurScope) >= 0 && CurScope)
+          error("Redefinition of type '%s'\n", s);
+        SyntaxStack[lastSyntaxPtr][0] = tokTypedef; // change tokIdent to tokTypedef
+      }
+      else
+      // fallthrough
+#endif
       if (external && !(isFxn && tok == '{'))
       {
       }
@@ -5651,9 +5843,9 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast)
             }
             else if (arrOfChar && strLitInitializer)
             {
-                // Defer storage of string literal data until the end.
-                // Now simply remember that the character array has buffered string data.
-                arrOfChar++;
+              // Defer storage of string literal data until the end.
+              // Now simply remember that the character array has buffered string data.
+              arrOfChar++;
             }
             else
               //error("ParseDecl(): cannot initialize a global variable with a non-constant expression\n");
@@ -5757,11 +5949,15 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast)
         int undoIdents = IdentTableLen;
         int locAllocLabel = (LabelCnt += 2) - 2;
         int i;
+        int Main;
+
+        CurFxnName = IdentTable + SyntaxStack[lastSyntaxPtr][1];
+        Main = !strcmp(CurFxnName, "main");
 
         gotoLabCnt = 0;
 
         if (verbose && OutFile)
-          printf("%s()\n", IdentTable + SyntaxStack[lastSyntaxPtr][1]);
+          printf("%s()\n", CurFxnName);
 
         ParseLevel++;
         GetFxnInfo(lastSyntaxPtr, &CurFxnParamCntMin, &CurFxnParamCntMax, &CurFxnReturnExprTypeSynPtr); // get return type
@@ -5776,10 +5972,25 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast)
         GenNumLabel(locAllocLabel);
 
         AddFxnParamSymbols(lastSyntaxPtr);
+
+#ifndef NO_FUNC_
+        {
+          char s[1 + 2 + (2 + CHAR_BIT * sizeof CurFxnNameLabel) / 3];
+          char *p = s + sizeof s;
+          CurFxnNameLabel = LabelCnt++;
+          *--p = '\0';
+          p = lab2str(p, CurFxnNameLabel);
+          *--p = '_';
+          *--p = '_';
+          SyntaxStack[SymFuncPtr][1] = AddIdent(p);
+          SyntaxStack[SymFuncPtr + 2][1] = strlen(CurFxnName) + 1;
+        }
+#endif
+
 #ifdef CAN_COMPILE_32BIT
         if (MainPrologCtorFxn &&
-            OutputFormat == FormatSegmented && SizeOfWord == 4 &&
-            !strcmp(IdentTable + SyntaxStack[lastSyntaxPtr][1], "main"))
+            Main &&
+            OutputFormat == FormatSegmented && SizeOfWord == 4)
         {
           sp = 0;
           push('(');
@@ -5788,20 +5999,26 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast)
           GenExpr();
         }
 #endif
+
         tok = ParseBlock(NULL, 0);
         ParseLevel--;
         if (tok != '}')
           //error("ParseDecl(): '}' expected\n");
           errorUnexpectedToken(tok);
-        IdentTableLen = undoIdents; // remove all identifier names
-        SyntaxStackCnt = undoSymbolsPtr; // remove all params and locals
 
         for (i = 0; i < gotoLabCnt; i++)
           if (gotoLabStat[i] == 2)
             error("Undeclared label '%s'\n", IdentTable + gotoLabels[i][0]);
 
-        // TBD??? if execution of main() reaches here, before the epilog (i.e. without using return),
+        // DONE: if execution of main() reaches here, before the epilog (i.e. without using return),
         // main() should return 0.
+        if (Main)
+        {
+          sp = 0;
+          push(tokNumInt);
+          GenExpr();
+        }
+
         GenNumLabel(CurFxnEpilogLabel);
         GenFxnEpilog();
         GenNumLabel(locAllocLabel + 1);
@@ -5810,6 +6027,33 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast)
         GenJumpUncond(locAllocLabel);
         if (OutputFormat != FormatFlat)
           puts2(CodeFooter);
+
+#ifndef NO_FUNC_
+        if (CurFxnNameLabel < 0)
+        {
+          PurgeStringTable();
+          AddString(-CurFxnNameLabel, CurFxnName, SyntaxStack[SymFuncPtr + 2][1]);
+
+          if (OutputFormat != FormatFlat)
+            puts2(DataHeader);
+
+          GenLabel(IdentTable + SyntaxStack[SymFuncPtr][1], 1);
+
+          sp = 1;
+          stack[0][0] = tokIdent;
+          stack[0][1] = SyntaxStack[SymFuncPtr][1] + 2;
+          GenStrData(0, 0);
+
+          if (OutputFormat != FormatFlat)
+            puts2(DataFooter);
+
+          CurFxnNameLabel = 0;
+        }
+#endif
+
+        CurFxnName = NULL;
+        IdentTableLen = undoIdents; // remove all identifier names
+        SyntaxStackCnt = undoSymbolsPtr; // remove all params and locals
       }
 
       if (tok == ';' || tok == '}')
@@ -5874,15 +6118,16 @@ void ParseFxnParams(int tok)
     }
 
     /* base type */
-    PushSyntax2(base[0], base[1]);
+    PushBase(base);
 
     /* Decay arrays to pointers */
     lastSyntaxPtr++; /* skip name */
     if (SyntaxStack[lastSyntaxPtr][0] == '[')
     {
+      int t;
       DeleteSyntax(lastSyntaxPtr, 1);
-      if (SyntaxStack[lastSyntaxPtr][0] == tokNumInt ||
-          SyntaxStack[lastSyntaxPtr][0] == tokNumUint)
+      t = SyntaxStack[lastSyntaxPtr][0];
+      if (t == tokNumInt || t == tokNumUint)
         DeleteSyntax(lastSyntaxPtr, 1);
       SyntaxStack[lastSyntaxPtr][0] = '*';
     }
@@ -5897,19 +6142,20 @@ void ParseFxnParams(int tok)
 
     if (tok == ')' || tok == ',')
     {
-      if (base[0] == tokVoid)
+      int t = SyntaxStack[SyntaxStackCnt - 2][0];
+      if (SyntaxStack[SyntaxStackCnt - 1][0] == tokVoid)
       {
-        int t = SyntaxStack[SyntaxStackCnt - 2][0];
-        // Disallow void variables and arrays of void. TBD!!! de-uglify
-        if (t != '*' && t != ')' &&
-            !(cnt == 1 && tok == ')' && !strcmp(IdentTable + SyntaxStack[lastSyntaxPtr][1], "<something>")))
+        // Disallow void variables. TBD!!! de-uglify
+        if (t == tokIdent &&
+            !(!strcmp(IdentTable + SyntaxStack[SyntaxStackCnt - 2][1], "<something>") &&
+              cnt == 1 && tok == ')'))
           //error("ParseFxnParams(): Cannot declare a variable ('%s') of type 'void'\n", IdentTable + SyntaxStack[lastSyntaxPtr][1]);
           errorUnexpectedVoid();
       }
 
-      if (base[0] == tokStructPtr &&
-          SyntaxStack[SyntaxStackCnt - 2][0] != '*' &&
-          SyntaxStack[SyntaxStackCnt - 2][0] != ']')
+      if (SyntaxStack[SyntaxStackCnt - 1][0] == tokStructPtr &&
+          t != '*' &&
+          t != ']')
         // structure passing and returning isn't supported currently
         errorDecl();
 
@@ -6762,6 +7008,10 @@ int main(int argc, char** argv)
       }
     }
 #endif // #ifndef NO_PREPROCESSOR
+    else if (argv[i][0] == '-')
+    {
+      // unknown option
+    }
     else if (FileCnt == 0)
     {
       // If it's none of the known options,
@@ -6796,12 +7046,14 @@ int main(int argc, char** argv)
   GenInitFinalize();
 
   // some manual initialization because there's no 2d array initialization yet
-  SyntaxStack[SyntaxStackCnt][0] = tokVoid;
-  SyntaxStack[SyntaxStackCnt++][1] = 0;
-  SyntaxStack[SyntaxStackCnt][0] = tokInt;
-  SyntaxStack[SyntaxStackCnt++][1] = 0;
-  SyntaxStack[SyntaxStackCnt][0] = tokUnsigned;
-  SyntaxStack[SyntaxStackCnt++][1] = 0;
+  PushSyntax(tokVoid);     // SymVoidSynPtr
+  PushSyntax(tokInt);      // SymIntSynPtr
+  PushSyntax(tokUnsigned); // SymUintSynPtr
+  PushSyntax(tokIdent);    // SymFuncPtr
+  PushSyntax('[');
+  PushSyntax(tokNumUint);
+  PushSyntax(']');
+  PushSyntax(tokChar);
 
 #ifndef NO_PREPROCESSOR
   // Define a few macros useful for conditional compilation
