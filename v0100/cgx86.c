@@ -50,7 +50,7 @@ either expressed or implied, of the FreeBSD Project.
 char GlobalsTable[MAX_GLOBALS_TABLE_LEN];
 int GlobalsTableLen = 0;
 
-void AddGlobal(char* s, int use)
+void GenAddGlobal(char* s, int use)
 {
   int i = 0;
   int l;
@@ -177,7 +177,7 @@ void GenLabel(char* Label, int Static)
       printf2("\tglobal\t$%s\n", Label);
     printf2("$%s:\n", Label);
   }
-  AddGlobal(Label, 1);
+  GenAddGlobal(Label, 1);
 }
 
 void GenPrintLabel(char* Label)
@@ -257,6 +257,8 @@ void GenAddrData(int Size, char* Label)
     printf2("\tdd\t");
 #endif
   GenPrintLabel(Label); puts2("");
+  if (!isdigit(*Label))
+    GenAddGlobal(Label, 2);
 }
 
 #define X86InstrMov    0x00
@@ -3102,7 +3104,7 @@ void GenExpr(void)
     int i;
     for (i = 0; i < sp; i++)
       if (stack[i][0] == tokIdent && !isdigit(IdentTable[stack[i][1]]))
-        AddGlobal(IdentTable + stack[i][1], 2);
+        GenAddGlobal(IdentTable + stack[i][1], 2);
   }
   GenStrData(1, 0);
 #ifndef CG_STACK_BASED

@@ -50,47 +50,47 @@ _score:
 _BiosKeyAvailable:
 	push	bp
 	mov	bp, sp
-	jmp	L5
-L4:
+	jmp	L6
+L5:
 mov   ah, 1
 int   0x16
 setnz al
 cbw
-L6:
+L7:
 	leave
 	ret
-L5:
-	jmp	L4
+L6:
+	jmp	L5
 ; glb BiosReadKey : (void) unsigned
 _BiosReadKey:
 	push	bp
 	mov	bp, sp
-	jmp	L8
-L7:
+	jmp	L10
+L9:
 mov ah, 0
 int 0x16
-L9:
+L11:
 	leave
 	ret
-L8:
-	jmp	L7
+L10:
+	jmp	L9
 ; glb BiosSetGfxMode : (
 ; prm     mode : unsigned
 ;     ) void
 _BiosSetGfxMode:
 	push	bp
 	mov	bp, sp
-	jmp	L11
-L10:
+	jmp	L14
+L13:
 ; loc     mode : (@4): unsigned
 mov ah, 0
 mov al, [bp + 4]
 int 0x10
-L12:
+L15:
 	leave
 	ret
-L11:
-	jmp	L10
+L14:
+	jmp	L13
 ; glb pokeb : (
 ; prm     seg : unsigned
 ; prm     ofs : unsigned
@@ -99,8 +99,8 @@ L11:
 _pokeb:
 	push	bp
 	mov	bp, sp
-	jmp	L14
-L13:
+	jmp	L18
+L17:
 ; loc     seg : (@4): unsigned
 ; loc     ofs : (@6): unsigned
 ; loc     val : (@8): unsigned char
@@ -110,11 +110,11 @@ mov  bx, [bp + 6]
 mov  al, [bp + 8]
 mov  [bx], al
 pop  ds
-L15:
+L19:
 	leave
 	ret
-L14:
-	jmp	L13
+L18:
+	jmp	L17
 ; glb poke : (
 ; prm     seg : unsigned
 ; prm     ofs : unsigned
@@ -123,8 +123,8 @@ L14:
 _poke:
 	push	bp
 	mov	bp, sp
-	jmp	L17
-L16:
+	jmp	L22
+L21:
 ; loc     seg : (@4): unsigned
 ; loc     ofs : (@6): unsigned
 ; loc     val : (@8): unsigned
@@ -134,11 +134,11 @@ mov  bx, [bp + 6]
 mov  ax, [bp + 8]
 mov  [bx], ax
 pop  ds
-L18:
+L23:
 	leave
 	ret
-L17:
-	jmp	L16
+L22:
+	jmp	L21
 ; glb peekb : (
 ; prm     seg : unsigned
 ; prm     ofs : unsigned
@@ -146,8 +146,8 @@ L17:
 _peekb:
 	push	bp
 	mov	bp, sp
-	jmp	L20
-L19:
+	jmp	L26
+L25:
 ; loc     seg : (@4): unsigned
 ; loc     ofs : (@6): unsigned
 push ds
@@ -156,11 +156,11 @@ mov  bx, [bp + 6]
 mov  al, [bx]
 mov  ah, 0
 pop  ds
-L21:
+L27:
 	leave
 	ret
-L20:
-	jmp	L19
+L26:
+	jmp	L25
 ; glb peek : (
 ; prm     seg : unsigned
 ; prm     ofs : unsigned
@@ -168,8 +168,8 @@ L20:
 _peek:
 	push	bp
 	mov	bp, sp
-	jmp	L23
-L22:
+	jmp	L30
+L29:
 ; loc     seg : (@4): unsigned
 ; loc     ofs : (@6): unsigned
 push ds
@@ -177,11 +177,11 @@ mov  ds, [bp + 4]
 mov  bx, [bp + 6]
 mov  ax, [bx]
 pop  ds
-L24:
+L31:
 	leave
 	ret
-L23:
-	jmp	L22
+L30:
+	jmp	L29
 ; RPN'ized expression: "2 "
 ; Expanded expression: "2 "
 ; Expression value: 2
@@ -191,8 +191,8 @@ L23:
 _BiosGetTicks:
 	push	bp
 	mov	bp, sp
-	jmp	L26
-L25:
+	jmp	L34
+L33:
 ; loc     ticks : (@4): * unsigned
 ; loc     low : (@-2): unsigned
 ; loc     high1 : (@-4): unsigned
@@ -206,7 +206,7 @@ L25:
 	sub	sp, -4
 	mov	[bp-6], ax
 ; do
-L28:
+L37:
 ; {
 ; RPN'ized expression: "high1 high2 = "
 ; Expanded expression: "(@-4) (@-6) *(2) =(2) "
@@ -233,12 +233,12 @@ L28:
 ; while
 ; RPN'ized expression: "high1 high2 != "
 ; Expanded expression: "(@-4) *(2) (@-6) *(2) != "
-L29:
+L38:
 ; Fused expression:    "!= *(@-4) *(@-6) IF "
 	mov	ax, [bp-4]
 	cmp	ax, [bp-6]
-	jne	L28
-L30:
+	jne	L37
+L39:
 ; RPN'ized expression: "ticks 0 + *u low = "
 ; Expanded expression: "(@4) *(2) 0 + (@-2) *(2) =(2) "
 ; Fused expression:    "+ *(@4) 0 =(170) *ax *(@-2) "
@@ -254,20 +254,20 @@ L30:
 	mov	bx, ax
 	mov	ax, [bp-6]
 	mov	[bx], ax
-L27:
+L35:
 	leave
 	ret
-L26:
+L34:
 	sub	sp, 6
-	jmp	L25
+	jmp	L33
 ; glb delay : (
 ; prm     milliseconds : unsigned
 ;     ) void
 _delay:
 	push	bp
 	mov	bp, sp
-	jmp	L32
-L31:
+	jmp	L41
+L40:
 ; loc     milliseconds : (@4): unsigned
 ; loc     tcnt : (@-2): unsigned
 ; =
@@ -295,11 +295,11 @@ L31:
 	call	_BiosGetTicks
 	sub	sp, -2
 ; for
-L34:
-	jmp	L36
-L35:
-	jmp	L34
-L36:
+L44:
+	jmp	L46
+L45:
+	jmp	L44
+L46:
 ; {
 ; RPN'ized expression: "( ticks 1 + *u BiosGetTicks ) "
 ; Expanded expression: " (@-6)  BiosGetTicks ()2 "
@@ -314,13 +314,13 @@ L36:
 ; Fused expression:    "<u *(@-6) *(@-10) IF! "
 	mov	ax, [bp-6]
 	cmp	ax, [bp-10]
-	jae	L38
+	jae	L48
 ; RPN'ized expression: "ticks 1 + *u 1 + *u -- "
 ; Expanded expression: "(@-4) --(2) "
 ; Fused expression:    "--(2) *(@-4) "
 	dec	word [bp-4]
 	mov	ax, [bp-4]
-L38:
+L48:
 ; RPN'ized expression: "ticks 1 + *u 0 + *u ticks 0 + *u 0 + *u -= "
 ; Expanded expression: "(@-6) (@-10) *(2) -=(2) "
 ; Fused expression:    "-=(170) *(@-6) *(@-10) "
@@ -335,35 +335,35 @@ L38:
 	mov	[bp-4], ax
 ; if
 ; RPN'ized expression: "ticks 1 + *u 0 + *u tcnt >= ticks 1 + *u 1 + *u || "
-; Expanded expression: "(@-6) *(2) (@-2) *(2) >=u [sh||->42] (@-4) *(2) _Bool ||[42] "
-; Fused expression:    ">=u *(@-6) *(@-2) [sh||->42] *(2) (@-4) _Bool ||[42] "
+; Expanded expression: "(@-6) *(2) (@-2) *(2) >=u [sh||->52] (@-4) *(2) _Bool ||[52] "
+; Fused expression:    ">=u *(@-6) *(@-2) [sh||->52] *(2) (@-4) _Bool ||[52] "
 	mov	ax, [bp-6]
 	cmp	ax, [bp-2]
 	setae	al
 	cbw
 ; JumpIfNotZero
 	test	ax, ax
-	jne	L42
+	jne	L52
 	mov	ax, [bp-4]
 	test	ax, ax
 	setne	al
 	cbw
-L42:
+L52:
 ; JumpIfZero
 	test	ax, ax
-	je	L40
+	je	L50
 ; break
-	jmp	L37
-L40:
+	jmp	L47
+L50:
 ; }
-	jmp	L35
-L37:
-L33:
+	jmp	L45
+L47:
+L42:
 	leave
 	ret
-L32:
+L41:
 	sub	sp, 10
-	jmp	L31
+	jmp	L40
 ; glb lineh : (
 ; prm     x : unsigned
 ; prm     y : unsigned
@@ -374,8 +374,8 @@ L32:
 _lineh:
 	push	bp
 	mov	bp, sp
-	jmp	L44
-L43:
+	jmp	L54
+L53:
 ; loc     x : (@4): unsigned
 ; loc     y : (@6): unsigned
 ; loc     w : (@8): unsigned
@@ -403,13 +403,13 @@ L43:
 ; while
 ; RPN'ized expression: "w --p "
 ; Expanded expression: "(@8) --p(2) "
-L46:
+L57:
 ; Fused expression:    "--p(2) *(@8) "
 	mov	ax, [bp+8]
 	dec	word [bp+8]
 ; JumpIfZero
 	test	ax, ax
-	je	L47
+	je	L58
 ; {
 ; RPN'ized expression: "( v , ofs , 47104u poke ) "
 ; Expanded expression: " (@-4) *(2)  (@-2) *(2)  47104u  poke ()6 "
@@ -426,14 +426,14 @@ L46:
 	add	ax, 2
 	mov	[bp-2], ax
 ; }
-	jmp	L46
-L47:
-L45:
+	jmp	L57
+L58:
+L55:
 	leave
 	ret
-L44:
+L54:
 	sub	sp, 4
-	jmp	L43
+	jmp	L53
 ; glb linev : (
 ; prm     x : unsigned
 ; prm     y : unsigned
@@ -444,8 +444,8 @@ L44:
 _linev:
 	push	bp
 	mov	bp, sp
-	jmp	L49
-L48:
+	jmp	L60
+L59:
 ; loc     x : (@4): unsigned
 ; loc     y : (@6): unsigned
 ; loc     h : (@8): unsigned
@@ -473,13 +473,13 @@ L48:
 ; while
 ; RPN'ized expression: "h --p "
 ; Expanded expression: "(@8) --p(2) "
-L51:
+L63:
 ; Fused expression:    "--p(2) *(@8) "
 	mov	ax, [bp+8]
 	dec	word [bp+8]
 ; JumpIfZero
 	test	ax, ax
-	je	L52
+	je	L64
 ; {
 ; RPN'ized expression: "( v , ofs , 47104u poke ) "
 ; Expanded expression: " (@-4) *(2)  (@-2) *(2)  47104u  poke ()6 "
@@ -496,14 +496,14 @@ L51:
 	add	ax, 80
 	mov	[bp-2], ax
 ; }
-	jmp	L51
-L52:
-L50:
+	jmp	L63
+L64:
+L61:
 	leave
 	ret
-L49:
+L60:
 	sub	sp, 4
-	jmp	L48
+	jmp	L59
 ; glb box : (
 ; prm     x : unsigned
 ; prm     y : unsigned
@@ -516,8 +516,8 @@ L49:
 _box:
 	push	bp
 	mov	bp, sp
-	jmp	L54
-L53:
+	jmp	L66
+L65:
 ; loc     x : (@4): unsigned
 ; loc     y : (@6): unsigned
 ; loc     w : (@8): unsigned
@@ -532,18 +532,18 @@ L53:
 	mov	ax, [bp+16]
 ; JumpIfZero
 	test	ax, ax
-	je	L56
+	je	L69
 ; {
 ; while
 ; RPN'ized expression: "h --p "
 ; Expanded expression: "(@10) --p(2) "
-L58:
+L71:
 ; Fused expression:    "--p(2) *(@10) "
 	mov	ax, [bp+10]
 	dec	word [bp+10]
 ; JumpIfZero
 	test	ax, ax
-	je	L59
+	je	L72
 ; RPN'ized expression: "( color , chr , w , y ++p , x lineh ) "
 ; Expanded expression: " (@14) *(2)  (@12) *(2)  (@8) *(2)  (@6) ++p(2)  (@4) *(2)  lineh ()10 "
 ; Fused expression:    "( *(2) (@14) , *(2) (@12) , *(2) (@8) , ++p(2) *(@6) , *(2) (@4) , lineh )10 "
@@ -556,11 +556,11 @@ L58:
 	push	word [bp+4]
 	call	_lineh
 	sub	sp, -10
-	jmp	L58
-L59:
+	jmp	L71
+L72:
 ; }
-	jmp	L57
-L56:
+	jmp	L70
+L69:
 ; else
 ; {
 ; RPN'ized expression: "( color , chr , w , y , x lineh ) "
@@ -610,12 +610,12 @@ L56:
 	call	_linev
 	sub	sp, -10
 ; }
-L57:
-L55:
+L70:
+L67:
 	leave
 	ret
-L54:
-	jmp	L53
+L66:
+	jmp	L65
 ; glb text : (
 ; prm     x : unsigned
 ; prm     y : unsigned
@@ -625,8 +625,8 @@ L54:
 _text:
 	push	bp
 	mov	bp, sp
-	jmp	L61
-L60:
+	jmp	L74
+L73:
 ; loc     x : (@4): unsigned
 ; loc     y : (@6): unsigned
 ; loc     s : (@8): * char
@@ -644,7 +644,7 @@ L60:
 ; while
 ; RPN'ized expression: "s *u "
 ; Expanded expression: "(@8) *(2) *(-1) "
-L63:
+L77:
 ; Fused expression:    "*(2) (@8) *(-1) ax "
 	mov	ax, [bp+8]
 	mov	bx, ax
@@ -652,7 +652,7 @@ L63:
 	cbw
 ; JumpIfZero
 	test	ax, ax
-	je	L64
+	je	L78
 ; {
 ; loc         v : (@-4): unsigned
 ; =
@@ -684,14 +684,14 @@ L63:
 	add	ax, 2
 	mov	[bp-2], ax
 ; }
-	jmp	L63
-L64:
-L62:
+	jmp	L77
+L78:
+L75:
 	leave
 	ret
-L61:
+L74:
 	sub	sp, 4
-	jmp	L60
+	jmp	L73
 ; glb number : (
 ; prm     x : unsigned
 ; prm     y : unsigned
@@ -701,8 +701,8 @@ L61:
 _number:
 	push	bp
 	mov	bp, sp
-	jmp	L66
-L65:
+	jmp	L80
+L79:
 ; loc     x : (@4): unsigned
 ; loc     y : (@6): unsigned
 ; loc     n : (@8): unsigned
@@ -718,22 +718,22 @@ L65:
 ; Fused expression:    "=(170) *(@-8) 4 "
 	mov	ax, 4
 	mov	[bp-8], ax
-L68:
+L83:
 ; RPN'ized expression: "i 0 >= "
 ; Expanded expression: "(@-8) *(2) 0 >= "
 ; Fused expression:    ">= *(@-8) 0 IF! "
 	mov	ax, [bp-8]
 	cmp	ax, 0
-	jl	L71
-	jmp	L70
-L69:
+	jl	L86
+	jmp	L85
+L84:
 ; RPN'ized expression: "i -- "
 ; Expanded expression: "(@-8) --(2) "
 ; Fused expression:    "--(2) *(@-8) "
 	dec	word [bp-8]
 	mov	ax, [bp-8]
-	jmp	L68
-L70:
+	jmp	L83
+L85:
 ; {
 ; RPN'ized expression: "s i + *u 48 n 10 % + = "
 ; Expanded expression: "(@-6) (@-8) *(2) + 48 (@8) *(2) 10 %u + =(-1) "
@@ -761,8 +761,8 @@ L70:
 	div	cx
 	mov	[bp+8], ax
 ; }
-	jmp	L69
-L71:
+	jmp	L84
+L86:
 ; RPN'ized expression: "s 5 + *u 0 = "
 ; Expanded expression: "(@-1) 0 =(-1) "
 ; Fused expression:    "=(122) *(@-1) 0 "
@@ -779,12 +779,12 @@ L71:
 	push	word [bp+4]
 	call	_text
 	sub	sp, -8
-L67:
+L81:
 	leave
 	ret
-L66:
+L80:
 	sub	sp, 8
-	jmp	L65
+	jmp	L79
 ; RPN'ized expression: "2 "
 ; Expanded expression: "2 "
 ; Expression value: 2
@@ -804,8 +804,8 @@ _rand_next:
 _rand:
 	push	bp
 	mov	bp, sp
-	jmp	L73
-L72:
+	jmp	L88
+L87:
 mov  eax, [_rand_next]
 imul eax, eax, 1103515245
 add  eax, 12345
@@ -813,19 +813,19 @@ mov  [_rand_next], eax
 shr  eax, 16
 and  ax, 0x7FFF
 
-L74:
+L89:
 	leave
 	ret
-L73:
-	jmp	L72
+L88:
+	jmp	L87
 ; glb srand : (
 ; prm     seed : unsigned
 ;     ) void
 _srand:
 	push	bp
 	mov	bp, sp
-	jmp	L76
-L75:
+	jmp	L92
+L91:
 ; loc     seed : (@4): unsigned
 ; RPN'ized expression: "rand_next 0 + *u seed = "
 ; Expanded expression: "rand_next 0 + (@4) *(2) =(2) "
@@ -834,18 +834,18 @@ L75:
 	mov	bx, ax
 	mov	ax, [bp+4]
 	mov	[bx], ax
-L77:
+L93:
 	leave
 	ret
-L76:
-	jmp	L75
+L92:
+	jmp	L91
 ; glb play : (void) void
 ; glb main : (void) int
 _main:
 	push	bp
 	mov	bp, sp
-	jmp	L79
-L78:
+	jmp	L96
+L95:
 ; RPN'ized expression: "2 "
 ; Expanded expression: "2 "
 ; Expression value: 2
@@ -856,15 +856,15 @@ L78:
 	push	1
 	call	_BiosSetGfxMode
 	sub	sp, -2
-; RPN'ized expression: "( 0 15 | , L81 , 25 2 / , 40 20 - 2 / text ) "
-; Expanded expression: " 15  L81  12  10  text ()8 "
-	jmp	L82
-L81:
+; RPN'ized expression: "( 0 15 | , L99 , 25 2 / , 40 20 - 2 / text ) "
+; Expanded expression: " 15  L99  12  10  text ()8 "
+	jmp	L100
+L99:
 	db	"Press a key to start",0
-L82:
-; Fused expression:    "( 15 , L81 , 12 , 10 , text )8 "
+L100:
+; Fused expression:    "( 15 , L99 , 12 , 10 , text )8 "
 	push	15
-	push	L81
+	push	L99
 	push	12
 	push	10
 	call	_text
@@ -872,18 +872,18 @@ L82:
 ; while
 ; RPN'ized expression: "( BiosKeyAvailable ) "
 ; Expanded expression: " BiosKeyAvailable ()0 "
-L83:
+L101:
 ; Fused expression:    "( BiosKeyAvailable )0 "
 	call	_BiosKeyAvailable
 ; JumpIfZero
 	test	ax, ax
-	je	L84
+	je	L102
 ; RPN'ized expression: "( BiosReadKey ) "
 ; Expanded expression: " BiosReadKey ()0 "
 ; Fused expression:    "( BiosReadKey )0 "
 	call	_BiosReadKey
-	jmp	L83
-L84:
+	jmp	L101
+L102:
 ; RPN'ized expression: "( BiosReadKey ) "
 ; Expanded expression: " BiosReadKey ()0 "
 ; Fused expression:    "( BiosReadKey )0 "
@@ -917,27 +917,27 @@ L84:
 ; Expression value: 0
 ; Fused expression:    "0 "
 	mov	ax, 0
-	jmp	L80
+	jmp	L97
 ; Fused expression:    "0 "
 	mov	ax, 0
-L80:
+L97:
 	leave
 	ret
-L79:
+L96:
 	sub	sp, 4
-	jmp	L78
+	jmp	L95
 ; glb newtarget : (void) void
 _newtarget:
 	push	bp
 	mov	bp, sp
-	jmp	L86
-L85:
+	jmp	L104
+L103:
 ; for
-L88:
-	jmp	L90
-L89:
-	jmp	L88
-L90:
+L107:
+	jmp	L109
+L108:
+	jmp	L107
+L109:
 ; {
 ; loc         bit : (@-2): unsigned
 ; =
@@ -993,27 +993,27 @@ L90:
 ; Fused expression:    "=(170) *(@-4) 0 "
 	mov	ax, 0
 	mov	[bp-4], ax
-L92:
+L111:
 ; RPN'ized expression: "i length < "
 ; Expanded expression: "(@-4) *(2) length *(2) <u "
 ; Fused expression:    "<u *(@-4) *length IF! "
 	mov	ax, [bp-4]
 	cmp	ax, [_length]
-	jae	L95
-	jmp	L94
-L93:
+	jae	L114
+	jmp	L113
+L112:
 ; RPN'ized expression: "i ++ "
 ; Expanded expression: "(@-4) ++(2) "
 ; Fused expression:    "++(2) *(@-4) "
 	inc	word [bp-4]
 	mov	ax, [bp-4]
-	jmp	L92
-L94:
+	jmp	L111
+L113:
 ; {
 ; if
 ; RPN'ized expression: "target 0 + *u snake i + *u 0 + *u == target 1 + *u snake i + *u 1 + *u == && "
-; Expanded expression: "target 0 + *(2) snake (@-4) *(2) 4 * + 0 + *(2) == [sh&&->98] target 2 + *(2) snake (@-4) *(2) 4 * + 2 + *(2) == &&[98] "
-; Fused expression:    "+ target 0 push-ax * *(@-4) 4 + snake ax + ax 0 == **sp *ax [sh&&->98] + target 2 push-ax * *(@-4) 4 + snake ax + ax 2 == **sp *ax &&[98] "
+; Expanded expression: "target 0 + *(2) snake (@-4) *(2) 4 * + 0 + *(2) == [sh&&->117] target 2 + *(2) snake (@-4) *(2) 4 * + 2 + *(2) == &&[117] "
+; Fused expression:    "+ target 0 push-ax * *(@-4) 4 + snake ax + ax 0 == **sp *ax [sh&&->117] + target 2 push-ax * *(@-4) 4 + snake ax + ax 2 == **sp *ax &&[117] "
 	mov	ax, _target
 	push	ax
 	mov	ax, [bp-4]
@@ -1030,7 +1030,7 @@ L94:
 	cbw
 ; JumpIfZero
 	test	ax, ax
-	je	L98
+	je	L117
 	mov	ax, _target
 	add	ax, 2
 	push	ax
@@ -1047,10 +1047,10 @@ L94:
 	cmp	ax, cx
 	sete	al
 	cbw
-L98:
+L117:
 ; JumpIfZero
 	test	ax, ax
-	je	L96
+	je	L115
 ; {
 ; RPN'ized expression: "bit 1 = "
 ; Expanded expression: "(@-2) 1 =(2) "
@@ -1058,34 +1058,34 @@ L98:
 	mov	ax, 1
 	mov	[bp-2], ax
 ; break
-	jmp	L95
+	jmp	L114
 ; }
-L96:
+L115:
 ; }
-	jmp	L93
-L95:
+	jmp	L112
+L114:
 ; if
 ; RPN'ized expression: "bit 0 == "
 ; Expanded expression: "(@-2) *(2) 0 == "
 ; Fused expression:    "== *(@-2) 0 IF! "
 	mov	ax, [bp-2]
 	cmp	ax, 0
-	jne	L99
+	jne	L118
 ; break
-	jmp	L91
-L99:
+	jmp	L110
+L118:
 ; }
-	jmp	L89
-L91:
-; RPN'ized expression: "( 32 14 | , L101 , target 1 + *u , target 0 + *u text ) "
-; Expanded expression: " 46  L101  target 2 + *(2)  target 0 + *(2)  text ()8 "
-	jmp	L102
-L101:
+	jmp	L108
+L110:
+; RPN'ized expression: "( 32 14 | , L120 , target 1 + *u , target 0 + *u text ) "
+; Expanded expression: " 46  L120  target 2 + *(2)  target 0 + *(2)  text ()8 "
+	jmp	L121
+L120:
 	db	"$",0
-L102:
-; Fused expression:    "( 46 , L101 , + target 2 *(2) ax , + target 0 *(2) ax , text )8 "
+L121:
+; Fused expression:    "( 46 , L120 , + target 2 *(2) ax , + target 0 *(2) ax , text )8 "
 	push	46
-	push	L101
+	push	L120
 	mov	ax, _target
 	add	ax, 2
 	mov	bx, ax
@@ -1095,18 +1095,18 @@ L102:
 	push	word [bx]
 	call	_text
 	sub	sp, -8
-L87:
+L105:
 	leave
 	ret
-L86:
+L104:
 	sub	sp, 4
-	jmp	L85
+	jmp	L103
 ; glb play : (void) void
 _play:
 	push	bp
 	mov	bp, sp
-	jmp	L104
-L103:
+	jmp	L123
+L122:
 ; loc     i : (@-2): unsigned
 ; loc     key : (@-4): unsigned
 ; RPN'ized expression: "( 1 , 32 14 | , 32 , 25 , 40 , 0 , 0 box ) "
@@ -1133,15 +1133,15 @@ L103:
 	push	0
 	call	_box
 	sub	sp, -14
-; RPN'ized expression: "( 96 0 | , L106 , 0 , 40 12 - 2 / text ) "
-; Expanded expression: " 96  L106  0  14  text ()8 "
-	jmp	L107
-L106:
+; RPN'ized expression: "( 96 0 | , L126 , 0 , 40 12 - 2 / text ) "
+; Expanded expression: " 96  L126  0  14  text ()8 "
+	jmp	L127
+L126:
 	db	"Score: ",0
-L107:
-; Fused expression:    "( 96 , L106 , 0 , 14 , text )8 "
+L127:
+; Fused expression:    "( 96 , L126 , 0 , 14 , text )8 "
 	push	96
-	push	L106
+	push	L126
 	push	0
 	push	14
 	call	_text
@@ -1166,22 +1166,22 @@ L107:
 ; Fused expression:    "=(170) *length 0 "
 	mov	ax, 0
 	mov	[_length], ax
-L108:
+L128:
 ; RPN'ized expression: "length 6 < "
 ; Expanded expression: "length *(2) 6 <u "
 ; Fused expression:    "<u *length 6 IF! "
 	mov	ax, [_length]
 	cmp	ax, 6
-	jae	L111
-	jmp	L110
-L109:
+	jae	L131
+	jmp	L130
+L129:
 ; RPN'ized expression: "length ++ "
 ; Expanded expression: "length ++(2) "
 ; Fused expression:    "++(2) *length "
 	inc	word [_length]
 	mov	ax, [_length]
-	jmp	L108
-L110:
+	jmp	L128
+L130:
 ; {
 ; RPN'ized expression: "snake length + *u 0 + *u 40 2 / = "
 ; Expanded expression: "snake length *(2) 4 * + 0 + 20 =(2) "
@@ -1208,15 +1208,15 @@ L110:
 	add	ax, [_length]
 	pop	bx
 	mov	[bx], ax
-; RPN'ized expression: "( 32 14 | , L112 , snake length + *u 1 + *u , snake length + *u 0 + *u text ) "
-; Expanded expression: " 46  L112  snake length *(2) 4 * + 2 + *(2)  snake length *(2) 4 * + 0 + *(2)  text ()8 "
-	jmp	L113
-L112:
+; RPN'ized expression: "( 32 14 | , L132 , snake length + *u 1 + *u , snake length + *u 0 + *u text ) "
+; Expanded expression: " 46  L132  snake length *(2) 4 * + 2 + *(2)  snake length *(2) 4 * + 0 + *(2)  text ()8 "
+	jmp	L133
+L132:
 	db	"O",0
-L113:
-; Fused expression:    "( 46 , L112 , * *length 4 + snake ax + ax 2 *(2) ax , * *length 4 + snake ax + ax 0 *(2) ax , text )8 "
+L133:
+; Fused expression:    "( 46 , L132 , * *length 4 + snake ax + ax 2 *(2) ax , * *length 4 + snake ax + ax 0 *(2) ax , text )8 "
 	push	46
-	push	L112
+	push	L132
 	mov	ax, [_length]
 	imul	ax, ax, 4
 	mov	cx, ax
@@ -1235,8 +1235,8 @@ L113:
 	call	_text
 	sub	sp, -8
 ; }
-	jmp	L109
-L111:
+	jmp	L129
+L131:
 ; RPN'ized expression: "direction 18432 = "
 ; Expanded expression: "direction 18432 =(2) "
 ; Fused expression:    "=(170) *direction 18432 "
@@ -1247,11 +1247,11 @@ L111:
 ; Fused expression:    "( newtarget )0 "
 	call	_newtarget
 ; for
-L114:
-	jmp	L116
-L115:
-	jmp	L114
-L116:
+L134:
+	jmp	L136
+L135:
+	jmp	L134
+L136:
 ; {
 ; RPN'ized expression: "key 0 = "
 ; Expanded expression: "(@-4) 0 =(2) "
@@ -1265,13 +1265,13 @@ L116:
 	call	_BiosKeyAvailable
 ; JumpIfZero
 	test	ax, ax
-	je	L118
+	je	L138
 ; RPN'ized expression: "key ( BiosReadKey ) = "
 ; Expanded expression: "(@-4)  BiosReadKey ()0 =(2) "
 ; Fused expression:    "( BiosReadKey )0 =(170) *(@-4) ax "
 	call	_BiosReadKey
 	mov	[bp-4], ax
-L118:
+L138:
 ; RPN'ized expression: "( 150 delay ) "
 ; Expanded expression: " 150  delay ()2 "
 ; Fused expression:    "( 150 , delay )2 "
@@ -1283,128 +1283,128 @@ L118:
 ; Expanded expression: "(@-4) *(2) "
 ; Fused expression:    "*(2) (@-4) "
 	mov	ax, [bp-4]
-	jmp	L122
+	jmp	L142
 ; {
 ; case
 ; RPN'ized expression: "283 "
 ; Expanded expression: "283 "
 ; Expression value: 283
-	jmp	L123
-L122:
+	jmp	L143
+L142:
 	cmp	ax, 283
-	jne	L124
-L123:
+	jne	L144
+L143:
 ; return
-	jmp	L105
+	jmp	L124
 ; case
 ; RPN'ized expression: "19200 "
 ; Expanded expression: "19200 "
 ; Expression value: 19200
-	jmp	L125
-L124:
+	jmp	L145
+L144:
 	cmp	ax, 19200
-	jne	L126
-L125:
+	jne	L146
+L145:
 ; if
 ; RPN'ized expression: "direction 19712 != "
 ; Expanded expression: "direction *(2) 19712 != "
 ; Fused expression:    "!= *direction 19712 IF! "
 	mov	ax, [_direction]
 	cmp	ax, 19712
-	je	L128
+	je	L148
 ; RPN'ized expression: "direction key = "
 ; Expanded expression: "direction (@-4) *(2) =(2) "
 ; Fused expression:    "=(170) *direction *(@-4) "
 	mov	ax, [bp-4]
 	mov	[_direction], ax
-L128:
+L148:
 ; break
-	jmp	L120
+	jmp	L140
 ; case
 ; RPN'ized expression: "19712 "
 ; Expanded expression: "19712 "
 ; Expression value: 19712
-	jmp	L127
-L126:
+	jmp	L147
+L146:
 	cmp	ax, 19712
-	jne	L130
-L127:
+	jne	L150
+L147:
 ; if
 ; RPN'ized expression: "direction 19200 != "
 ; Expanded expression: "direction *(2) 19200 != "
 ; Fused expression:    "!= *direction 19200 IF! "
 	mov	ax, [_direction]
 	cmp	ax, 19200
-	je	L132
+	je	L152
 ; RPN'ized expression: "direction key = "
 ; Expanded expression: "direction (@-4) *(2) =(2) "
 ; Fused expression:    "=(170) *direction *(@-4) "
 	mov	ax, [bp-4]
 	mov	[_direction], ax
-L132:
+L152:
 ; break
-	jmp	L120
+	jmp	L140
 ; case
 ; RPN'ized expression: "18432 "
 ; Expanded expression: "18432 "
 ; Expression value: 18432
-	jmp	L131
-L130:
+	jmp	L151
+L150:
 	cmp	ax, 18432
-	jne	L134
-L131:
+	jne	L154
+L151:
 ; if
 ; RPN'ized expression: "direction 20480 != "
 ; Expanded expression: "direction *(2) 20480 != "
 ; Fused expression:    "!= *direction 20480 IF! "
 	mov	ax, [_direction]
 	cmp	ax, 20480
-	je	L136
+	je	L156
 ; RPN'ized expression: "direction key = "
 ; Expanded expression: "direction (@-4) *(2) =(2) "
 ; Fused expression:    "=(170) *direction *(@-4) "
 	mov	ax, [bp-4]
 	mov	[_direction], ax
-L136:
+L156:
 ; break
-	jmp	L120
+	jmp	L140
 ; case
 ; RPN'ized expression: "20480 "
 ; Expanded expression: "20480 "
 ; Expression value: 20480
-	jmp	L135
-L134:
+	jmp	L155
+L154:
 	cmp	ax, 20480
-	jne	L138
-L135:
+	jne	L158
+L155:
 ; if
 ; RPN'ized expression: "direction 18432 != "
 ; Expanded expression: "direction *(2) 18432 != "
 ; Fused expression:    "!= *direction 18432 IF! "
 	mov	ax, [_direction]
 	cmp	ax, 18432
-	je	L140
+	je	L160
 ; RPN'ized expression: "direction key = "
 ; Expanded expression: "direction (@-4) *(2) =(2) "
 ; Fused expression:    "=(170) *direction *(@-4) "
 	mov	ax, [bp-4]
 	mov	[_direction], ax
-L140:
+L160:
 ; break
-	jmp	L120
+	jmp	L140
 ; }
-	jmp	L120
-L138:
-L120:
-; RPN'ized expression: "( 32 14 | , L142 , snake length 1 - + *u 1 + *u , snake length 1 - + *u 0 + *u text ) "
-; Expanded expression: " 46  L142  snake length *(2) 1 - 4 * + 2 + *(2)  snake length *(2) 1 - 4 * + 0 + *(2)  text ()8 "
-	jmp	L143
-L142:
+	jmp	L140
+L158:
+L140:
+; RPN'ized expression: "( 32 14 | , L162 , snake length 1 - + *u 1 + *u , snake length 1 - + *u 0 + *u text ) "
+; Expanded expression: " 46  L162  snake length *(2) 1 - 4 * + 2 + *(2)  snake length *(2) 1 - 4 * + 0 + *(2)  text ()8 "
+	jmp	L163
+L162:
 	db	" ",0
-L143:
-; Fused expression:    "( 46 , L142 , - *length 1 * ax 4 + snake ax + ax 2 *(2) ax , - *length 1 * ax 4 + snake ax + ax 0 *(2) ax , text )8 "
+L163:
+; Fused expression:    "( 46 , L162 , - *length 1 * ax 4 + snake ax + ax 2 *(2) ax , - *length 1 * ax 4 + snake ax + ax 0 *(2) ax , text )8 "
 	push	46
-	push	L142
+	push	L162
 	mov	ax, [_length]
 	dec	ax
 	imul	ax, ax, 4
@@ -1431,22 +1431,22 @@ L143:
 	mov	ax, [_length]
 	dec	ax
 	mov	[bp-2], ax
-L144:
+L164:
 ; RPN'ized expression: "i 0 > "
 ; Expanded expression: "(@-2) *(2) 0 >u "
 ; Fused expression:    ">u *(@-2) 0 IF! "
 	mov	ax, [bp-2]
 	cmp	ax, 0
-	jbe	L147
-	jmp	L146
-L145:
+	jbe	L167
+	jmp	L166
+L165:
 ; RPN'ized expression: "i -- "
 ; Expanded expression: "(@-2) --(2) "
 ; Fused expression:    "--(2) *(@-2) "
 	dec	word [bp-2]
 	mov	ax, [bp-2]
-	jmp	L144
-L146:
+	jmp	L164
+L166:
 ; {
 ; RPN'ized expression: "snake i + *u 0 + *u snake i 1 - + *u 0 + *u = "
 ; Expanded expression: "snake (@-2) *(2) 4 * + 0 + snake (@-2) *(2) 1 - 4 * + 0 + *(2) =(2) "
@@ -1489,24 +1489,24 @@ L146:
 	pop	bx
 	mov	[bx], ax
 ; }
-	jmp	L145
-L147:
+	jmp	L165
+L167:
 ; switch
 ; RPN'ized expression: "direction "
 ; Expanded expression: "direction *(2) "
 ; Fused expression:    "*(2) direction "
 	mov	ax, [_direction]
-	jmp	L150
+	jmp	L170
 ; {
 ; case
 ; RPN'ized expression: "19200 "
 ; Expanded expression: "19200 "
 ; Expression value: 19200
-	jmp	L151
-L150:
+	jmp	L171
+L170:
 	cmp	ax, 19200
-	jne	L152
-L151:
+	jne	L172
+L171:
 ; RPN'ized expression: "snake 0 + *u 0 + *u -- "
 ; Expanded expression: "snake 0 + --(2) "
 ; Fused expression:    "+ snake 0 --(2) *ax "
@@ -1515,16 +1515,16 @@ L151:
 	dec	word [bx]
 	mov	ax, [bx]
 ; break
-	jmp	L148
+	jmp	L168
 ; case
 ; RPN'ized expression: "19712 "
 ; Expanded expression: "19712 "
 ; Expression value: 19712
-	jmp	L153
-L152:
+	jmp	L173
+L172:
 	cmp	ax, 19712
-	jne	L154
-L153:
+	jne	L174
+L173:
 ; RPN'ized expression: "snake 0 + *u 0 + *u ++ "
 ; Expanded expression: "snake 0 + ++(2) "
 ; Fused expression:    "+ snake 0 ++(2) *ax "
@@ -1533,16 +1533,16 @@ L153:
 	inc	word [bx]
 	mov	ax, [bx]
 ; break
-	jmp	L148
+	jmp	L168
 ; case
 ; RPN'ized expression: "18432 "
 ; Expanded expression: "18432 "
 ; Expression value: 18432
-	jmp	L155
-L154:
+	jmp	L175
+L174:
 	cmp	ax, 18432
-	jne	L156
-L155:
+	jne	L176
+L175:
 ; RPN'ized expression: "snake 0 + *u 1 + *u -- "
 ; Expanded expression: "snake 2 + --(2) "
 ; Fused expression:    "+ snake 2 --(2) *ax "
@@ -1552,16 +1552,16 @@ L155:
 	dec	word [bx]
 	mov	ax, [bx]
 ; break
-	jmp	L148
+	jmp	L168
 ; case
 ; RPN'ized expression: "20480 "
 ; Expanded expression: "20480 "
 ; Expression value: 20480
-	jmp	L157
-L156:
+	jmp	L177
+L176:
 	cmp	ax, 20480
-	jne	L158
-L157:
+	jne	L178
+L177:
 ; RPN'ized expression: "snake 0 + *u 1 + *u ++ "
 ; Expanded expression: "snake 2 + ++(2) "
 ; Fused expression:    "+ snake 2 ++(2) *ax "
@@ -1571,20 +1571,20 @@ L157:
 	inc	word [bx]
 	mov	ax, [bx]
 ; break
-	jmp	L148
+	jmp	L168
 ; }
-	jmp	L148
-L158:
-L148:
-; RPN'ized expression: "( 32 14 | , L160 , snake 0 + *u 1 + *u , snake 0 + *u 0 + *u text ) "
-; Expanded expression: " 46  L160  snake 2 + *(2)  snake 0 + *(2)  text ()8 "
-	jmp	L161
-L160:
+	jmp	L168
+L178:
+L168:
+; RPN'ized expression: "( 32 14 | , L180 , snake 0 + *u 1 + *u , snake 0 + *u 0 + *u text ) "
+; Expanded expression: " 46  L180  snake 2 + *(2)  snake 0 + *(2)  text ()8 "
+	jmp	L181
+L180:
 	db	"O",0
-L161:
-; Fused expression:    "( 46 , L160 , + snake 2 *(2) ax , + snake 0 *(2) ax , text )8 "
+L181:
+; Fused expression:    "( 46 , L180 , + snake 2 *(2) ax , + snake 0 *(2) ax , text )8 "
 	push	46
-	push	L160
+	push	L180
 	mov	ax, _snake
 	add	ax, 2
 	mov	bx, ax
@@ -1596,8 +1596,8 @@ L161:
 	sub	sp, -8
 ; if
 ; RPN'ized expression: "snake 0 + *u 0 + *u 1 < snake 0 + *u 0 + *u 40 1 - >= || snake 0 + *u 1 + *u 1 < || snake 0 + *u 1 + *u 25 1 - >= || "
-; Expanded expression: "snake 0 + *(2) 1 <u [sh||->166] snake 0 + *(2) 39 >=u ||[166] _Bool [sh||->165] snake 2 + *(2) 1 <u ||[165] _Bool [sh||->164] snake 2 + *(2) 24 >=u ||[164] "
-; Fused expression:    "+ snake 0 <u *ax 1 [sh||->166] + snake 0 >=u *ax 39 ||[166] _Bool [sh||->165] + snake 2 <u *ax 1 ||[165] _Bool [sh||->164] + snake 2 >=u *ax 24 ||[164] "
+; Expanded expression: "snake 0 + *(2) 1 <u [sh||->186] snake 0 + *(2) 39 >=u ||[186] _Bool [sh||->185] snake 2 + *(2) 1 <u ||[185] _Bool [sh||->184] snake 2 + *(2) 24 >=u ||[184] "
+; Fused expression:    "+ snake 0 <u *ax 1 [sh||->186] + snake 0 >=u *ax 39 ||[186] _Bool [sh||->185] + snake 2 <u *ax 1 ||[185] _Bool [sh||->184] + snake 2 >=u *ax 24 ||[184] "
 	mov	ax, _snake
 	mov	bx, ax
 	mov	ax, [bx]
@@ -1606,20 +1606,20 @@ L161:
 	cbw
 ; JumpIfNotZero
 	test	ax, ax
-	jne	L166
+	jne	L186
 	mov	ax, _snake
 	mov	bx, ax
 	mov	ax, [bx]
 	cmp	ax, 39
 	setae	al
 	cbw
-L166:
+L186:
 	test	ax, ax
 	setne	al
 	cbw
 ; JumpIfNotZero
 	test	ax, ax
-	jne	L165
+	jne	L185
 	mov	ax, _snake
 	add	ax, 2
 	mov	bx, ax
@@ -1627,13 +1627,13 @@ L166:
 	cmp	ax, 1
 	setb	al
 	cbw
-L165:
+L185:
 	test	ax, ax
 	setne	al
 	cbw
 ; JumpIfNotZero
 	test	ax, ax
-	jne	L164
+	jne	L184
 	mov	ax, _snake
 	add	ax, 2
 	mov	bx, ax
@@ -1641,13 +1641,13 @@ L165:
 	cmp	ax, 24
 	setae	al
 	cbw
-L164:
+L184:
 ; JumpIfZero
 	test	ax, ax
-	je	L162
+	je	L182
 ; break
-	jmp	L117
-L162:
+	jmp	L137
+L182:
 ; {
 ; loc             bit : (@-6): unsigned
 ; =
@@ -1663,27 +1663,27 @@ L162:
 ; Fused expression:    "=(170) *(@-2) 1 "
 	mov	ax, 1
 	mov	[bp-2], ax
-L167:
+L187:
 ; RPN'ized expression: "i length < "
 ; Expanded expression: "(@-2) *(2) length *(2) <u "
 ; Fused expression:    "<u *(@-2) *length IF! "
 	mov	ax, [bp-2]
 	cmp	ax, [_length]
-	jae	L170
-	jmp	L169
-L168:
+	jae	L190
+	jmp	L189
+L188:
 ; RPN'ized expression: "i ++ "
 ; Expanded expression: "(@-2) ++(2) "
 ; Fused expression:    "++(2) *(@-2) "
 	inc	word [bp-2]
 	mov	ax, [bp-2]
-	jmp	L167
-L169:
+	jmp	L187
+L189:
 ; {
 ; if
 ; RPN'ized expression: "snake 0 + *u 0 + *u snake i + *u 0 + *u == snake 0 + *u 1 + *u snake i + *u 1 + *u == && "
-; Expanded expression: "snake 0 + *(2) snake (@-2) *(2) 4 * + 0 + *(2) == [sh&&->173] snake 2 + *(2) snake (@-2) *(2) 4 * + 2 + *(2) == &&[173] "
-; Fused expression:    "+ snake 0 push-ax * *(@-2) 4 + snake ax + ax 0 == **sp *ax [sh&&->173] + snake 2 push-ax * *(@-2) 4 + snake ax + ax 2 == **sp *ax &&[173] "
+; Expanded expression: "snake 0 + *(2) snake (@-2) *(2) 4 * + 0 + *(2) == [sh&&->193] snake 2 + *(2) snake (@-2) *(2) 4 * + 2 + *(2) == &&[193] "
+; Fused expression:    "+ snake 0 push-ax * *(@-2) 4 + snake ax + ax 0 == **sp *ax [sh&&->193] + snake 2 push-ax * *(@-2) 4 + snake ax + ax 2 == **sp *ax &&[193] "
 	mov	ax, _snake
 	push	ax
 	mov	ax, [bp-2]
@@ -1700,7 +1700,7 @@ L169:
 	cbw
 ; JumpIfZero
 	test	ax, ax
-	je	L173
+	je	L193
 	mov	ax, _snake
 	add	ax, 2
 	push	ax
@@ -1717,10 +1717,10 @@ L169:
 	cmp	ax, cx
 	sete	al
 	cbw
-L173:
+L193:
 ; JumpIfZero
 	test	ax, ax
-	je	L171
+	je	L191
 ; {
 ; RPN'ized expression: "bit 1 = "
 ; Expanded expression: "(@-6) 1 =(2) "
@@ -1728,12 +1728,12 @@ L173:
 	mov	ax, 1
 	mov	[bp-6], ax
 ; break
-	jmp	L170
+	jmp	L190
 ; }
-L171:
+L191:
 ; }
-	jmp	L168
-L170:
+	jmp	L188
+L190:
 ; if
 ; RPN'ized expression: "bit "
 ; Expanded expression: "(@-6) *(2) "
@@ -1741,15 +1741,15 @@ L170:
 	mov	ax, [bp-6]
 ; JumpIfZero
 	test	ax, ax
-	je	L174
+	je	L194
 ; break
-	jmp	L117
-L174:
+	jmp	L137
+L194:
 ; }
 ; if
 ; RPN'ized expression: "snake 0 + *u 0 + *u target 0 + *u == snake 0 + *u 1 + *u target 1 + *u == && "
-; Expanded expression: "snake 0 + *(2) target 0 + *(2) == [sh&&->178] snake 2 + *(2) target 2 + *(2) == &&[178] "
-; Fused expression:    "+ snake 0 push-ax + target 0 == **sp *ax [sh&&->178] + snake 2 push-ax + target 2 == **sp *ax &&[178] "
+; Expanded expression: "snake 0 + *(2) target 0 + *(2) == [sh&&->198] snake 2 + *(2) target 2 + *(2) == &&[198] "
+; Fused expression:    "+ snake 0 push-ax + target 0 == **sp *ax [sh&&->198] + snake 2 push-ax + target 2 == **sp *ax &&[198] "
 	mov	ax, _snake
 	push	ax
 	mov	ax, _target
@@ -1762,7 +1762,7 @@ L174:
 	cbw
 ; JumpIfZero
 	test	ax, ax
-	je	L178
+	je	L198
 	mov	ax, _snake
 	add	ax, 2
 	push	ax
@@ -1775,10 +1775,10 @@ L174:
 	cmp	ax, cx
 	sete	al
 	cbw
-L178:
+L198:
 ; JumpIfZero
 	test	ax, ax
-	je	L176
+	je	L196
 ; {
 ; RPN'ized expression: "snake length + *u 0 + *u snake length 1 - + *u 0 + *u = "
 ; Expanded expression: "snake length *(2) 4 * + 0 + snake length *(2) 1 - 4 * + 0 + *(2) =(2) "
@@ -1844,19 +1844,19 @@ L178:
 ; Fused expression:    "( newtarget )0 "
 	call	_newtarget
 ; }
-L176:
+L196:
 ; }
-	jmp	L115
-L117:
-; RPN'ized expression: "( 0 15 | , L179 , 25 2 / , 40 10 - 2 / text ) "
-; Expanded expression: " 15  L179  12  15  text ()8 "
-	jmp	L180
-L179:
+	jmp	L135
+L137:
+; RPN'ized expression: "( 0 15 | , L199 , 25 2 / , 40 10 - 2 / text ) "
+; Expanded expression: " 15  L199  12  15  text ()8 "
+	jmp	L200
+L199:
 	db	"Game Over!",0
-L180:
-; Fused expression:    "( 15 , L179 , 12 , 15 , text )8 "
+L200:
+; Fused expression:    "( 15 , L199 , 12 , 15 , text )8 "
 	push	15
-	push	L179
+	push	L199
 	push	12
 	push	15
 	call	_text
@@ -1870,31 +1870,31 @@ L180:
 ; while
 ; RPN'ized expression: "( BiosKeyAvailable ) "
 ; Expanded expression: " BiosKeyAvailable ()0 "
-L181:
+L201:
 ; Fused expression:    "( BiosKeyAvailable )0 "
 	call	_BiosKeyAvailable
 ; JumpIfZero
 	test	ax, ax
-	je	L182
+	je	L202
 ; RPN'ized expression: "( BiosReadKey ) "
 ; Expanded expression: " BiosReadKey ()0 "
 ; Fused expression:    "( BiosReadKey )0 "
 	call	_BiosReadKey
-	jmp	L181
-L182:
+	jmp	L201
+L202:
 ; RPN'ized expression: "( BiosReadKey ) "
 ; Expanded expression: " BiosReadKey ()0 "
 ; Fused expression:    "( BiosReadKey )0 "
 	call	_BiosReadKey
-L105:
+L124:
 	leave
 	ret
-L104:
+L123:
 	sub	sp, 6
-	jmp	L103
+	jmp	L122
 
 ; Syntax/declaration table/stack:
-; Bytes used: 1752/19968
+; Bytes used: 1752/20224
 
 
 ; Macro table:
@@ -1986,7 +1986,7 @@ L104:
 ; Ident seed
 ; Ident play
 ; Ident newtarget
-; Bytes used: 320/4672
+; Bytes used: 320/4752
 
-; Next label number: 183
+; Next label number: 203
 ; Compilation succeeded.

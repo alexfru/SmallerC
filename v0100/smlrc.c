@@ -49,7 +49,8 @@ either expressed or implied, of the FreeBSD Project.
 // extern char _setargv__;
 
 #ifdef NO_EXTRAS
-#define NO_TYPEDEF
+#define NO_PPACK
+#define NO_TYPEDEF_ENUM
 #define NO_FUNC_
 #endif
 
@@ -151,7 +152,9 @@ int vfprintf(FILE*, char*, void*);
 
 // all public macros
 
+#ifndef MAX_IDENT_LEN
 #define MAX_IDENT_LEN        31
+#endif
 #define MAX_STRING_LEN       127
 #define MAX_CHAR_QUEUE_LEN   256
 
@@ -164,11 +167,11 @@ int vfprintf(FILE*, char*, void*);
 #endif
 
 #ifndef MAX_IDENT_TABLE_LEN
-#define MAX_IDENT_TABLE_LEN  (4096+576)
+#define MAX_IDENT_TABLE_LEN  (4096+656)
 #endif
 
 #ifndef SYNTAX_STACK_MAX
-#define SYNTAX_STACK_MAX (2048+448)
+#define SYNTAX_STACK_MAX (2048+480)
 #endif
 
 #ifndef MAX_FILE_NAME_LEN
@@ -296,6 +299,8 @@ int vfprintf(FILE*, char*, void*);
 //#define tokLongDbl    0x86
 #define tokStructPtr  0x90
 #define tokTag        0x91
+#define tokMemberIdent 0x92
+#define tokEnumPtr    0x93
 
 #define FormatFlat      0
 #define FormatSegmented 1
@@ -409,8 +414,8 @@ void errorLongExpr(void);
 int FindSymbol(char* s);
 int SymType(int SynPtr);
 int FindTaggedDecl(char* s, int start, int* CurScope);
-#ifndef NO_TYPEDEF
-int FindTypedef(char* s, int* CurScope);
+#ifndef NO_TYPEDEF_ENUM
+int FindTypedef(char* s, int* CurScope, int forUse);
 #endif
 int GetDeclSize(int SyntaxPtr, int SizeForDeref);
 
@@ -488,6 +493,14 @@ int PrepDontSkipTokens = 1;
 int PrepStack[PREP_STACK_SIZE][2];
 int PrepSp = 0;
 
+// Data structures to support #pragma pack(...)
+#ifndef NO_PPACK
+#define PPACK_STACK_SIZE 16
+int PragmaPackValue;
+int PragmaPackValues[PPACK_STACK_SIZE];
+int PragmaPackSp = 0;
+#endif
+
 // expr.c data
 
 int ExprLevel = 0;
@@ -550,7 +563,9 @@ int CurFxnReturnExprTypeSynPtr = 0;
 int CurFxnEpilogLabel = 0;
 
 char* CurFxnName = NULL;
+#ifndef NO_FUNC_
 int CurFxnNameLabel = 0;
+#endif
 
 int ParseLevel = 0; // Parse level/scope (file:0, fxn:1+)
 int ParamLevel = 0; // 1+ if parsing params, 0 otherwise
@@ -1730,6 +1745,90 @@ int GetToken(void)
         continue;
       } // endof if (line)
 
+#ifndef NO_PPACK
+      if (!strcmp(TokenIdentName, "pragma"))
+      {
+        int canHaveNumber = 1, hadNumber = 0;
+
+        if (!PrepDontSkipTokens)
+        {
+          while (!strchr("\r\n", *p))
+            ShiftCharN(1);
+          continue;
+        }
+
+        SkipSpace(0);
+        GetIdent();
+        if (strcmp(TokenIdentName, "pack"))
+          errorDirective();
+        // TBD??? fail if inside a structure declaration
+        SkipSpace(0);
+        if (*p == '(')
+          ShiftCharN(1);
+        SkipSpace(0);
+
+        if (*p == 'p')
+        {
+          GetIdent();
+          if (!strcmp(TokenIdentName, "push"))
+          {
+            SkipSpace(0);
+            if (*p == ',')
+            {
+              ShiftCharN(1);
+              SkipSpace(0);
+              if (!isdigit(*p & 0xFFu) || GetNumber() != tokNumInt)
+                errorDirective();
+              hadNumber = 1;
+            }
+            if (PragmaPackSp >= PPACK_STACK_SIZE)
+              error("#pragma pack stack overflow\n");
+            PragmaPackValues[PragmaPackSp++] = PragmaPackValue;
+          }
+          else if (!strcmp(TokenIdentName, "pop"))
+          {
+            if (PragmaPackSp <= 0)
+              error("#pragma pack stack underflow\n");
+            PragmaPackValue = PragmaPackValues[--PragmaPackSp];
+          }
+          else
+            errorDirective();
+          SkipSpace(0);
+          canHaveNumber = 0;
+        }
+
+        if (canHaveNumber && isdigit(*p & 0xFFu))
+        {
+          if (GetNumber() != tokNumInt)
+            errorDirective();
+          hadNumber = 1;
+          SkipSpace(0);
+        }
+
+        if (hadNumber)
+        {
+          PragmaPackValue = GetTokenValueInt();
+          if (PragmaPackValue <= 0 ||
+              PragmaPackValue > SizeOfWord ||
+              PragmaPackValue & (PragmaPackValue - 1))
+            error("Invalid alignment value\n");
+        }
+        else if (canHaveNumber)
+        {
+          PragmaPackValue = SizeOfWord;
+        }
+
+        if (*p != ')')
+          errorDirective();
+        ShiftCharN(1);
+
+        SkipSpace(0);
+        if (!strchr("\r\n", *p))
+          errorDirective();
+        continue;
+      }
+#endif
+
 #ifndef NO_PREPROCESSOR
       if (!strcmp(TokenIdentName, "define"))
       {
@@ -2846,6 +2945,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       {
         synPtr = FindSymbol(ident);
       }
+
       if (synPtr < 0)
       {
         if ((*idx + 2 >= sp) || stack[*idx + 2][0] != ')')
@@ -2860,6 +2960,17 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
           PushSyntax(tokInt);
           synPtr = FindSymbol(ident);
         }
+      }
+
+      if (synPtr + 1 < SyntaxStackCnt &&
+          SyntaxStack[synPtr + 1][0] == tokNumInt)
+      {
+        // this is an enum constant
+        stack[*idx + 1][0] = tokNumInt;
+        s = stack[*idx + 1][1] = SyntaxStack[synPtr + 1][1];
+        *ExprTypeSynPtr = SymIntSynPtr;
+        *ConstExpr = 1;
+        break;
       }
 
       // DONE: this declaration is actually a type cast
@@ -3960,13 +4071,13 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
         // incomplete structure/union type
         errorOpType();
 
-      i += 5;
+      i += 5; // step inside the {} body of the struct/union
       while (c)
       {
         int t = SyntaxStack[i][0];
         c += (t == '(') - (t == ')') + (t == '{') - (t == '}');
         if (c == 1 &&
-            t == tokIdent && SyntaxStack[i][1] == member &&
+            t == tokMemberIdent && SyntaxStack[i][1] == member &&
             SyntaxStack[i + 1][0] == tokLocalOfs)
         {
           j = i;
@@ -4417,6 +4528,11 @@ void errorTagRedef(int ident)
   error("Redefinition of type tagged '%s'\n", IdentTable + ident);
 }
 
+void errorRedef(char* s)
+{
+  error("Redefinition of identifier '%s'\n", s);
+}
+
 void errorVarSize(void)
 {
   error("Variable(s) take(s) too much space\n");
@@ -4461,7 +4577,7 @@ int tsd[] =
 
 int TokenStartsDeclaration(int t, int params)
 {
-#ifndef NO_TYPEDEF
+#ifndef NO_TYPEDEF_ENUM
   int CurScope;
 #endif
   unsigned i;
@@ -4474,12 +4590,13 @@ int TokenStartsDeclaration(int t, int params)
 #ifdef CAN_COMPILE_32BIT
          (SizeOfWord != 2 && t == tokLong) ||
 #endif
-#ifndef NO_TYPEDEF
+#ifndef NO_TYPEDEF_ENUM
+         t == tokEnum ||
          (t == tokIdent &&
-          FindTypedef(GetTokenIdentName(), &CurScope) >= 0) ||
+          FindTypedef(GetTokenIdentName(), &CurScope, 1) >= 0) ||
 #endif
          (!params && (t == tokExtern ||
-#ifndef NO_TYPEDEF
+#ifndef NO_TYPEDEF_ENUM
                       t == tokTypedef ||
 #endif
                       t == tokStatic));
@@ -4535,20 +4652,21 @@ int FindSymbol(char* s)
 
   for (i = SyntaxStackCnt - 1; i >= 0; i--)
   {
-    if (SyntaxStack[i][0] == tokIdent &&
+    int t = SyntaxStack[i][0];
+    if (t == tokIdent &&
         !strcmp(IdentTable + SyntaxStack[i][1], s))
     {
       return i;
     }
 
-    if (SyntaxStack[i][0] == ')' || SyntaxStack[i][0] == '}')
+    if (t == ')')
     {
-      // Skip over the function params and structure/union declarations
+      // Skip over the function params
       int c = -1;
       while (c)
       {
-        int t = SyntaxStack[--i][0];
-        c += (t == '(') - (t == ')') + (t == '{') - (t == '}');
+        t = SyntaxStack[--i][0];
+        c += (t == '(') - (t == ')');
       }
     }
   }
@@ -4591,22 +4709,23 @@ int FindTaggedDecl(char* s, int start, int* CurScope)
 
   for (i = start; i >= 0; i--)
   {
-    if (SyntaxStack[i][0] == tokTag &&
+    int t = SyntaxStack[i][0];
+    if (t == tokTag &&
         !strcmp(IdentTable + SyntaxStack[i][1], s))
     {
       return i - 1;
     }
-    else if (SyntaxStack[i][0] == ')')
+    else if (t == ')')
     {
       // Skip over the function params
       int c = -1;
       while (c)
       {
-        int t = SyntaxStack[--i][0];
+        t = SyntaxStack[--i][0];
         c += (t == '(') - (t == ')');
       }
     }
-    else if (SyntaxStack[i][0] == '#')
+    else if (t == '#')
     {
       // the scope has changed to the outer scope
       *CurScope = 0;
@@ -4616,8 +4735,9 @@ int FindTaggedDecl(char* s, int start, int* CurScope)
   return -1;
 }
 
-#ifndef NO_TYPEDEF
-int FindTypedef(char* s, int* CurScope)
+#ifndef NO_TYPEDEF_ENUM
+// TBD??? rename this fxn? Cleanup/unify finding functions?
+int FindTypedef(char* s, int* CurScope, int forUse)
 {
   int i;
 
@@ -4625,12 +4745,30 @@ int FindTypedef(char* s, int* CurScope)
 
   for (i = SyntaxStackCnt - 1; i >= 0; i--)
   {
-    if (SyntaxStack[i][0] == tokTypedef &&
+    int t = SyntaxStack[i][0];
+    if ((t == tokTypedef || t == tokIdent) &&
         !strcmp(IdentTable + SyntaxStack[i][1], s))
     {
+      // if the closest declaration isn't from typedef,
+      // (i.e. if it's a variable/function declaration),
+      // then the type is unknown for the purpose of
+      // declaring a variable of this type
+      if (forUse && t == tokIdent)
+        return -1;
       return i;
     }
-    else if (SyntaxStack[i][0] == '#')
+
+    if (t == ')')
+    {
+      // Skip over the function params
+      int c = -1;
+      while (c)
+      {
+        t = SyntaxStack[--i][0];
+        c += (t == '(') - (t == ')');
+      }
+    }
+    else if (t == '#')
     {
       // the scope has changed to the outer scope
       *CurScope = 0;
@@ -5003,7 +5141,7 @@ void AddFxnParamSymbols(int SyntaxPtr);
 
 int ParseBase(int tok, int base[2])
 {
-#ifndef NO_TYPEDEF
+#ifndef NO_TYPEDEF_ENUM
   int CurScope;
 #endif
   int valid = 1;
@@ -5073,7 +5211,12 @@ int ParseBase(int tok, int base[2])
         tok = GetToken();
     }
   }
-  else if (tok == tokStruct || tok == tokUnion)
+  else if (tok == tokStruct ||
+           tok == tokUnion
+#ifndef NO_TYPEDEF_ENUM
+           || tok == tokEnum
+#endif
+          )
   {
     int structType = tok;
     int empty = 1;
@@ -5084,14 +5227,14 @@ int ParseBase(int tok, int base[2])
 
     if (tok == tokIdent)
     {
-      // this is a structure/union tag
+      // this is a structure/union/enum tag
       gotTag = 1;
       declPtr = FindTaggedDecl(GetTokenIdentName(), SyntaxStackCnt - 1, &curScope);
       tagIdent = AddIdent(GetTokenIdentName());
 
       if (declPtr >= 0)
       {
-        // Within the same scope we can't declare a union and a structure
+        // Within the same scope we can't declare more than one union, structure or enum
         // with the same tag.
         // There's one common tag namespace for structures, unions and enumerations.
         if (curScope && SyntaxStack[declPtr][0] != structType)
@@ -5099,7 +5242,7 @@ int ParseBase(int tok, int base[2])
       }
       else if (ParamLevel)
       {
-        // structure/union declarations aren't supported in function parameters
+        // structure/union/enum declarations aren't supported in function parameters
         errorDecl();
       }
 
@@ -5107,7 +5250,7 @@ int ParseBase(int tok, int base[2])
     }
     else
     {
-      // structure/union declarations aren't supported in expressions
+      // structure/union/enum declarations aren't supported in expressions
       if (ExprLevel)
         errorDecl();
       PushSyntax(structType);
@@ -5118,60 +5261,141 @@ int ParseBase(int tok, int base[2])
     {
       unsigned structInfo[4], sz, alignment, tmp;
 
-      // structure/union declarations aren't supported in expressions and function parameters
+      // structure/union/enum declarations aren't supported in expressions and function parameters
       if (ExprLevel || ParamLevel)
         errorDecl();
 
       if (gotTag)
       {
-        // Cannot redefine a tagged structure/union within the same scope
+        // Cannot redefine a tagged structure/union/enum within the same scope
         if (declPtr >= 0 &&
             curScope &&
-            declPtr + 2 < SyntaxStackCnt &&
-            SyntaxStack[declPtr + 2][0] == tokSizeof)
+            ((declPtr + 2 < SyntaxStackCnt && SyntaxStack[declPtr + 2][0] == tokSizeof)
+#ifndef NO_TYPEDEF_ENUM
+             || structType == tokEnum
+#endif
+            ))
           errorTagRedef(tagIdent);
 
         PushSyntax(structType);
         PushSyntax2(tokTag, tagIdent);
       }
 
-      structInfo[0] = structType;
-      structInfo[1] = 1; // initial member alignment
-      structInfo[2] = 0; // initial member offset
-      structInfo[3] = 0; // initial max member size (for unions)
-
-      PushSyntax(tokSizeof); // 0 = initial structure/union size, to be updated
-      PushSyntax2(tokSizeof, 1); // 1 = initial structure/union alignment, to be updated
-
-      PushSyntax('{');
-
-      tok = GetToken();
-      while (tok != '}')
+#ifndef NO_TYPEDEF_ENUM
+      if (structType == tokEnum)
       {
-        if (!TokenStartsDeclaration(tok, 1))
+        int val = 0;
+        int CurScope;
+
+        tok = GetToken();
+        while (tok != '}')
+        {
+          char* s;
+
+          if (tok != tokIdent)
+            errorUnexpectedToken(tok);
+
+          s = GetTokenIdentName();
+          if (FindTypedef(s, &CurScope, 0) >= 0 && CurScope)
+            errorRedef(s);
+
+          PushSyntax2(tokIdent, AddIdent(s));
+
+          empty = 0;
+
+          tok = GetToken();
+          if (tok == '=')
+          {
+            int gotUnary, synPtr, constExpr;
+            int oldssp, oldesp, undoIdents;
+
+            oldssp = SyntaxStackCnt;
+            oldesp = sp;
+            undoIdents = IdentTableLen;
+
+            tok = ParseExpr(GetToken(), &gotUnary, &synPtr, &constExpr, &val, 1, 0);
+
+            IdentTableLen = undoIdents; // remove all temporary identifier names from e.g. "sizeof"
+            SyntaxStackCnt = oldssp; // undo any temporary declarations from e.g. "sizeof" in the expression
+            sp = oldesp;
+
+            if (!gotUnary)
+              errorUnexpectedToken(tok);
+            if (!constExpr)
+              errorNotConst();
+          }
+
+          PushSyntax2(tokNumInt, val);
+          val = uint2int(val + 1u);
+
+          if (tok == ',')
+            tok = GetToken();
+          else if (tok != '}')
+            errorUnexpectedToken(tok);
+        }
+
+        if (empty)
           errorDecl();
-        tok = ParseDecl(tok, structInfo, 0);
-        empty = 0;
+
+        base[0] = tokEnumPtr;
+        base[1] = typePtr;
+
+        tok = GetToken();
+        return tok;
       }
+      else
+#endif
+      {
+        structInfo[0] = structType;
+        structInfo[1] = 1; // initial member alignment
+        structInfo[2] = 0; // initial member offset
+        structInfo[3] = 0; // initial max member size (for unions)
 
-      PushSyntax('}');
+        PushSyntax(tokSizeof); // 0 = initial structure/union size, to be updated
+        PushSyntax2(tokSizeof, 1); // 1 = initial structure/union alignment, to be updated
 
-      // Update structure/union alignment
-      alignment = structInfo[1];
-      SyntaxStack[typePtr + 3][1] = alignment;
+        PushSyntax('{');
 
-      // Update structure/union size and include trailing padding if needed
-      sz = structInfo[2] + structInfo[3];
-      tmp = sz;
-      sz = (sz + alignment - 1) & ~(alignment - 1);
-      if (sz < tmp || sz != truncUint(sz))
-        errorVarSize();
-      SyntaxStack[typePtr + 2][1] = uint2int(sz);
+        tok = GetToken();
+        while (tok != '}')
+        {
+          if (!TokenStartsDeclaration(tok, 1))
+            errorUnexpectedToken(tok);
+          tok = ParseDecl(tok, structInfo, 0);
+          empty = 0;
+        }
 
-      tok = GetToken();
+        PushSyntax('}');
+
+        // Update structure/union alignment
+        alignment = structInfo[1];
+        SyntaxStack[typePtr + 3][1] = alignment;
+
+        // Update structure/union size and include trailing padding if needed
+        sz = structInfo[2] + structInfo[3];
+        tmp = sz;
+        sz = (sz + alignment - 1) & ~(alignment - 1);
+        if (sz < tmp || sz != truncUint(sz))
+          errorVarSize();
+        SyntaxStack[typePtr + 2][1] = uint2int(sz);
+
+        tok = GetToken();
+      }
     }
     else
     {
+#ifndef NO_TYPEDEF_ENUM
+      if (structType == tokEnum)
+      {
+        if (!gotTag || declPtr < 0)
+          errorDecl(); // TBD!!! different error when enum tag is not found
+
+        base[0] = tokEnumPtr;
+        base[1] = declPtr;
+        return tok;
+      }
+#endif
+
       if (gotTag)
       {
         if (declPtr >= 0 &&
@@ -5216,9 +5440,9 @@ int ParseBase(int tok, int base[2])
         }
     }
   }
-#ifndef NO_TYPEDEF
+#ifndef NO_TYPEDEF_ENUM
   else if (tok == tokIdent &&
-           (base[1] = FindTypedef(GetTokenIdentName(), &CurScope)) >= 0)
+           (base[1] = FindTypedef(GetTokenIdentName(), &CurScope, 1)) >= 0)
   {
     base[0] = tokTypedef;
     tok = GetToken();
@@ -5355,7 +5579,7 @@ int ParseDerived(int tok)
 
 void PushBase(int base[2])
 {
-#ifndef NO_TYPEDEF
+#ifndef NO_TYPEDEF_ENUM
   if (base[0] == tokTypedef)
   {
     int ptr = base[1];
@@ -5418,12 +5642,12 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast)
   int lastSyntaxPtr;
   int external = tok == tokExtern;
   int Static = tok == tokStatic;
-#ifndef NO_TYPEDEF
+#ifndef NO_TYPEDEF_ENUM
   int typeDef = tok == tokTypedef;
 #endif
 
   if (external ||
-#ifndef NO_TYPEDEF
+#ifndef NO_TYPEDEF_ENUM
       typeDef ||
 #endif
       Static)
@@ -5458,7 +5682,7 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast)
       {
         if (SyntaxStack[SyntaxStackCnt - 2][0] == tokIdent &&
             !(cast
-#ifndef NO_TYPEDEF
+#ifndef NO_TYPEDEF_ENUM
               || typeDef
 #endif
              ))
@@ -5480,45 +5704,65 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast)
 
       if (!ExprLevel &&
           !external && !Static &&
-#ifndef NO_TYPEDEF
+#ifndef NO_TYPEDEF_ENUM
           !typeDef &&
 #endif
           !structInfo &&
           !strcmp(IdentTable + SyntaxStack[lastSyntaxPtr][1], "<something>") &&
-          SyntaxStack[lastSyntaxPtr + 1][0] == tokStructPtr &&
           tok == ';')
       {
-        // This is either an incomplete tagged structure/union declaration, e.g. "struct sometag;",
-        // or a tag-less complete structure/union declaration, e.g. "struct { ... };", without an instance variable
-        int declPtr, curScope;
-        int j = SyntaxStack[lastSyntaxPtr + 1][1];
-
-        if (j + 2 < SyntaxStackCnt &&
-            IdentTable[SyntaxStack[j + 1][1]] == '<' && // without tag
-            SyntaxStack[j + 2][0] == tokSizeof) // but with the {} "body"
-          errorDecl();
-
-        // If a structure/union with this tag has been declared in an outer scope,
-        // this new declaration should override it
-        declPtr = FindTaggedDecl(IdentTable + SyntaxStack[j + 1][1], lastSyntaxPtr - 1, &curScope);
-        if (declPtr >= 0 && !curScope)
+        if (SyntaxStack[lastSyntaxPtr + 1][0] == tokStructPtr)
         {
-          // If that's the case, unbind this declaration from the old declaration
-          // and make it a new incomplete declaration
-          PushSyntax(SyntaxStack[j][0]); // tokStruct or tokUnion
-          PushSyntax2(tokTag, SyntaxStack[j + 1][1]);
-          SyntaxStack[lastSyntaxPtr + 1][1] = SyntaxStackCnt - 2;
-        }
+          // This is either an incomplete tagged structure/union declaration, e.g. "struct sometag;",
+          // or a tagged complete structure/union declaration, e.g. "struct sometag { ... };", without an instance variable,
+          // or an untagged complete structure/union declaration, e.g. "struct { ... };", without an instance variable
+          int declPtr, curScope;
+          int j = SyntaxStack[lastSyntaxPtr + 1][1];
 
-        return GetToken();
+          if (j + 2 < SyntaxStackCnt &&
+              IdentTable[SyntaxStack[j + 1][1]] == '<' && // without tag
+              SyntaxStack[j + 2][0] == tokSizeof) // but with the {} "body"
+            errorDecl();
+
+          // If a structure/union with this tag has been declared in an outer scope,
+          // this new declaration should override it
+          declPtr = FindTaggedDecl(IdentTable + SyntaxStack[j + 1][1], lastSyntaxPtr - 1, &curScope);
+          if (declPtr >= 0 && !curScope)
+          {
+            // If that's the case, unbind this declaration from the old declaration
+            // and make it a new incomplete declaration
+            PushSyntax(SyntaxStack[j][0]); // tokStruct or tokUnion
+            PushSyntax2(tokTag, SyntaxStack[j + 1][1]);
+            SyntaxStack[lastSyntaxPtr + 1][1] = SyntaxStackCnt - 2;
+          }
+          return GetToken();
+        }
+#ifndef NO_TYPEDEF_ENUM
+        else if (SyntaxStack[lastSyntaxPtr + 1][0] == tokEnumPtr)
+        {
+          int j = SyntaxStack[lastSyntaxPtr + 1][1];
+          if (IdentTable[SyntaxStack[j + 1][1]] == '<') // without tag
+            errorDecl();
+          return GetToken();
+        }
+#endif
       }
+
+#ifndef NO_TYPEDEF_ENUM
+      // Convert enums into ints
+      if (SyntaxStack[SyntaxStackCnt - 1][0] == tokEnumPtr)
+      {
+        SyntaxStack[SyntaxStackCnt - 1][0] = tokInt;
+        SyntaxStack[SyntaxStackCnt - 1][1] = 0;
+      }
+#endif
 
       // Structure/union members can't be initialized nor be functions nor
       // be incompletely typed arrays inside structure/union declarations
       if (structInfo && (tok == '=' || isFxn || tok == '{' || isIncompleteArr))
         errorDecl();
 
-#ifndef NO_TYPEDEF
+#ifndef NO_TYPEDEF_ENUM
       if (typeDef && (tok == '=' || tok == '{'))
         errorDecl();
 #endif
@@ -5570,7 +5814,7 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast)
         errorInit();
 
       if (isIncompleteArr && !(external ||
-#ifndef NO_TYPEDEF
+#ifndef NO_TYPEDEF_ENUM
                                typeDef ||
 #endif
                                tok == '='))
@@ -5594,7 +5838,7 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast)
       {
         // Disallow nameless variables, prototypes, structure/union members and typedefs.
         if (structInfo ||
-#ifndef NO_TYPEDEF
+#ifndef NO_TYPEDEF_ENUM
             typeDef ||
 #endif
             !ExprLevel)
@@ -5608,7 +5852,7 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast)
       }
 
       if (!isFxn
-#ifndef NO_TYPEDEF
+#ifndef NO_TYPEDEF_ENUM
           && !typeDef
 #endif
          )
@@ -5616,7 +5860,7 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast)
         int sz = GetDeclSize(lastSyntaxPtr, 0);
 
         if (!sz && !isIncompleteArr && !ExprLevel) // incomplete type
-          errorDecl();
+          errorDecl(); // TBD!!! different error when struct/union tag is not found
 
         elementSz = sz;
         if (isArray)
@@ -5627,21 +5871,25 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast)
         }
 
         alignment = GetDeclAlignment(lastSyntaxPtr);
-        //#pragma pack(1):
-        //alignment = 1;
 
         if (structInfo)
         {
           unsigned tmp;
+          unsigned newAlignment = alignment;
+#ifndef NO_PPACK
+          if (alignment > PragmaPackValue + 0u)
+            newAlignment = PragmaPackValue;
+#endif
           // Update structure/union alignment
-          if (structInfo[1] < alignment)
-            structInfo[1] = alignment;
+          if (structInfo[1] < newAlignment)
+            structInfo[1] = newAlignment;
           // Align structure member
           tmp = structInfo[2];
-          structInfo[2] = (structInfo[2] + alignment - 1) & ~(alignment - 1);
+          structInfo[2] = (structInfo[2] + newAlignment - 1) & ~(newAlignment - 1);
           if (structInfo[2] < tmp || structInfo[2] != truncUint(structInfo[2]))
             errorVarSize();
-          // Insert a local var offset token
+          // Change tokIdent to tokMemberIdent and insert a local var offset token
+          SyntaxStack[lastSyntaxPtr][0] = tokMemberIdent;
           InsertSyntax2(lastSyntaxPtr + 1, tokLocalOfs, uint2int(structInfo[2]));
 
           // Advance member offset for structures, keep it zero for unions
@@ -5695,7 +5943,7 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast)
         return tok;
 
       if ((globalAllocSize || isIncompleteArr) &&
-#ifndef NO_TYPEDEF
+#ifndef NO_TYPEDEF_ENUM
           !typeDef &&
 #endif
           !external)
@@ -5708,13 +5956,14 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast)
         GenLabel(IdentTable + SyntaxStack[lastSyntaxPtr][1], Static);
       }
 
-#ifndef NO_TYPEDEF
+#ifndef NO_TYPEDEF_ENUM
       if (typeDef)
       {
         int CurScope;
         char* s = IdentTable + SyntaxStack[lastSyntaxPtr][1];
-        if (FindTypedef(s, &CurScope) >= 0 && CurScope)
-          error("Redefinition of type '%s'\n", s);
+        SyntaxStack[lastSyntaxPtr][0] = 0; // hide tokIdent for now
+        if (FindTypedef(s, &CurScope, 0) >= 0 && CurScope)
+          errorRedef(s);
         SyntaxStack[lastSyntaxPtr][0] = tokTypedef; // change tokIdent to tokTypedef
       }
       else
@@ -6119,6 +6368,15 @@ void ParseFxnParams(int tok)
 
     /* base type */
     PushBase(base);
+
+#ifndef NO_TYPEDEF_ENUM
+      // Convert enums into ints
+      if (SyntaxStack[SyntaxStackCnt - 1][0] == tokEnumPtr)
+      {
+        SyntaxStack[SyntaxStackCnt - 1][0] = tokInt;
+        SyntaxStack[SyntaxStackCnt - 1][1] = 0;
+      }
+#endif
 
     /* Decay arrays to pointers */
     lastSyntaxPtr++; /* skip name */
@@ -7074,6 +7332,9 @@ int main(int argc, char** argv)
   puts2(FileHeader);
 
   // compile
+#ifndef NO_PPACK
+  PragmaPackValue = SizeOfWord;
+#endif
   ParseBlock(NULL, 0);
 
   GenFin();
