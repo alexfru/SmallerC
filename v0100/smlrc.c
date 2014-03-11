@@ -1133,7 +1133,7 @@ void SkipSpace(int SkipNewLines)
 
   while (*p != '\0')
   {
-    if (strchr(" \t\f\v", *p) != NULL)
+    if (strchr(" \t\f\v", *p))
     {
       ShiftCharN(1);
       continue;
@@ -1508,7 +1508,7 @@ int GetTokenInner(void)
   int ch = *p;
 
   // these single-character tokens/operators need no further processing
-  if (strchr(",;:()[]{}~?", ch) != NULL)
+  if (strchr(",;:()[]{}~?", ch))
   {
     ShiftCharN(1);
     return ch;
@@ -2187,7 +2187,7 @@ int exprUnary(int tok, int* gotUnary, int commaSeparator, int argOfSizeOf)
   int decl = 0;
   *gotUnary = 0;
 
-  if (isop(tok) && (isunary(tok) || strchr("&*+-", tok) != NULL))
+  if (isop(tok) && (isunary(tok) || strchr("&*+-", tok)))
   {
     int lastTok = tok;
     tok = exprUnary(GetToken(), gotUnary, commaSeparator, lastTok == tokSizeof);
@@ -2543,7 +2543,8 @@ void decayArray(int* ExprTypeSynPtr, int arithmetic)
       if (SyntaxStack[-*ExprTypeSynPtr][0] == tokVoid)
         //error("decayArray(): cannot do pointer arithmetic on a pointer to 'void'\n");
         errorUnexpectedVoid();
-      if (SyntaxStack[-*ExprTypeSynPtr][0] == '(')
+      if (SyntaxStack[-*ExprTypeSynPtr][0] == '(' ||
+          !GetDeclSize(-*ExprTypeSynPtr, 0))
         //error("decayArray(): cannot do pointer arithmetic on a pointer to a function\n");
         errorOpType();
     }
@@ -4323,7 +4324,7 @@ void DetermineVaListType(void)
 int puts2(char* s)
 {
   int res;
-  if (OutFile != NULL)
+  if (OutFile)
   {
     // Turbo C++ 1.01's fputs() returns EOF if s is empty, which is wrong.
     // Hence the workaround.
@@ -4354,7 +4355,7 @@ int printf2(char* format, ...)
 #endif
 
 #ifndef __SMALLER_C__
-  if (OutFile != NULL)
+  if (OutFile)
     res = vfprintf(OutFile, format, vl);
   else
     res = vprintf(format, vl);
@@ -4363,7 +4364,7 @@ int printf2(char* format, ...)
   if (VaListType == 1)
   {
     // va_list is a pointer
-    if (OutFile != NULL)
+    if (OutFile)
       res = vfprintf(OutFile, format, vl);
     else
       res = vprintf(format, vl);
@@ -4371,7 +4372,7 @@ int printf2(char* format, ...)
   else // if (VaListType == 2)
   {
     // va_list is a one-element array containing a pointer
-    if (OutFile != NULL)
+    if (OutFile)
       res = vfprintf(OutFile, format, &vl);
     else
       res = vprintf(format, &vl);
@@ -4417,7 +4418,7 @@ void error(char* format, ...)
 
   GenStartCommentLine(); printf2("Compilation failed.\n");
 
-  if (OutFile != NULL)
+  if (OutFile)
     fclose(OutFile);
 
   printf("Error in \"%s\" (%d:%d)\n", FileNames[fidx], LineNo, LinePos);
@@ -6951,7 +6952,7 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
 
       brkCntSwchTarget[0] = LabelCnt++; // break target
       brkCntSwchTarget[1] = 0; // continue target
-      if (BrkCntSwchTarget != NULL)
+      if (BrkCntSwchTarget)
       {
         // preserve the continue target
         brkCntSwchTarget[1] = BrkCntSwchTarget[1]; // continue target
@@ -7351,7 +7352,7 @@ int main(int argc, char** argv)
     printf("%d warnings\n", warnCnt);
   GenStartCommentLine(); printf2("Compilation succeeded.\n");
 
-  if (OutFile != NULL)
+  if (OutFile)
     fclose(OutFile);
 
   return 0;
