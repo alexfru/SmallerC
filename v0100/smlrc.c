@@ -297,6 +297,7 @@ int vfprintf(FILE*, char*, void*);
 //#define tokLongLong   0x84
 //#define tokULongLong  0x85
 //#define tokLongDbl    0x86
+#define tokGotoLabel  0x8F
 #define tokStructPtr  0x90
 #define tokTag        0x91
 #define tokMemberIdent 0x92
@@ -387,7 +388,7 @@ void ins(int pos, int v);
 void del(int pos, int cnt);
 
 int TokenStartsDeclaration(int t, int params);
-int ParseDecl(int tok, unsigned structInfo[4], int cast);
+int ParseDecl(int tok, unsigned structInfo[4], int cast, int label);
 
 void ShiftChar(void);
 int puts2(char*);
@@ -2275,7 +2276,7 @@ int exprUnary(int tok, int* gotUnary, int commaSeparator, int argOfSizeOf)
         char s[1 + (2 + CHAR_BIT * sizeof lbl) / 3 + sizeof "<something>" - 1];
         char *p = s + sizeof s;
 
-        tok = ParseDecl(tok, NULL, !argOfSizeOf);
+        tok = ParseDecl(tok, NULL, !argOfSizeOf, 0);
         if (tok != ')')
           //error("exprUnary(): ')' expected, unexpected token %s\n", GetTokenName(tok));
           errorUnexpectedToken(tok);
@@ -2963,6 +2964,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
         }
       }
 
+#ifndef NO_TYPEDEF_ENUM
       if (synPtr + 1 < SyntaxStackCnt &&
           SyntaxStack[synPtr + 1][0] == tokNumInt)
       {
@@ -2973,6 +2975,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
         *ConstExpr = 1;
         break;
       }
+#endif
 
       // DONE: this declaration is actually a type cast
       if (!strncmp(IdentTable + SyntaxStack[synPtr][1], "(something", sizeof "(something)" - 1 - 1))
@@ -4124,6 +4127,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
 
 int ParseExpr(int tok, int* GotUnary, int* ExprTypeSynPtr, int* ConstExpr, int* ConstVal, int commaSeparator, int label)
 {
+  int identFirst = tok == tokIdent;
   *ConstVal = *ConstExpr = 0;
   *ExprTypeSynPtr = SymVoidSynPtr;
 
@@ -4139,10 +4143,11 @@ int ParseExpr(int tok, int* GotUnary, int* ExprTypeSynPtr, int* ConstExpr, int* 
     //error("ParseExpr(): Unexpected token %s\n", GetTokenName(tok));
     errorUnexpectedToken(tok);
 
-  if (label && tok == ':' && *GotUnary && sp == 1 && stack[sp - 1][0] == tokIdent)
+  if (label && identFirst && tok == ':' && *GotUnary && sp == 1 && stack[sp - 1][0] == tokIdent)
   {
+    // This is a label.
     ExprLevel--;
-    return tokGoto;
+    return tokGotoLabel;
   }
 
   if (*GotUnary)
@@ -4737,7 +4742,7 @@ int FindTaggedDecl(char* s, int start, int* CurScope)
 }
 
 #ifndef NO_TYPEDEF_ENUM
-// TBD??? rename this fxn? Cleanup/unify finding functions?
+// TBD??? rename this fxn? Cleanup/unify search functions?
 int FindTypedef(char* s, int* CurScope, int forUse)
 {
   int i;
@@ -5292,6 +5297,7 @@ int ParseBase(int tok, int base[2])
         while (tok != '}')
         {
           char* s;
+          int ident;
 
           if (tok != tokIdent)
             errorUnexpectedToken(tok);
@@ -5300,7 +5306,7 @@ int ParseBase(int tok, int base[2])
           if (FindTypedef(s, &CurScope, 0) >= 0 && CurScope)
             errorRedef(s);
 
-          PushSyntax2(tokIdent, AddIdent(s));
+          ident = AddIdent(s);
 
           empty = 0;
 
@@ -5326,6 +5332,7 @@ int ParseBase(int tok, int base[2])
               errorNotConst();
           }
 
+          PushSyntax2(tokIdent, ident);
           PushSyntax2(tokNumInt, val);
           val = uint2int(val + 1u);
 
@@ -5362,7 +5369,7 @@ int ParseBase(int tok, int base[2])
         {
           if (!TokenStartsDeclaration(tok, 1))
             errorUnexpectedToken(tok);
-          tok = ParseDecl(tok, structInfo, 0);
+          tok = ParseDecl(tok, structInfo, 0, 0);
           empty = 0;
         }
 
@@ -5637,7 +5644,7 @@ void PushBase(int base[2])
 // DONE: support simple non-array initializations with string literals
 // DONE: support basic 1-d array initialization
 // DONE: global/static data allocations
-int ParseDecl(int tok, unsigned structInfo[4], int cast)
+int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
 {
   int base[2];
   int lastSyntaxPtr;
@@ -5659,6 +5666,15 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast)
       errorUnexpectedToken(tok);
   }
   tok = ParseBase(tok, base);
+
+#ifndef NO_TYPEDEF_ENUM
+  if (label && tok == ':' && base[0] == tokTypedef &&
+      !(external | Static | typeDef) && ParseLevel > 0)
+  {
+    // This is a label.
+    return tokGotoLabel;
+  }
+#endif
 
   for (;;)
   {
@@ -5741,9 +5757,6 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast)
 #ifndef NO_TYPEDEF_ENUM
         else if (SyntaxStack[lastSyntaxPtr + 1][0] == tokEnumPtr)
         {
-          int j = SyntaxStack[lastSyntaxPtr + 1][1];
-          if (IdentTable[SyntaxStack[j + 1][1]] == '<') // without tag
-            errorDecl();
           return GetToken();
         }
 #endif
@@ -7093,7 +7106,7 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
     else
     {
       tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0, 1);
-      if (tok == tokGoto)
+      if (tok == tokGotoLabel)
       {
         // found a label
 #ifndef NO_ANNOTATIONS
@@ -7135,7 +7148,20 @@ int ParseBlock(int BrkCntSwchTarget[4], int switchBody)
 
     if (TokenStartsDeclaration(tok, 0))
     {
-      tok = ParseDecl(tok, NULL, 0);
+      tok = ParseDecl(tok, NULL, 0, 1);
+#ifndef NO_TYPEDEF_ENUM
+      if (tok == tokGotoLabel)
+      {
+        // found a label
+#ifndef NO_ANNOTATIONS
+        GenStartCommentLine(); printf2("%s:\n", GetTokenIdentName());
+#endif
+        GenNumLabel(AddGotoLabel(GetTokenIdentName(), 1));
+        tok = GetToken();
+        // a statement is needed after "label:"
+        tok = ParseStatement(tok, BrkCntSwchTarget, switchBody);
+      }
+#endif
     }
     else if (ParseLevel > 0 || tok == tok_Asm)
     {
