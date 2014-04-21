@@ -270,9 +270,8 @@ _delay:
 L40:
 ; loc     milliseconds : (@4): unsigned
 ; loc     tcnt : (@-2): unsigned
-; =
-; RPN'ized expression: "milliseconds 27 + 55 / "
-; Expanded expression: "(@4) *(2) 27 + 55 /u "
+; RPN'ized expression: "tcnt milliseconds 27 + 55 / = "
+; Expanded expression: "(@-2) (@4) *(2) 27 + 55 /u =(2) "
 ; Fused expression:    "+ *(@4) 27 /u ax 55 =(170) *(@-2) ax "
 	mov	ax, [bp+4]
 	add	ax, 27
@@ -382,9 +381,8 @@ L53:
 ; loc     chr : (@10): unsigned
 ; loc     color : (@12): unsigned
 ; loc     ofs : (@-2): unsigned
-; =
-; RPN'ized expression: "y 40 * x + 2 * "
-; Expanded expression: "(@6) *(2) 40 * (@4) *(2) + 2 * "
+; RPN'ized expression: "ofs y 40 * x + 2 * = "
+; Expanded expression: "(@-2) (@6) *(2) 40 * (@4) *(2) + 2 * =(2) "
 ; Fused expression:    "* *(@6) 40 + ax *(@4) * ax 2 =(170) *(@-2) ax "
 	mov	ax, [bp+6]
 	imul	ax, ax, 40
@@ -392,9 +390,8 @@ L53:
 	imul	ax, ax, 2
 	mov	[bp-2], ax
 ; loc     v : (@-4): unsigned
-; =
-; RPN'ized expression: "color 8 << chr | "
-; Expanded expression: "(@12) *(2) 8 << (@10) *(2) | "
+; RPN'ized expression: "v color 8 << chr | = "
+; Expanded expression: "(@-4) (@12) *(2) 8 << (@10) *(2) | =(2) "
 ; Fused expression:    "<< *(@12) 8 | ax *(@10) =(170) *(@-4) ax "
 	mov	ax, [bp+12]
 	shl	ax, 8
@@ -452,9 +449,8 @@ L59:
 ; loc     chr : (@10): unsigned
 ; loc     color : (@12): unsigned
 ; loc     ofs : (@-2): unsigned
-; =
-; RPN'ized expression: "y 40 * x + 2 * "
-; Expanded expression: "(@6) *(2) 40 * (@4) *(2) + 2 * "
+; RPN'ized expression: "ofs y 40 * x + 2 * = "
+; Expanded expression: "(@-2) (@6) *(2) 40 * (@4) *(2) + 2 * =(2) "
 ; Fused expression:    "* *(@6) 40 + ax *(@4) * ax 2 =(170) *(@-2) ax "
 	mov	ax, [bp+6]
 	imul	ax, ax, 40
@@ -462,9 +458,8 @@ L59:
 	imul	ax, ax, 2
 	mov	[bp-2], ax
 ; loc     v : (@-4): unsigned
-; =
-; RPN'ized expression: "color 8 << chr | "
-; Expanded expression: "(@12) *(2) 8 << (@10) *(2) | "
+; RPN'ized expression: "v color 8 << chr | = "
+; Expanded expression: "(@-4) (@12) *(2) 8 << (@10) *(2) | =(2) "
 ; Fused expression:    "<< *(@12) 8 | ax *(@10) =(170) *(@-4) ax "
 	mov	ax, [bp+12]
 	shl	ax, 8
@@ -632,9 +627,8 @@ L73:
 ; loc     s : (@8): * char
 ; loc     color : (@10): unsigned
 ; loc     ofs : (@-2): unsigned
-; =
-; RPN'ized expression: "y 40 * x + 2 * "
-; Expanded expression: "(@6) *(2) 40 * (@4) *(2) + 2 * "
+; RPN'ized expression: "ofs y 40 * x + 2 * = "
+; Expanded expression: "(@-2) (@6) *(2) 40 * (@4) *(2) + 2 * =(2) "
 ; Fused expression:    "* *(@6) 40 + ax *(@4) * ax 2 =(170) *(@-2) ax "
 	mov	ax, [bp+6]
 	imul	ax, ax, 40
@@ -655,9 +649,8 @@ L77:
 	je	L78
 ; {
 ; loc         v : (@-4): unsigned
-; =
-; RPN'ized expression: "color 8 << s ++p *u | "
-; Expanded expression: "(@10) *(2) 8 << (@8) ++p(2) *(-1) | "
+; RPN'ized expression: "v color 8 << s ++p *u | = "
+; Expanded expression: "(@-4) (@10) *(2) 8 << (@8) ++p(2) *(-1) | =(2) "
 ; Fused expression:    "<< *(@10) 8 push-ax ++p(2) *(@8) | *sp *ax =(170) *(@-4) ax "
 	mov	ax, [bp+10]
 	shl	ax, 8
@@ -940,10 +933,8 @@ L108:
 L109:
 ; {
 ; loc         bit : (@-2): unsigned
-; =
-; RPN'ized expression: "0 "
-; Expanded expression: "0 "
-; Expression value: 0
+; RPN'ized expression: "bit 0 = "
+; Expanded expression: "(@-2) 0 =(2) "
 ; Fused expression:    "=(170) *(@-2) 0 "
 	mov	ax, 0
 	mov	[bp-2], ax
@@ -1650,10 +1641,8 @@ L184:
 L182:
 ; {
 ; loc             bit : (@-6): unsigned
-; =
-; RPN'ized expression: "0 "
-; Expanded expression: "0 "
-; Expression value: 0
+; RPN'ized expression: "bit 0 = "
+; Expanded expression: "(@-6) 0 =(2) "
 ; Fused expression:    "=(170) *(@-6) 0 "
 	mov	ax, 0
 	mov	[bp-6], ax
@@ -1894,7 +1883,7 @@ L123:
 	jmp	L122
 
 ; Syntax/declaration table/stack:
-; Bytes used: 1752/20224
+; Bytes used: 1752/20736
 
 
 ; Macro table:

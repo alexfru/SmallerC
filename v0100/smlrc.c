@@ -163,7 +163,7 @@ int vfprintf(FILE*, char*, void*);
 #endif
 
 #ifndef MAX_STRING_TABLE_LEN
-#define MAX_STRING_TABLE_LEN 512
+#define MAX_STRING_TABLE_LEN (512+128)
 #endif
 
 #ifndef MAX_IDENT_TABLE_LEN
@@ -171,7 +171,7 @@ int vfprintf(FILE*, char*, void*);
 #endif
 
 #ifndef SYNTAX_STACK_MAX
-#define SYNTAX_STACK_MAX (2048+480)
+#define SYNTAX_STACK_MAX (2048+512+32)
 #endif
 
 #ifndef MAX_FILE_NAME_LEN
@@ -339,7 +339,9 @@ int GetTokenValueStringLength(void);
 char* GetTokenIdentName(void);
 
 #ifndef NO_PREPROCESSOR
+#ifndef NO_ANNOTATIONS
 void DumpMacroTable(void);
+#endif
 #endif
 
 void PurgeStringTable(void);
@@ -348,7 +350,9 @@ char* FindString(int label);
 
 int AddIdent(char* name);
 int FindIdent(char* name);
+#ifndef NO_ANNOTATIONS
 void DumpIdentTable(void);
+#endif
 char* lab2str(char* p, int n);
 
 void GenInit(void);
@@ -380,7 +384,9 @@ void GenExpr(void);
 void PushSyntax(int t);
 void PushSyntax2(int t, int v);
 
+#ifndef NO_ANNOTATIONS
 void DumpSynDecls(void);
+#endif
 
 void push2(int v, int v2);
 void ins2(int pos, int v, int v2);
@@ -420,7 +426,7 @@ int FindTypedef(char* s, int* CurScope, int forUse);
 #endif
 int GetDeclSize(int SyntaxPtr, int SizeForDeref);
 
-int ParseExpr(int tok, int* GotUnary, int* ExprTypeSynPtr, int* ConstExpr, int* ConstVal, int commaSeparator, int label);
+int ParseExpr(int tok, int* GotUnary, int* ExprTypeSynPtr, int* ConstExpr, int* ConstVal, int option, int option2);
 int GetFxnInfo(int ExprTypeSynPtr, int* MinParams, int* MaxParams, int* ReturnExprTypeSynPtr);
 
 // all data
@@ -714,14 +720,15 @@ void AddMacroExpansionChar(char e)
 void DefineMacro(char* name, char* expansion)
 {
   AddMacroIdent(name);
-  while (*expansion != '\0')
-    AddMacroExpansionChar(*expansion++);
-  AddMacroExpansionChar('\0');
+  do
+  {
+    AddMacroExpansionChar(*expansion);
+  } while (*expansion++ != '\0');
 }
 
+#ifndef NO_ANNOTATIONS
 void DumpMacroTable(void)
 {
-#ifndef NO_ANNOTATIONS
   int i, j;
 
   puts2("");
@@ -737,8 +744,8 @@ void DumpMacroTable(void)
     printf2("`\n");
   }
   GenStartCommentLine(); printf2("Bytes used: %d/%d\n\n", MacroTableLen, MAX_MACRO_TABLE_LEN);
-#endif
 }
+#endif
 #endif // #ifndef NO_PREPROCESSOR
 
 int KeepStringTable = 0;
@@ -821,6 +828,17 @@ int AddIdent(char* name)
   return i;
 }
 
+int AddNumericIdent__(int n)
+{
+  char s[1 + 2 + (2 + CHAR_BIT * sizeof n) / 3];
+  char *p = s + sizeof s;
+  *--p = '\0';
+  p = lab2str(p, n);
+  *--p = '_';
+  *--p = '_';
+  return AddIdent(p);
+}
+
 int AddGotoLabel(char* name, int label)
 {
   int i;
@@ -858,9 +876,9 @@ void UndoNonLabelIdents(int len)
     }
 }
 
+#ifndef NO_ANNOTATIONS
 void DumpIdentTable(void)
 {
-#ifndef NO_ANNOTATIONS
   int i;
   puts2("");
   GenStartCommentLine(); printf2("Identifier table:\n");
@@ -870,8 +888,8 @@ void DumpIdentTable(void)
     i += strlen(IdentTable + i) + 2;
   }
   GenStartCommentLine(); printf2("Bytes used: %d/%d\n\n", IdentTableLen, MAX_IDENT_TABLE_LEN);
-#endif
 }
+#endif
 
 char* rws[] =
 {
@@ -904,14 +922,59 @@ int GetTokenByWord(char* word)
   return tokIdent;
 }
 
+unsigned char tktk[] =
+{
+  tokEof,
+  // Single-character operators and punctuators:
+  '+', '-', '~', '*', '/', '%', '&', '|', '^', '!',
+  '<', '>', '(', ')', '[', ']',
+  '{', '}', '=', ',', ';', ':', '.', '?',
+  // Multi-character operators and punctuators:
+  tokLShift, tokLogAnd, tokEQ, tokLEQ, tokInc, tokArrow, tokAssignMul,
+  tokAssignMod, tokAssignSub, tokAssignRSh, tokAssignXor,
+  tokRShift, tokLogOr, tokNEQ, tokGEQ, tokDec, tokEllipsis,
+  tokAssignDiv, tokAssignAdd, tokAssignLSh, tokAssignAnd, tokAssignOr,
+  // Some of the above tokens get converted into these in the process:
+  tokUnaryAnd, tokUnaryPlus, tokPostInc, tokPostAdd,
+  tokULess, tokULEQ, tokURShift, tokUDiv, tokUMod, tokComma,
+  tokUnaryStar, tokUnaryMinus, tokPostDec, tokPostSub,
+  tokUGreater, tokUGEQ, tokAssignURSh, tokAssignUDiv, tokAssignUMod,
+  // Helper (pseudo-)tokens:
+  tokNumInt, tokLitStr, tokLocalOfs, tokNumUint, tokIdent, tokShortCirc,
+  tokSChar, tokShort, tokLong, tokUChar, tokUShort, tokULong,
+};
+
+char* tks[] =
+{
+  "<EOF>",
+  // Single-character operators and punctuators:
+  "+", "-", "~", "*", "/", "%", "&", "|", "^", "!",
+  "<", ">", "(", ")", "[", "]",
+  "{", "}", "=", ",", ",", ":", ".", "?",
+  // Multi-character operators and punctuators:
+  "<<", "&&", "==", "<=", "++", "->", "*=",
+  "%=", "-=", ">>=", "^=",
+  ">>", "||", "!=", ">=", "--", "...",
+  "/=", "+=", "<<=", "&=", "|=",
+  // Some of the above tokens get converted into these in the process:
+  "&u", "+u", "++p", "+=p",
+  "<u", "<=u", ">>u", "/u", "%u", ",b",
+  "*u", "-u", "--p", "-=p",
+  ">u", ">=u", ">>=u", "/=u", "%=u",
+  // Helper (pseudo-)tokens:
+  "<NumInt>",  "<LitStr>", "<LocalOfs>", "<NumUint>", "<Ident>", "<ShortCirc>",
+  "signed char", "short", "long", "unsigned char", "unsigned short", "unsigned long",
+};
+
 char* GetTokenName(int token)
 {
   unsigned i;
 
+/* +-~* /% &|^! << >> && || < <= > >= == !=  () *[] ++ -- = += -= ~= *= /= %= &= |= ^= <<= >>= {} ,;: -> ... */
+/*
   switch (token)
   {
   case tokEof: return "<EOF>";
-/* +-~* /% &|^! << >> && || < <= > >= == !=  () *[] ++ -- = += -= ~= *= /= %= &= |= ^= <<= >>= {} ,;: -> ... */
   // Single-character operators and punctuators:
   case '+': return "+";                  case '-': return "-";
   case '~': return "~";                  case '*': return "*";
@@ -959,6 +1022,12 @@ char* GetTokenName(int token)
   case tokShort: return "short";         case tokUShort: return "unsigned short";
   case tokLong: return "long";           case tokULong: return "unsigned long";
   }
+*/
+
+  // Tokens other than reserved keywords:
+  for (i = 0; i < sizeof tktk / sizeof tktk[0]; i++)
+    if (tktk[i] == token)
+      return tks[i];
 
   // Reserved keywords:
   for (i = 0; i < sizeof rws / sizeof rws[0]; i++)
@@ -2946,6 +3015,12 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
 #endif
       {
         synPtr = FindSymbol(ident);
+        // "Rename" static vars in function scope
+        if (synPtr >= 0 && synPtr + 1 < SyntaxStackCnt && SyntaxStack[synPtr + 1][0] == tokIdent)
+        {
+          s = stack[*idx + 1][1] = SyntaxStack[++synPtr][1];
+          ident = IdentTable + s;
+        }
       }
 
       if (synPtr < 0)
@@ -3421,8 +3496,6 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
               (*ExprTypeSynPtr >= 0 && SyntaxStack[*ExprTypeSynPtr][0] == tokStructPtr) * 2;
       if (structs)
       {
-        char s[1 + 2 + (2 + CHAR_BIT * sizeof StructCpyLabel) / 3];
-        char *p = s + sizeof s;
         int sz;
 
         if (structs != 3 ||
@@ -3450,11 +3523,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
 
         if (!StructCpyLabel)
           StructCpyLabel = LabelCnt++;
-        *--p = '\0';
-        p = lab2str(p, StructCpyLabel);
-        *--p = '_';
-        *--p = '_';
-        ins2(oldIdxRight + 2 - (oldSpRight - sp), tokIdent, AddIdent(p));
+        ins2(oldIdxRight + 2 - (oldSpRight - sp), tokIdent, AddNumericIdent__(StructCpyLabel));
 
         ins2(oldIdxRight + 2 - (oldSpRight - sp), ')', SizeOfWord * 3);
         ins2(oldIdxRight + 2 - (oldSpRight - sp), tokUnaryStar, 0); // use 0 deref size to drop meaningless dereferences
@@ -4125,7 +4194,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
   return s;
 }
 
-int ParseExpr(int tok, int* GotUnary, int* ExprTypeSynPtr, int* ConstExpr, int* ConstVal, int commaSeparator, int label)
+int ParseExpr(int tok, int* GotUnary, int* ExprTypeSynPtr, int* ConstExpr, int* ConstVal, int option, int option2)
 {
   int identFirst = tok == tokIdent;
   *ConstVal = *ConstExpr = 0;
@@ -4137,13 +4206,20 @@ int ParseExpr(int tok, int* GotUnary, int* ExprTypeSynPtr, int* ConstExpr, int* 
     PurgeStringTable();
   }
 
-  tok = expr(tok, GotUnary, commaSeparator);
+  if (option == '=')
+    push2(tokIdent, option2);
+
+  tok = expr(tok, GotUnary, option == ',' || option == '=');
 
   if (tok == tokEof || strchr(",;:)]}", tok) == NULL)
     //error("ParseExpr(): Unexpected token %s\n", GetTokenName(tok));
     errorUnexpectedToken(tok);
 
-  if (label && identFirst && tok == ':' && *GotUnary && sp == 1 && stack[sp - 1][0] == tokIdent)
+  if (option == '=')
+  {
+    push('=');
+  }
+  else if (option == tokGotoLabel && identFirst && tok == ':' && *GotUnary && sp == 1 && stack[sp - 1][0] == tokIdent)
   {
     // This is a label.
     ExprLevel--;
@@ -4407,11 +4483,17 @@ void error(char* format, ...)
 
   puts2("");
 
+#ifndef NO_ANNOTATIONS
   DumpSynDecls();
+#endif
 #ifndef NO_PREPROCESSOR
+#ifndef NO_ANNOTATIONS
   DumpMacroTable();
 #endif
+#endif
+#ifndef NO_ANNOTATIONS
   DumpIdentTable();
+#endif
 
   // using stdout implicitly instead of stderr explicitly because:
   // - stderr can be a macro and it's unknown if standard headers
@@ -4934,9 +5016,9 @@ int GetDeclAlignment(int SyntaxPtr)
   return 0;
 }
 
+#ifndef NO_ANNOTATIONS
 void DumpDecl(int SyntaxPtr, int IsParam)
 {
-#ifndef NO_ANNOTATIONS
   int i;
   int icnt = 0;
 
@@ -5076,21 +5158,19 @@ void DumpDecl(int SyntaxPtr, int IsParam)
       break;
     }
   }
-#endif
-  (void)SyntaxPtr;
-  (void)IsParam;
 }
+#endif
 
+#ifndef NO_ANNOTATIONS
 void DumpSynDecls(void)
 {
-#ifndef NO_ANNOTATIONS
   int used = SyntaxStackCnt * sizeof SyntaxStack[0];
   int total = SYNTAX_STACK_MAX * sizeof SyntaxStack[0];
   puts2("");
   GenStartCommentLine(); printf2("Syntax/declaration table/stack:\n");
   GenStartCommentLine(); printf2("Bytes used: %d/%d\n\n", used, total);
-#endif
 }
+#endif
 
 int ParseArrayDimension(int AllowEmptyDimension)
 {
@@ -5153,9 +5233,9 @@ int ParseBase(int tok, int base[2])
   int valid = 1;
   base[1] = 0;
 
-  if (tok == tokVoid ||
-      tok == tokChar ||
-      tok == tokInt)
+  if ((tok == tokVoid) |
+      (tok == tokChar) |
+      (tok == tokInt))
   {
     *base = tok;
     tok = GetToken();
@@ -5171,8 +5251,8 @@ int ParseBase(int tok, int base[2])
     if (tok == tokInt)
       tok = GetToken();
   }
-  else if (tok == tokSigned ||
-           tok == tokUnsigned)
+  else if ((tok == tokSigned) |
+           (tok == tokUnsigned))
   {
     int sign = tok;
     tok = GetToken();
@@ -5217,10 +5297,10 @@ int ParseBase(int tok, int base[2])
         tok = GetToken();
     }
   }
-  else if (tok == tokStruct ||
-           tok == tokUnion
+  else if ((tok == tokStruct) |
+           (tok == tokUnion)
 #ifndef NO_TYPEDEF_ENUM
-           || tok == tokEnum
+           | (tok == tokEnum)
 #endif
           )
   {
@@ -5320,7 +5400,7 @@ int ParseBase(int tok, int base[2])
             oldesp = sp;
             undoIdents = IdentTableLen;
 
-            tok = ParseExpr(GetToken(), &gotUnary, &synPtr, &constExpr, &val, 1, 0);
+            tok = ParseExpr(GetToken(), &gotUnary, &synPtr, &constExpr, &val, ',', 0);
 
             IdentTableLen = undoIdents; // remove all temporary identifier names from e.g. "sizeof"
             SyntaxStackCnt = oldssp; // undo any temporary declarations from e.g. "sizeof" in the expression
@@ -5343,7 +5423,7 @@ int ParseBase(int tok, int base[2])
         }
 
         if (empty)
-          errorDecl();
+          errorUnexpectedToken('}');
 
         base[0] = tokEnumPtr;
         base[1] = typePtr;
@@ -5372,6 +5452,9 @@ int ParseBase(int tok, int base[2])
           tok = ParseDecl(tok, structInfo, 0, 0);
           empty = 0;
         }
+
+        if (empty)
+          errorUnexpectedToken('}');
 
         PushSyntax('}');
 
@@ -5485,7 +5568,7 @@ int ParseBase(int tok, int base[2])
 
   // TBD!!! review/test this fxn
 //  if (!valid || !tok || !(strchr("*([,)", tok) || tok == tokIdent))
-  if (!valid || !tok)
+  if (!valid | !tok)
     //error("ParseBase(): Invalid or unsupported type\n");
     error("Invalid or unsupported type\n");
 
@@ -5535,10 +5618,10 @@ int ParseDerived(int tok)
     PushSyntax2(tokIdent, AddIdent("<something>"));
   }
 
-  if (params || tok == '(')
+  if (params | (tok == '('))
   {
     int t = SyntaxStack[SyntaxStackCnt - 1][0];
-    if (t == ')' || t == ']')
+    if ((t == ')') | (t == ']'))
       errorUnexpectedToken('('); // array of functions or function returning function
     if (!params)
       tok = GetToken();
@@ -5638,6 +5721,282 @@ void PushBase(int base[2])
     errorUnexpectedVoid();
 }
 
+int InitScalar(int synPtr, int tok);
+int InitArray(int synPtr, int tok);
+int InitStruct(int synPtr, int tok);
+
+int InitVar(int synPtr, int tok)
+{
+  int p = synPtr, t;
+  int undoIdents = IdentTableLen;
+
+  while ((SyntaxStack[p][0] == tokIdent) | (SyntaxStack[p][0] == tokLocalOfs))
+    p++;
+
+  PurgeStringTable();
+  KeepStringTable = 1;
+
+  t = SyntaxStack[p][0];
+  if (t == '[')
+    tok = InitArray(p, tok);
+  else if (t == tokStructPtr)
+    tok = InitStruct(p, tok);
+  else
+    tok = InitScalar(p, tok);
+
+  if (!strchr(",;", tok))
+    errorUnexpectedToken(tok);
+
+  {
+    int lab;
+    char s[1 + (2 + CHAR_BIT * sizeof lab) / 3];
+    int i = 0;
+
+    // Construct an expression for each buffered string for GenStrData()
+    sp = 1;
+    stack[0][0] = tokIdent;
+
+    // Dump all buffered strings, one by one, the ugly way
+    while (i < StringTableLen)
+    {
+      char *p = s + sizeof s;
+
+      lab = StringTable[i] & 0xFF;
+      lab += (StringTable[i + 1] & 0xFFu) << 8;
+
+      // Reconstruct the identifier for the definition: char #[len] = "...";
+      *--p = '\0';
+      p = lab2str(p, lab);
+      stack[0][1] = AddIdent(p);
+
+      GenStrData(0, 0);
+
+      // Drop the identifier from the identifier table so as not to
+      // potentially overflow it when there are many initializing
+      // string literals and the table is nearly full.
+      IdentTableLen = undoIdents; // remove all temporary identifier names from e.g. "sizeof" or "str"
+
+      i += 2;
+      i += 1 + StringTable[i];
+    }
+  }
+
+  PurgeStringTable();
+  KeepStringTable = 0;
+
+  return tok;
+}
+
+int InitScalar(int synPtr, int tok)
+{
+  unsigned elementSz = GetDeclSize(synPtr, 0);
+  int gotUnary, synPtr2, constExpr, exprVal;
+  int oldssp = SyntaxStackCnt;
+  int undoIdents = IdentTableLen;
+
+  tok = ParseExpr(tok, &gotUnary, &synPtr2, &constExpr, &exprVal, ',', 0);
+
+  if (!gotUnary)
+    errorUnexpectedToken(tok);
+
+  scalarTypeCheck(synPtr2);
+
+  if (stack[sp - 1][0] == tokNumInt || stack[sp - 1][0] == tokNumUint)
+  {
+    // TBD??? truncate values for types smaller than int (e.g. char and short),
+    // so they are always in range?
+    GenIntData(elementSz, exprVal);
+  }
+  else if (elementSz == SizeOfWord + 0u && stack[sp - 1][0] == tokIdent)
+  {
+    GenAddrData(elementSz, IdentTable + stack[sp - 1][1]);
+    // Defer storage of string literal data (if any) until the end.
+    // This will let us generate the contiguous array of pointers to
+    // string literals unperturbed by the string literal data
+    // (e.g. "char* colors[] = { "red", "green", "blue" };").
+  }
+  else
+    //error("ParseDecl(): cannot initialize a global variable with a non-constant expression\n");
+    errorNotConst();
+
+  IdentTableLen = undoIdents; // remove all temporary identifier names from e.g. "sizeof" or "str"
+  SyntaxStackCnt = oldssp; // undo any temporary declarations from e.g. "sizeof" or "str" in the expression
+  return tok;
+}
+
+int InitArray(int synPtr, int tok)
+{
+  int elementTypePtr = synPtr + 3;
+  int elementType = SyntaxStack[elementTypePtr][0];
+  unsigned elementSz = GetDeclSize(elementTypePtr, 0);
+  int braces = 0;
+  unsigned elementCnt = 0;
+  unsigned elementsRequired = SyntaxStack[synPtr + 1][1];
+  int arrOfChar = (elementType == tokChar) | (elementType == tokUChar) | (elementType == tokSChar);
+
+  if (tok == '{')
+  {
+    braces = 1;
+    tok = GetToken();
+  }
+  else
+  {
+    // Only fully-bracketed (sic) initialization of arrays is supported,
+    // except for arrays of char initialized with string literals
+    // (the string literals may be optionally enclosed in braces)
+    if (!(arrOfChar & (tok == tokLitStr)))
+      errorUnexpectedToken(tok);
+  }
+
+  if (arrOfChar & (tok == tokLitStr))
+  {
+    // this is 'someArray[someCountIfAny] = "some string"' or
+    // 'someArray[someCountIfAny] = { "some string" }'
+    int gotUnary, synPtr2, constExpr, exprVal;
+    int oldssp = SyntaxStackCnt;
+    int undoIdents = IdentTableLen;
+    int slen = StringTableLen;
+
+    tok = ParseExpr(tok, &gotUnary, &synPtr2, &constExpr, &exprVal, ',', 0);
+
+    if (!gotUnary ||
+        stack[sp - 1][0] != tokIdent ||
+        !isdigit(IdentTable[stack[sp - 1][1]]))
+      errorInit();
+
+    elementCnt = GenStrData(0, elementsRequired);
+
+    StringTableLen = slen; // don't accumulate strings initializing arrays of char
+    IdentTableLen = undoIdents; // remove all temporary identifier names from e.g. "sizeof" or "str"
+    SyntaxStackCnt = oldssp; // undo any temporary declarations from e.g. "sizeof" or "str" in the expression
+
+    if (braces)
+    {
+      if (tok != '}')
+        errorUnexpectedToken(tok);
+      tok = GetToken();
+    }
+  }
+  else
+  {
+    while (tok != '}')
+    {
+      if (elementType == '[')
+      {
+        tok = InitArray(elementTypePtr, tok);
+      }
+      else if (elementType == tokStructPtr)
+      {
+        tok = InitStruct(elementTypePtr, tok);
+      }
+      else
+      {
+        tok = InitScalar(elementTypePtr, tok);
+      }
+
+      if (++elementCnt > elementsRequired && elementsRequired)
+        error("Too many array initializers\n");
+
+      if (tok == ',')
+        tok = GetToken();
+      else if (tok != '}')
+        errorUnexpectedToken(tok);
+    }
+
+    if (!elementCnt)
+      errorUnexpectedToken('}');
+
+    if (elementCnt < elementsRequired)
+      GenZeroData((elementsRequired - elementCnt) * elementSz);
+
+    tok = GetToken();
+  }
+
+  // Store the element count if it's an incomplete array
+  if (!elementsRequired)
+    SyntaxStack[synPtr + 1][1] = elementCnt;
+
+  return tok;
+}
+
+int InitStruct(int synPtr, int tok)
+{
+  int isUnion;
+  unsigned size, ofs = 0;
+
+  synPtr = SyntaxStack[synPtr][1];
+  isUnion = SyntaxStack[synPtr++][0] == tokUnion;
+  size = SyntaxStack[++synPtr][1];
+  synPtr += 3; // step inside the {} body of the struct/union
+
+  if (tok != '{')
+    errorUnexpectedToken(tok);
+  tok = GetToken();
+
+  while (tok != '}')
+  {
+    int c = 1;
+    int elementTypePtr, elementType;
+    unsigned elementOfs, elementSz;
+
+    // Find the next member or the closing brace
+    while (c)
+    {
+      int t = SyntaxStack[synPtr][0];
+      c += (t == '(') - (t == ')') + (t == '{') - (t == '}');
+      if (c == 1 && t == tokMemberIdent)
+        break;
+      synPtr++;
+    }
+    if (!c)
+      errorUnexpectedToken(tok); // too many initializers
+
+    elementOfs = SyntaxStack[++synPtr][1];
+    elementTypePtr = ++synPtr;
+    elementType = SyntaxStack[elementTypePtr][0];
+    elementSz = GetDeclSize(elementTypePtr, 0);
+
+    // Alignment
+    if (ofs < elementOfs)
+      GenZeroData(elementOfs - ofs);
+
+    if (elementType == '[')
+    {
+      tok = InitArray(elementTypePtr, tok);
+    }
+    else if (elementType == tokStructPtr)
+    {
+      tok = InitStruct(elementTypePtr, tok);
+    }
+    else
+    {
+      tok = InitScalar(elementTypePtr, tok);
+    }
+
+    ofs = elementOfs + elementSz;
+
+    if (tok == ',')
+      tok = GetToken();
+    else if (tok != '}')
+      errorUnexpectedToken(tok);
+
+    // Only one member (first) is initialized in unions explicitly
+    if (isUnion && tok != '}')
+      errorUnexpectedToken(tok);
+  }
+
+  if (!ofs)
+    errorUnexpectedToken('}');
+
+  // Implicit initialization of the rest and trailing padding
+  if (ofs < size)
+    GenZeroData(size - ofs);
+
+  tok = GetToken();
+
+  return tok;
+}
+
 // DONE: support extern
 // DONE: support static
 // DONE: support basic initialization
@@ -5654,22 +6013,23 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
   int typeDef = tok == tokTypedef;
 #endif
 
-  if (external ||
+  if (external |
 #ifndef NO_TYPEDEF_ENUM
-      typeDef ||
+      typeDef |
 #endif
       Static)
   {
     tok = GetToken();
     if (!TokenStartsDeclaration(tok, 1))
       //error("ParseDecl(): unexpected token %s\n", GetTokenName(tok));
+      // Implicit int (as in "extern x; static y;") isn't supported
       errorUnexpectedToken(tok);
   }
   tok = ParseBase(tok, base);
 
 #ifndef NO_TYPEDEF_ENUM
   if (label && tok == ':' && base[0] == tokTypedef &&
-      !(external | Static | typeDef) && ParseLevel > 0)
+      !(external | Static | typeDef) && ParseLevel)
   {
     // This is a label.
     return tokGotoLabel;
@@ -5688,10 +6048,7 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
 
     if ((tok && strchr(",;{=", tok)) || (tok == ')' && ExprLevel))
     {
-      int localAllocSize = 0;
-      int globalAllocSize = 0;
-      int isFxn, isArray, isMultiDimArray, isIncompleteArr;
-      unsigned elementSz = 0;
+      int isLocal = 0, isGlobal = 0, isFxn, isStruct, isArray, isIncompleteArr;
       unsigned alignment = 0;
 
       // Disallow void variables
@@ -5700,7 +6057,7 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
         if (SyntaxStack[SyntaxStackCnt - 2][0] == tokIdent &&
             !(cast
 #ifndef NO_TYPEDEF_ENUM
-              || typeDef
+              | typeDef
 #endif
              ))
           //error("ParseDecl(): Cannot declare a variable ('%s') of type 'void'\n", IdentTable + SyntaxStack[lastSyntaxPtr][1]);
@@ -5716,19 +6073,20 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
         errorDecl();
 
       isArray = SyntaxStack[lastSyntaxPtr + 1][0] == '[';
-      isMultiDimArray = isArray && SyntaxStack[lastSyntaxPtr + 4][0] == '[';
       isIncompleteArr = isArray && SyntaxStack[lastSyntaxPtr + 2][1] == 0;
 
-      if (!ExprLevel &&
-          !external && !Static &&
+      isStruct = SyntaxStack[lastSyntaxPtr + 1][0] == tokStructPtr;
+
+      if (!(ExprLevel || structInfo) &&
+          !(external |
 #ifndef NO_TYPEDEF_ENUM
-          !typeDef &&
+            typeDef |
 #endif
-          !structInfo &&
+            Static) && 
           !strcmp(IdentTable + SyntaxStack[lastSyntaxPtr][1], "<something>") &&
           tok == ';')
       {
-        if (SyntaxStack[lastSyntaxPtr + 1][0] == tokStructPtr)
+        if (isStruct)
         {
           // This is either an incomplete tagged structure/union declaration, e.g. "struct sometag;",
           // or a tagged complete structure/union declaration, e.g. "struct sometag { ... };", without an instance variable,
@@ -5773,11 +6131,11 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
 
       // Structure/union members can't be initialized nor be functions nor
       // be incompletely typed arrays inside structure/union declarations
-      if (structInfo && (tok == '=' || isFxn || tok == '{' || isIncompleteArr))
+      if (structInfo && ((tok == '=') | isFxn | (tok == '{') | isIncompleteArr))
         errorDecl();
 
 #ifndef NO_TYPEDEF_ENUM
-      if (typeDef && (tok == '=' || tok == '{'))
+      if (typeDef & ((tok == '=') | (tok == '{')))
         errorDecl();
 #endif
 
@@ -5811,41 +6169,29 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
       // fxn scope   static  fxn=          var=  arr[]=  arr[]...[]=  arr[incomplete]=  arr[incomplete]...[]=
       //                     +             +     +       +            +                 +
 
-      if (isFxn && tok == '=')
+      if (isFxn & (tok == '='))
         //error("ParseDecl(): cannot initialize a function\n");
         errorInit();
 
-      if (isFxn && tok == '{' && ParseLevel)
+      if ((isFxn & (tok == '{')) && ParseLevel)
         //error("ParseDecl(): cannot define a nested function\n");
         errorDecl();
 
-      if (isFxn && Static && ParseLevel)
+      if ((isFxn & Static) && ParseLevel)
         //error("ParseDecl(): cannot declare a static function in this scope\n");
         errorDecl();
 
-      if (external && tok == '=')
+      if (external & (tok == '='))
         //error("ParseDecl(): cannot initialize an external variable\n");
         errorInit();
 
-      if (isIncompleteArr && !(external ||
+      if (isIncompleteArr & !(external |
 #ifndef NO_TYPEDEF_ENUM
-                               typeDef ||
+                              typeDef |
 #endif
-                               tok == '='))
+                              (tok == '=')))
         //error("ParseDecl(): cannot define an array of incomplete type\n");
         errorDecl();
-
-      if (Static && ParseLevel)
-        //error("ParseDecl(): static not supported in this scope\n");
-        errorDecl();
-
-      if (isMultiDimArray && tok == '=')
-        //error("ParseDecl(): multidimensional array initialization not supported\n");
-        errorInit();
-
-      if (isArray && tok == '=' && ParseLevel)
-        //error("ParseDecl(): array initialization not supported in this scope\n");
-        errorInit();
 
       // TBD!!! de-uglify
       if (!strcmp(IdentTable + SyntaxStack[lastSyntaxPtr][1], "<something>"))
@@ -5860,7 +6206,7 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
       }
       else
       {
-        // Disallow named variables and prototypes.
+        // Disallow named variables and prototypes in sizeof(typedecl) and (typedecl).
         if (ExprLevel && !structInfo)
           error("Identifier unexpected in declaration\n");
       }
@@ -5871,23 +6217,21 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
 #endif
          )
       {
+        // This is a variable or a variable (member) in a struct/union declaration
         int sz = GetDeclSize(lastSyntaxPtr, 0);
 
-        if (!sz && !isIncompleteArr && !ExprLevel) // incomplete type
+        if (!((sz | isIncompleteArr) || ExprLevel)) // incomplete type
           errorDecl(); // TBD!!! different error when struct/union tag is not found
 
-        elementSz = sz;
-        if (isArray)
-        {
-          elementSz = GetDeclSize(lastSyntaxPtr + 4, 0);
-          if (!elementSz) // incomplete type of element (e.g. struct/union)
-            errorDecl();
-        }
+        if (isArray && !GetDeclSize(lastSyntaxPtr + 4, 0))
+          // incomplete type of array element (e.g. struct/union)
+          errorDecl();
 
         alignment = GetDeclAlignment(lastSyntaxPtr);
 
         if (structInfo)
         {
+          // It's a variable (member) in a struct/union declaration
           unsigned tmp;
           unsigned newAlignment = alignment;
 #ifndef NO_PPACK
@@ -5920,10 +6264,167 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
             structInfo[3] = sz;
           }
         }
-        else if (ParseLevel && !external && !Static && !ExprLevel)
+        else if (ParseLevel && !((external | Static) || ExprLevel))
+        {
+          // It's a local variable
+          isLocal = 1;
+          // Defer size calculation until initialization
+          // Insert a local var offset token, the offset is to be updated
+          InsertSyntax2(lastSyntaxPtr + 1, tokLocalOfs, 0);
+        }
+        else if (!ExprLevel)
+        {
+          // It's a global variable (external, static or neither)
+          isGlobal = 1;
+          if (Static && ParseLevel)
+          {
+            // It's a static variable in function scope, "rename" it by providing
+            // an alternative unique numeric identifier right next to it and use it
+            int staticLabel = LabelCnt++;
+            InsertSyntax2(++lastSyntaxPtr, tokIdent, AddNumericIdent__(staticLabel));
+          }
+        }
+      }
+
+      // If it's a type declaration in a sizeof(typedecl) expression or
+      // in an expression with a cast, e.g. (typedecl)expr, we're done
+      if (ExprLevel && !structInfo)
+      {
+#ifndef NO_ANNOTATIONS
+        DumpDecl(lastSyntaxPtr, 0);
+#endif
+        return tok;
+      }
+
+#ifndef NO_TYPEDEF_ENUM
+      if (typeDef)
+      {
+        int CurScope;
+        char* s = IdentTable + SyntaxStack[lastSyntaxPtr][1];
+#ifndef NO_ANNOTATIONS
+        DumpDecl(lastSyntaxPtr, 0);
+#endif
+        SyntaxStack[lastSyntaxPtr][0] = 0; // hide tokIdent for now
+        if (FindTypedef(s, &CurScope, 0) >= 0 && CurScope)
+          errorRedef(s);
+        SyntaxStack[lastSyntaxPtr][0] = tokTypedef; // change tokIdent to tokTypedef
+      }
+      else
+      // fallthrough
+#endif
+      if (isLocal | isGlobal)
+      {
+        int hasInit = tok == '=';
+        int needsGlobalInit = isGlobal & !external;
+        int sz = GetDeclSize(lastSyntaxPtr, 0);
+        int localAllocSize = 0;
+        int skipLabel = 0;
+        int initLabel = 0;
+
+#ifndef NO_ANNOTATIONS
+        if (isGlobal)
+          DumpDecl(lastSyntaxPtr, 0);
+#endif
+
+        if (hasInit)
+        {
+          tok = GetToken();
+        }
+
+        if (isLocal & hasInit)
+          needsGlobalInit = isArray | (isStruct & (tok == '{'));
+
+        if (needsGlobalInit)
+        {
+          if (isLocal | (Static && ParseLevel))
+          {
+            // Global data appears inside code of a function
+            if (OutputFormat == FormatFlat)
+            {
+              skipLabel = LabelCnt++;
+              GenJumpUncond(skipLabel);
+            }
+            else
+            {
+              puts2(CodeFooter);
+              puts2(DataHeader);
+            }
+          }
+          else
+          {
+            // Global data appears between functions
+            if (OutputFormat != FormatFlat)
+            {
+              puts2(DataHeader);
+            }
+          }
+
+          // DONE: imperfect condition for alignment
+          if (alignment != 1)
+            GenWordAlignment();
+
+          if (isGlobal)
+          {
+            GenLabel(IdentTable + SyntaxStack[lastSyntaxPtr][1], Static);
+          }
+          else
+          {
+            // Generate numeric labels for global initializers of local vars
+            char s[1 + 2 + (2 + CHAR_BIT * sizeof StructCpyLabel) / 3];
+            char *p = s + sizeof s;
+            initLabel = LabelCnt++;
+            *--p = '\0';
+            p = lab2str(p, initLabel);
+            *--p = '_';
+            *--p = '_';
+            GenLabel(p, 1);
+          }
+
+          // Generate global initializers
+          if (hasInit)
+          {
+#ifndef NO_ANNOTATIONS
+            if (isGlobal)
+            {
+              GenStartCommentLine(); printf2("=\n");
+            }
+#endif
+            tok = InitVar(lastSyntaxPtr, tok);
+            // Update the size in case it's an incomplete array
+            sz = GetDeclSize(lastSyntaxPtr, 0);
+          }
+          else
+          {
+            GenZeroData(sz);
+          }
+
+          if (isLocal | (Static && ParseLevel))
+          {
+            // Global data appears inside code of a function
+            if (OutputFormat == FormatFlat)
+            {
+              GenNumLabel(skipLabel);
+            }
+            else
+            {
+              puts2(DataFooter);
+              puts2(CodeHeader);
+            }
+          }
+          else
+          {
+            // Global data appears between functions
+            if (OutputFormat != FormatFlat)
+            {
+              puts2(DataFooter);
+            }
+          }
+        }
+
+        if (isLocal)
         {
           int oldOfs;
-          // It's a local variable, let's calculate its relative on-stack location
+          // Let's calculate variable's relative on-stack location
           oldOfs = CurFxnLocalOfs;
 
           // Note: local vars are word-aligned on the stack
@@ -5936,273 +6437,74 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
             errorVarSize();
 #endif
 
-          // Insert a local var offset token
-          InsertSyntax2(lastSyntaxPtr + 1, tokLocalOfs, CurFxnLocalOfs);
+          // Now that the size of the local is certainly known,
+          // update its offset in the offset token
+          SyntaxStack[lastSyntaxPtr + 1][1] = CurFxnLocalOfs;
 
           localAllocSize = oldOfs - CurFxnLocalOfs;
           if (CurFxnMinLocalOfs > CurFxnLocalOfs)
             CurFxnMinLocalOfs = CurFxnLocalOfs;
-        }
-        else
-        {
-          // It's a global variable
-          globalAllocSize = sz;
-        }
-      }
 
-      if (!structInfo)
-        DumpDecl(lastSyntaxPtr, 0);
-
-      if (ExprLevel && !structInfo)
-        return tok;
-
-      if ((globalAllocSize || isIncompleteArr) &&
-#ifndef NO_TYPEDEF_ENUM
-          !typeDef &&
-#endif
-          !external)
-      {
-        if (OutputFormat != FormatFlat)
-          puts2(DataHeader);
-        // DONE: imperfect condition for alignment
-        if (alignment != 1)
-          GenWordAlignment();
-        GenLabel(IdentTable + SyntaxStack[lastSyntaxPtr][1], Static);
-      }
-
-#ifndef NO_TYPEDEF_ENUM
-      if (typeDef)
-      {
-        int CurScope;
-        char* s = IdentTable + SyntaxStack[lastSyntaxPtr][1];
-        SyntaxStack[lastSyntaxPtr][0] = 0; // hide tokIdent for now
-        if (FindTypedef(s, &CurScope, 0) >= 0 && CurScope)
-          errorRedef(s);
-        SyntaxStack[lastSyntaxPtr][0] = tokTypedef; // change tokIdent to tokTypedef
-      }
-      else
-      // fallthrough
-#endif
-      if (external && !(isFxn && tok == '{'))
-      {
-      }
-      // Handle initialization
-      else if (tok == '=')
-      {
-        int gotUnary, synPtr, constExpr, exprVal;
-        int p, p2;
-        int oldssp, undoIdents;
-        int braces = 0;
-        unsigned elementCnt = 0;
-        unsigned elementsRequired = 0;
-        int strLitAllowed = 1;
-        int nonStrLitAllowed = 1;
-        int arrOfChar = isArray && elementSz == 1;
 #ifndef NO_ANNOTATIONS
-        GenStartCommentLine(); printf2("=\n");
+          DumpDecl(lastSyntaxPtr, 0);
 #endif
-
-        p = lastSyntaxPtr;
-        while (SyntaxStack[p][0] == tokIdent || SyntaxStack[p][0] == tokLocalOfs)
-          p++;
-
-        // explicit structure/union initialization with '=' isn't supported
-        p2 = p;
-        while (SyntaxStack[p2][0] == '[')
-          p2 += 3;
-        if (SyntaxStack[p2][0] == tokStructPtr)
-          errorInit();
-
-        oldssp = SyntaxStackCnt;
-        undoIdents = IdentTableLen;
-
-        if (isArray)
-          elementsRequired = SyntaxStack[p + 1][1];
-
-        tok = GetToken();
-        // Interestingly, scalars can be legally initialized with braced
-        // initializers just like arrays, e.g. "int a = { 1 };".
-        // Also, "int i[];" must have 1 element.
-        // Let's not support that!
-        if (isArray && tok == '{')
-        {
-          braces = 1;
-          tok = GetToken();
         }
 
-        PurgeStringTable();
-        KeepStringTable = 1;
-
-        for (;;)
+        // Copy global initializers into local vars
+        if (isLocal & needsGlobalInit)
         {
-          int strLitInitializer;
+#ifndef NO_ANNOTATIONS
+          GenStartCommentLine(); printf2("=\n");
+#endif
+          if (!StructCpyLabel)
+            StructCpyLabel = LabelCnt++;
 
-          if (braces && tok == '}')
-          {
-            tok = GetToken();
-            if (!tok || !strchr(",;", tok))
-              //error("ParseDecl(): unexpected token %s\n", GetTokenName(tok));
-              errorUnexpectedToken(tok);
-            break;
-          }
+          sp = 0;
 
-          tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 1, 0);
+          push2('(', SizeOfWord * 3);
+
+          push2(tokLocalOfs, SyntaxStack[lastSyntaxPtr + 1][1]);
+
+          push(',');
+
+          push2(tokIdent, AddNumericIdent__(initLabel));
+
+          push(',');
+
+          push2(tokNumUint, sz);
+
+          push(',');
+
+          push2(tokIdent, AddNumericIdent__(StructCpyLabel));
+
+          push2(')', SizeOfWord * 3);
+
+          GenExpr();
+        }
+        // Initialize local vars with expressions
+        else if (hasInit & !needsGlobalInit)
+        {
+          int gotUnary, synPtr, constExpr, exprVal;
+
+          // ParseExpr() will transform the initializer expression into an assignment expression here
+          tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, '=', SyntaxStack[lastSyntaxPtr][1]);
+
           if (!gotUnary)
-            //error("ParseDecl(): missing initialization expression\n");
             errorUnexpectedToken(tok);
 
-          scalarTypeCheck(synPtr);
-
-          if (!tok ||
-              (braces && !strchr(",}", tok)) ||
-              (!braces && !strchr(",;", tok)))
-            //error("ParseDecl(): unexpected token %s\n", GetTokenName(tok));
-            errorUnexpectedToken(tok);
-
-          strLitInitializer = stack[sp - 1][0] == tokIdent &&
-                              isdigit(IdentTable[stack[sp - 1][1]]);
-
-          // Prohibit initializers like in "int a[1] = 1;" and "char* a[1] = "abc";"
-          if (isArray && !braces && (!strLitInitializer || !arrOfChar))
-            //error("ParseDecl(): array initializers must be in braces\n");
-            errorInit();
-
-          // Prohibit the following character array initializations:
-          // char a[] = { 'a', "b" };
-          // char a[] = { "a", 'b' };
-          // char a[] = { "a", "b" };
-          if (arrOfChar)
+          if (!isStruct)
           {
-            if (!strLitInitializer)
-              strLitAllowed = 0;
-            else
-              nonStrLitAllowed = 0;
-            if ((strLitInitializer && !strLitAllowed) ||
-                (!strLitInitializer && !nonStrLitAllowed))
-              //error("ParseDecl(): invalid initialization\n");
-              errorInit();
-            if (strLitInitializer)
-              strLitAllowed = 0;
+            // This is a special case for initialization of integers smaller than int.
+            // Since a local integer variable always takes as much space as a whole int,
+            // we can optimize code generation a bit by storing the initializer as an int.
+            // This is an old accidental optimization and I preserve it for now.
+            stack[sp - 1][1] = SizeOfWord;
           }
 
-          elementCnt++;
-
-          if (braces && elementsRequired && elementCnt > elementsRequired)
-            error("Too many array initializers\n");
-
-          if (!ParseLevel)
-          {
-            if (constExpr)
-            {
-              GenIntData(elementSz, exprVal);
-            }
-            else if (elementSz == SizeOfWord + 0u && stack[sp - 1][0] == tokIdent)
-            {
-              GenAddrData(elementSz, IdentTable + stack[sp - 1][1]);
-              // Defer storage of string literal data (if any) until the end.
-              // This will let us generate the contiguous array of pointers to
-              // string literals unperturbed by the string literal data
-              // (e.g. "char* colors[] = { "red", "green", "blue" };").
-            }
-            else if (arrOfChar && strLitInitializer)
-            {
-              // Defer storage of string literal data until the end.
-              // Now simply remember that the character array has buffered string data.
-              arrOfChar++;
-            }
-            else
-              //error("ParseDecl(): cannot initialize a global variable with a non-constant expression\n");
-              errorNotConst();
-          }
-          else
-          {
-            //error("ParseDecl(): cannot initialize a variable with a 'void' expression\n");
-            nonVoidTypeCheck(synPtr);
-            // transform the current expression stack into:
-            //   tokLocalOfs(...), original expression stack, =(localAllocSize)
-            // this will simulate assignment
-            ins2(0, tokLocalOfs, SyntaxStack[lastSyntaxPtr + 1][1]);
-            push2('=', localAllocSize); // TBD??? should use elementSz instead?
-            // Storage of string literal data from the initializing expression
-            // occurs here.
-            GenExpr();
-          }
-
-          if (braces)
-          {
-            if (tok == ',')
-              tok = GetToken();
-          }
-          else
-            break;
-        } // for (;;)
-
-        if (!ParseLevel)
-        {
-          if (arrOfChar == 2)
-            elementCnt = GenStrData(0, elementsRequired);
-
-          if (isArray)
-          {
-            // Implicit initialization with 0 of what's not initialized explicitly
-            if (elementCnt < elementsRequired)
-              GenZeroData((elementsRequired - elementCnt) * elementSz);
-
-            // The number of elements is now known
-            if (isIncompleteArr)
-              SyntaxStack[p + 1][1] = elementCnt;
-          }
-
-          if (!arrOfChar)
-          {
-            int lab;
-            char s[1 + (2 + CHAR_BIT * sizeof lab) / 3];
-            int i = 0;
-
-            // Construct an expression for each buffered string for GenStrData()
-            sp = 1;
-            stack[0][0] = tokIdent;
-
-            // Dump all buffered strings, one by one, the ugly way
-            while (i < StringTableLen)
-            {
-              char *p = s + sizeof s;
-
-              lab = StringTable[i] & 0xFF;
-              lab += (StringTable[i + 1] & 0xFFu) << 8;
-
-              // Reconstruct the identifier for the definition: char #[len] = "...";
-              *--p = '\0';
-              p = lab2str(p, lab);
-              stack[0][1] = AddIdent(p);
-
-              GenStrData(0, 0);
-
-              // Drop the identifier from the identifier table so as not to
-              // potentially overflow it when there are many initializing
-              // string literals and the table is nearly full.
-              IdentTableLen = undoIdents; // remove all temporary identifier names from e.g. "sizeof" or "str"
-
-              i += 2;
-              i += 1 + StringTable[i];
-            }
-          }
+          // Storage of string literal data from the initializing expression
+          // occurs here.
+          GenExpr();
         }
-
-        PurgeStringTable();
-        KeepStringTable = 0;
-
-        if (!ParseLevel && OutputFormat != FormatFlat)
-          puts2(DataFooter);
-
-        IdentTableLen = undoIdents; // remove all temporary identifier names from e.g. "sizeof" or "str"
-        SyntaxStackCnt = oldssp; // undo any temporary declarations from e.g. "sizeof" or "str" in the expression
-      }
-      else if (globalAllocSize)
-      {
-        GenZeroData(globalAllocSize);
-        if (OutputFormat != FormatFlat)
-          puts2(DataFooter);
       }
       else if (tok == '{')
       {
@@ -6213,6 +6515,10 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
         int locAllocLabel = (LabelCnt += 2) - 2;
         int i;
         int Main;
+
+#ifndef NO_ANNOTATIONS
+        DumpDecl(lastSyntaxPtr, 0);
+#endif
 
         CurFxnName = IdentTable + SyntaxStack[lastSyntaxPtr][1];
         Main = !strcmp(CurFxnName, "main");
@@ -6238,14 +6544,8 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
 
 #ifndef NO_FUNC_
         {
-          char s[1 + 2 + (2 + CHAR_BIT * sizeof CurFxnNameLabel) / 3];
-          char *p = s + sizeof s;
           CurFxnNameLabel = LabelCnt++;
-          *--p = '\0';
-          p = lab2str(p, CurFxnNameLabel);
-          *--p = '_';
-          *--p = '_';
-          SyntaxStack[SymFuncPtr][1] = AddIdent(p);
+          SyntaxStack[SymFuncPtr][1] = AddNumericIdent__(CurFxnNameLabel);
           SyntaxStack[SymFuncPtr + 2][1] = strlen(CurFxnName) + 1;
         }
 #endif
@@ -6318,8 +6618,15 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
         IdentTableLen = undoIdents; // remove all identifier names
         SyntaxStackCnt = undoSymbolsPtr; // remove all params and locals
       }
+#ifndef NO_ANNOTATIONS
+      else if (isFxn)
+      {
+        // function prototype
+        DumpDecl(lastSyntaxPtr, 0);
+      }
+#endif
 
-      if (tok == ';' || tok == '}')
+      if ((tok == ';') | (tok == '}'))
         break;
 
       tok = GetToken();
@@ -6500,7 +6807,9 @@ void AddFxnParamSymbols(int SyntaxPtr)
         if (tok == tokIdent || tok == ')')
         {
           CurFxnParamCnt++;
+#ifndef NO_ANNOTATIONS
           DumpDecl(paramPtr, 0);
+#endif
           i--;
           break;
         }
@@ -7105,7 +7414,7 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
     }
     else
     {
-      tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0, 1);
+      tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, tokGotoLabel, 0);
       if (tok == tokGotoLabel)
       {
         // found a label
@@ -7366,11 +7675,17 @@ int main(int argc, char** argv)
 
   GenFin();
 
+#ifndef NO_ANNOTATIONS
   DumpSynDecls();
+#endif
 #ifndef NO_PREPROCESSOR
+#ifndef NO_ANNOTATIONS
   DumpMacroTable();
 #endif
+#endif
+#ifndef NO_ANNOTATIONS
   DumpIdentTable();
+#endif
 
   GenStartCommentLine(); printf2("Next label number: %d\n", LabelCnt);
 

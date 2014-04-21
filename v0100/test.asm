@@ -89,9 +89,8 @@ _getchar:
 	jmp	L20
 L19:
 ; loc     c : (@-2): int
-; =
-; RPN'ized expression: "( dosgetch ) "
-; Expanded expression: " dosgetch ()0 "
+; RPN'ized expression: "c ( dosgetch ) = "
+; Expanded expression: "(@-2)  dosgetch ()0 =(2) "
 ; Fused expression:    "( dosgetch )0 =(170) *(@-2) ax "
 	call	_dosgetch
 	mov	[bp-2], ax
@@ -240,9 +239,8 @@ L45:
 ; loc     s1 : (@4): * char
 ; loc     s2 : (@6): * char
 ; loc     tmp : (@-2): * char
-; =
-; RPN'ized expression: "s1 "
-; Expanded expression: "(@4) *(2) "
+; RPN'ized expression: "tmp s1 = "
+; Expanded expression: "(@-2) (@4) *(2) =(2) "
 ; Fused expression:    "=(170) *(@-2) *(@4) "
 	mov	ax, [bp+4]
 	mov	[bp-2], ax
@@ -289,10 +287,8 @@ _strlen:
 L51:
 ; loc     s : (@4): * char
 ; loc     l : (@-2): unsigned
-; =
-; RPN'ized expression: "0 "
-; Expanded expression: "0 "
-; Expression value: 0
+; RPN'ized expression: "l 0 = "
+; Expanded expression: "(@-2) 0 =(2) "
 ; Fused expression:    "=(170) *(@-2) 0 "
 	mov	ax, 0
 	mov	[bp-2], ax
@@ -555,17 +551,14 @@ L86:
 ; loc     fmt : (@4): * char
 ; loc     vl : (@6): * void
 ; loc     pp : (@-2): * int
-; =
-; RPN'ized expression: "vl "
-; Expanded expression: "(@6) *(2) "
+; RPN'ized expression: "pp vl = "
+; Expanded expression: "(@-2) (@6) *(2) =(2) "
 ; Fused expression:    "=(170) *(@-2) *(@6) "
 	mov	ax, [bp+6]
 	mov	[bp-2], ax
 ; loc     cnt : (@-4): int
-; =
-; RPN'ized expression: "0 "
-; Expanded expression: "0 "
-; Expression value: 0
+; RPN'ized expression: "cnt 0 = "
+; Expanded expression: "(@-4) 0 =(2) "
 ; Fused expression:    "=(170) *(@-4) 0 "
 	mov	ax, 0
 	mov	[bp-4], ax
@@ -580,10 +573,8 @@ L86:
 ; loc     sign : (@-26): int
 ; loc     msign : (@-28): int
 ; loc     minlen : (@-30): int
-; =
-; RPN'ized expression: "0 "
-; Expanded expression: "0 "
-; Expression value: 0
+; RPN'ized expression: "minlen 0 = "
+; Expanded expression: "(@-30) 0 =(2) "
 ; Fused expression:    "=(170) *(@-30) 0 "
 	mov	ax, 0
 	mov	[bp-30], ax
@@ -1393,9 +1384,8 @@ L140:
 L156:
 ; {
 ; loc                 nn : (@-34): unsigned
-; =
-; RPN'ized expression: "n "
-; Expanded expression: "(@-24) *(2) "
+; RPN'ized expression: "nn n = "
+; Expanded expression: "(@-34) (@-24) *(2) =(2) "
 ; Fused expression:    "=(170) *(@-34) *(@-24) "
 	mov	ax, [bp-24]
 	mov	[bp-34], ax
@@ -1625,9 +1615,8 @@ L172:
 L175:
 ; {
 ; loc                 nn : (@-34): unsigned
-; =
-; RPN'ized expression: "n "
-; Expanded expression: "(@-24) *(2) "
+; RPN'ized expression: "nn n = "
+; Expanded expression: "(@-34) (@-24) *(2) =(2) "
 ; Fused expression:    "=(170) *(@-34) *(@-24) "
 	mov	ax, [bp-24]
 	mov	[bp-34], ax
@@ -1799,9 +1788,8 @@ L174:
 L186:
 ; {
 ; loc                 nn : (@-34): unsigned
-; =
-; RPN'ized expression: "n "
-; Expanded expression: "(@-24) *(2) "
+; RPN'ized expression: "nn n = "
+; Expanded expression: "(@-34) (@-24) *(2) =(2) "
 ; Fused expression:    "=(170) *(@-34) *(@-24) "
 	mov	ax, [bp-24]
 	mov	[bp-34], ax
@@ -1971,9 +1959,8 @@ _printf:
 L195:
 ; loc     fmt : (@4): * char
 ; loc     pp : (@-2): * * void
-; =
-; RPN'ized expression: "fmt &u "
-; Expanded expression: "(@4) "
+; RPN'ized expression: "pp fmt &u = "
+; Expanded expression: "(@-2) (@4) =(2) "
 ; Fused expression:    "=(170) *(@-2) (@4) "
 	lea	ax, [bp+4]
 	mov	[bp-2], ax
@@ -2284,9 +2271,8 @@ L232:
 L233:
 ; {
 ; loc         j : (@-4): int
-; =
-; RPN'ized expression: "i "
-; Expanded expression: "(@-2) *(2) "
+; RPN'ized expression: "j i = "
+; Expanded expression: "(@-4) (@-2) *(2) =(2) "
 ; Fused expression:    "=(170) *(@-4) *(@-2) "
 	mov	ax, [bp-2]
 	mov	[bp-4], ax
@@ -2346,9 +2332,8 @@ L239:
 ; Expression value: 4
 ; loc     cp : (@-16): [4u] * * char
 ; loc     cpp : (@-18): * * * char
-; =
-; RPN'ized expression: "cp "
-; Expanded expression: "(@-16) "
+; RPN'ized expression: "cpp cp = "
+; Expanded expression: "(@-18) (@-16) =(2) "
 ; Fused expression:    "=(170) *(@-18) (@-16) "
 	lea	ax, [bp-16]
 	mov	[bp-18], ax
@@ -2581,9 +2566,8 @@ L275:
 ; Expression value: 16
 ; loc     hws : (@-16): [16u] char
 ; loc     phw : (@-18): * char
-; =
-; RPN'ized expression: "hws "
-; Expanded expression: "(@-16) "
+; RPN'ized expression: "phw hws = "
+; Expanded expression: "(@-18) (@-16) =(2) "
 ; Fused expression:    "=(170) *(@-18) (@-16) "
 	lea	ax, [bp-16]
 	mov	[bp-18], ax
@@ -2902,9 +2886,8 @@ L310:
 ; Fused expression:    "( Switch )0 "
 	call	_Switch
 ; loc     pgb : (@-42): * char
-; =
-; RPN'ized expression: "L313 "
-; Expanded expression: "L313 "
+; RPN'ized expression: "pgb L313 = "
+; Expanded expression: "(@-42) L313 =(2) "
 	jmp	L314
 L313:
 	db	"Green on Black!",0
@@ -3413,9 +3396,8 @@ L407:
 ; Expression value: 3
 ; loc     arr : (@-76): [3u] int
 ; loc     p : (@-78): * int
-; =
-; RPN'ized expression: "arr 1 + "
-; Expanded expression: "(@-74) "
+; RPN'ized expression: "p arr 1 + = "
+; Expanded expression: "(@-78) (@-74) =(2) "
 ; Fused expression:    "=(170) *(@-78) (@-74) "
 	lea	ax, [bp-74]
 	mov	[bp-78], ax
@@ -3513,10 +3495,8 @@ L417:
 	call	_printf
 	sub	sp, -8
 ; loc     c : (@-80): char
-; =
-; RPN'ized expression: "127 "
-; Expanded expression: "127 "
-; Expression value: 127
+; RPN'ized expression: "c 127 = "
+; Expanded expression: "(@-80) 127 =(-1) "
 ; Fused expression:    "=(170) *(@-80) 127 "
 	mov	ax, 127
 	mov	[bp-80], ax
@@ -4482,7 +4462,7 @@ L457:
 	jmp	L456
 
 ; Syntax/declaration table/stack:
-; Bytes used: 2072/20224
+; Bytes used: 2072/20736
 
 
 ; Macro table:
