@@ -5805,7 +5805,7 @@ int InitScalar(int synPtr, int tok)
   {
     // TBD??? truncate values for types smaller than int (e.g. char and short),
     // so they are always in range?
-    GenIntData(elementSz, exprVal);
+    GenIntData(elementSz, stack[0][1]);
   }
   else if (elementSz == SizeOfWord + 0u && stack[sp - 1][0] == tokIdent)
   {
