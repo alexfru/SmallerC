@@ -3,13 +3,13 @@ Copyright (c) 2012-2014, Alexey Frunze
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met: 
+modification, are permitted provided that the following conditions are met:
 
 1. Redistributions of source code must retain the above copyright notice, this
-   list of conditions and the following disclaimer. 
+   list of conditions and the following disclaimer.
 2. Redistributions in binary form must reproduce the above copyright notice,
    this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution. 
+   and/or other materials provided with the distribution.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -23,7 +23,7 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 The views and conclusions contained in the software and documentation are those
-of the authors and should not be interpreted as representing official policies, 
+of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
 */
 
@@ -131,15 +131,19 @@ void GenStartAsciiString(void)
   printf2("\t.ascii\t");
 }
 
-void GenAddrData(int Size, char* Label)
+void GenAddrData(int Size, char* Label, int ofs)
 {
+  ofs = truncInt(ofs);
   if (Size == 1)
     printf2("\t.byte\t");
   else if (Size == 2)
     printf2("\t.half\t");
   else if (Size == 4)
     printf2("\t.word\t");
-  GenPrintLabel(Label); puts2("");
+  GenPrintLabel(Label);
+  if (ofs)
+    printf2(" %+d", ofs);
+  puts2("");
 }
 
 #define MipsInstrNop    0x00

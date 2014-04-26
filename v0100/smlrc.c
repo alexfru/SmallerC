@@ -3,13 +3,13 @@ Copyright (c) 2012-2014, Alexey Frunze
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met: 
+modification, are permitted provided that the following conditions are met:
 
 1. Redistributions of source code must retain the above copyright notice, this
-   list of conditions and the following disclaimer. 
+   list of conditions and the following disclaimer.
 2. Redistributions in binary form must reproduce the above copyright notice,
    this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution. 
+   and/or other materials provided with the distribution.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -23,7 +23,7 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 The views and conclusions contained in the software and documentation are those
-of the authors and should not be interpreted as representing official policies, 
+of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
 */
 
@@ -331,13 +331,6 @@ int truncInt(int);
 int GetToken(void);
 char* GetTokenName(int token);
 
-int GetTokenValueInt(void);
-
-char* GetTokenValueString(void);
-int GetTokenValueStringLength(void);
-
-char* GetTokenIdentName(void);
-
 #ifndef NO_PREPROCESSOR
 #ifndef NO_ANNOTATIONS
 void DumpMacroTable(void);
@@ -366,7 +359,7 @@ void GenNumLabel(int Label);
 void GenZeroData(unsigned Size);
 void GenIntData(int Size, int Val);
 void GenStartAsciiString(void);
-void GenAddrData(int Size, char* Label);
+void GenAddrData(int Size, char* Label, int ofs);
 
 void GenJumpUncond(int Label);
 void GenJumpIfZero(int Label);
@@ -577,8 +570,19 @@ int CurFxnNameLabel = 0;
 int ParseLevel = 0; // Parse level/scope (file:0, fxn:1+)
 int ParamLevel = 0; // 1+ if parsing params, 0 otherwise
 
-int SyntaxStack[SYNTAX_STACK_MAX][2];
-int SyntaxStackCnt = 0;
+int SyntaxStack[SYNTAX_STACK_MAX][2] =
+{
+  { tokVoid },     // SymVoidSynPtr
+  { tokInt },      // SymIntSynPtr
+  { tokUnsigned }, // SymUintSynPtr
+  { tokIdent },    // SymFuncPtr
+  { '[' },
+  { tokNumUint },
+  { ']' },
+  { tokChar }
+};
+
+int SyntaxStackCnt = 8; // number of explicitly initialized elements in SyntaxStack[][2]
 
 // all code
 
@@ -586,7 +590,7 @@ int uint2int(unsigned n)
 {
   int r;
   // Convert n to (int)n in such a way that (unsigned)(int)n == n,
-  // IOW, avoid signed overflows in (int)n.
+  // IOW, avoid signed overflows in (int)n that result in an implementation-defined value/signal.
   // We're assuming ints are 2's complement.
 
   // "n < INT_MAX + 1u" is equivalent to "n <= INT_MAX" without the
@@ -1037,26 +1041,6 @@ char* GetTokenName(int token)
   //error("Internal Error: GetTokenName(): Invalid token %d\n", token);
   errorInternal(1);
   return "";
-}
-
-int GetTokenValueInt(void)
-{
-  return TokenValueInt;
-}
-
-char* GetTokenValueString(void)
-{
-  return TokenValueString;
-}
-
-int GetTokenValueStringLength(void)
-{
-  return TokenStringLen;
-}
-
-char* GetTokenIdentName(void)
-{
-  return TokenIdentName;
 }
 
 int GetNextChar(void)
@@ -1732,9 +1716,9 @@ int GetToken(void)
 #endif
 
       // treat keywords auto, const, register, restrict and volatile as white space for now
-      if (tok == tokConst || tok == tokVolatile ||
-          tok == tokAuto || tok == tokRegister ||
-          tok == tokRestrict)
+      if ((tok == tokConst) | (tok == tokVolatile) |
+          (tok == tokAuto) | (tok == tokRegister) |
+          (tok == tokRestrict))
         continue;
 
       return tok;
@@ -1788,7 +1772,7 @@ int GetToken(void)
         if (GetNumber() != tokNumInt)
           //error("Invalid line number in preprocessor output\n");
           errorDirective();
-        line = GetTokenValueInt();
+        line = TokenValueInt;
 
         SkipSpace(0);
 
@@ -1799,10 +1783,10 @@ int GetToken(void)
           else
             GetString('>', 0);
 
-          if (strlen(GetTokenValueString()) > MAX_FILE_NAME_LEN)
+          if (strlen(TokenValueString) > MAX_FILE_NAME_LEN)
             //error("File name too long in preprocessor output\n");
             errorFileName();
-          strcpy(FileNames[FileCnt - 1], GetTokenValueString());
+          strcpy(FileNames[FileCnt - 1], TokenValueString);
         }
 
         // Ignore gcc-style #line's flags, if any
@@ -1877,7 +1861,7 @@ int GetToken(void)
 
         if (hadNumber)
         {
-          PragmaPackValue = GetTokenValueInt();
+          PragmaPackValue = TokenValueInt;
           if (PragmaPackValue <= 0 ||
               PragmaPackValue > SizeOfWord ||
               PragmaPackValue & (PragmaPackValue - 1))
@@ -2163,6 +2147,7 @@ int popop()
 
 int isop(int tok)
 {
+/*
   switch (tok)
   {
   case '!':
@@ -2190,11 +2175,41 @@ int isop(int tok)
   default:
     return 0;
   }
+*/
+  static unsigned char toks[] =
+  {
+    '!',
+    '~',
+    '&',
+    '*',
+    '/', '%',
+    '+', '-',
+    '|', '^',
+    '<', '>',
+    '=',
+    tokLogOr, tokLogAnd,
+    tokEQ, tokNEQ,
+    tokLEQ, tokGEQ,
+    tokLShift, tokRShift,
+    tokInc, tokDec,
+    tokSizeof,
+    tokAssignMul, tokAssignDiv, tokAssignMod,
+    tokAssignAdd, tokAssignSub,
+    tokAssignLSh, tokAssignRSh,
+    tokAssignAnd, tokAssignXor, tokAssignOr,
+    tokComma,
+    '?'
+  };
+  unsigned i;
+  for (i = 0; i < sizeof toks / sizeof toks[0]; i++)
+    if (toks[i] == tok)
+      return 1;
+  return 0;
 }
 
 int isunary(int tok)
 {
-  return tok == '!' || tok == '~' || tok == tokInc || tok == tokDec || tok == tokSizeof;
+  return (tok == '!') | (tok == '~') | (tok == tokInc) | (tok == tokDec) | (tok == tokSizeof);
 }
 
 int preced(int tok)
@@ -2298,7 +2313,7 @@ int exprUnary(int tok, int* gotUnary, int commaSeparator, int argOfSizeOf)
 
     if (tok == tokNumInt || tok == tokNumUint)
     {
-      push2(tok, GetTokenValueInt());
+      push2(tok, TokenValueInt);
       *gotUnary = 1;
       tok = GetToken();
     }
@@ -2311,7 +2326,7 @@ int exprUnary(int tok, int* gotUnary, int commaSeparator, int argOfSizeOf)
 
       // imitate definition: char #[len] = "...";
 
-      AddString(lbl, GetTokenValueString(), len = 1 + GetTokenValueStringLength());
+      AddString(lbl, TokenValueString, len = 1 + TokenStringLen);
 
       *--p = '\0';
       p = lab2str(p, lbl);
@@ -2329,7 +2344,7 @@ int exprUnary(int tok, int* gotUnary, int commaSeparator, int argOfSizeOf)
     }
     else if (tok == tokIdent)
     {
-      push2(tok, AddIdent(GetTokenIdentName()));
+      push2(tok, AddIdent(TokenIdentName));
       *gotUnary = 1;
       tok = GetToken();
     }
@@ -2488,7 +2503,7 @@ int exprUnary(int tok, int* gotUnary, int commaSeparator, int argOfSizeOf)
         tok = GetToken();
         if (tok != tokIdent)
           errorUnexpectedToken(tok);
-        push2(tok, AddIdent(GetTokenIdentName()));
+        push2(tok, AddIdent(TokenIdentName));
         // "->" in "a->b" will function as "+" in "*(type_of_b*)((char*)a + offset_of_b_in_a)"
         push(tokArrow);
         push(tokUnaryStar);
@@ -4681,7 +4696,7 @@ int TokenStartsDeclaration(int t, int params)
 #ifndef NO_TYPEDEF_ENUM
          t == tokEnum ||
          (t == tokIdent &&
-          FindTypedef(GetTokenIdentName(), &CurScope, 1) >= 0) ||
+          FindTypedef(TokenIdentName, &CurScope, 1) >= 0) ||
 #endif
          (!params && (t == tokExtern ||
 #ifndef NO_TYPEDEF_ENUM
@@ -5315,8 +5330,8 @@ int ParseBase(int tok, int base[2])
     {
       // this is a structure/union/enum tag
       gotTag = 1;
-      declPtr = FindTaggedDecl(GetTokenIdentName(), SyntaxStackCnt - 1, &curScope);
-      tagIdent = AddIdent(GetTokenIdentName());
+      declPtr = FindTaggedDecl(TokenIdentName, SyntaxStackCnt - 1, &curScope);
+      tagIdent = AddIdent(TokenIdentName);
 
       if (declPtr >= 0)
       {
@@ -5382,7 +5397,7 @@ int ParseBase(int tok, int base[2])
           if (tok != tokIdent)
             errorUnexpectedToken(tok);
 
-          s = GetTokenIdentName();
+          s = TokenIdentName;
           if (FindTypedef(s, &CurScope, 0) >= 0 && CurScope)
             errorRedef(s);
 
@@ -5533,7 +5548,7 @@ int ParseBase(int tok, int base[2])
   }
 #ifndef NO_TYPEDEF_ENUM
   else if (tok == tokIdent &&
-           (base[1] = FindTypedef(GetTokenIdentName(), &CurScope, 1)) >= 0)
+           (base[1] = FindTypedef(TokenIdentName, &CurScope, 1)) >= 0)
   {
     base[0] = tokTypedef;
     tok = GetToken();
@@ -5610,7 +5625,7 @@ int ParseDerived(int tok)
   }
   else if (tok == tokIdent)
   {
-    PushSyntax2(tok, AddIdent(GetTokenIdentName()));
+    PushSyntax2(tok, AddIdent(TokenIdentName));
     tok = GetToken();
   }
   else
@@ -5793,6 +5808,7 @@ int InitScalar(int synPtr, int tok)
   int gotUnary, synPtr2, constExpr, exprVal;
   int oldssp = SyntaxStackCnt;
   int undoIdents = IdentTableLen;
+  int ttop;
 
   tok = ParseExpr(tok, &gotUnary, &synPtr2, &constExpr, &exprVal, ',', 0);
 
@@ -5801,15 +5817,39 @@ int InitScalar(int synPtr, int tok)
 
   scalarTypeCheck(synPtr2);
 
-  if (stack[sp - 1][0] == tokNumInt || stack[sp - 1][0] == tokNumUint)
+  ttop = stack[sp - 1][0];
+  if (ttop == tokNumInt || ttop == tokNumUint)
   {
     // TBD??? truncate values for types smaller than int (e.g. char and short),
     // so they are always in range?
     GenIntData(elementSz, stack[0][1]);
   }
-  else if (elementSz == SizeOfWord + 0u && stack[sp - 1][0] == tokIdent)
+  else if (elementSz == SizeOfWord + 0u)
   {
-    GenAddrData(elementSz, IdentTable + stack[sp - 1][1]);
+    if (ttop == tokIdent)
+    {
+      GenAddrData(elementSz, IdentTable + stack[sp - 1][1], 0);
+    }
+    else if (ttop == '+' || ttop == '-')
+    {
+      int tleft = stack[sp - 3][0];
+      int tright = stack[sp - 2][0];
+      if (tleft == tokIdent &&
+          (tright == tokNumInt || tright == tokNumUint))
+      {
+        GenAddrData(elementSz, IdentTable + stack[sp - 3][1], (ttop == '+') ? stack[sp - 2][1] : -stack[sp - 2][1]);
+      }
+      else if (ttop == '+' &&
+               tright == tokIdent &&
+               (tleft == tokNumInt || tleft == tokNumUint))
+      {
+        GenAddrData(elementSz, IdentTable + stack[sp - 2][1], stack[sp - 3][1]);
+      }
+      else
+        errorNotConst();
+    }
+    else
+      errorNotConst();
     // Defer storage of string literal data (if any) until the end.
     // This will let us generate the contiguous array of pointers to
     // string literals unperturbed by the string literal data
@@ -7386,7 +7426,7 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
         //error("ParseStatement(): string literal expression expected in 'asm ( expression )'\n");
         errorUnexpectedToken(tok);
 
-      puts2(GetTokenValueString());
+      puts2(TokenValueString);
 
       tok = GetToken();
       if (tok != ')')
@@ -7405,9 +7445,9 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
       if ((tok = GetToken()) != tokIdent)
         errorUnexpectedToken(tok);
 #ifndef NO_ANNOTATIONS
-      GenStartCommentLine(); printf2("goto %s\n", GetTokenIdentName());
+      GenStartCommentLine(); printf2("goto %s\n", TokenIdentName);
 #endif
-      GenJumpUncond(AddGotoLabel(GetTokenIdentName(), 0));
+      GenJumpUncond(AddGotoLabel(TokenIdentName, 0));
       if ((tok = GetToken()) != ';')
         errorUnexpectedToken(tok);
       tok = GetToken();
@@ -7463,9 +7503,9 @@ int ParseBlock(int BrkCntSwchTarget[4], int switchBody)
       {
         // found a label
 #ifndef NO_ANNOTATIONS
-        GenStartCommentLine(); printf2("%s:\n", GetTokenIdentName());
+        GenStartCommentLine(); printf2("%s:\n", TokenIdentName);
 #endif
-        GenNumLabel(AddGotoLabel(GetTokenIdentName(), 1));
+        GenNumLabel(AddGotoLabel(TokenIdentName, 1));
         tok = GetToken();
         // a statement is needed after "label:"
         tok = ParseStatement(tok, BrkCntSwchTarget, switchBody);
@@ -7638,16 +7678,6 @@ int main(int argc, char** argv)
     error("Input file not specified\n");
 
   GenInitFinalize();
-
-  // some manual initialization because there's no 2d array initialization yet
-  PushSyntax(tokVoid);     // SymVoidSynPtr
-  PushSyntax(tokInt);      // SymIntSynPtr
-  PushSyntax(tokUnsigned); // SymUintSynPtr
-  PushSyntax(tokIdent);    // SymFuncPtr
-  PushSyntax('[');
-  PushSyntax(tokNumUint);
-  PushSyntax(']');
-  PushSyntax(tokChar);
 
 #ifndef NO_PREPROCESSOR
   // Define a few macros useful for conditional compilation
