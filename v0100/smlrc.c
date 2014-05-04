@@ -302,6 +302,7 @@ int vfprintf(FILE*, char*, void*);
 #define tokTag        0x91
 #define tokMemberIdent 0x92
 #define tokEnumPtr    0x93
+#define tokIntr       0x94
 
 #define FormatFlat      0
 #define FormatSegmented 1
@@ -368,6 +369,8 @@ void GenJumpIfNotEqual(int val, int Label);
 
 void GenFxnProlog(void);
 void GenFxnEpilog(void);
+void GenIsrProlog(void);
+void GenIsrEpilog(void);
 
 void GenLocalAlloc(int Size);
 
@@ -614,8 +617,10 @@ unsigned truncUint(unsigned n)
   // Truncate n to SizeOfWord * 8 bits
   if (SizeOfWord == 2)
     n &= ~(~0u << 8 << 8);
+#ifdef CAN_COMPILE_32BIT
   else if (SizeOfWord == 4)
     n &= ~(~0u << 8 << 12 << 12);
+#endif
   return n;
 }
 
@@ -628,11 +633,13 @@ int truncInt(int n)
     un &= ~(~0u << 8 << 8);
     un |= (((un >> 8 >> 7) & 1) * ~0u) << 8 << 8;
   }
+#ifdef CAN_COMPILE_32BIT
   else if (SizeOfWord == 4)
   {
     un &= ~(~0u << 8 << 12 << 12);
     un |= (((un >> 8 >> 12 >> 11) & 1) * ~0u) << 8 << 12 << 12;
   }
+#endif
   return uint2int(un);
 }
 
@@ -902,7 +909,8 @@ char* rws[] =
   "static", "switch", "unsigned", "void", "while", "asm", "auto",
   "const", "double", "enum", "float", "goto", "inline", "long",
   "register", "restrict", "short", "struct", "typedef", "union",
-  "volatile", "_Bool", "_Complex", "_Imaginary"
+  "volatile", "_Bool", "_Complex", "_Imaginary",
+  "__interrupt"
 };
 
 unsigned char rwtk[] =
@@ -912,7 +920,8 @@ unsigned char rwtk[] =
   tokStatic, tokSwitch, tokUnsigned, tokVoid, tokWhile, tok_Asm, tokAuto,
   tokConst, tokDouble, tokEnum, tokFloat, tokGoto, tokInline, tokLong,
   tokRegister, tokRestrict, tokShort, tokStruct, tokTypedef, tokUnion,
-  tokVolatile, tok_Bool, tok_Complex, tok_Imagin
+  tokVolatile, tok_Bool, tok_Complex, tok_Imagin,
+  tokIntr
 };
 
 int GetTokenByWord(char* word)
@@ -1368,11 +1377,10 @@ void GetString(char terminator, int SkipNewLines)
               c = (c * 8) & 0xFF;
               c += *p - '0';
               ShiftCharN(1);
-              cnt++;
+              // octal escape sequence is terminated after three octal digits
+              if (++cnt == 3)
+                break;
             }
-            if (!cnt)
-              //error("Unsupported or invalid character/string constant\n");
-              errorChrStr();
             c -= (c >= 0x80 && CHAR_MIN) * 0x100;
             ch = c;
           }
@@ -1530,11 +1538,13 @@ int GetNumber(void)
   }
 
   // Ensure the constant fits into 16(32) bits
-  if ((SizeOfWord == 2 && n >> 8 >> 8) || // equiv. to SizeOfWord == 2 && n > 0xFFFF
+  if (
+      (SizeOfWord == 2 && n >> 8 >> 8) // equiv. to SizeOfWord == 2 && n > 0xFFFF
 #ifdef CAN_COMPILE_32BIT
-      (SizeOfWord == 2 && lSuffix) || // long (which must have at least 32 bits) isn't supported in 16-bit models
+      || (SizeOfWord == 2 && lSuffix) // long (which must have at least 32 bits) isn't supported in 16-bit models
+      || (SizeOfWord == 4 && n >> 8 >> 12 >> 12) // equiv. to SizeOfWord == 4 && n > 0xFFFFFFFF
 #endif
-      (SizeOfWord == 4 && n >> 8 >> 12 >> 12)) // equiv. to SizeOfWord == 4 && n > 0xFFFFFFFF
+     )
     error("Constant too big for %d-bit type\n", SizeOfWord * 8);
 
   TokenValueInt = uint2int(n);
@@ -1542,8 +1552,13 @@ int GetNumber(void)
   // Unsuffixed (with 'u') integer constants (octal, decimal, hex)
   // fitting into 15(31) out of 16(32) bits are signed ints
   if (!uSuffix &&
-      ((SizeOfWord == 2 && !(n >> 8 >> 7)) || // equiv. to SizeOfWord == 2 && n <= 0x7FFF
-       (SizeOfWord == 4 && !(n >> 8 >> 12 >> 11)))) // equiv. to SizeOfWord == 4 && n <= 0x7FFFFFFF
+      (
+       (SizeOfWord == 2 && !(n >> 15)) // equiv. to SizeOfWord == 2 && n <= 0x7FFF
+#ifdef CAN_COMPILE_32BIT
+       || (SizeOfWord == 4 && !(n >> 8 >> 12 >> 11)) // equiv. to SizeOfWord == 4 && n <= 0x7FFFFFFF
+#endif
+      )
+     )
     return tokNumInt;
 
   // Unlike octal and hex constants, decimal constants are always
@@ -1792,7 +1807,7 @@ int GetToken(void)
         // Ignore gcc-style #line's flags, if any
         while (!strchr("\r\n", *p))
           ShiftCharN(1);
-        
+
         LineNo = line - 1; // "line" is the number of the next line
         LinePos = 1;
 
@@ -5600,12 +5615,30 @@ int ParseDerived(int tok)
 {
   int stars = 0;
   int params = 0;
+#ifndef MIPS
+#ifdef CAN_COMPILE_32BIT
+  int isInterrupt = 0;
+#endif
+#endif
 
   while (tok == '*')
   {
     stars++;
     tok = GetToken();
   }
+
+#ifndef MIPS
+#ifdef CAN_COMPILE_32BIT
+  if (tok == tokIntr)
+  {
+    // __interrupt is supported in the huge mode(l) only
+    if (OutputFormat != FormatSegHuge)
+      errorDecl();
+    isInterrupt = 1;
+    tok = GetToken();
+  }
+#endif
+#endif
 
   if (tok == '(')
   {
@@ -5642,7 +5675,15 @@ int ParseDerived(int tok)
       tok = GetToken();
     else
       PushSyntax2(tokIdent, AddIdent("<something>"));
+#ifndef MIPS
+#ifdef CAN_COMPILE_32BIT
+    if (isInterrupt)
+      PushSyntax2('(', 1);
+    else // fallthrough
+#endif
+#endif
     PushSyntax('(');
+
     ParseLevel++;
     ParamLevel++;
     ParseFxnParams(tok);
@@ -5897,6 +5938,9 @@ int InitArray(int synPtr, int tok)
     int undoIdents = IdentTableLen;
     int slen = StringTableLen;
 
+    if (elementsRequired * ((unsigned)TokenStringLen > elementsRequired))
+      warning("String literal truncated\n");
+
     tok = ParseExpr(tok, &gotUnary, &synPtr2, &constExpr, &exprVal, ',', 0);
 
     if (!gotUnary ||
@@ -6122,7 +6166,7 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
 #ifndef NO_TYPEDEF_ENUM
             typeDef |
 #endif
-            Static) && 
+            Static) &&
           !strcmp(IdentTable + SyntaxStack[lastSyntaxPtr][1], "<something>") &&
           tok == ';')
       {
@@ -6576,7 +6620,16 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
 
         GenLabel(IdentTable + SyntaxStack[lastSyntaxPtr][1], Static);
         CurFxnEpilogLabel = LabelCnt++;
+
+#ifndef MIPS
+#ifdef CAN_COMPILE_32BIT
+        if (SyntaxStack[lastSyntaxPtr + 1][1] & 1)
+          GenIsrProlog();
+        else // fallthrough
+#endif
+#endif
         GenFxnProlog();
+
         GenJumpUncond(locAllocLabel + 1);
         GenNumLabel(locAllocLabel);
 
@@ -6623,7 +6676,16 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
         }
 
         GenNumLabel(CurFxnEpilogLabel);
+
+#ifndef MIPS
+#ifdef CAN_COMPILE_32BIT
+        if (SyntaxStack[lastSyntaxPtr + 1][1] & 1)
+          GenIsrEpilog();
+        else // fallthrough
+#endif
+#endif
         GenFxnEpilog();
+
         GenNumLabel(locAllocLabel + 1);
         if (CurFxnMinLocalOfs)
           GenLocalAlloc(-CurFxnMinLocalOfs);
@@ -7661,7 +7723,7 @@ int main(int argc, char** argv)
       LinePoss[0] = LinePos;
       FileCnt++;
       continue;
-    }  
+    }
     else if (FileCnt == 1 && OutFile == NULL)
     {
       // This should be the output file name
@@ -7669,7 +7731,7 @@ int main(int argc, char** argv)
         //error("Cannot open output file \"%s\"\n", argv[i]);
         errorFile(argv[i]);
       continue;
-    }  
+    }
 
     error("Invalid or unsupported command line option\n");
   }

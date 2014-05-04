@@ -803,6 +803,79 @@ void GenFxnEpilog(void)
   GenPrintInstrNoOperand(X86InstrRet);
 }
 
+#ifdef CAN_COMPILE_32BIT
+/*
+struct INTREGS
+{
+  unsigned short gs, fs, es, ds;
+  unsigned edi, esi, ebp, esp, ebx, edx, ecx, eax;
+  unsigned short ss, ip, cs, flags;
+};
+void __interrupt isr(struct INTREGS** ppRegs)
+{
+  // **ppRegs (input/output values of registers) can be modified to
+  // handle software interrupts requested via the int instruction and
+  // communicate data via registers
+
+  // *ppRegs (directly related to the stack pointer) can be modified to
+  // return to a different location & implement preemptive scheduling,
+  // e.g. save *ppRegs of the interrupted task somewhere, update *ppRegs
+  // with a value from another interrupted task.
+}
+*/
+void GenIsrProlog(void)
+{
+  // The CPU has already done these:
+  //   push flags
+  //   push cs
+  //   push ip
+
+  puts2("\tpush\tss");
+  puts2("\tpushad");
+  puts2("\tpush\tds\n"
+        "\tpush\tes\n"
+        "\tpush\tfs\n"
+        "\tpush\tgs");
+
+  // The context has been saved
+
+  puts2("\txor\teax, eax\n\tmov\tax, ss"); // mov r32, sreg leaves top 16 bits undefined on pre-Pentium CPUs
+  puts2("\txor\tebx, ebx\n\tmov\tbx, sp"); // top 16 bits of esp can contain garbage as well
+  puts2("\tshl\teax, 4\n\tadd\teax, ebx");
+  puts2("\tpush\teax"); // pointer to the structure with register values
+  puts2("\tsub\teax, 4\n\tpush\teax"); // pointer to the pointer to the structure with register values
+
+  puts2("\tpush\teax"); // fake return address allowing to use the existing bp-relative addressing of locals and params
+
+  puts2("\tpush\tebp\n"
+        "\tmov\tebp, esp");
+}
+
+void GenIsrEpilog(void)
+{
+  puts2("\tdb\t0x66\n\tleave");
+
+  puts2("\tpop\teax"); // fake return address
+
+  puts2("\tpop\teax"); // pointer to the pointer to the structure with register values
+  puts2("\tpop\tebx"); // pointer to the structure with register values
+  puts2("\tror\tebx, 4\n\tmov\tds, bx\n\tshr\tebx, 28"); // ds:bx = pointer to the structure with register values
+  puts2("\tmov\tax, [bx+4*10]\n\tmov\tbx, [bx+4*5]\n\tsub\tbx, 4*10"); // ax:bx = proper pointer (with original segment) to the struct...
+  puts2("\tmov\tss, ax\n\tmov\tsp, bx"); // restore ss:sp that we had after push gs
+
+  // The context is now going to be restored
+
+  puts2("\tpop\tgs\n"
+        "\tpop\tfs\n"
+        "\tpop\tes\n"
+        "\tpop\tds");
+  puts2("\tpopad");
+  puts2("\tpop\tss");
+
+  puts2("\tiret");
+}
+#endif
+
 void GenReadIdent(int opSz, int label)
 {
   GenPrintInstr2Operands(X86InstrMov, 0,

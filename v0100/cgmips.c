@@ -37,6 +37,11 @@ either expressed or implied, of the FreeBSD Project.
 /*                                                                           */
 /*****************************************************************************/
 
+// Works around bugs in RetroBSD's as instruction reordering
+#define REORDER_WORKAROUND
+// Works around bugs in RetroBSD's as immediate operand truncation to 16 bits
+//#define INSTR_IMM_WORKAROUND
+
 int UseGp = 0;
 
 void GenInit(void)
@@ -47,7 +52,7 @@ void GenInit(void)
   CodeHeader = "\t.text";
   DataHeader = "\t.data";
   UseLeadingUnderscores = 0;
-#ifndef NO_REORDER_WORKAROUND
+#ifdef REORDER_WORKAROUND
   FileHeader = "\t.set\tnoreorder";
 #else
   FileHeader = "\t.set\treorder";
@@ -63,6 +68,12 @@ int GenInitParams(int argc, char** argv, int* idx)
     UseGp = 1;
     return 1;
   }
+  else if (!strcmp(argv[*idx], "-v"))
+  {
+    // RetroBSD's cc may supply this parameter. Just need to consume it.
+    return 1;
+  }
+
   return 0;
 }
 
@@ -290,7 +301,7 @@ void GenPrintInstr(int instr, int val)
 #define MipsOpLabelGpOption              0x83
 #define MipsOpIndLocal                   MipsOpIndRegFp
 
-#ifndef NO_REORDER_WORKAROUND
+#ifdef REORDER_WORKAROUND
 void GenNop(void)
 {
   puts2("\tnop");
@@ -359,7 +370,7 @@ void GenPrintInstr1Operand(int instr, int instrval, int operand, int operandval)
   GenPrintOperand(operand, operandval);
   GenPrintNewLine();
 
-#ifndef NO_REORDER_WORKAROUND
+#ifdef REORDER_WORKAROUND
   if (instr == MipsInstrJ || instr == MipsInstrJAL)
     GenNop();
 #endif
@@ -383,9 +394,60 @@ void GenPrintInstr3Operands(int instr, int instrval,
                             int operand2, int operand2val,
                             int operand3, int operand3val)
 {
+#ifdef INSTR_IMM_WORKAROUND
+  int useAt = 0;
+#endif
+
   if (operand3 == MipsOpConst && operand3val == 0 &&
       (instr == MipsInstrAddU || instr == MipsInstrSubU))
     return;
+
+#ifdef INSTR_IMM_WORKAROUND
+  if (operand3 == MipsOpConst)
+  {
+    unsigned imm = truncUint(operand3val);
+
+    switch (instr)
+    {
+    // signed imm16:
+    //   addi[u], subi[u], slti[u]
+    case MipsInstrAddU:
+    case MipsInstrSLT:
+    case MipsInstrSLTU:
+      if (imm > 0x7FFF && imm < 0xFFFF8000) // if not (-0x8000 <= imm <= 0x7FFF)
+        useAt = 1;
+      break;
+    case MipsInstrSubU:
+      // subi[u] will be transformed into addi[u] and the immediate will be negated,
+      // hence the immediate range is shifted by 1
+      if (imm > 0x8000 && imm < 0xFFFF8001) // if not (-0x7FFF <= imm <= 0x8000)
+        useAt = 1;
+      break;
+
+    // unsigned imm16:
+    //   andi, ori, xori
+    case MipsInstrAnd:
+    case MipsInstrOr:
+    case MipsInstrXor:
+      if (imm > 0xFFFF)
+        useAt = 1;
+      break;
+
+    // also: various trap instructions
+    default:
+      break;
+    }
+  }
+
+  if (useAt)
+  {
+    puts2("\t.set\tnoat");
+    GenPrintInstr2Operands(MipsInstrLI, 0,
+                           MipsOpRegAt, 0,
+                           MipsOpConst, operand3val);
+    operand3 = MipsOpRegAt;
+  }
+#endif
 
   GenPrintInstr(instr, instrval);
   GenPrintOperand(operand1, operand1val);
@@ -395,7 +457,14 @@ void GenPrintInstr3Operands(int instr, int instrval,
   GenPrintOperand(operand3, operand3val);
   GenPrintNewLine();
 
-#ifndef NO_REORDER_WORKAROUND
+#ifdef INSTR_IMM_WORKAROUND
+  if (useAt)
+  {
+    puts2("\t.set\tat");
+  }
+#endif
+
+#ifdef REORDER_WORKAROUND
   if (instr == MipsInstrBEQ || instr == MipsInstrBNE)
     GenNop();
 #endif
@@ -1129,11 +1198,13 @@ void GenExpr0(void)
       {
         int reg = GenPopReg(MipsOpRegT0);
         if (tok == '/' || tok == '%')
-          GenPrintInstr2Operands(MipsInstrDiv, 0,
+          GenPrintInstr3Operands(MipsInstrDiv, 0,
+                                 MipsOpRegZero, 0,
                                  reg, 0,
                                  MipsOpRegV0, 0);
         else
-          GenPrintInstr2Operands(MipsInstrDivU, 0,
+          GenPrintInstr3Operands(MipsInstrDivU, 0,
+                                 MipsOpRegZero, 0,
                                  reg, 0,
                                  MipsOpRegV0, 0);
         if (tok == '%' || tok == tokUMod)
@@ -1236,11 +1307,13 @@ void GenExpr0(void)
 
         GenReadIndirect(MipsOpRegT1, reg, v);
         if (tok == tokAssignDiv || tok == tokAssignMod)
-          GenPrintInstr2Operands(MipsInstrDiv, 0,
+          GenPrintInstr3Operands(MipsInstrDiv, 0,
+                                 MipsOpRegZero, 0,
                                  MipsOpRegT1, 0,
                                  MipsOpRegV0, 0);
         else
-          GenPrintInstr2Operands(MipsInstrDivU, 0,
+          GenPrintInstr3Operands(MipsInstrDivU, 0,
+                                 MipsOpRegZero, 0,
                                  MipsOpRegT1, 0,
                                  MipsOpRegV0, 0);
         if (tok == tokAssignMod || tok == tokAssignUMod)
@@ -1600,11 +1673,11 @@ void GenFin(void)
           "\taddiu\t$3, $3, 1");
     printf2("\tbne\t$4, $0, "); GenPrintNumLabel(lbl);
     puts2("");
-#ifndef NO_REORDER_WORKAROUND
+#ifdef REORDER_WORKAROUND
     GenNop();
 #endif
     puts2("\tj\t$31");
-#ifndef NO_REORDER_WORKAROUND
+#ifdef REORDER_WORKAROUND
     GenNop();
 #endif
 
