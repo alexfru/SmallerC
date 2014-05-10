@@ -6401,7 +6401,6 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
         int hasInit = tok == '=';
         int needsGlobalInit = isGlobal & !external;
         int sz = GetDeclSize(lastSyntaxPtr, 0);
-        int localAllocSize = 0;
         int skipLabel = 0;
         int initLabel = 0;
 
@@ -6525,7 +6524,6 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
           // update its offset in the offset token
           SyntaxStack[lastSyntaxPtr + 1][1] = CurFxnLocalOfs;
 
-          localAllocSize = oldOfs - CurFxnLocalOfs;
           if (CurFxnMinLocalOfs > CurFxnLocalOfs)
             CurFxnMinLocalOfs = CurFxnLocalOfs;
 
@@ -6878,7 +6876,9 @@ void AddFxnParamSymbols(int SyntaxPtr)
     if (tok == tokIdent)
     {
       int sz;
+#ifndef NO_ANNOTATIONS
       int paramPtr;
+#endif
 
       if (i + 1 >= SyntaxStackCnt)
         //error("Internal error: AddFxnParamSymbols(): Invalid input\n");
@@ -6896,7 +6896,9 @@ void AddFxnParamSymbols(int SyntaxPtr)
 
       // Let's calculate this parameter's relative on-stack location
       CurFxnParamOfs = (CurFxnParamOfs + SizeOfWord - 1) / SizeOfWord * SizeOfWord;
+#ifndef NO_ANNOTATIONS
       paramPtr = SyntaxStackCnt;
+#endif
       PushSyntax2(SyntaxStack[i][0], SyntaxStack[i][1]);
       PushSyntax2(tokLocalOfs, CurFxnParamOfs);
       CurFxnParamOfs += sz;
