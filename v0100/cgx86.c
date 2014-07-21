@@ -537,7 +537,7 @@ void GenPrintOperand(int op, int val)
   else
   {
     char* frame = (OutputFormat == FormatSegHuge) ? "bp" : "ebp";
-    char* base = (OutputFormat == FormatSegHuge) ? "bx" : "ebx";
+    char* base = (OutputFormat == FormatSegHuge) ? "si" : "ebx";
     switch (op)
     {
     case X86OpRegAByte: printf2("al"); break;
@@ -588,16 +588,10 @@ void GenPrintInstrNoOperand(int instr)
 }
 
 #ifdef CAN_COMPILE_32BIT
-void GenSaveRestoreRegB(int restore)
-{
-  if (OutputFormat == FormatSegHuge)
-    puts2(restore ? "\tpop\tebx" : "\tpush\tebx");
-}
-
 void GenRegB2Seg(void)
 {
   if (OutputFormat == FormatSegHuge)
-    puts2("\tror\tebx, 4\n\tmov\tds, bx\n\tshr\tebx, 28");
+    puts2("\tmov\tesi, ebx\n\tror\tesi, 4\n\tmov\tds, si\n\tshr\tesi, 28");
 }
 #endif
 
@@ -898,15 +892,11 @@ void GenReadIndirect(int opSz)
                          X86OpRegBWord, 0,
                          X86OpRegAWord, 0);
 #ifdef CAN_COMPILE_32BIT
-  GenSaveRestoreRegB(0);
   GenRegB2Seg();
 #endif
   GenPrintInstr2Operands(X86InstrMov, 0,
                          GenSelectByteOrWord(X86OpRegAByteOrWord, opSz), 0,
                          X86OpIndRegB, 0);
-#ifdef CAN_COMPILE_32BIT
-  GenSaveRestoreRegB(1);
-#endif
   GenExtendRegAIfNeeded(opSz);
 }
 
@@ -974,7 +964,6 @@ void GenReadCRegIndirect(int opSz)
                          X86OpRegBWord, 0,
                          X86OpRegAWord, 0);
 #ifdef CAN_COMPILE_32BIT
-  GenSaveRestoreRegB(0);
   GenRegB2Seg();
 #endif
   if (opSz == -1)
@@ -1002,9 +991,6 @@ void GenReadCRegIndirect(int opSz)
     GenPrintInstr2Operands(X86InstrMov, 0,
                            X86OpRegCWord, 0,
                            X86OpIndRegB, 0);
-#ifdef CAN_COMPILE_32BIT
-  GenSaveRestoreRegB(1);
-#endif
 }
 
 void GenIncDecIdent(int opSz, int label, int tok)
@@ -1048,7 +1034,6 @@ void GenIncDecIndirect(int opSz, int tok)
                          X86OpRegBWord, 0,
                          X86OpRegAWord, 0);
 #ifdef CAN_COMPILE_32BIT
-  GenSaveRestoreRegB(0);
   GenRegB2Seg();
 #endif
   GenPrintInstr1Operand(instr, 0,
@@ -1056,9 +1041,6 @@ void GenIncDecIndirect(int opSz, int tok)
   GenPrintInstr2Operands(X86InstrMov, 0,
                          GenSelectByteOrWord(X86OpRegAByteOrWord, opSz), 0,
                          X86OpIndRegB, 0);
-#ifdef CAN_COMPILE_32BIT
-  GenSaveRestoreRegB(1);
-#endif
   GenExtendRegAIfNeeded(opSz);
 }
 
@@ -1103,7 +1085,6 @@ void GenPostIncDecIndirect(int opSz, int tok)
                          X86OpRegBWord, 0,
                          X86OpRegAWord, 0);
 #ifdef CAN_COMPILE_32BIT
-  GenSaveRestoreRegB(0);
   GenRegB2Seg();
 #endif
   GenPrintInstr2Operands(X86InstrMov, 0,
@@ -1112,9 +1093,6 @@ void GenPostIncDecIndirect(int opSz, int tok)
   GenExtendRegAIfNeeded(opSz);
   GenPrintInstr1Operand(instr, 0,
                         GenSelectByteOrWord(X86OpIndRegBExplicitByteOrWord, opSz), 0);
-#ifdef CAN_COMPILE_32BIT
-  GenSaveRestoreRegB(1);
-#endif
 }
 
 void GenPostAddSubIdent(int opSz, int val, int label, int tok)
@@ -1160,7 +1138,6 @@ void GenPostAddSubIndirect(int opSz, int val, int tok)
                          X86OpRegBWord, 0,
                          X86OpRegAWord, 0);
 #ifdef CAN_COMPILE_32BIT
-  GenSaveRestoreRegB(0);
   GenRegB2Seg();
 #endif
   GenPrintInstr2Operands(X86InstrMov, 0,
@@ -1170,9 +1147,6 @@ void GenPostAddSubIndirect(int opSz, int val, int tok)
   GenPrintInstr2Operands(instr, 0,
                          GenSelectByteOrWord(X86OpIndRegBExplicitByteOrWord, opSz), 0,
                          X86OpConst, val);
-#ifdef CAN_COMPILE_32BIT
-  GenSaveRestoreRegB(1);
-#endif
 }
 
 #define tokOpNumInt      0x100
@@ -2129,15 +2103,11 @@ void GenExpr1(void)
         GenPrintInstr1Operand(X86InstrPop, 0,
                               X86OpRegBWord, 0);
 #ifdef CAN_COMPILE_32BIT
-        GenSaveRestoreRegB(0);
         GenRegB2Seg();
 #endif
         GenPrintInstr2Operands(X86InstrMov, 0,
                                GenSelectByteOrWord(X86OpRegAByteOrWord, v / 16 - 8), 0,
                                X86OpIndRegB, 0);
-#ifdef CAN_COMPILE_32BIT
-        GenSaveRestoreRegB(1);
-#endif
         GenExtendRegAIfNeeded(v / 16 - 8);
         break;
       }
@@ -2541,15 +2511,11 @@ void GenExpr1(void)
         case tokOpIndAcc:
         case tokOpIndStack:
 #ifdef CAN_COMPILE_32BIT
-          GenSaveRestoreRegB(0);
           GenRegB2Seg();
 #endif
           GenPrintInstr2Operands(X86InstrMov, 0,
                                  X86OpIndRegB, 0,
                                  GenSelectByteOrWord(X86OpRegAByteOrWord, v / 16 - 8), 0);
-#ifdef CAN_COMPILE_32BIT
-          GenSaveRestoreRegB(1);
-#endif
           break;
         }
         // the result of the expression is of type of the
@@ -2816,7 +2782,6 @@ void GenExpr0(void)
         GenPrintInstr1Operand(X86InstrPop, 0,
                               X86OpRegBWord, 0);
 #ifdef CAN_COMPILE_32BIT
-        GenSaveRestoreRegB(0);
         GenRegB2Seg();
 #endif
         GenPrintInstr2Operands(X86InstrMov, 0,
@@ -2828,9 +2793,6 @@ void GenExpr0(void)
         GenPrintInstr2Operands(instr, 0,
                                X86OpIndRegB, 0,
                                GenSelectByteOrWord(X86OpRegCByteOrWord, v), 0);
-#ifdef CAN_COMPILE_32BIT
-        GenSaveRestoreRegB(1);
-#endif
         GenExtendRegAIfNeeded(v);
       }
       break;
@@ -2846,7 +2808,6 @@ void GenExpr0(void)
         GenPrintInstr1Operand(X86InstrPop, 0,
                               X86OpRegBWord, 0);
 #ifdef CAN_COMPILE_32BIT
-        GenSaveRestoreRegB(0);
         GenRegB2Seg();
 #endif
         if (tok != tokAssignMul)
@@ -2866,9 +2827,6 @@ void GenExpr0(void)
                                  X86OpIndRegB, 0,
                                  GenSelectByteOrWord(X86OpRegAByteOrWord, v), 0);
         }
-#ifdef CAN_COMPILE_32BIT
-        GenSaveRestoreRegB(1);
-#endif
         GenExtendRegAIfNeeded(v);
       }
       break;
@@ -2880,7 +2838,6 @@ void GenExpr0(void)
       GenPrintInstr1Operand(X86InstrPop, 0,
                             X86OpRegBWord, 0);
 #ifdef CAN_COMPILE_32BIT
-      GenSaveRestoreRegB(0);
       GenRegB2Seg();
 #endif
       GenPrintInstr2Operands(X86InstrMov, 0,
@@ -2916,9 +2873,6 @@ void GenExpr0(void)
       GenPrintInstr2Operands(X86InstrMov, 0,
                              X86OpIndRegB, 0,
                              GenSelectByteOrWord(X86OpRegAByteOrWord, v), 0);
-#ifdef CAN_COMPILE_32BIT
-      GenSaveRestoreRegB(1);
-#endif
       GenExtendRegAIfNeeded(v);
       break;
 
@@ -2930,7 +2884,6 @@ void GenExpr0(void)
         GenPrintInstr1Operand(X86InstrPop, 0,
                               X86OpRegBWord, 0);
 #ifdef CAN_COMPILE_32BIT
-        GenSaveRestoreRegB(0);
         GenRegB2Seg();
 #endif
         GenPrintInstr2Operands(X86InstrMov, 0,
@@ -2942,9 +2895,6 @@ void GenExpr0(void)
         GenPrintInstr2Operands(X86InstrMov, 0,
                                GenSelectByteOrWord(X86OpRegAByteOrWord, v), 0,
                                X86OpIndRegB, 0);
-#ifdef CAN_COMPILE_32BIT
-        GenSaveRestoreRegB(1);
-#endif
         GenExtendRegAIfNeeded(v);
       }
       break;
@@ -2953,15 +2903,11 @@ void GenExpr0(void)
       GenPrintInstr1Operand(X86InstrPop, 0,
                             X86OpRegBWord, 0);
 #ifdef CAN_COMPILE_32BIT
-      GenSaveRestoreRegB(0);
       GenRegB2Seg();
 #endif
       GenPrintInstr2Operands(X86InstrMov, 0,
                              X86OpIndRegB, 0,
                              GenSelectByteOrWord(X86OpRegAByteOrWord, v), 0);
-#ifdef CAN_COMPILE_32BIT
-      GenSaveRestoreRegB(1);
-#endif
       GenExtendRegAIfNeeded(v);
       break;
 
