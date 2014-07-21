@@ -29,14 +29,14 @@ either expressed or implied, of the FreeBSD Project.
 
 /*****************************************************************************/
 /*                                                                           */
-/*                                Smaller C                                  */
+/*                                 Smaller C                                 */
 /*                                                                           */
-/*       A simple and small single-pass C compiler ("small C" class).        */
+/*                 A simple and small single-pass C compiler                 */
 /*                                                                           */
 /*            Produces 16/32-bit 80386 assembly output for NASM.             */
 /*             Produces 32-bit MIPS assembly output for gcc/as.              */
 /*                                                                           */
-/*                                Main file                                  */
+/*                                 Main file                                 */
 /*                                                                           */
 /*****************************************************************************/
 
