@@ -371,6 +371,21 @@ C_ASSERT(sizeof(tPeImageImportDescriptor) == 20);
 
 typedef struct
 {
+  char name[16];
+  char date[12];
+  char uid[6];
+  char gid[6];
+  char mode[8];
+  char size[10];
+  char fmag[2];
+} tArchiveFileHeader;
+
+#ifndef __SMALLER_C__
+C_ASSERT(sizeof(tArchiveFileHeader) == 60);
+#endif
+
+typedef struct
+{
   void** Buf;
   size_t Reserved;
   size_t Used;
@@ -395,7 +410,7 @@ typedef struct
 typedef struct
 {
   const char* ElfName;
-  FILE* ElfFile;
+  uint32 ObjOffset;
 
   char* pSectNames;
   tElfSection* pSections;
@@ -551,9 +566,14 @@ void errSectTooBig(void)
   error("Too much code (or data) or too big origin\n");
 }
 
-void errStackTooBig()
+void errStackTooBig(void)
 {
   error("Too big stack or too much data (or code)\n");
+}
+
+void errArchive(void)
+{
+  error("Corrupted archive\n");
 }
 
 void* Malloc(size_t size)
@@ -680,7 +700,7 @@ int RelCmp(const void* p1_, const void* p2_)
 }
 
 // TBD??? Thoroughly validate ELF object files, specifically sections
-int loadElfMeta(tElfMeta* pMeta, const char* ElfName)
+void loadElfObj(tElfMeta* pMeta, const char* ElfName, FILE* file, uint32 objOfs)
 {
   Elf32_Ehdr elfHdr;
   Elf32_Shd sectHdr;
@@ -690,12 +710,13 @@ int loadElfMeta(tElfMeta* pMeta, const char* ElfName)
   memset(pMeta, 0, sizeof *pMeta);
 
   pMeta->ElfName = ElfName;
-  pMeta->ElfFile = Fopen(ElfName, "rb");
+  pMeta->ObjOffset = objOfs;
 
   if (verbose)
     printf("File %s:\n\n", ElfName);
 
-  Fread(&elfHdr, sizeof elfHdr, pMeta->ElfFile);
+  Fseek(file, objOfs, SEEK_SET);
+  Fread(&elfHdr, sizeof elfHdr, file);
 
   if (memcmp(elfHdr.e_ident, "\x7F""ELF", 4))
     error("Not an ELF file\n");
@@ -718,13 +739,13 @@ int loadElfMeta(tElfMeta* pMeta, const char* ElfName)
 
   if (elfHdr.e_shoff == 0 || elfHdr.e_shstrndx == 0)
     error("Invalid file\n");
-  Fseek(pMeta->ElfFile, elfHdr.e_shoff + elfHdr.e_shstrndx * sizeof sectHdr, SEEK_SET);
-  Fread(&sectHdr, sizeof sectHdr, pMeta->ElfFile);
+  Fseek(file, objOfs + elfHdr.e_shoff + elfHdr.e_shstrndx * sizeof sectHdr, SEEK_SET);
+  Fread(&sectHdr, sizeof sectHdr, file);
 
   pMeta->pSectNames = Malloc(sectHdr.sh_size);
 
-  Fseek(pMeta->ElfFile, sectHdr.sh_offset, SEEK_SET);
-  Fread(pMeta->pSectNames, sectHdr.sh_size, pMeta->ElfFile);
+  Fseek(file, objOfs + sectHdr.sh_offset, SEEK_SET);
+  Fread(pMeta->pSectNames, sectHdr.sh_size, file);
 
   pMeta->pSections = Malloc((elfHdr.e_shnum + 1) * sizeof(tElfSection));
 
@@ -750,8 +771,8 @@ int loadElfMeta(tElfMeta* pMeta, const char* ElfName)
     };
     const char* name = "";
 
-    Fseek(pMeta->ElfFile, elfHdr.e_shoff + sectIdx * sizeof sectHdr, SEEK_SET);
-    Fread(&sectHdr, sizeof sectHdr, pMeta->ElfFile);
+    Fseek(file, objOfs + elfHdr.e_shoff + sectIdx * sizeof sectHdr, SEEK_SET);
+    Fread(&sectHdr, sizeof sectHdr, file);
     if (sectHdr.sh_type == SHT_NULL)
       memset(&sectHdr, 0, sizeof sectHdr);
 
@@ -820,8 +841,8 @@ int loadElfMeta(tElfMeta* pMeta, const char* ElfName)
 
         ofs = pSect->h.sh_offset;
 
-        Fseek(pMeta->ElfFile, ofs, SEEK_SET);
-        Fread(pSect->d.pSym, sz, pMeta->ElfFile);
+        Fseek(file, objOfs + ofs, SEEK_SET);
+        Fread(pSect->d.pSym, sz, file);
 
         // Collect all local section symbols and throw away other local symbols
 
@@ -854,8 +875,8 @@ int loadElfMeta(tElfMeta* pMeta, const char* ElfName)
 
     case SHT_STRTAB:
       pSect->d.pStr = Malloc(pSect->h.sh_size);
-      Fseek(pMeta->ElfFile, pSect->h.sh_offset, SEEK_SET);
-      Fread(pSect->d.pStr, pSect->h.sh_size, pMeta->ElfFile);
+      Fseek(file, objOfs + pSect->h.sh_offset, SEEK_SET);
+      Fread(pSect->d.pStr, pSect->h.sh_size, file);
       break;
 
     case SHT_REL:
@@ -865,8 +886,8 @@ int loadElfMeta(tElfMeta* pMeta, const char* ElfName)
       pSect->h.sh_entsize = pSect->h.sh_size / sizeof(Elf32_Rel); // repurpose sh_entsize for number of relocations
 
       pSect->d.pRel = Malloc(pSect->h.sh_size);
-      Fseek(pMeta->ElfFile, pSect->h.sh_offset, SEEK_SET);
-      Fread(pSect->d.pRel, pSect->h.sh_size, pMeta->ElfFile);
+      Fseek(file, objOfs + pSect->h.sh_offset, SEEK_SET);
+      Fread(pSect->d.pRel, pSect->h.sh_size, file);
       // Sort the relocations by offset, so relocation can be done while copying sections
       qsort(pSect->d.pRel, pSect->h.sh_entsize, sizeof(Elf32_Rel), &RelCmp);
       break;
@@ -911,11 +932,95 @@ int loadElfMeta(tElfMeta* pMeta, const char* ElfName)
     }
     puts("");
   }
+}
 
-  Fclose(pMeta->ElfFile);
-  pMeta->ElfFile = NULL;
+// TBD??? Thoroughly validate archive files
+void loadMeta(const char* FileName)
+{
+  FILE* f = Fopen(FileName, "rb");
+  char magic[8];
+  uint32 ofs = sizeof magic;
 
-  return 0;
+  Fread(magic, sizeof magic, f);
+
+  if (!memcmp(magic, "!<arch>\n", sizeof magic))
+  {
+    for (;;)
+    {
+      tArchiveFileHeader fh;
+      uint32 nlen = 0, fsz = 0, fofs;
+      uint i;
+
+      Fseek(f, ofs, SEEK_SET);
+      if (fread(&fh, 1, sizeof fh, f) != sizeof fh)
+        break;
+      if (fh.fmag[0] != 0x60 || fh.fmag[1] != 0x0A)
+        errArchive();
+
+      // Special names:
+      //
+      // - "//              " entry is a string table, containing long file names (GNU)
+      // - "/               " entry is a symbol lookup table (GNU)
+      // - "/nnn            ", where n's are decimal digits, entry is a file entry with a long name (GNU style)
+      //   nnn is an index into the string table
+      //
+      // - "__.SYMDEF       " entry is a symbol lookup table (BSD)
+      // - "#1/nnn          ", where n's are decimal digits, entry is a file entry with a long name (BSD style)
+      //   nnn is the length of the long name (prepended to file data; file size includes this length)
+      //
+      // - otherwise it's a regular file with a short name
+
+      if (!memcmp(fh.name, "#1/", 3))
+      {
+        for (i = 3; i < sizeof fh.name; i++)
+        {
+          if (fh.name[i] >= '0' && fh.name[i] <= '9')
+            nlen = nlen * 10 + fh.name[i] - '0';
+          else
+            break;
+        }
+      }
+
+      for (i = 0; i < sizeof fh.size; i++)
+      {
+        if (fh.size[i] >= '0' && fh.size[i] <= '9')
+          fsz = fsz * 10 + fh.size[i] - '0';
+        else
+          break;
+      }
+
+      if (nlen > fsz)
+        errArchive();
+
+      fofs = ofs + sizeof fh + nlen;
+      fsz -= nlen;
+
+      // TBD??? load and use symbol lookup tables
+
+      if (memcmp(fh.name, "//              ", sizeof fh.name) &&
+          memcmp(fh.name, "/               ", sizeof fh.name) &&
+          memcmp(fh.name, "__.SYMDEF       ", sizeof fh.name))
+      {
+        if (fsz < sizeof(Elf32_Ehdr))
+          errArchive();
+        pMetas = Realloc(pMetas, (sizeof *pMetas) * (ObjFileCnt + 1));
+        // TBD!!! extract object file name and pass it instead of the library file name
+        loadElfObj(pMetas + ObjFileCnt, FileName, f, fofs);
+        ObjFileCnt++;
+      }
+
+      ofs = fofs + fsz;
+      ofs += ofs & 1;
+    }
+  }
+  else
+  {
+    pMetas = Realloc(pMetas, (sizeof *pMetas) * (ObjFileCnt + 1));
+    loadElfObj(pMetas + ObjFileCnt, FileName, f, 0);
+    ObjFileCnt++;
+  }
+
+  Fclose(f);
 }
 
 void DeferSymbol(const char* SymName)
@@ -1874,7 +1979,7 @@ void RelocateAndWriteAllSections(void)
               FILE* fin = Fopen(pMeta->ElfName, "rb");
               if (verbose)
                 printf("Relocating %s in %s:\n", pMeta->pSectNames + pSect->h.sh_name, pMeta->ElfName);
-              Fseek(fin, pSect->h.sh_offset, SEEK_SET);
+              Fseek(fin, pMeta->ObjOffset + pSect->h.sh_offset, SEEK_SET);
               RelocateAndWriteSection(fout, fin, pSect->h.sh_size, pMeta, pRelSect);
               Fclose(fin);
               if (verbose)
@@ -2221,9 +2326,13 @@ void fatargs(int* pargc, char*** pargv)
 
 int main(int argc, char* argv[])
 {
+  uint32 ui32 = 0x44434241;
+  uint16 ui16 = 0x3231;
 #ifdef __SMALLER_C__
   DetermineVaListType();
 #endif
+  if (memcmp(&ui32, "ABCD", sizeof ui32) || memcmp(&ui16, "12", sizeof ui16))
+    error("Little-endian platform required\n");
 
   fatargs(&argc, &argv);
 
@@ -2339,9 +2448,7 @@ int main(int argc, char* argv[])
       }
       else
       {
-        pMetas = Realloc(pMetas, (sizeof *pMetas) * (ObjFileCnt + 1));
-        loadElfMeta(pMetas + ObjFileCnt, argv[i]);
-        ObjFileCnt++;
+        loadMeta(argv[i]);
         continue;
       }
 
