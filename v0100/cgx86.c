@@ -39,6 +39,11 @@ either expressed or implied, of the FreeBSD Project.
 
 // TBD!!! compress/clean up
 
+#ifdef CAN_COMPILE_32BIT
+int WindowsStack = 0;
+int WinChkStkLabel = 0;
+#endif
+
 #define MAX_GLOBALS_TABLE_LEN MAX_IDENT_TABLE_LEN
 
 /*
@@ -118,6 +123,11 @@ int GenInitParams(int argc, char** argv, int* idx)
   else if (!strcmp(argv[*idx], "-huge"))
   {
     OutputFormat = FormatSegHuge; SizeOfWord = 4;
+    return 1;
+  }
+  else if (!strcmp(argv[*idx], "-winstack"))
+  {
+    WindowsStack = 1;
     return 1;
   }
 #endif
@@ -786,6 +796,32 @@ void GenFxnProlog(void)
 
 void GenLocalAlloc(int size)
 {
+#ifdef CAN_COMPILE_32BIT
+  if (SizeOfWord == 4 &&
+      OutputFormat != FormatSegHuge &&
+      WindowsStack &&
+      size >= 4096)
+  {
+    // When targeting Windows, call equivalent of _chkstk() to
+    // correctly grow the stack page by page by probing it
+    char s[1 + 2 + (2 + CHAR_BIT * sizeof WinChkStkLabel) / 3];
+    char *p = s + sizeof s;
+
+    if (!WinChkStkLabel)
+      WinChkStkLabel = LabelCnt++;
+
+    GenPrintInstr2Operands(X86InstrMov, 0,
+                           X86OpRegAWord, 0,
+                           X86OpConst, size);
+    *--p = '\0';
+    p = lab2str(p, WinChkStkLabel);
+    *--p = '_';
+    *--p = '_';
+    printf2("\tcall\t");
+    GenPrintLabel(p);
+    puts2("");
+  }
+#endif
   GenPrintInstr2Operands(X86InstrSub, 0,
                          X86OpRegSpWord, 0,
                          X86OpConst, size);
@@ -3224,6 +3260,41 @@ void GenFin(void)
     if (OutputFormat != FormatFlat)
       puts2(CodeFooter);
   }
+
+#ifdef CAN_COMPILE_32BIT
+  if (WinChkStkLabel)
+  {
+    // When targeting Windows, simulate _chkstk() to
+    // correctly grow the stack page by page by probing it
+    char s[1 + 2 + (2 + CHAR_BIT * sizeof WinChkStkLabel) / 3];
+    char *p = s + sizeof s;
+    int lbl = LabelCnt++;
+
+    *--p = '\0';
+    p = lab2str(p, WinChkStkLabel);
+    *--p = '_';
+    *--p = '_';
+
+    if (OutputFormat != FormatFlat)
+      puts2(CodeHeader);
+
+    GenLabel(p, 1);
+    puts2("\tlea\tebx, [esp+4]\n"
+          "\tmov\tecx, ebx\n"
+          "\tsub\tecx, eax\n"
+          "\tand\tebx, -4096\n"
+          "\tand\tecx, -4096");
+    GenNumLabel(lbl); // L1:
+    puts2("\tsub\tebx, 4096\n"
+          "\tmov\tal, [ebx]\n"
+          "\tcmp\tebx, ecx");
+    printf2("\tjne\t"); GenPrintNumLabel(lbl); // jne L1
+    puts2("\n\tret");
+
+    if (OutputFormat != FormatFlat)
+      puts2(CodeFooter);
+  }
+#endif
 
   if (OutputFormat != FormatFlat && GenExterns)
   {
