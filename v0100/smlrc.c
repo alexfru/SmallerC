@@ -488,6 +488,8 @@ FILE* OutFile;
 char CharQueues[MAX_INCLUDES][3];
 int LineNos[MAX_INCLUDES];
 int LinePoss[MAX_INCLUDES];
+char SysSearchPaths[MAX_SEARCH_PATH];
+int SysSearchPathsLen = 0;
 char SearchPaths[MAX_SEARCH_PATH];
 int SearchPathsLen = 0;
 
@@ -984,58 +986,6 @@ char* GetTokenName(int token)
   unsigned i;
 
 /* +-~* /% &|^! << >> && || < <= > >= == !=  () *[] ++ -- = += -= ~= *= /= %= &= |= ^= <<= >>= {} ,;: -> ... */
-/*
-  switch (token)
-  {
-  case tokEof: return "<EOF>";
-  // Single-character operators and punctuators:
-  case '+': return "+";                  case '-': return "-";
-  case '~': return "~";                  case '*': return "*";
-  case '/': return "/";                  case '%': return "%";
-  case '&': return "&";                  case '|': return "|";
-  case '^': return "^";                  case '!': return "!";
-  case '<': return "<";                  case '>': return ">";
-  case '(': return "(";                  case ')': return ")";
-  case '[': return "[";                  case ']': return "]";
-  case '{': return "{";                  case '}': return "}";
-  case '=': return "=";                  case ',': return ",";
-  case ';': return ";";                  case ':': return ":";
-  case '.': return ".";                  case '?': return "?";
-  // Multi-character operators and punctuators:
-  case tokLShift: return "<<";           case tokRShift: return ">>";
-  case tokLogAnd: return "&&";           case tokLogOr: return "||";
-  case tokEQ: return "==";               case tokNEQ: return "!=";
-  case tokLEQ: return "<=";              case tokGEQ: return ">=";
-  case tokInc: return "++";              case tokDec: return "--";
-  case tokArrow: return "->";            case tokEllipsis: return "...";
-  case tokAssignMul: return "*=";        case tokAssignDiv: return "/=";
-  case tokAssignMod: return "%=";        case tokAssignAdd: return "+=";
-  case tokAssignSub: return "-=";        case tokAssignLSh: return "<<=";
-  case tokAssignRSh: return ">>=";       case tokAssignAnd: return "&=";
-  case tokAssignXor: return "^=";        case tokAssignOr: return "|=";
-
-  // Some of the above tokens get converted into these in the process:
-  case tokUnaryAnd: return "&u";         case tokUnaryStar: return "*u";
-  case tokUnaryPlus: return "+u";        case tokUnaryMinus: return "-u";
-  case tokPostInc: return "++p";         case tokPostDec: return "--p";
-  case tokPostAdd: return "+=p";         case tokPostSub: return "-=p";
-  case tokULess: return "<u";            case tokUGreater: return ">u";
-  case tokULEQ: return "<=u";            case tokUGEQ: return ">=u";
-  case tokURShift: return ">>u";         case tokAssignURSh: return ">>=u";
-  case tokUDiv: return "/u";             case tokAssignUDiv: return "/=u";
-  case tokUMod: return "%u";             case tokAssignUMod: return "%=u";
-  case tokComma: return ",b";
-
-  // Helper (pseudo-)tokens:
-  case tokNumInt: return "<NumInt>";     case tokNumUint: return "<NumUint>";
-  case tokLitStr: return "<LitStr>";     case tokIdent: return "<Ident>";
-  case tokLocalOfs: return "<LocalOfs>"; case tokShortCirc: return "<ShortCirc>";
-
-  case tokSChar: return "signed char";   case tokUChar: return "unsigned char";
-  case tokShort: return "short";         case tokUShort: return "unsigned short";
-  case tokLong: return "long";           case tokULong: return "unsigned long";
-  }
-*/
 
   // Tokens other than reserved keywords:
   for (i = 0; i < sizeof tktk / sizeof tktk[0]; i++)
@@ -1123,44 +1073,54 @@ void IncludeFile(int quot)
 
   // DONE: differentiate between quot == '\"' and quot == '<'
 
-  // first, try opening "file" in the current directory
+  // First, try opening "file" in the current directory
+  // (Open Watcom C/C++ 1.9, Turbo C++ 1.01 use the current directory,
+  // unlike gcc, which uses the same directory as the current file)
   if (quot == '\"')
   {
     strcpy(FileNames[FileCnt], TokenValueString);
     Files[FileCnt] = fopen(FileNames[FileCnt], "r");
   }
 
-  // next, iterate the search paths trying to open "file" or <file>
+  // Next, iterate the search paths trying to open "file" or <file>.
+  // "file" is first searched using the list provided by the -I option.
+  // "file" is then searched using the list provided by the -SI option.
+  // <file> is searched using the list provided by the -SI option.
   if (Files[FileCnt] == NULL)
   {
     int i;
-    for (i = 0; i < SearchPathsLen; )
+    char *paths = SearchPaths;
+    int pl = SearchPathsLen;
+    for (;;)
     {
-      int plen = strlen(SearchPaths + i);
-      if (plen + 1 + nlen < MAX_FILE_NAME_LEN)
+      if (quot == '<')
       {
-        strcpy(FileNames[FileCnt], SearchPaths + i);
-        strcpy(FileNames[FileCnt] + plen + 1, TokenValueString);
-        // first, try '/' as a separator (Linux/Unix)
-        FileNames[FileCnt][plen] = '/';
-        if ((Files[FileCnt] = fopen(FileNames[FileCnt], "r")) == NULL)
-        {
-          // next, try '\\' as a separator (DOS/Windows)
-          FileNames[FileCnt][plen] = '\\';
-          Files[FileCnt] = fopen(FileNames[FileCnt], "r");
-        }
-        if (Files[FileCnt])
-          break;
+        paths = SysSearchPaths;
+        pl = SysSearchPathsLen;
       }
-      i += plen + 1;
+      for (i = 0; i < pl; )
+      {
+        int plen = strlen(paths + i);
+        if (plen + 1 + nlen < MAX_FILE_NAME_LEN)
+        {
+          strcpy(FileNames[FileCnt], paths + i);
+          strcpy(FileNames[FileCnt] + plen + 1, TokenValueString);
+          // Use '/' as a separator, typical for Linux/Unix,
+          // but also supported by file APIs in DOS/Windows just as '\\'
+          FileNames[FileCnt][plen] = '/';
+          if ((Files[FileCnt] = fopen(FileNames[FileCnt], "r")) != NULL)
+            break;
+        }
+        i += plen + 1;
+      }
+      if (Files[FileCnt] || quot == '<')
+        break;
+      quot = '<';
     }
   }
 
   if (Files[FileCnt] == NULL)
   {
-    //if (quot == '<' && !SearchPathsLen)
-    //  error("Cannot open file \"%s\", include search path unspecified\n", TokenValueString);
-
     //error("Cannot open file \"%s\"\n", TokenValueString);
     errorFile(TokenValueString);
   }
@@ -2162,35 +2122,6 @@ int popop()
 
 int isop(int tok)
 {
-/*
-  switch (tok)
-  {
-  case '!':
-  case '~':
-  case '&':
-  case '*':
-  case '/': case '%':
-  case '+': case '-':
-  case '|': case '^':
-  case '<': case '>':
-  case '=':
-  case tokLogOr: case tokLogAnd:
-  case tokEQ: case tokNEQ:
-  case tokLEQ: case tokGEQ:
-  case tokLShift: case tokRShift:
-  case tokInc: case tokDec:
-  case tokSizeof:
-  case tokAssignMul: case tokAssignDiv: case tokAssignMod:
-  case tokAssignAdd: case tokAssignSub:
-  case tokAssignLSh: case tokAssignRSh:
-  case tokAssignAnd: case tokAssignXor: case tokAssignOr:
-  case tokComma:
-  case '?':
-    return 1;
-  default:
-    return 0;
-  }
-*/
   static unsigned char toks[] =
   {
     '!',
@@ -3536,11 +3467,11 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
         // allowed, while (a = b).c should be allowed.
 
         // transform "*psleft = *psright" into "*fxn(sizeof *psright, psright, psleft)"
-
+/*
         if (stack[oldIdxLeft - (oldSpLeft - sp)][0] != tokUnaryStar ||
             stack[oldIdxRight - (oldSpRight - sp)][0] != tokUnaryStar)
           errorInternal(18);
-
+*/
         stack[oldIdxLeft - (oldSpLeft - sp)][0] = ','; // replace '*' with ','
         stack[oldIdxRight - (oldSpRight - sp)][0] = ','; // replace '*' with ','
 
@@ -4106,11 +4037,11 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
           errorOpType();
 
         // transform "cond ? a : b" into "*(cond ? &a : &b)"
-
+/*
         if (stack[oldIdxLeft - (oldSpLeft - sp)][0] != tokUnaryStar ||
             stack[oldIdxRight - (oldSpRight - sp)][0] != tokUnaryStar)
           errorInternal(19);
-
+*/
         del(oldIdxLeft - (oldSpLeft - sp), 1); // delete '*'
         del(oldIdxRight - (oldSpRight - sp), 1); // delete '*'
         ins2(oldIdxRight + 2 - (oldSpRight - sp), tokUnaryStar, 0); // use 0 deref size to drop meaningless dereferences
@@ -7658,19 +7589,36 @@ int main(int argc, char** argv)
       continue;
     }
 #ifndef NO_PREPROCESSOR
-    else if (!strcmp(argv[i], "-I"))
+    else if (!strcmp(argv[i], "-I") || !strcmp(argv[i], "-SI"))
     {
       if (i + 1 < argc)
       {
-        int len = strlen(argv[++i]);
-        if (MAX_SEARCH_PATH - SearchPathsLen < len + 1)
-          //error("Path name too long\n");
-          errorFileName();
-        strcpy(SearchPaths + SearchPathsLen, argv[i]);
-        SearchPathsLen += len + 1;
+        int len = strlen(argv[++i]) + 1;
+        if (argv[i][1] == 'I')
+        {
+          if (MAX_SEARCH_PATH - SearchPathsLen < len)
+            //error("Path name too long\n");
+            errorFileName();
+          strcpy(SearchPaths + SearchPathsLen, argv[i]);
+          SearchPathsLen += len;
+        }
+        else
+        {
+          if (MAX_SEARCH_PATH - SysSearchPathsLen < len)
+            //error("Path name too long\n");
+            errorFileName();
+          strcpy(SysSearchPaths + SysSearchPathsLen, argv[i]);
+          SysSearchPathsLen += len;
+        }
         continue;
       }
     }
+/*
+    else if (!strcmp(argv[i], "-no-pp"))
+    {
+      // TBD!!! don't do preprocessing when this option is present
+    }
+*/
     // DONE: '-D macro[=expansion]': '#define macro 1' when there's no '=expansion'
     else if (!strcmp(argv[i], "-D"))
     {
