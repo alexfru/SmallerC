@@ -79,6 +79,7 @@ size_t strlen(char*);
 char* strcpy(char*, char*);
 char* strcat(char*, char*);
 char* strchr(char*, int);
+char* strrchr(char*, int);
 int strcmp(char*, char*);
 void* memcpy(void*, void*, size_t);
 void* memset(void*, int, size_t);
@@ -106,6 +107,7 @@ void* realloc(void*, size_t);
 void free(void*);
 
 int system(char*);
+char* getenv(char*);
 #endif
 
 typedef unsigned uint;
@@ -130,6 +132,18 @@ char* OutName;
 #define FormatWinPe32     6
 #define FormatElf32       7
 int OutputFormat = 0;
+
+const char* LibName[] =
+{
+  NULL,
+  "lcds.a", // FormatDosComTiny
+  "lcds.a", // FormatDosExeSmall
+  "lcdh.a", // FormatDosExeHuge
+  NULL,     // FormatFlat16
+  NULL,     // FormatFlat32
+  "lcw.a",  // FormatWinPe32
+  "lcl.a",  // FormatElf32
+};
 
 int verbose = 0;
 
@@ -451,7 +465,7 @@ void fatargs(int* pargc, char*** pargv)
           char* p;
           memset(buf, '\0', sz + 1);
           fseek(f, 0, SEEK_SET);
-          fread(buf, 1, sz, f);
+          fread(buf, 1, sz, f); // TBD??? return value not used
           p = strtok(buf, sep);
           pcnt--; // don't count the file name as an argument, count only what's inside
           while (p)
@@ -619,7 +633,6 @@ void Compile(char* name)
   {
     char* cmd;
 
-    // TBD!!! find system headers directory
     if (InputFileCnt == 1 && OutName && CompileToAsm)
     {
       // Compiling one C file to an assembly file with a given name
@@ -708,8 +721,6 @@ void Compile(char* name)
 
 void Link(void)
 {
-  // TBD!!! take into account LinkStdLib: find system library directory
-
   if (OutName)
   {
     AddOption(&LinkerOptions, &LinkerOptionsLen, "-o");
@@ -730,6 +741,248 @@ void Link(void)
 #endif
 
   DeleteTemporaryFiles();
+}
+
+#ifndef HOST_LINUX
+// Returns the path to the executable in forms like these (not an exhaustive list):
+// - "c:\\path\\"
+// - "c:"
+// - ".\\"
+char* exepath(char* argv0)
+{
+  char* name = argv0;
+  char* pslash = strrchr(name, '/');
+  char* pbackslash = strrchr(name, '\\');
+  size_t len;
+  FILE* f;
+  char* p;
+  char* epaths;
+  char* paths;
+  char* sep;
+  char* path;
+
+  // First, try to extract the path from argv[0]
+
+  // In DOS/Windows paths can contain either '\\' or '/' as a separator between directories,
+  // choose the right-most
+  if (pslash && pbackslash)
+  {
+    if (pslash < pbackslash)
+      pslash = pbackslash;
+  }
+  else if (!pslash)
+  {
+    pslash = pbackslash;
+  }
+
+  // If there's no slash, it could be "c:file"
+  if (!pslash)
+    pslash = strrchr(name, ':');
+
+  // If there's a slash or a colon, we're done
+  if (pslash)
+  {
+    len = pslash + 1/*retain the slash or the colon*/ - name;
+    p = Malloc(len + 1/*NUL*/);
+    memcpy(p, name, len);
+    p[len] = '\0';
+    return p;
+  }
+
+  // If there's no path in argv[0], the file can be found either in the
+  // current directory or in one of the paths specified in the "PATH"
+  // environment variable.
+
+  // Note: I could've used GetModuleFileNameA(NULL) on Windows, but that would
+  // create an explicit dependency on <windows.h> and Windows XP or later.
+
+  // Append ".exe" if necessary
+  // (".com" applies to DOS only, and DOS programs get the full path in the PSP,
+  //  which should have just been handled by the code above)
+  len = strlen(name);
+  if (!(len > 4 &&
+        name[len-4] == '.' &&
+        (name[len-3] == 'E' || name[len-3] == 'e') &&
+        (name[len-2] == 'X' || name[len-2] == 'x') &&
+        (name[len-1] == 'E' || name[len-1] == 'e')))
+  {
+    len += sizeof ".exe" - 1/*NUL*/;
+    name = Malloc(len + 1/*NUL*/);
+    strcpy(name, argv0);
+    strcat(name, ".exe");
+  }
+
+  // Check the current directory
+  if ((f = fopen(name, "rb")) != NULL)
+  {
+    fclose(f);
+    if (name != argv0)
+      free(name);
+    p = Malloc(sizeof ".\\"); // strangely, "./" may not always work
+    strcpy(p, ".\\");
+    return p;
+  }
+
+  // All that's left is to try %PATH%
+
+  if (!(epaths = getenv("PATH")))
+  {
+    if (name != argv0)
+      free(name);
+    return NULL;
+  }
+
+  paths = Malloc(strlen(epaths) + 1/*NUL*/);
+  strcpy(paths, epaths);
+
+  sep = ";";
+  path = strtok(paths, sep);
+  while (path)
+  {
+    size_t plen = strlen(path);
+    p = Malloc(plen + 1/*slash*/ + len + 1/*NUL*/);
+
+    strcpy(p, path);
+    if (path[plen-1] != '\\' && path[plen-1] != '/')
+    {
+      strcat(p, "\\");
+      plen++;
+    }
+    strcat(p, name);
+
+    if ((f = fopen(p, "rb")) != NULL)
+    {
+      fclose(f);
+      free(paths);
+      if (name != argv0)
+        free(name);
+      p[plen] = '\0';
+      return p;
+    }
+
+    free(p);
+
+    path = strtok(NULL, sep);
+  }
+
+  free(paths);
+  if (name != argv0)
+    free(name);
+
+  return NULL;
+}
+#endif
+
+char* SystemFileExists(const char* path, int slash, const char* pathsuffix, const char* name)
+{
+  size_t plen = strlen(path);
+  char* p = Malloc(plen + 1/*slash*/ + (pathsuffix ? strlen(pathsuffix) : 0) + strlen(name) + 1/*NUL*/);
+  FILE* f;
+  strcpy(p, path);
+  if (slash && plen && path[plen-1] != '/' && path[plen-1] != '\\')
+    p[plen] = slash, p[plen+1] = '\0';
+  if (pathsuffix)
+    strcat(p, pathsuffix);
+  strcat(p, name);
+  if ((f = fopen(p, "rb")) != NULL)
+  {
+    fclose(f);
+    return p;
+  }
+  free(p);
+  return NULL;
+}
+
+void AddSystemPaths(char* argv0)
+{
+  char* epath;
+  char* pinclude = NULL;
+  char* plib = NULL;
+
+  (void)argv0;
+
+  if (LinkStdLib && StdLibPath)
+    plib = SystemFileExists(StdLibPath, '/', NULL, LibName[OutputFormat]);
+
+  epath = getenv("SMLRC");
+  if (epath)
+  {
+    pinclude = SystemFileExists(epath, '/', "include/", "limits.h");
+    if (pinclude)
+      *strrchr(pinclude, '/') = '\0';
+
+    if (LinkStdLib && !plib)
+      plib = SystemFileExists(epath, '/', "lib/", LibName[OutputFormat]);
+
+    if (pinclude && (plib || !LinkStdLib))
+    {
+      AddOption(&CompilerOptions, &CompilerOptionsLen, "-SI");
+      AddOption(&CompilerOptions, &CompilerOptionsLen, pinclude);
+      if (plib)
+        AddOption(&LinkerOptions, &LinkerOptionsLen, plib);
+      return;
+    }
+  }
+
+#ifdef HOST_LINUX
+  epath = getenv("HOME");
+  if (epath)
+  {
+    pinclude = SystemFileExists(epath, '/', "smlrc/include/", "limits.h");
+    if (pinclude)
+      *strrchr(pinclude, '/') = '\0';
+
+    if (LinkStdLib && !plib)
+      plib = SystemFileExists(epath, '/', "smlrc/lib/", LibName[OutputFormat]);
+
+    if (pinclude && (plib || !LinkStdLib))
+    {
+      AddOption(&CompilerOptions, &CompilerOptionsLen, "-SI");
+      AddOption(&CompilerOptions, &CompilerOptionsLen, pinclude);
+      if (plib)
+        AddOption(&LinkerOptions, &LinkerOptionsLen, plib);
+      return;
+    }
+  }
+
+  pinclude = SystemFileExists("/usr/local/smlrc/include/", 0, NULL, "limits.h");
+  if (pinclude)
+    *strrchr(pinclude, '/') = '\0';
+
+  if (LinkStdLib && !plib)
+    plib = SystemFileExists("/usr/local/smlrc/lib/", 0, NULL, LibName[OutputFormat]);
+
+  if (pinclude && (plib || !LinkStdLib))
+  {
+    AddOption(&CompilerOptions, &CompilerOptionsLen, "-SI");
+    AddOption(&CompilerOptions, &CompilerOptionsLen, pinclude);
+    if (plib)
+      AddOption(&LinkerOptions, &LinkerOptionsLen, plib);
+    return;
+  }
+#else
+  epath = exepath(argv0);
+  if (epath)
+  {
+    pinclude = SystemFileExists(epath, 0, "../include/", "limits.h");
+    if (pinclude)
+      *strrchr(pinclude, '/') = '\0';
+
+    if (LinkStdLib && !plib)
+      plib = SystemFileExists(epath, 0, "../lib/", LibName[OutputFormat]);
+
+    if (pinclude && (plib || !LinkStdLib))
+    {
+      AddOption(&CompilerOptions, &CompilerOptionsLen, "-SI");
+      AddOption(&CompilerOptions, &CompilerOptionsLen, pinclude);
+      if (plib)
+        AddOption(&LinkerOptions, &LinkerOptionsLen, plib);
+      return;
+    }
+  }
+#endif
+
+// TBD??? Issue a warning if the location of the system headers and libraries wasn't found
 }
 
 int main(int argc, char* argv[])
@@ -790,6 +1043,7 @@ int main(int argc, char* argv[])
     {
       OutputFormat = FormatDosComTiny;
       AddOption(&CompilerOptions, &CompilerOptionsLen, "-seg16");
+      AddOption(&CompilerOptions, &CompilerOptionsLen, "-D _DOS");
       AddOption(&LinkerOptions, &LinkerOptionsLen, "-tiny");
       LinkStdLib = 1;
       argv[i] = NULL;
@@ -807,6 +1061,7 @@ int main(int argc, char* argv[])
     {
       OutputFormat = FormatDosExeSmall;
       AddOption(&CompilerOptions, &CompilerOptionsLen, "-seg16");
+      AddOption(&CompilerOptions, &CompilerOptionsLen, "-D _DOS");
       AddOption(&LinkerOptions, &LinkerOptionsLen, "-small");
       LinkStdLib = 1;
       argv[i] = NULL;
@@ -824,6 +1079,7 @@ int main(int argc, char* argv[])
     {
       OutputFormat = FormatDosExeHuge;
       AddOption(&CompilerOptions, &CompilerOptionsLen, "-huge");
+      AddOption(&CompilerOptions, &CompilerOptionsLen, "-D _DOS");
       AddOption(&LinkerOptions, &LinkerOptionsLen, "-huge");
       LinkStdLib = 1;
       argv[i] = NULL;
@@ -842,6 +1098,7 @@ int main(int argc, char* argv[])
       OutputFormat = FormatWinPe32;
       AddOption(&CompilerOptions, &CompilerOptionsLen, "-seg32");
       AddOption(&CompilerOptions, &CompilerOptionsLen, "-winstack");
+      AddOption(&CompilerOptions, &CompilerOptionsLen, "-D _WINDOWS");
       AddOption(&LinkerOptions, &LinkerOptionsLen, "-pe");
       LinkStdLib = 1;
       argv[i] = NULL;
@@ -859,6 +1116,7 @@ int main(int argc, char* argv[])
     {
       OutputFormat = FormatElf32;
       AddOption(&CompilerOptions, &CompilerOptionsLen, "-seg32");
+      AddOption(&CompilerOptions, &CompilerOptionsLen, "-D _LINUX");
       AddOption(&LinkerOptions, &LinkerOptionsLen, "-elf");
       argv[i] = NULL;
       LinkStdLib = 1;
@@ -934,6 +1192,7 @@ int main(int argc, char* argv[])
 #ifdef HOST_LINUX
     OutputFormat = FormatElf32;
     AddOption(&CompilerOptions, &CompilerOptionsLen, "-seg32");
+    AddOption(&CompilerOptions, &CompilerOptionsLen, "-D _LINUX");
     AddOption(&LinkerOptions, &LinkerOptionsLen, "-elf");
     LinkStdLib = 1;
 #else
@@ -941,12 +1200,14 @@ int main(int argc, char* argv[])
     OutputFormat = FormatWinPe32;
     AddOption(&CompilerOptions, &CompilerOptionsLen, "-seg32");
     AddOption(&CompilerOptions, &CompilerOptionsLen, "-winstack");
+    AddOption(&CompilerOptions, &CompilerOptionsLen, "-D _WINDOWS");
     AddOption(&LinkerOptions, &LinkerOptionsLen, "-pe");
     LinkStdLib = 1;
 #else
 #ifdef HOST_DOS
     OutputFormat = FormatDosExeHuge;
     AddOption(&CompilerOptions, &CompilerOptionsLen, "-huge");
+    AddOption(&CompilerOptions, &CompilerOptionsLen, "-D _DOS");
     AddOption(&LinkerOptions, &LinkerOptionsLen, "-huge");
     LinkStdLib = 1;
 #endif
@@ -976,6 +1237,8 @@ int main(int argc, char* argv[])
       break;
     }
   }
+
+  AddSystemPaths(argv[0]);
 
   for (i = 1; i < argc; i++)
   {
