@@ -1322,7 +1322,7 @@ void GetString(char terminator, int SkipNewLines)
             if (!cnt)
               //error("Unsupported or invalid character/string constant\n");
               errorChrStr();
-            c -= (c >= 0x80 && CHAR_MIN) * 0x100;
+            c -= (c >= 0x80 && CHAR_MIN < 0) * 0x100;
             ch = c;
           }
           break;
@@ -1341,7 +1341,7 @@ void GetString(char terminator, int SkipNewLines)
               if (++cnt == 3)
                 break;
             }
-            c -= (c >= 0x80 && CHAR_MIN) * 0x100;
+            c -= (c >= 0x80 && CHAR_MIN < 0) * 0x100;
             ch = c;
           }
           else
