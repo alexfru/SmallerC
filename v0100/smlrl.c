@@ -595,7 +595,7 @@ void* Realloc(void* ptr, size_t size)
 void** DynArrFindSpot(tDynArr* pArr)
 {
   size_t i, oldcnt, oldsz, newcnt, newsz;
-  void* p;
+  void* p = NULL;
 
   if (pArr->Used < pArr->Reserved)
     for (i = 0; i < pArr->Reserved; i++)
@@ -2293,7 +2293,7 @@ void fatargs(int* pargc, char*** pargv)
           char* p;
           memset(buf, '\0', sz + 1);
           fseek(f, 0, SEEK_SET);
-          fread(buf, 1, sz, f); // TBD??? return value not used
+          buf[fread(buf, 1, sz, f)] = '\0';
           p = strtok(buf, sep);
           pcnt--; // don't count the file name as an argument, count only what's inside
           while (p)

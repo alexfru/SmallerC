@@ -238,7 +238,7 @@ void error(char* format, ...)
   void* vl = &format + 1;
 #endif
 
-  // Make sure all files get closed if linking fails (DOS doesn't like leaked file handles)
+  // Make sure all files get closed if compilation fails (DOS doesn't like leaked file handles)
   for (i = 0; i < OpenFiles.Reserved; i++)
     if (OpenFiles.Buf[i])
       fclose(OpenFiles.Buf[i]);
@@ -296,7 +296,7 @@ void* Realloc(void* ptr, size_t size)
 void** DynArrFindSpot(tDynArr* pArr)
 {
   size_t i, oldcnt, oldsz, newcnt, newsz;
-  void* p;
+  void* p = NULL;
 
   if (pArr->Used < pArr->Reserved)
     for (i = 0; i < pArr->Reserved; i++)
@@ -465,7 +465,7 @@ void fatargs(int* pargc, char*** pargv)
           char* p;
           memset(buf, '\0', sz + 1);
           fseek(f, 0, SEEK_SET);
-          fread(buf, 1, sz, f); // TBD??? return value not used
+          buf[fread(buf, 1, sz, f)] = '\0';
           p = strtok(buf, sep);
           pcnt--; // don't count the file name as an argument, count only what's inside
           while (p)
@@ -556,6 +556,7 @@ void System(char* cmd)
     // DOS is not multi-tasking and so there shouldn't be any race condition
     // between doing tmpnam() and fopen().
     ftmp = Fopen(ntmp, "wb");
+    AddOptionInner(&TemporaryFiles, &TemporaryFilesLen, ntmp, '\0');
     if (len > l)
       Fwrite(p + 1, len - l, ftmp);
     Fclose(ftmp);
@@ -653,6 +654,8 @@ void Compile(char* name)
     strcat(cmd, " ");
     strcat(cmd, asmName);
 
+    AddOptionInner(&TemporaryFiles, &TemporaryFilesLen, asmName, '\0');
+    // TBD!!! also, if CompileToAsm==0, add .o file to temps here
     System(cmd);
 
     free(cmd);
@@ -776,8 +779,8 @@ char* exepath(char* argv0)
   }
 
   // If there's no slash, it could be "c:file"
-  if (!pslash)
-    pslash = strrchr(name, ':');
+  if (!pslash && ((*name >= 'A' && *name <= 'Z') || (*name >= 'a' && *name <= 'z')) && name[1] == ':')
+    pslash = name + 1;
 
   // If there's a slash or a colon, we're done
   if (pslash)
@@ -1241,11 +1244,8 @@ int main(int argc, char* argv[])
   AddSystemPaths(argv[0]);
 
   for (i = 1; i < argc; i++)
-  {
-    if (!argv[i])
-      continue;
-    Compile(argv[i]);
-  }
+    if (argv[i])
+      Compile(argv[i]);
 
   if (!DontLink)
     Link();

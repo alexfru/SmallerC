@@ -1,14 +1,14 @@
 /*
   How to compile for DOS (all mode(l)s: tiny/.COM, small/.EXE, huge/.EXE):
-    smlrcc -v -dost hw0.c -o hw0dt.com
-    smlrcc -v -doss hw0.c -o hw0ds.exe
-    smlrcc -v -dosh hw0.c -o hw0dh.exe
+    smlrcc -dost hw0.c -o hw0dt.com
+    smlrcc -doss hw0.c -o hw0ds.exe
+    smlrcc -dosh hw0.c -o hw0dh.exe
 
   How to compile for Windows:
-    smlrcc -v -win hw0.c -o hw0w.exe
+    smlrcc -win hw0.c -o hw0w.exe
 
   How to compile for Linux:
-    smlrcc -v -linux hw0.c -o hw0l
+    smlrcc -linux hw0.c -o hw0l
 */
 
 #ifdef _WINDOWS

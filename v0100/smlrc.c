@@ -7696,8 +7696,14 @@ int main(int argc, char** argv)
   DefineMacro("__SMALLER_C__", "0x0100");
   if (SizeOfWord == 2)
     DefineMacro("__SMALLER_C_16__", "");
+#ifdef CAN_COMPILE_32BIT
   else if (SizeOfWord == 4)
     DefineMacro("__SMALLER_C_32__", "");
+#endif
+#ifdef CAN_COMPILE_32BIT
+  if (OutputFormat == FormatSegHuge)
+    DefineMacro("__HUGE__", "");
+#endif
   if (CharIsSigned)
     DefineMacro("__SMALLER_C_SCHAR__", "");
   else
