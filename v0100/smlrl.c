@@ -1069,6 +1069,8 @@ int FindSymbolByName(const char* SymName)
       if (cnt)
         break;
     }
+    if (cnt)
+      break;
   }
   if (!cnt)
   {
@@ -1094,6 +1096,8 @@ void CheckDuplicates(void)
   for (fIdx = 0; fIdx < ObjFileCnt; fIdx++)
   {
     tElfMeta* pMeta = &pMetas[fIdx];
+    if (!pMeta->Needed)
+      continue;
     for (sectIdx = 0; sectIdx < pMeta->SectionCnt; sectIdx++)
     {
       tElfSection* pSect = &pMeta->pSections[sectIdx];
@@ -1113,6 +1117,8 @@ void CheckDuplicates(void)
           for (fIdx2 = fIdx + 1; fIdx2 < ObjFileCnt; fIdx2++)
           {
             tElfMeta* pMeta2 = &pMetas[fIdx2];
+            if (!pMeta2->Needed)
+              continue;
             for (sectIdx2 = 0; sectIdx2 < pMeta2->SectionCnt; sectIdx2++)
             {
               tElfSection* pSect2 = &pMeta2->pSections[sectIdx2];
