@@ -120,6 +120,17 @@ typedef struct
   size_t Used;
 } tDynArr;
 
+typedef struct
+{
+  char name[16];
+  char date[12];
+  char uid[6];
+  char gid[6];
+  char mode[8];
+  char size[10];
+  char fmag[2];
+} tArchiveFileHeader;
+
 #define FBUF_SIZE 1024
 
 char* OutName;
@@ -152,8 +163,10 @@ int DontLink = 0;
 int CompileToAsm = 0;
 
 int LinkStdLib = 0;
-
 char* StdLibPath;
+char* StdLib;
+
+int DoArchive = 0;
 
 char* CompilerOptions;
 size_t CompilerOptionsLen;
@@ -163,6 +176,9 @@ size_t AssemblerOptionsLen;
 
 char* LinkerOptions;
 size_t LinkerOptionsLen;
+
+char* ArchiveFiles;
+size_t ArchiveFilesLen;
 
 char* TemporaryFiles;
 size_t TemporaryFilesLen;
@@ -599,7 +615,9 @@ void Compile(char* name)
 
   if (len > 4 && name[len - 4] == '.')
   {
-    if (!strcmp(name + len - 3, "asm") || !strcmp(name + len - 3, "ASM"))
+    if ((name[len-3] == 'A' || name[len-3] == 'a') &&
+        (name[len-2] == 'S' || name[len-2] == 's') &&
+        (name[len-1] == 'M' || name[len-1] == 'm'))
       type = 'a';
   }
   if (len > 2 && name[len - 2] == '.')
@@ -627,6 +645,8 @@ void Compile(char* name)
     // Nothing to do with object and library files (.o and .a)
     if (!DontLink)
       AddOption(&LinkerOptions, &LinkerOptionsLen, name);
+    else if (DoArchive && type == 'O')
+      AddOptionInner(&ArchiveFiles, &ArchiveFilesLen, name, '\0');
     return;
   }
 
@@ -674,7 +694,7 @@ void Compile(char* name)
     char* objName;
     char* cmd;
 
-    if (InputFileCnt == 1 && OutName && DontLink)
+    if (InputFileCnt == 1 && OutName && DontLink && !DoArchive)
     {
       // Compiling one C or assembly file to an object file with a given name
       objName = OutName;
@@ -716,6 +736,11 @@ void Compile(char* name)
       // Temporary object files will be removed at the end
       AddOptionInner(&TemporaryFiles, &TemporaryFilesLen, objName, '\0');
     }
+    else if (DoArchive)
+    {
+      AddOptionInner(&ArchiveFiles, &ArchiveFilesLen, objName, '\0');
+      AddOptionInner(&TemporaryFiles, &TemporaryFilesLen, objName, '\0');
+    }
 
     if (objName != OutName)
       free(objName);
@@ -724,6 +749,9 @@ void Compile(char* name)
 
 void Link(void)
 {
+  if (StdLib)
+    AddOption(&LinkerOptions, &LinkerOptionsLen, StdLib);
+
   if (OutName)
   {
     AddOption(&LinkerOptions, &LinkerOptionsLen, "-o");
@@ -742,6 +770,115 @@ void Link(void)
     free(cmd);
   }
 #endif
+
+  DeleteTemporaryFiles();
+}
+
+void Archive(void)
+{
+  static unsigned char buf[FBUF_SIZE];
+  size_t i;
+  FILE* fout = Fopen(OutName, "wb");
+
+  Fwrite("!<arch>\n", 8, fout);
+
+  for (i = 0; i < ArchiveFilesLen; )
+  {
+    char* name = ArchiveFiles + i;
+    char* name2 = name;
+    size_t len = strlen(name);
+    size_t len2;
+    char* pslash = strrchr(name, '/');
+    char* pbackslash = strrchr(name, '\\');
+    FILE* f = Fopen(name, "rb");
+    long sz = fsize(f);
+    ulong sz2 = 0;
+    tArchiveFileHeader fh;
+    if (sz < 0 || sz > 0x20000000) // 512MB cap to simplify overflow handling, should be enough for all purposes
+      error("File '%s' too large\n", name);
+
+    // Find where the file path ends in the file name
+
+    // In DOS/Windows paths can contain either '\\' or '/' as a separator between directories,
+    // choose the right-most
+    if (pslash && pbackslash)
+    {
+      if (pslash < pbackslash)
+        pslash = pbackslash;
+    }
+    else if (!pslash)
+    {
+      pslash = pbackslash;
+    }
+
+#ifndef HOST_LINUX
+    // If there's no slash, it could be "c:file" in DOS/Windows
+    if (!pslash && ((*name >= 'A' && *name <= 'Z') || (*name >= 'a' && *name <= 'z')) && name[1] == ':')
+      pslash = name + 1;
+#endif
+
+    if (pslash)
+      name2 = pslash + 1;
+
+    len2 = strlen(name2);
+
+    memset(&fh, ' ', sizeof fh);
+    if (len2 <= 15)
+    {
+      memcpy(fh.name, name2, len2);
+      fh.name[len2] = '/';
+    }
+    else
+    {
+      ulong l = len2;
+      fh.name[sprintf(fh.name, "#1/%lu", l)] = ' '; // Use BSD(in-place) format for long names
+    }
+    memcpy(fh.date, "1388534400", sizeof "1388534400" - 1); // TBD??? use actual file date/time???
+    fh.uid[0] = '0';
+    fh.gid[0] = '0';
+    memcpy(fh.mode, "100666", sizeof "100666" - 1); // S_IFREG | rw-rw-rw-
+    if (len2 <= 15)
+    {
+      ulong l = sz;
+      fh.size[sprintf(fh.size, "%lu", l)] = ' ';
+    }
+    else
+    {
+      ulong l = sz;
+      l += len2;
+      fh.size[sprintf(fh.size, "%lu", l)] = ' ';
+    }
+    fh.fmag[0] = 0x60;
+    fh.fmag[1] = 0x0A;
+
+    Fwrite(&fh, sizeof fh, fout);
+
+    if (len2 > 15)
+      Fwrite(name2, len2, fout);
+
+    Fseek(f, 0, SEEK_SET);
+
+    for (;;)
+    {
+      size_t csz = fread(buf, 1, FBUF_SIZE, f);
+      if (!csz)
+        break;
+      Fwrite(buf, csz, fout);
+      sz2 += csz;
+    }
+    if ((ulong)sz != sz2)
+      error("Failed to archive file '%s'\n", name);
+
+    if (len2 > 15)
+      sz2 += len2;
+    if (sz2 & 1)
+      Fwrite("\n", 1, fout);
+
+    Fclose(f);
+    i += len + 1;
+  }
+
+  Fclose(fout);
 
   DeleteTemporaryFiles();
 }
@@ -922,7 +1059,7 @@ void AddSystemPaths(char* argv0)
       AddOption(&CompilerOptions, &CompilerOptionsLen, "-SI");
       AddOption(&CompilerOptions, &CompilerOptionsLen, pinclude);
       if (plib)
-        AddOption(&LinkerOptions, &LinkerOptionsLen, plib);
+        StdLib = plib;
       return;
     }
   }
@@ -943,7 +1080,7 @@ void AddSystemPaths(char* argv0)
       AddOption(&CompilerOptions, &CompilerOptionsLen, "-SI");
       AddOption(&CompilerOptions, &CompilerOptionsLen, pinclude);
       if (plib)
-        AddOption(&LinkerOptions, &LinkerOptionsLen, plib);
+        StdLib = plib;
       return;
     }
   }
@@ -960,7 +1097,7 @@ void AddSystemPaths(char* argv0)
     AddOption(&CompilerOptions, &CompilerOptionsLen, "-SI");
     AddOption(&CompilerOptions, &CompilerOptionsLen, pinclude);
     if (plib)
-      AddOption(&LinkerOptions, &LinkerOptionsLen, plib);
+      StdLib = plib;
     return;
   }
 #else
@@ -979,7 +1116,7 @@ void AddSystemPaths(char* argv0)
       AddOption(&CompilerOptions, &CompilerOptionsLen, "-SI");
       AddOption(&CompilerOptions, &CompilerOptionsLen, pinclude);
       if (plib)
-        AddOption(&LinkerOptions, &LinkerOptionsLen, plib);
+        StdLib = plib;
       return;
     }
   }
@@ -1033,6 +1170,15 @@ int main(int argc, char* argv[])
         argv[i] = NULL;
         continue;
       }
+    }
+    else if (!strcmp(argv[i], "-signed-char") ||
+             !strcmp(argv[i], "-unsigned-char") ||
+             !strcmp(argv[i], "-leading-underscore") ||
+             !strcmp(argv[i], "-no-leading-underscore"))
+    {
+      AddOption(&CompilerOptions, &CompilerOptionsLen, argv[i]);
+      argv[i] = NULL;
+      continue;
     }
     else if (!strcmp(argv[i], "-tiny"))
     {
@@ -1241,6 +1387,15 @@ int main(int argc, char* argv[])
     }
   }
 
+  // Figure out if we need to create a library ('-c -o file.a' specified)
+  if (DontLink && !CompileToAsm && OutName)
+  {
+    size_t len = strlen(OutName);
+    if (len > 2 && OutName[len-2] == '.' &&
+        (OutName[len-1] == 'a' || OutName[len-1] == 'A'))
+      DoArchive = 1;
+  }
+
   AddSystemPaths(argv[0]);
 
   for (i = 1; i < argc; i++)
@@ -1249,6 +1404,8 @@ int main(int argc, char* argv[])
 
   if (!DontLink)
     Link();
+  else if (DoArchive)
+    Archive();
 
   return 0;
 }
