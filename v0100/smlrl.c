@@ -2389,13 +2389,8 @@ int main(int argc, char* argv[])
       {
         if (i + 1 < argc)
         {
-          ulong o;
           ++i;
-          if (!strncmp(argv[i], "0x", 2) || !strncmp(argv[i], "0X", 2))
-            o = strtoul(argv[i], NULL, 16);
-          else
-            o = strtoul(argv[i], NULL, 10);
-          Origin = o;
+          Origin = strtoul(argv[i], NULL, 0);
           continue;
         }
       }
@@ -2403,13 +2398,8 @@ int main(int argc, char* argv[])
       {
         if (i + 1 < argc)
         {
-          ulong o;
           ++i;
-          if (!strncmp(argv[i], "0x", 2) || !strncmp(argv[i], "0X", 2))
-            o = strtoul(argv[i], NULL, 16);
-          else
-            o = strtoul(argv[i], NULL, 10);
-          StackSize = o;
+          StackSize = strtoul(argv[i], NULL, 0);
           continue;
         }
       }

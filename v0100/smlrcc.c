@@ -1135,9 +1135,21 @@ int main(int argc, char* argv[])
 
   fatargs(&argc, &argv);
 
+#ifdef HOST_LINUX
   AddOption(&CompilerOptions, &CompilerOptionsLen, "smlrc");
   AddOption(&AssemblerOptions, &AssemblerOptionsLen, "nasm -f elf");
   AddOption(&LinkerOptions, &LinkerOptionsLen, "smlrl");
+#else
+  // Use explicit extensions (".exe") to let system() know that
+  // these commands are not COMMAND.COM's internal commands and
+  // should be executed directly and not via "COMMAND.COM /C command",
+  // if possible.
+  // This helps recover the program exit status under DOS and thus
+  // stop compilation as soon as one compilation stage fails.
+  AddOption(&CompilerOptions, &CompilerOptionsLen, "smlrc.exe");
+  AddOption(&AssemblerOptions, &AssemblerOptionsLen, "nasm.exe -f elf");
+  AddOption(&LinkerOptions, &LinkerOptionsLen, "smlrl.exe");
+#endif
 
   for (i = 1; i < argc; i++)
   {
