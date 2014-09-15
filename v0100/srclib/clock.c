@@ -23,3 +23,4 @@ clock_t clock(void)
   return helper();
 }
 #endif
+#endif
