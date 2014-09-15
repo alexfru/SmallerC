@@ -6,6 +6,7 @@
 
 #ifdef _DOS
 #ifdef __HUGE__
+static
 unsigned long helper(void)
 {
   asm("mov ax, 0x40\n"
