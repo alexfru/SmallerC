@@ -165,8 +165,8 @@ static int helper(char exe[FILENAME_MAX], char** cmd)
     if (*end == ':' || *end == '/' || *end == '\\')
       haspath = 1;
     // If there's a '%', it may be an environment variable, pass the
-    // command to COMMAND.COM as-is.
-    if (*end == '%')
+    // command to COMMAND.COM as-is. Do the same for some reserved characters.
+    if (strchr("\"%*+,;<=>?[]|", *end))
       return 0;
     end++;
   }
@@ -257,8 +257,18 @@ static int helper(char exe[FILENAME_MAX], char** cmd)
     }
     return -1;
   }
-
-  return 0;
+  else
+  {
+    FILE* f;
+    memcpy(exe, start, clen);
+    exe[clen] = '\0';
+    if ((f = fopen(exe, "rb")) != NULL)
+    {
+      fclose(f);
+      return 0;
+    }
+    return -1;
+  }
 }
 
 int system(char* cmd)
@@ -348,6 +358,11 @@ int system(char* cmd)
     params[0] = 0;
     params[1] = '\r';
   }
+  // Convert UNIX current directory prefix ("./") to DOS current directory prefix (".\\") if needed.
+  // COMMAND.COM may mistakenly recognize "./foo.exe" as program "." with parameters "/foo.exe",
+  // which would be an error anyway.
+  if (comspec == exe && *exe == '.' && exe[1] == '/')
+    exe[1] = '\\';
 
   eparams.EnvSeg = 0; // create and use a copy of the current environment
 #ifdef __SMALLER_C_16__
