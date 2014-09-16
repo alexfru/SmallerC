@@ -164,6 +164,10 @@ static int helper(char exe[FILENAME_MAX], char** cmd)
   {
     if (*end == ':' || *end == '/' || *end == '\\')
       haspath = 1;
+    // If there's a '%', it may be an environment variable, pass the
+    // command to COMMAND.COM as-is.
+    if (*end == '%')
+      return 0;
     end++;
   }
 
