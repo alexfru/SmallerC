@@ -1,3 +1,6 @@
+#define float int
+#define double int
+
    struct defs {
      int cbits;          /* No. of bits per char           */
      int ibits;          /*                 int            */
@@ -16,9 +19,7 @@
      int crc;            /* Cumulative return code         */
      char rfs[8];        /* Return from section            */
    };
-main(n,args)               /* C REFERENCE MANUAL         */
-int n;
-char **args;
+int main(int n, char **args) /* C REFERENCE MANUAL         */
 {
 
 /*   This program performs a series of tests on a C compiler,
@@ -139,7 +140,7 @@ prologue:
 used for housekeeping, handshaking and module initialization.
 
                                                            */
-   extern
+   extern int
      s22(struct defs *),
      s241(struct defs *),
      s243(struct defs *),
@@ -207,8 +208,7 @@ used for housekeeping, handshaking and module initialization.
    else printf("\nFailed.\n");
    return 0;
 }
-s22(pd0)                 /* 2.2 Identifiers (Names)      */
-struct defs *pd0;
+int s22(struct defs *pd0)                 /* 2.2 Identifiers (Names)      */
 {
    int a234, a;
    int _, _234, A, rc;
@@ -247,9 +247,8 @@ struct defs *pd0;
 
    return(rc);
 }
-s241(pd0)                   /* 2.4.1 Integer constants
+int s241(struct defs *pd0)                   /* 2.4.1 Integer constants
                                2.4.2 Explicit long constants  */
-struct defs *pd0;
 {
    long pow2();
    static char s241er[] = "s241,er%d\n";
@@ -391,10 +390,13 @@ struct defs *pd0;
    d[32] = 268435456;       o[32] = 02000000000;     x[32] = 0x10000000;
    d[33] = 1073741823;      o[33] = 07777777777;     x[33] = 0x3fffffff;
    d[34] = 1073741824;      o[34] = 010000000000;    x[34] = 0x40000000;
-   d[35] = 4294967295;      o[35] = 037777777777;    x[35] = 0xffffffff;
-   d[36] = 4294967296;      o[36] = 040000000000;    x[36] = 0x100000000;
-   d[37] = 68719476735;     o[37] = 0777777777777;   x[37] = 0xfffffffff;
-   d[38] = 68719476736;     o[38] = 01000000000000;  x[38] = 0x1000000000;
+   d[35] = 4294967295u;     o[35] = 037777777777;    x[35] = 0xffffffff;
+//   d[36] = 4294967296;      o[36] = 040000000000;    x[36] = 0x100000000;
+   d[36] = 0;               o[36] = 0;               x[36] = 0;
+//   d[37] = 68719476735;     o[37] = 0777777777777;   x[37] = 0xfffffffff;
+   d[37] = 4294967295u;     o[37] = 037777777777;    x[37] = 0xffffffff;
+//   d[38] = 68719476736;     o[38] = 01000000000000;  x[38] = 0x1000000000;
+   d[38] = 0;               o[38] = 0;               x[38] = 0;
 
    /* WHEW! */
 
@@ -417,16 +419,14 @@ struct defs *pd0;
    return rc;
 }
 
-long pow2(n)        /* Calculate 2**n by multiplying, not shifting  */
-long n;
+long pow2(long n)        /* Calculate 2**n by multiplying, not shifting  */
 {
    long s;
    s = 1;
    while(n--) s = s*2;
    return s;
 }
-s243(pd0)                   /*  2.4.3 Character constants  */
-struct defs *pd0;
+int s243(struct defs *pd0)                   /*  2.4.3 Character constants  */
 {
    static char s243er[] = "s243,er%d\n";
    static char qs243[8] = "s243   ";
@@ -524,15 +524,13 @@ struct defs *pd0;
 
    return rc;
 }
-zerofill(x)
-char *x;
+void zerofill(char* x)
 {
    int j;
 
    for (j=0; j<256; j++) *x++ = 0;
 }
-sumof(x)
-char *x;
+int sumof(char* x)
 {
    char *p;
    int total, j;
@@ -543,8 +541,7 @@ char *x;
    for(j=0; j<256; j++) total = total+ *p++;
    return total;
 }
-s244(pd0)
-struct defs *pd0;
+int s244(struct defs *pd0)
 {
    double a[8];
    int rc, lrc, j;
@@ -564,6 +561,7 @@ struct defs *pd0;
       ware representations in all cases, and that all representations
       thus checked are double precision.              */
 
+/*
    a[0] = .1250E+04;
    a[1] = 1.250E3;
    a[2] = 12.50E02;
@@ -593,11 +591,11 @@ struct defs *pd0;
      if(pd0->flgd != 0) printf(s244er,2);
      rc = rc+2;
    }
+*/
 
    return rc;
 }
-s25(pd0)
-struct defs *pd0;
+int s25(struct defs *pd0)
 {
    char *s, *s2;
    int rc, lrc, j;
@@ -671,8 +669,7 @@ struct defs *pd0;
    }
    return rc;
 }
-s26(pd0)                  /*  2.6  Hardware Characteristics     */
-struct defs *pd0;
+int s26(struct defs *pd0)                  /*  2.6  Hardware Characteristics     */
 {
    static char qs26[8] = "s26    ";
    char *ps, *pt;
@@ -723,6 +720,7 @@ struct defs *pd0;
              1. without loss of significance. We calculate that here, for
              float and double.                       */
 
+/*
    one = 1.;
    delta = 1.;
    temp = 0.;
@@ -739,6 +737,7 @@ struct defs *pd0;
      delta = delta/2.;
    }
    pd0->dprec = delta * 4.;
+*/
 
           /* Now, if anyone's interested, we publish the results.       */
 
@@ -748,10 +747,10 @@ struct defs *pd0;
      printf(s,pd0->sbits,"short");
      printf(s,pd0->lbits,"long");
      printf(s,pd0->ubits,"unsigned");
-     printf(s,pd0->fbits,"float");
-     printf(s,pd0->dbits,"double");
-     printf(s2,pd0->fprec,"float");
-     printf(s2,pd0->dprec,"double");
+//     printf(s,pd0->fbits,"float");
+//     printf(s,pd0->dbits,"double");
+//     printf(s2,pd0->fprec,"float");
+//     printf(s2,pd0->dprec,"double");
    }
           /* Since we are only exploring and perhaps reporting, but not 
              testing any features, we cannot return an error code.  */
@@ -759,8 +758,7 @@ struct defs *pd0;
    return 0;
 }
 int extvar;
-s4(pd0)                    /* 4. What's in a name?             */
-struct defs *pd0;
+int s4(struct defs *pd0)                    /* 4. What's in a name?             */
 {
    static char s4er[] = "s4,er%d\n";
    static char qs4[8] = "s4     ";
@@ -843,10 +841,9 @@ implementation                                                  */
 
    return rc;
 }
-svtest(n)
-int n;
+int svtest(int n)
 {
-   static k;
+   static int k;
    int rc;
    switch (n) {
 
@@ -867,19 +864,18 @@ int n;
    }
    return rc;
 }
-zero(){                 /* Returns a value of zero, possibly */
-   static k;            /* with side effects, as it's called */
+int zero(){                 /* Returns a value of zero, possibly */
+   static int k;            /* with side effects, as it's called */
    int rc;              /* alternately with svtest, above,   */
    k = 2;               /* and has the same internal storage */
    rc = 0;              /* requirements.                     */
    return rc;
 }
-testev(){
+int testev(){
    if(extvar != 1066) return 1;
    else return 0;
 }
-s61(pd0)          /* Characters and integers */
-struct defs *pd0;
+int s61(struct defs *pd0)          /* Characters and integers */
 {
    static char s61er[] = "s61,er%d\n";
    static char qs61[8] = "s61    ";
@@ -954,24 +950,23 @@ simply discarded.                                       */
 
    return rc;
 }
-s626(pd0)          /* 6.2 Float and double                  */
+int s626(struct defs *pd0)          /* 6.2 Float and double                  */
                    /* 6.3 Floating and integral                 */
                    /* 6.4 Pointers and integers                 */
                    /* 6.5 Unsigned                              */
                    /* 6.6 Arithmetic conversions                */
-struct defs *pd0;
 {
    static char s626er[] = "s626,er%d\n";
    static char qs626[8] = "s626   ";
    int rc;
    char *ps, *pt;
-   float eps, f1, f2, f3, f4, f;
+//   float eps, f1, f2, f3, f4, f;
    long lint1, lint2, l, ls;
    char c, t[28], t0;
    short s;
    int is, i, j;
    unsigned u, us;
-   double d, ds;
+//   double d, ds;
    ps = qs626;
    pt = pd0->rfs;
    rc = 0;
@@ -980,6 +975,7 @@ struct defs *pd0;
         /* Conversions of integral values to floating type are
         well-behaved.                                           */
 
+/*
    f1 = 1.;
    lint1 = 1.;
    lint2 = 1.;
@@ -995,7 +991,7 @@ struct defs *pd0;
      rc = rc+2;
      if(pd0->flgd != 0) printf(s626er,2);
    }
-
+*/
         /* Pointer-integer combinations are discussed in s74,
         "Additive operators". The unsigned-int combination
         appears below.                                          */
@@ -1005,8 +1001,8 @@ struct defs *pd0;
    i = 125;     is = 15625;
    u = 125;     us = 15625;
    l = 125;     ls = 15625;
-   f = 125.;
-   d = 125.;    ds = 15625.;
+//   f = 125.;
+//   d = 125.;    ds = 15625.;
 
    for(j=0;j<28;j++) t[j] = 0;
 
@@ -1025,6 +1021,7 @@ struct defs *pd0;
    if(l*i != ls) t[12] = 1;
    if(l*u != us) t[13] = 1;
    if(l*l != ls) t[14] = 1;
+/*
    if(f*c != ds) t[15] = 1;
    if(f*s != ds) t[16] = 1;
    if(f*i != ds) t[17] = 1;
@@ -1038,6 +1035,7 @@ struct defs *pd0;
    if(d*l != ds) t[25] = 1;
    if(d*f != ds) t[26] = 1;
    if(d*d != ds) t[27] = 1;
+*/
 
    t0 = 0;
    for(j=0; j<28; j++) t0 = t0+t[j];
@@ -1067,8 +1065,7 @@ struct defs *pd0;
 
    return rc;
 }
-s71(pd0)          /*         7.1  Primary expressions   */
-struct defs *pd0;
+int s71(struct defs *pd0)          /*         7.1  Primary expressions   */
 {
    static char s71er[] = "s71,er%d\n";
    static char qs71[8] = "s71    ";
@@ -1155,20 +1152,17 @@ struct defs *pd0;
 
    return rc;
 }
-McCarthy(x)
-int x;
+int McCarthy(int x)
 {
    if(x>100) return x-10;
    else return McCarthy( McCarthy(x+11));
 }
-clobber(x,y)
-int x, *y;
+int clobber(int x, int* y)
 {
    x = 3;
    *y = 2;
 }
-s714(pd0)          /*  7.14  Assignment operators       */
-struct defs *pd0;
+int s714(struct defs *pd0)          /*  7.14  Assignment operators       */
 {
    static char f[] = "Local error %d.\n";
    static char s714er[] = "s714,er%d\n";
@@ -2621,6 +2615,7 @@ initial         (5,2)       |    (5,2)    |  (12,10)
      lrc = 231;
      if(prlc) printf(f,lrc);
    }
+/*
    fl = 5; cr = 2;
    fl /= cr;
    if(fl != 2.5){
@@ -2705,6 +2700,7 @@ initial         (5,2)       |    (5,2)    |  (12,10)
      lrc = 245;
      if(prlc) printf(f,lrc);
    }
+*/
    cl = 5; cr = 2;
    cl %= cr;
    if(cl != 1){
@@ -3611,8 +3607,7 @@ initial         (5,2)       |    (5,2)    |  (12,10)
    }
    return rc;
 }
-s715(pd0)          /*  7.15 Comma operator     */
-struct defs *pd0;
+int s715(struct defs *pd0)          /*  7.15 Comma operator     */
 {
    static char s715er[] = "s715,er%d\n";
    static char qs715[8] = "s715   ";
@@ -3653,13 +3648,11 @@ struct defs *pd0;
    }
    return rc;
 }
-s715f(x,y,z)
-int x, y, z;
+int s715f(int x, int y, int z)
 {
    return y;
 }
-s72(pd0)          /*  7.2  Unary operators  */
-struct defs *pd0;
+int s72(struct defs *pd0)          /*  7.2  Unary operators  */
 {
    static char s72er[] = "s72,er%d\n";
    static char qs72[8] = "s72    ";
@@ -3726,9 +3719,9 @@ struct defs *pd0;
         and that they all produce a correct result for this sample
         of size one.                                            */
 
-   c = 26;  l = 26;  d = 26.;
+   c = 26;  l = 26;  d = 26;//26.;
    s = 26;  u = 26; 
-   i = 26;  f = 26.;
+   i = 26;  f = 26;//26.;
 
    lrc = 0;
 
@@ -3752,6 +3745,7 @@ struct defs *pd0;
     || (unsigned)i != 26 || (unsigned)l != 26
     || (unsigned)f != 26 || (unsigned)d != 26 ) lrc = lrc+16;
 
+/*
    if( (float)c != 26. || (float)s != 26.
     || (float)i != 26. || (float)l != 26.
     || (float)u != 26. || (float)d != 26. ) lrc = lrc+32;
@@ -3759,6 +3753,7 @@ struct defs *pd0;
    if( (double)c != 26. || (double)s != 26.
     || (double)i != 26. || (double)l != 26.
     || (double)u != 26. || (double)f != 26. ) lrc = lrc+64;
+*/
 
    if(lrc != 0){
      rc = rc+16;
@@ -3769,10 +3764,9 @@ struct defs *pd0;
 
    return rc;
 }
-s757(pd0)          /* 7.5 Shift operators          */
+int s757(struct defs *pd0)          /* 7.5 Shift operators          */
                    /* 7.6 Relational operators     */
                    /* 7.7 Equality operator        */
-struct defs *pd0;
 {
    static char s757er[] = "s757,er%d\n";
    static char qs757[8] = "s757   ";
@@ -3886,13 +3880,12 @@ struct defs *pd0;
 
    return rc;
 }
-s7813(pd0)          /* 7.8 Bitwise AND operator
+int s7813(struct defs *pd0)          /* 7.8 Bitwise AND operator
                        7.9 Bitwise OR operator
                        7.10 Bitwise exclusive OR operator
                        7.11 Logical AND operator
                        7.12 Logical OR operator
                        7.13 Conditional operator            */
-struct defs *pd0;
 {
    register int prlc, lrc;
    int i, j, r, zero, one;
@@ -4169,8 +4162,7 @@ struct defs *pd0;
    }
    return rc;
 }
-s81(pd0)              /* 8.1 Storage Class Specifiers    */
-struct defs *pd0;
+int s81(struct defs *pd0)              /* 8.1 Storage Class Specifiers    */
 {
    static char s81er[] = "s81,er%d\n";
    static char qs81[8] = "s81    ";
@@ -4263,7 +4255,7 @@ struct defs *pd0;
 
    return rc;
 }
-regc() {     /*   char to register assignment   */
+int regc() {     /*   char to register assignment   */
 /*   Testing a variable whose storage class has been spec-
 ified as "register" is somewhat tricky, but it can be done in a 
 fairly reliable fashion by taking advantage of our knowledge of the
@@ -4440,7 +4432,7 @@ test is unreliable.              */
    if (s == 3) return 16-nr;
    else return -1;
 }
-regi() {     /*   int to register assignment    */
+int regi() {     /*   int to register assignment    */
 /*   Testing a variable whose storage class has been spec-
 ified as "register" is somewhat tricky, but it can be done in a 
 fairly reliable fashion by taking advantage of our knowledge of the
@@ -4619,7 +4611,7 @@ test is unreliable.              */
    if (s == 3) return 16-nr;
    else return -1;
 }
-regp() {     /*   pointer to register assignment   */
+int regp() {     /*   pointer to register assignment   */
 /*   Testing a variable whose storage class has been spec-
 ified as "register" is somewhat tricky, but it can be done in a 
 fairly reliable fashion by taking advantage of our knowledge of the
@@ -4797,8 +4789,7 @@ test is unreliable.              */
    if (s == 3) return 16-nr;
    else return -1;
 }
-s84(pd0)          /*  8.4 Meaning of declarators   */
-struct defs *pd0;
+int s84(struct defs *pd0)          /*  8.4 Meaning of declarators   */
 {
    int *ip, i, *fip(), (*pfi)(), j, k, array(), glork(int);
    static int x3d[3][5][7];
@@ -4839,7 +4830,7 @@ struct defs *pd0;
      afp[j] = &fa[j];
    }
 
-   sum = 0.;
+   sum = 0;//0.;
    for(j=0; j<17; j++) sum += *afp[j];
    if(sum != 136){
      if(pd0->flgd != 0) printf(s84er,4);
@@ -4875,8 +4866,7 @@ struct defs *pd0;
 
    return rc;
 }
-array(a,size,start)
-int a[], size, start;
+int array(int a[], int size, int start)
 {
    int i;
    for(i=0; i<size; i++)
@@ -4884,18 +4874,15 @@ int a[], size, start;
 
    return 0;
 }
-int *fip(x)
-int x;
+int *fip(int x)
 {
    static int y;
    y = x;
    return &y;
 }
-glork(x)
-int x;
+int glork(int x)
 {return x;}
-s85(pd0)          /*  8.5 Structure and union declarations   */
-struct defs *pd0;
+int s85(struct defs *pd0)          /*  8.5 Structure and union declarations   */
 {
    static char s85er[] = "s85,er%d\n";
    static char qs85[8] = "s85    ";
@@ -4960,12 +4947,14 @@ struct defs *pd0;
 
    static char aln[] = " alignment: ";
 
+/*
    struct{
      int twobit:2;
      int       :1;
      int threebit:3;
      int onebit:1;
    } s3;
+*/
 
    union{
      char u1[30];
@@ -5016,7 +5005,7 @@ struct defs *pd0;
         and that they seem to work, after a fashion, at
         run time...
                                                                 */
-
+/*
    s3.threebit = 7;
    s3.twobit = s3.threebit;
    s3.threebit = s3.twobit;
@@ -5036,6 +5025,7 @@ struct defs *pd0;
      if(pd0->flgm != 0)
       printf("Be especially careful with 1-bit fields!\n");
    }
+*/
 
         /* A union may be thought of as a structure all of whose
         members begin at offset 0 and whose size is sufficient
@@ -5077,8 +5067,7 @@ struct defs *pd0;
    }
    return rc;
 }
-s86(pd0)          /*  8.6 Initialization  */
-struct defs *pd0;
+int s86(struct defs *pd0)          /*  8.6 Initialization  */
 {
    static char s86er[] = "s86,er%d\n";
    static char qs86[8] = "s86    ";
@@ -5096,7 +5085,7 @@ struct defs *pd0;
      {2,4,6},
      {3,5,7},
    };
-   static float y2[4][3] = {1,3,5,2,4,6,3,5,7};
+   static float y2[4][3] = {{1,3,5},{2,4,6},{3,5,7}};//{1,3,5,2,4,6,3,5,7};
    static float y3[4][3] = {
      {1},{2},{3},{4}
    };
@@ -5173,12 +5162,11 @@ struct defs *pd0;
    }
    return rc;
 }
-one(){
+int one(){
    return 1;
 }
 int *metricp;
-s88(pd0)          /*  8.8 Typedef  */
-struct defs *pd0;
+int s88(struct defs *pd0)          /*  8.8 Typedef  */
 {
    static char s88er[] = "s88,er%d\n";
    static char qs88[8] = "s88    ";
@@ -5229,20 +5217,19 @@ struct defs *pd0;
         pointer to such a structure.
                                                                 */
 
-   z.re = 0.;
-   z.im = 0.;
+   z.re = 0;//0.;
+   z.im = 0;//0.;
    zp = &z;
-   zp->re = 1.;
-   zp->im = 1.;
-   if(z.re+z.im != 2.){
+   zp->re = 1;//1.;
+   zp->im = 1;//1.;
+   if(z.re+z.im != 2/*2.*/){
      if(pd0->flgd != 0) printf(s88er,4);
      rc = rc+4;
    }
 
    return rc;
 }
-s9(pd0)          /*  9  Statements  */
-struct defs *pd0;
+int s9(struct defs *pd0)          /*  9  Statements  */
 {
    static char s9er[] = "s9,er%d\n";
    static char qs9[8] = "s9     ";
@@ -5297,7 +5284,7 @@ struct defs *pd0;
 
    return rc;
 }
-setev(){                  /* Sets an external variable. Used  */
+void setev(){                  /* Sets an external variable. Used  */
    extern int extvar;     /* by s4, and should be compiled    */
    extvar = 1066;         /* separately from s4.              */
 }
