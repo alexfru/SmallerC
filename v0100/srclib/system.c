@@ -318,17 +318,25 @@ int system(char* cmd)
 
   if (clen)
   {
+    unsigned start;
     params[0] = plen - 2;
     if (comspec != exe)
     {
       memcpy(params + 1, "/C ", 3);
-      memcpy(params + 4, cmd, clen);
+      start = 4;
     }
     else
     {
-      memcpy(params + 1, cmd, clen);
+      start = 1;
     }
+    memcpy(params + start, cmd, clen);
     params[plen - 1] = '\r';
+
+    // Convert UNIX current directory prefix ("./") to DOS current directory prefix (".\\") if needed.
+    // COMMAND.COM may mistakenly recognize "./foo.exe" as program "." with parameters "/foo.exe",
+    // which would be an error anyway.
+    if (params[start] == '.' && params[start+1] == '/')
+      params[start+1] = '\\';
   }
   else
   {
