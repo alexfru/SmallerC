@@ -165,7 +165,7 @@ static int helper(char exe[FILENAME_MAX], char** cmd)
     if (*end == ':' || *end == '/' || *end == '\\')
       haspath = 1;
     // If there's a '%', it may be an environment variable, pass the
-    // command to COMMAND.COM as-is. Do the same for some reserved characters.
+    // command to COMMAND.COM as-is. Also, bail out on some reserved characters.
     if (strchr("\"%*+,;<=>?[]|", *end))
       return 0;
     end++;
@@ -190,6 +190,9 @@ static int helper(char exe[FILENAME_MAX], char** cmd)
 
   while (*end == ' ') end++;
   *cmd = end; // move the pointer to the first parameter of the command, if any
+
+  if (strpbrk(end, "<>|")) // Bail out on redirection
+    return 0;
 
   // If there hasn't been any path delimiter (slash or colon), look for
   // this .COM/.EXE in the current directory and then in the directories
