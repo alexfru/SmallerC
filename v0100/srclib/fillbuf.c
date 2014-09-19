@@ -20,7 +20,7 @@ int __fillbuf(FILE* f)
 
   if (f->flags & _IOWR) // fail file read immediately after file write or on write-only files
     return EOF;
-  if (f->flags & _IOEOF) // EOF has been reached already
+  if (f->flags & (_IOEOF | _IOSTRING)) // EOF has been reached already
     return EOF;
 
   f->flags |= _IORD; // last operation was a read

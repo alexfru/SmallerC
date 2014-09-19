@@ -10,11 +10,11 @@
 #endif
 
 #ifdef NDEBUG
-#define assert // TBD!!! must be a parametrized macro, ignoring its parameter
+#define assert (1)?(void)0:(void) // TBD!!! must be a parametrized macro, ignoring its parameter
 #else
-#define assert __assert
+#define assert __assert(__func__)
 #endif
 
-void __assert(unsigned);
+void (*__assert(char*))(unsigned);
 
 #endif

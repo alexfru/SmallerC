@@ -5,11 +5,19 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-void __assert(unsigned expr)
+static char* msg;
+
+static void helper(unsigned expr)
 {
   if (!expr)
   {
-    fprintf(stderr, "Assertion failed.\n");
+    fprintf(stderr, "%s: Assertion failed.\n", msg);
     abort();
   }
+}
+
+void (*__assert(char* function))(unsigned)
+{
+  msg = function;
+  return &helper;
 }
