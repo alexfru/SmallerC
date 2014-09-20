@@ -83,6 +83,13 @@ vsprintf.c
 sprintf.c
 vsnprint.c
 snprintf.c
+doscan.c
+vfscanf.c
+fscanf.c
+vscanf.c
+scanf.c
+vsscanf.c
+sscanf.c
 tmpnam.c
 
 exit.c

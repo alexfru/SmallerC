@@ -9,6 +9,9 @@ int ungetc(int c, FILE* f)
   if (c == EOF)
     return EOF;
 
+  // It doesn't make much sense to support ungetc() before
+  // at least one fgetc() is done.
+  // TBD??? Support it nonetheless???
   if (f->ptr == f->buf)
     return EOF;
 

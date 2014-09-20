@@ -99,4 +99,11 @@ int sprintf(char*, char*, ...);
 int vsnprintf(char*, size_t, char*, va_list);
 int snprintf(char*, size_t, char*, ...);
 
+int vfscanf(FILE*, char*, va_list);
+int fscanf(FILE*, char*, ...);
+int vscanf(char*, va_list);
+int scanf(char*, ...);
+int vsscanf(char*, char*, va_list);
+int sscanf(char*, char*, ...);
+
 #endif

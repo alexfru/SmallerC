@@ -47,5 +47,6 @@ extern FILE __StreamsHead; // list head for all fopen()'d files
 int __fillbuf(FILE*);
 int __flushbuf(int, FILE*);
 int __doprint(FILE*, char*, va_list);
+int __doscan(FILE*, char*, va_list);
 
 #endif
