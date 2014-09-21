@@ -1,4 +1,4 @@
--dosh -c -o lcdh.a
+-dosh -c -Wall -o lcdh.a
 
 c0dh.asm
 c0.c

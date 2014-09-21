@@ -4,6 +4,7 @@
 */
 #include <fcntl.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include "istdio.h"
 
 extern void (*__pFileCloser)(void);

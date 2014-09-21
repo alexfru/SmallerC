@@ -1186,7 +1186,9 @@ int main(int argc, char* argv[])
     else if (!strcmp(argv[i], "-signed-char") ||
              !strcmp(argv[i], "-unsigned-char") ||
              !strcmp(argv[i], "-leading-underscore") ||
-             !strcmp(argv[i], "-no-leading-underscore"))
+             !strcmp(argv[i], "-no-leading-underscore") ||
+             !strcmp(argv[i], "-winstack") ||
+             !strcmp(argv[i], "-Wall"))
     {
       AddOption(&CompilerOptions, &CompilerOptionsLen, argv[i]);
       argv[i] = NULL;
@@ -1296,12 +1298,6 @@ int main(int argc, char* argv[])
       OutputFormat = FormatFlat32;
       AddOption(&CompilerOptions, &CompilerOptionsLen, "-seg32");
       AddOption(&LinkerOptions, &LinkerOptionsLen, argv[i]);
-      argv[i] = NULL;
-      continue;
-    }
-    else if (!strcmp(argv[i], "-winstack"))
-    {
-      AddOption(&CompilerOptions, &CompilerOptionsLen, argv[i]);
       argv[i] = NULL;
       continue;
     }

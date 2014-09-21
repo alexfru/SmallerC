@@ -3,6 +3,7 @@
   2-clause BSD license.
 */
 #include <stdio.h>
+#include <string.h>
 
 #ifdef _DOS
 

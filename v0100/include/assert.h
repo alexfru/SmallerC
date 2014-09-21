@@ -12,9 +12,9 @@
 #ifdef NDEBUG
 #define assert (1)?(void)0:(void) // TBD!!! must be a parametrized macro, ignoring its parameter
 #else
-#define assert __assert(__func__)
+#define assert __assert(__func__, __FILE__, __LINE__)
 #endif
 
-void (*__assert(char*))(unsigned);
+void (*__assert(char*, char*, int))(unsigned);
 
 #endif

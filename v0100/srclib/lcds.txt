@@ -1,4 +1,4 @@
--doss -c -o lcds.a
+-doss -c -Wall -o lcds.a
 
 c0ds.asm
 c0.c

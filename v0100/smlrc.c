@@ -428,6 +428,7 @@ int GetFxnInfo(int ExprTypeSynPtr, int* MinParams, int* MaxParams, int* ReturnEx
 // all data
 
 int verbose = 0;
+int warnings = 0;
 int warnCnt = 0;
 
 // prep.c data
@@ -1623,6 +1624,20 @@ int GetTokenInner(void)
   return tokEof;
 }
 
+#ifndef NO_PREPROCESSOR
+void Reserve4Expansion(char* name, int len)
+{
+  if (MAX_CHAR_QUEUE_LEN - CharQueueLen < len + 1)
+    error("Too long expansion of macro '%s'\n", name);
+
+  memmove(CharQueue + len + 1, CharQueue, CharQueueLen);
+
+  CharQueue[len] = ' '; // space to avoid concatenation
+
+  CharQueueLen += len + 1;
+}
+#endif
+
 // TBD??? implement file I/O for input source code and output code (use fxn ptrs/wrappers to make librarization possible)
 // DONE: support string literals
 int GetToken(void)
@@ -1671,21 +1686,31 @@ int GetToken(void)
 #ifndef NO_PREPROCESSOR
       // TBD!!! think of expanding macros in the context of concatenating string literals,
       // maybe factor out this piece of code
-      if ((midx = FindMacro(TokenIdentName)) >= 0)
+      if (!strcmp(TokenIdentName, "__FILE__"))
+      {
+        char* p = FileNames[FileCnt - 1];
+        int len = strlen(p);
+        Reserve4Expansion(TokenIdentName, len + 2);
+        *CharQueue = '"';
+        memcpy(CharQueue + 1, p, len);
+        CharQueue[len + 1] = '"';
+        continue;
+      }
+      else if (!strcmp(TokenIdentName, "__LINE__"))
+      {
+        char s[(2 + CHAR_BIT * sizeof LineNo) / 3];
+        char *p = lab2str(s + sizeof s, LineNo);
+        int len = s + sizeof s - p;
+        Reserve4Expansion(TokenIdentName, len);
+        memcpy(CharQueue, p, len);
+        continue;
+      }
+      else if ((midx = FindMacro(TokenIdentName)) >= 0)
       {
         // this is a macro identifier, need to expand it
         int len = MacroTable[midx];
-
-        if (MAX_CHAR_QUEUE_LEN - CharQueueLen < len + 1)
-          error("Too long expansion of macro '%s'\n", TokenIdentName);
-
-        memmove(CharQueue + len + 1, CharQueue, CharQueueLen);
-
+        Reserve4Expansion(TokenIdentName, len);
         memcpy(CharQueue, MacroTable + midx + 1, len);
-        CharQueue[len] = ' '; // space to avoid concatenation
-
-        CharQueueLen += len + 1;
-
         continue;
       }
 #endif
@@ -4506,7 +4531,7 @@ void warning(char* format, ...)
 
   warnCnt++;
 
-  if (!(verbose && OutFile))
+  if (!(warnings && OutFile))
     return;
 
   printf("Warning in \"%s\" (%d:%d)\n", FileNames[fidx], LineNo, LinePos);
@@ -7585,7 +7610,12 @@ int main(int argc, char** argv)
     }
     else if (!strcmp(argv[i], "-verbose"))
     {
-      verbose = 1;
+      warnings = verbose = 1;
+      continue;
+    }
+    else if (!strcmp(argv[i], "-Wall"))
+    {
+      warnings = 1;
       continue;
     }
 #ifndef NO_PREPROCESSOR
@@ -7737,7 +7767,7 @@ int main(int argc, char** argv)
 
   GenStartCommentLine(); printf2("Next label number: %d\n", LabelCnt);
 
-  if (verbose && warnCnt && OutFile)
+  if (warnings && warnCnt && OutFile)
     printf("%d warnings\n", warnCnt);
   GenStartCommentLine(); printf2("Compilation succeeded.\n");
 
