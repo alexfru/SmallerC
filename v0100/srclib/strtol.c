@@ -10,7 +10,7 @@ long strtol(char* nptr, char** endptr, int base)
 {
   char* nptr0 = nptr;
   unsigned long n = 0;
-  int neg = 0, toobig = 0, c;
+  int neg = 0, hexpfx = 0, toobig = 0, c;
   unsigned cnt = 0;
   unsigned long preMulMax;
 
@@ -28,6 +28,7 @@ long strtol(char* nptr, char** endptr, int base)
   {
     base = 16;
     nptr += 2;
+    hexpfx = 1;
   }
   if (base == 0)
   {
@@ -72,7 +73,11 @@ long strtol(char* nptr, char** endptr, int base)
   }
 
   if (endptr)
+  {
+    if (!cnt && hexpfx)
+      cnt = 1, nptr--; // move the position from after [+-]0x to after [+-]0
     *endptr = cnt ? nptr : nptr0;
+  }
 
   return (long)n;
 }
