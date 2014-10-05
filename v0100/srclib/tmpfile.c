@@ -14,9 +14,9 @@ FILE* tmpfile(void)
   unsigned i;
   char* name = malloc(L_tmpnam);
   int fd = -1;
-  FILE* f = NULL;
+  FILE* f = malloc(sizeof(FILE));
 
-  if (!name)
+  if (!name || !f)
   {
     goto err;
   }
@@ -31,11 +31,6 @@ FILE* tmpfile(void)
   }
 
   if (fd < 0)
-  {
-    goto err;
-  }
-
-  if (!(f = malloc(sizeof(FILE))))
   {
     goto err;
   }
@@ -62,8 +57,8 @@ err:
   if (name)
     free(name);
 
-  if (fd >= 0)
-    close(fd);
+  if (f)
+    free(f);
 
   return NULL;
 }

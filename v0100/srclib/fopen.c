@@ -37,6 +37,13 @@ FILE* fopen(char* name, char* mode)
     oflags = O_CREAT | O_TRUNC | (update ? O_RDWR : O_WRONLY);
     break;
   case 'a':
+    if (update)
+    {
+      // For now disallow "a+" (reads and writes) as it complicates things
+      // and there's no direct support for append mode in DOS.
+      // Allow only "a" (writes only) for now.
+      goto err;
+    }
     oflags = O_CREAT | O_APPEND | (update ? O_RDWR : O_WRONLY);
     break;
   default:
@@ -61,16 +68,7 @@ FILE* fopen(char* name, char* mode)
     f->flags |= _IOBINARY;
   
   if (*mode == 'a')
-  {
-    if (update)
-    {
-      // For now disallow "a+" (reads and writes) as it complicates things
-      // and there's no direct support for append mode in DOS.
-      // Allow only "a" (writes only) for now.
-      goto err;
-    }
     f->flags |= _IOAPPEND;
-  }
 
   f->ptr = f->buf = NULL;
   f->cnt = f->bufsz = 0;
@@ -87,9 +85,6 @@ FILE* fopen(char* name, char* mode)
   return f;
 
 err:
-
-  if (fd >= 0)
-    close(fd);
 
   if (f)
     free(f);
