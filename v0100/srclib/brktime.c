@@ -61,7 +61,7 @@ struct tm* __breaktime(time_t* t)
 
   tm.tm_sec = trem;
 
-  // Convert integer amount of days since 1970-Jan-01 to the year:
+  // Convert integral amount of days since 1970-Jan-01 to the year:
   if (daysPassed >= 
       DaysSinceEpoch[sizeof(DaysSinceEpoch)/sizeof(DaysSinceEpoch[0])-1])
     return NULL;
@@ -81,7 +81,7 @@ struct tm* __breaktime(time_t* t)
 
   tm.tm_yday = daysPassed;
 
-  // Convert integer amount of days since Jan-01 to the month:
+  // Convert integral amount of days since Jan-01 to the month:
   for (lidx=0, ridx=sizeof(__DaysSinceJan1st[0])/sizeof(__DaysSinceJan1st[0][0])-1;;)
   {
     idx = (lidx + ridx) >> 1;
