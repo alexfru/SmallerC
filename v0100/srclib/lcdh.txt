@@ -91,6 +91,7 @@ scanf.c
 vsscanf.c
 sscanf.c
 tmpnam.c
+tmpfile.c
 
 exit.c
 atexit.c

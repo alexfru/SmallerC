@@ -2,7 +2,7 @@
   Copyright (c) 2014, Alexey Frunze
   2-clause BSD license.
 */
-#include <stdio.h>
+#include "istdio.h"
 
 void (*__pAtExitIterator)(void);
 void (*__pFileCloser)(void);

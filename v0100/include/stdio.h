@@ -52,6 +52,8 @@ extern FILE *__stdin, *__stdout, *__stderr;
 #ifdef _DOS
 #define FOPEN_MAX 20
 #define FILENAME_MAX 80
+#define L_tmpnam 80
+#define TMP_MAX 10000
 #endif
 
 FILE* fopen(char*, char*);
@@ -89,6 +91,7 @@ int setvbuf(FILE*, char*, int, size_t);
 void setbuf(FILE*, char*);
 int fileno(FILE*);
 char* tmpnam(char*);
+FILE* tmpfile(void);
 
 int vfprintf(FILE*, char*, va_list);
 int fprintf(FILE*, char*, ...);

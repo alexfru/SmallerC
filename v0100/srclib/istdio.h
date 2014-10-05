@@ -44,9 +44,17 @@ extern FILE __StreamsHead; // list head for all fopen()'d files
 #define _IOERR    020000 // read() or write() returned error
 #define _IOSTRING 040000 // underlying file is actually a string for formatted I/O with (v)s(n)printf()
 
+extern void (*__pFileCloser)(void);
+void __FileCloser(void);
+
 int __fillbuf(FILE*);
 int __flushbuf(int, FILE*);
 int __doprint(FILE*, char*, va_list);
 int __doscan(FILE*, char*, va_list);
+char* __tmpnam(char*, unsigned);
+
+#ifdef _DOS
+extern char* __EnvVar;
+#endif
 
 #endif

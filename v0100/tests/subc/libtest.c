@@ -743,7 +743,7 @@ void test_stdio(void) {
 void test_file(void) {
 	FILE	*f;
 	char	buf[1024];
-//	char	tn1[L_tmpnam], tn2[L_tmpnam];
+	char	tn1[L_tmpnam], tn2[L_tmpnam];
 
 	fclose(fopen(TMPFILE, "w"));
 	pr("remove");
@@ -756,7 +756,7 @@ void test_file(void) {
 	if (rename(TMPFILE, TMPFILE2) < 0) fail("rename-2");
 	if (rename(TMPFILE, TMPFILE2) >= 0) fail("rename-3");
 	remove(TMPFILE2);
-/*
+
 	pr("tmpfile");
 	if ((f = tmpfile()) == NULL) fail("tmpfile-1");
 	memset(buf, 0xa5, 1024);
@@ -770,7 +770,6 @@ void test_file(void) {
 	if (tmpnam(tn2) == NULL) fail("tmpnam-2");
 	if (!strcmp(tn1, tn2)) fail("tmpnam-3");
 	remove(tn1);
-*/
 }
 
 void doexit(void) {

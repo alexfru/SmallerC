@@ -77,7 +77,7 @@ int open(char* name, int oflag, ...)
   if (psmode && (*psmode & S_IWUSR) == 0)
     attr |= 1; // read-only attribute
 
-  // TBD??? use int 0x21 functions 0x3d, 0x3c, 0x5b for oder versions of DOS???
+  // TBD??? use int 0x21 functions 0x3d, 0x3c, 0x5b for older versions of DOS???
   if (DosExtOpen(name, omode, attr, action, &handle))
   {
     // Problem: DOS does not support the append mode directly

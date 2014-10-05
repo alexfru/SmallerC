@@ -3,13 +3,11 @@
   2-clause BSD license.
 */
 #include <stdlib.h>
-#include <stdio.h>
+#include "istdio.h"
 #include <ctype.h>
 #include <string.h>
 
 #ifdef _DOS
-
-extern char* __EnvVar;
 
 #ifdef __SMALLER_C_16__
 extern unsigned short __getSS(void);

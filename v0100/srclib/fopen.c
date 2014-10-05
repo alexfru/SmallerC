@@ -7,9 +7,6 @@
 #include <stdlib.h>
 #include "istdio.h"
 
-extern void (*__pFileCloser)(void);
-void __FileCloser(void);
-
 FILE* fopen(char* name, char* mode)
 {
   FILE* f = NULL;
