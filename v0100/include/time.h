@@ -51,5 +51,6 @@ time_t mktime(struct tm*);
 char* ctime(time_t*);
 #endif
 char* asctime(struct tm*);
+size_t strftime(char*, size_t, char*, struct tm*);
 
 #endif

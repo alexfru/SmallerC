@@ -146,6 +146,7 @@ localtim.c
 mktime.c
 asctime.c
 ctime.c
+strftime.c
 
 lngfu.c
 lngfs.c

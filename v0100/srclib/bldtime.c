@@ -14,7 +14,7 @@ time_t __buildtime(struct tm* tm)
   // Note: this introduces incompatibility with the C standard.
   if
   (
-    tm->tm_sec  <  0 || tm->tm_sec  > 60 ||
+    tm->tm_sec  <  0 || tm->tm_sec  > 59 ||
     tm->tm_min  <  0 || tm->tm_min  > 59 ||
     tm->tm_hour <  0 || tm->tm_hour > 23 ||
     tm->tm_mday <  1 || tm->tm_mday > 31 ||
