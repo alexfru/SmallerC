@@ -1265,8 +1265,8 @@ void GenExpr0(void)
         GenReadIndirect(MipsOpRegV0, reg, v);
         GenPrintInstr3Operands(instr, 0,
                                MipsOpRegT1, 0,
-                               MipsOpRegT1, 0,
-                               MipsOpRegV0, 0);
+                               MipsOpRegV0, 0,
+                               MipsOpRegT1, 0);
         GenWriteIndirect(reg, MipsOpRegT1, v);
       }
       break;
