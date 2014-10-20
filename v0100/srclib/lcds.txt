@@ -33,7 +33,13 @@ lseek16.c
 unlink.c
 isatty.c
 
+setlocal.c
+localeco.c
+
 longjmp.c
+
+signal.c
+raise.c
 
 stdio1.c
 stdio2.c
