@@ -469,6 +469,7 @@ tDeferredSym* pDeferredSyms;
 uint32 DeferredSymCnt;
 
 #ifdef __SMALLER_C__
+#ifdef DETERMINE_VA_LIST
 // 2 if va_list is a one-element array containing a pointer
 //   (typical for x86 Open Watcom C/C++)
 // 1 if va_list is a pointer
@@ -512,7 +513,8 @@ void DetermineVaListType(void)
     exit(-1);
   }
 }
-#endif
+#endif // DETERMINE_VA_LIST
+#endif // __SMALLER_C__
 
 void error(char* format, ...)
 {
@@ -537,17 +539,20 @@ void error(char* format, ...)
   vprintf(format, vl);
 #else
   // TBD!!! This is not good. Really need the va_something macros.
-  if (VaListType == 1)
-  {
-    // va_list is a pointer
-    vprintf(format, vl);
-  }
-  else // if (VaListType == 2)
+#ifdef DETERMINE_VA_LIST
+  if (VaListType == 2)
   {
     // va_list is a one-element array containing a pointer
     vprintf(format, &vl);
   }
-#endif
+  else // if (VaListType == 1)
+  // fallthrough
+#endif // DETERMINE_VA_LIST
+  {
+    // va_list is a pointer
+    vprintf(format, vl);
+  }
+#endif // __SMALLER_C__
 
 #ifndef __SMALLER_C__
   va_end(vl);
@@ -2334,9 +2339,13 @@ int main(int argc, char* argv[])
 {
   uint32 ui32 = 0x44434241;
   uint16 ui16 = 0x3231;
+
 #ifdef __SMALLER_C__
+#ifdef DETERMINE_VA_LIST
   DetermineVaListType();
 #endif
+#endif
+
   if (memcmp(&ui32, "ABCD", sizeof ui32) || memcmp(&ui16, "12", sizeof ui16))
     error("Little-endian platform required\n");
 

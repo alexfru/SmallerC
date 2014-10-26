@@ -52,6 +52,7 @@ either expressed or implied, of the FreeBSD Project.
 #define NO_PPACK
 #define NO_TYPEDEF_ENUM
 #define NO_FUNC_
+#define NO_EXTRA_WARNS
 #endif
 
 #ifndef __SMALLER_C__
@@ -155,7 +156,7 @@ int vfprintf(FILE*, char*, void*);
 #ifndef MAX_IDENT_LEN
 #define MAX_IDENT_LEN        31
 #endif
-#define MAX_STRING_LEN       127
+#define MAX_STRING_LEN       255
 #define MAX_CHAR_QUEUE_LEN   256
 
 #ifndef MAX_MACRO_TABLE_LEN
@@ -423,7 +424,7 @@ int FindTypedef(char* s, int* CurScope, int forUse);
 int GetDeclSize(int SyntaxPtr, int SizeForDeref);
 
 int ParseExpr(int tok, int* GotUnary, int* ExprTypeSynPtr, int* ConstExpr, int* ConstVal, int option, int option2);
-int GetFxnInfo(int ExprTypeSynPtr, int* MinParams, int* MaxParams, int* ReturnExprTypeSynPtr);
+int GetFxnInfo(int ExprTypeSynPtr, int* MinParams, int* MaxParams, int* ReturnExprTypeSynPtr, int* FirstParamSynPtr);
 
 // all data
 
@@ -459,7 +460,7 @@ int MacroTableLen = 0;
   String table entry format:
     labell uchar:   temporary identifier's (char*) label number low 8 bits
     labelh uchar:   temporary identifier's (char*) label number high 8 bits
-    len char:       string length (<= 127)
+    len uchar:      string length (<= 255)
     str char[len]:  string (ASCII)
 */
 char StringTable[MAX_STRING_TABLE_LEN];
@@ -772,7 +773,7 @@ void PurgeStringTable(void)
 
 void AddString(int label, char* str, int len)
 {
-  if (len > 127)
+  if (len > MAX_STRING_LEN)
     error("String literal too long\n");
 
   if (MAX_STRING_TABLE_LEN - StringTableLen < 2 + 1 + len)
@@ -801,7 +802,7 @@ char* FindString(int label)
       return StringTable + i + 2;
 
     i += 2;
-    i += 1 + StringTable[i];
+    i += 1 + (StringTable[i] & 0xFF);
   }
 
   return NULL;
@@ -2847,7 +2848,7 @@ void promoteType(int* ExprTypeSynPtr, int* TheOtherExprTypeSynPtr)
     *ExprTypeSynPtr = SymUintSynPtr;
 }
 
-int GetFxnInfo(int ExprTypeSynPtr, int* MinParams, int* MaxParams, int* ReturnExprTypeSynPtr)
+int GetFxnInfo(int ExprTypeSynPtr, int* MinParams, int* MaxParams, int* ReturnExprTypeSynPtr, int* FirstParamSynPtr)
 {
   int ptr = 0;
 
@@ -2873,6 +2874,9 @@ int GetFxnInfo(int ExprTypeSynPtr, int* MinParams, int* MaxParams, int* ReturnEx
   while (SyntaxStack[ExprTypeSynPtr][0] != '(')
     ExprTypeSynPtr++;
   ExprTypeSynPtr++;
+
+  if (FirstParamSynPtr)
+    *FirstParamSynPtr = ExprTypeSynPtr;
 
   if (SyntaxStack[ExprTypeSynPtr][0] == ')')
   {
@@ -3842,14 +3846,15 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
     {
       int tmpSynPtr, c;
       int minParams, maxParams;
+      int firstParamSynPtr;
       exprval(idx, ExprTypeSynPtr, ConstExpr);
 
-      if (!GetFxnInfo(*ExprTypeSynPtr, &minParams, &maxParams, ExprTypeSynPtr))
+      if (!GetFxnInfo(*ExprTypeSynPtr, &minParams, &maxParams, ExprTypeSynPtr, &firstParamSynPtr))
         //error("exprval(): function or function pointer expected\n");
         errorOpType();
 
       // DONE: validate the number of function parameters
-      // TBD??? warnings/errors on int<->pointer substitution in params
+      // DONE: warnings on int<->pointer substitution in params
 
       // evaluate function parameters
       c = 0;
@@ -3866,6 +3871,49 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
 
         if (++c > maxParams)
           error("Too many function parameters\n");
+
+#ifndef NO_EXTRA_WARNS
+        // Issue a warning if the parameter has to be a pointer but isn't and vice versa.
+        // TBD??? Compare pointer types deeply as in compatCheck()???
+        // TBD??? Issue a similar warning for return values and initializers???
+        if (c <= minParams)
+        {
+          int gotPtr = tmpSynPtr < 0;
+          int needPtr;
+          int t;
+          if (!gotPtr)
+          {
+            t = SyntaxStack[tmpSynPtr][0];
+            gotPtr = (t == '*') | (t == '[') | (t == '('); // arrays and functions decay to pointers
+          }
+          // Find the type of the formal parameter in the function declaration
+          while ((t = SyntaxStack[firstParamSynPtr][0]) != tokIdent)
+          {
+            if (t == '(')
+            {
+              // skip parameters in parameters
+              int c = 1;
+              while (c)
+              {
+                t = SyntaxStack[++firstParamSynPtr][0];
+                c += (t == '(') - (t == ')');
+              }
+            }
+            firstParamSynPtr++;
+          }
+          firstParamSynPtr++;
+          needPtr = SyntaxStack[firstParamSynPtr][0] == '*';
+          if (needPtr != gotPtr &&
+              // Make an exception for integer constants equal to 0, treat them as NULL pointers
+              !(
+                 needPtr &&
+                 *ConstExpr &&
+                 !stack[*idx + 1][1]
+               )
+             )
+            warning("Expected %spointer in parameter %d\n", needPtr ? "" : "non-", c);
+        }
+#endif // NO_EXTRA_WARNS
 
         if (stack[*idx][0] == ',')
           --*idx;
@@ -4174,7 +4222,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
 
   default:
     //error("exprval(): Unexpected token %s\n", GetTokenName(tok));
-    errorUnexpectedToken(tok);
+    errorInternal(21);
   }
 
   return s;
@@ -4341,6 +4389,7 @@ int ParseExpr(int tok, int* GotUnary, int* ExprTypeSynPtr, int* ConstExpr, int* 
 // smc.c code
 
 #ifdef __SMALLER_C__
+#ifdef DETERMINE_VA_LIST
 // 2 if va_list is a one-element array containing a pointer
 //   (typical for x86 Open Watcom C/C++)
 // 1 if va_list is a pointer
@@ -4384,7 +4433,8 @@ void DetermineVaListType(void)
     exit(-1);
   }
 }
-#endif
+#endif // DETERMINE_VA_LIST
+#endif // __SMALLER_C__
 
 // Equivalent to puts() but outputs to OutFile
 // if it's not NULL.
@@ -4428,15 +4478,8 @@ int printf2(char* format, ...)
     res = vprintf(format, vl);
 #else
   // TBD!!! This is not good. Really need the va_something macros.
-  if (VaListType == 1)
-  {
-    // va_list is a pointer
-    if (OutFile)
-      res = vfprintf(OutFile, format, vl);
-    else
-      res = vprintf(format, vl);
-  }
-  else // if (VaListType == 2)
+#ifdef DETERMINE_VA_LIST
+  if (VaListType == 2)
   {
     // va_list is a one-element array containing a pointer
     if (OutFile)
@@ -4444,7 +4487,17 @@ int printf2(char* format, ...)
     else
       res = vprintf(format, &vl);
   }
-#endif
+  else // if (VaListType == 1)
+  // fallthrough
+#endif // DETERMINE_VA_LIST
+  {
+    // va_list is a pointer
+    if (OutFile)
+      res = vfprintf(OutFile, format, vl);
+    else
+      res = vprintf(format, vl);
+  }
+#endif // __SMALLER_C__
 
 #ifndef __SMALLER_C__
   va_end(vl);
@@ -4500,17 +4553,20 @@ void error(char* format, ...)
   vprintf(format, vl);
 #else
   // TBD!!! This is not good. Really need the va_something macros.
-  if (VaListType == 1)
-  {
-    // va_list is a pointer
-    vprintf(format, vl);
-  }
-  else // if (VaListType == 2)
+#ifdef DETERMINE_VA_LIST
+  if (VaListType == 2)
   {
     // va_list is a one-element array containing a pointer
     vprintf(format, &vl);
   }
-#endif
+  else // if (VaListType == 1)
+  // fallthrough
+#endif // DETERMINE_VA_LIST
+  {
+    // va_list is a pointer
+    vprintf(format, vl);
+  }
+#endif // __SMALLER_C__
 
 #ifndef __SMALLER_C__
   va_end(vl);
@@ -4540,17 +4596,20 @@ void warning(char* format, ...)
   vprintf(format, vl);
 #else
   // TBD!!! This is not good. Really need the va_something macros.
-  if (VaListType == 1)
-  {
-    // va_list is a pointer
-    vprintf(format, vl);
-  }
-  else // if (VaListType == 2)
+#ifdef DETERMINE_VA_LIST
+  if (VaListType == 2)
   {
     // va_list is a one-element array containing a pointer
     vprintf(format, &vl);
   }
-#endif
+  else // if (VaListType == 1)
+  // fallthrough
+#endif // DETERMINE_VA_LIST
+  {
+    // va_list is a pointer
+    vprintf(format, vl);
+  }
+#endif // __SMALLER_C__
 
 #ifndef __SMALLER_C__
   va_end(vl);
@@ -4579,7 +4638,7 @@ void errorChrStr(void)
 
 void errorUnexpectedToken(int tok)
 {
-  error("Unexpected token %s\n", GetTokenName(tok));
+  error("Unexpected token %s\n", (tok == tokIdent) ? TokenIdentName : GetTokenName(tok));
 }
 
 void errorDirective(void)
@@ -5789,7 +5848,7 @@ int InitVar(int synPtr, int tok)
       IdentTableLen = undoIdents; // remove all temporary identifier names from e.g. "sizeof" or "str"
 
       i += 2;
-      i += 1 + StringTable[i];
+      i += 1 + (StringTable[i] & 0xFF);
     }
   }
 
@@ -6567,7 +6626,7 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
           printf("%s()\n", CurFxnName);
 
         ParseLevel++;
-        GetFxnInfo(lastSyntaxPtr, &CurFxnParamCntMin, &CurFxnParamCntMax, &CurFxnReturnExprTypeSynPtr); // get return type
+        GetFxnInfo(lastSyntaxPtr, &CurFxnParamCntMin, &CurFxnParamCntMax, &CurFxnReturnExprTypeSynPtr, NULL); // get return type
 
         if (OutputFormat != FormatFlat)
           puts2(CodeHeader);
@@ -7548,7 +7607,9 @@ int main(int argc, char** argv)
   int i;
 
 #ifdef __SMALLER_C__
+#ifdef DETERMINE_VA_LIST
   DetermineVaListType();
+#endif
 #endif
 
   GenInit();

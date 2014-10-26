@@ -3064,7 +3064,7 @@ unsigned GenStrData(int generatingCode, unsigned requiredLen)
       unsigned len;
 
       p = FindString(label);
-      len = *p++;
+      len = *p++ & 0xFF;
 
       // If this is a string literal initializing an array of char,
       // truncate or pad it as necessary.
