@@ -1,3 +1,8 @@
+/*
+  How to compile for DOS:
+    smlrcc -dosh libtest.c -o libtest.exe
+*/
+
 #define float int
 #define double int
 

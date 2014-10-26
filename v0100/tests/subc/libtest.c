@@ -1,4 +1,9 @@
 /*
+  How to compile for DOS:
+    smlrcc -dosh libtest.c -o libtest.exe
+*/
+
+/*
  * Ad-hoc libc test program.
  * Nils M Holm, 1995, 2014
  * In the public domain

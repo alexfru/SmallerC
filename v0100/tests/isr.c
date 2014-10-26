@@ -1,3 +1,7 @@
+/*
+  How to compile for DOS:
+    smlrcc -dosh isr.c -o isr.exe
+*/
 #ifndef __HUGE__
 #error This program requires the huge mode(l)
 #endif
