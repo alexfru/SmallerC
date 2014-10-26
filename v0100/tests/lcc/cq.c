@@ -1,6 +1,6 @@
 /*
   How to compile for DOS:
-    smlrcc -dosh libtest.c -o libtest.exe
+    smlrcc -dosh cq.c -o cq.exe
 */
 
 #define float int
