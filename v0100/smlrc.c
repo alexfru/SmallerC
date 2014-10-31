@@ -1287,14 +1287,14 @@ void GetString(char terminator, int SkipNewLines)
   for (;;)
   {
     ShiftCharN(1);
-    while (!(*p == terminator || strchr("\a\b\f\n\r\t\v", *p)))
+    while (!(*p == terminator || strchr("\n\r", *p)))
     {
       ch = *p;
       if (ch == '\\')
       {
         ShiftCharN(1);
         ch = *p;
-        if (strchr("\a\b\f\n\r\t\v", ch))
+        if (strchr("\n\r", ch))
           break;
         switch (ch)
         {
@@ -1369,7 +1369,7 @@ void GetString(char terminator, int SkipNewLines)
 
       TokenValueString[TokenStringLen++] = ch;
       TokenValueString[TokenStringLen] = '\0';
-    } // endof while (!(*p == '\0' || *p == terminator || strchr("\a\b\f\n\r\t\v", *p)))
+    } // endof while (!(*p == '\0' || *p == terminator || strchr("\n\r", *p)))
 
     if (*p != terminator)
       //error("Unsupported or invalid character/string constant\n");
