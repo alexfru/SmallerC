@@ -27,5 +27,5 @@ void main()
    printf("%d\n", jones[1].boris);
    printf("%d\n", jones[1].natasha);
 
-   return 0;
+   return;
 }

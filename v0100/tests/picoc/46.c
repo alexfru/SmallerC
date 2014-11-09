@@ -25,7 +25,6 @@
  * See below for more information.
  */
 
-#if 0
 char    *documentation[] = {
    "grep searches a file for a given pattern.  Execute by",
    "   grep [flags] regular_expression file_list\n",
@@ -49,6 +48,7 @@ char    *patdoc[] = {
    "       beginning of a line.",
    "'$'    A dollar-sign at the end of an expression matches the end of a line.",
    "'.'    A period matches any character except \"new-line\".",
+#ifndef __SMALLER_C__
    "':a'   A colon matches a class of characters described by the following",
    "':d'     character.  \":a\" matches any alphabetic, \":d\" matches digits,",
    "':n'     \":n\" matches alphanumerics, \": \" matches spaces, tabs, and",
@@ -69,8 +69,10 @@ char    *patdoc[] = {
    "       specified by two characters separated by \"-\".  Note that,",
    "       [a-z] matches alphabetics, while [z-a] never matches.",
    "The concatenation of regular expressions is a regular expression.",
-   0};
+#else
+   "...", // string table exhausted :-(
 #endif
+   0};
 
 #define LMAX    512
 #define PMAX    256
@@ -338,7 +340,7 @@ void grep(FILE *fp, char *fn)
 }
 
 /*** Match line (lbuf) with pattern (pbuf) return 1 if match ***/
-void match()
+int match()
 {
    char   *l;        /* Line pointer       */
 

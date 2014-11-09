@@ -4,11 +4,11 @@ int main()
 {
    char a;
    int b;
-   double c;
+//   double c;
 
    printf("%d\n", sizeof(a));
    printf("%d\n", sizeof(b));
-   printf("%d\n", sizeof(c));
+//   printf("%d\n", sizeof(c));
 
    return 0;
 }

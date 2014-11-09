@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 
 int main()
 {
@@ -13,7 +14,8 @@ int main()
 
    int b[4];
 
-   b = a;
+//   b = a; // non-standard!!!
+   memcpy(b, a, sizeof b);
 
    printf("%d %d %d %d\n", b[0], b[1], b[2], b[3]);
 
