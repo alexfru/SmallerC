@@ -17,7 +17,7 @@ invokes the core compiler, the assembler, and the linker and supports
 options similar to those of gcc).
 
 The standard C library is work-in-progress and it's close to completion
-for the DOS platform.
+for DOS and Windows.
 
 See the Wiki for more up-to-date details:
 http://github.com/alexfru/SmallerC/wiki

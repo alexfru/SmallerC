@@ -6,6 +6,7 @@
 #include "itime.h"
 
 #ifdef _DOS
+
 #ifdef __HUGE__
 static
 void DosGetDate(unsigned short d[3/*[0]-year,[1]-month,[2]-day*/])
@@ -42,6 +43,7 @@ void DosGetTime(unsigned short t[3/*[0]-hour,[1]-minutes,[2]-seconds*/])
       "mov [si+5], al");
 }
 
+// time() must return UTC/GMT time
 time_t time(time_t* t)
 {
   unsigned short d0[3], t1[3], d1[3];
@@ -73,5 +75,35 @@ time_t time(time_t* t)
     *t = res;
   return res;
 }
-#endif
-#endif
+#endif // __HUGE__
+
+#endif // _DOS
+
+#ifdef _WINDOWS
+
+#include "iwin32.h"
+
+// time() must return UTC/GMT time
+time_t time(time_t* t)
+{
+  SYSTEMTIME st;
+  struct tm tm;
+  time_t res;
+
+  GetSystemTime(&st);
+  tm.tm_year = st.wYear - 1900;
+  tm.tm_mon  = st.wMonth - 1;
+  tm.tm_mday = st.wDay;
+  tm.tm_hour = st.wHour;
+  tm.tm_min  = st.wMinute;
+  tm.tm_sec  = st.wSecond;
+  tm.tm_isdst = 0;
+
+  res = __buildtime(&tm);
+
+  if (t)
+    *t = res;
+  return res;
+}
+
+#endif // _WINDOWS

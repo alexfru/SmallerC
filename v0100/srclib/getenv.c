@@ -5,6 +5,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+char* __EnvVar;
+
 #ifdef _DOS
 
 #ifdef __HUGE__
@@ -65,8 +67,6 @@ unsigned DosGetPspSeg(void)
 }
 #endif
 
-char* __EnvVar;
-
 char* getenv(char* name)
 {
   unsigned psp = DosGetPspSeg();
@@ -123,4 +123,48 @@ char* getenv(char* name)
   }
 }
 
-#endif
+#endif // _DOS
+
+#ifdef _WINDOWS
+
+#include "iwin32.h"
+
+char* getenv(char* name)
+{
+  unsigned sz = 3, len;
+  char *p = NULL, *p2;
+
+  while (sz <= 32767)
+  {
+    if ((p2 = realloc(p, sz)) == NULL)
+    {
+      goto err;
+    }
+    p = p2;
+
+    len = GetEnvironmentVariableA(name, p, sz);
+
+    if (len == 0)
+    {
+      goto err;
+    }
+    else if (len > sz)
+    {
+      sz = (sz << 1) + 1;
+    }
+    else
+    {
+      if (__EnvVar)
+        free(__EnvVar);
+      return (__EnvVar = p);
+    }
+  }
+
+err:
+
+  if (p)
+    free(p);
+  return NULL;
+}
+
+#endif // _WINDOWS

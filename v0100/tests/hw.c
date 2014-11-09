@@ -3,7 +3,11 @@
     smlrcc -dost hw.c -o hwdt.com
     smlrcc -doss hw.c -o hwds.exe
     smlrcc -dosh hw.c -o hwdh.exe
+
+  How to compile for Windows:
+    smlrcc -win hw.c -o hww.exe
 */
+
 #include <stdio.h>
 
 int main(void)

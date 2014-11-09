@@ -5,6 +5,7 @@
 #include <time.h>
 
 #ifdef _DOS
+
 #ifdef __HUGE__
 static
 unsigned long helper(void)
@@ -20,7 +21,29 @@ unsigned long helper(void)
 
 clock_t clock(void)
 {
-  return helper();
+  static unsigned initialized, initticks;
+  if (initialized)
+    return helper() - initticks;
+  initticks = helper();
+  initialized = 1;
+  return 0;
 }
 #endif
-#endif
+
+#endif // _DOS
+
+#ifdef _WINDOWS
+
+#include "iwin32.h"
+
+clock_t clock(void)
+{
+  static unsigned initialized, initticks;
+  if (initialized)
+    return GetTickCount() - initticks;
+  initticks = GetTickCount();
+  initialized = 1;
+  return 0;
+}
+
+#endif // _WINDOWS

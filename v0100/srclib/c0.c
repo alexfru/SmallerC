@@ -5,6 +5,104 @@
 extern int main(int argc, char** argv);
 extern void exit(int);
 
+#include <time.h>
+
+#ifndef _LINUX
+// Implements the logic of __getmainargs() from msvcrt.dll, msvcr70.dll ... msvcr120.dll.
+//static
+int __ArgParser__(char* in, char* out, char** argv)
+{
+  int cnt = 0;
+  enum
+  {
+    WHITE,
+    QUOT,
+    PLAIN
+  } state = WHITE;
+  int c;
+  unsigned slashes = 0;
+  
+  while ((c = *in++) != '\0')
+  {
+    if (state == WHITE)
+    {
+      if (c == '"')
+      {
+        state = QUOT;
+      }
+      else if (c != ' ' && c != '\t')
+      {
+        in--;
+        state = PLAIN;
+      }
+      if (state != WHITE)
+      {
+        slashes = 0;
+        argv[cnt++] = out;
+      }
+    }
+    else if (c == '\\')
+    {
+      slashes++;
+    }
+    else if (c == '"')
+    {
+      unsigned scnt = slashes >> 1;
+      while (scnt--)
+        *out++ = '\\';
+      if (slashes & 1)
+      {
+        *out++ = '"';
+      }
+      else
+      {
+        if (state == QUOT)
+        {
+          if (*in == '"')
+            *out++ = *in++;
+          // Comment out this else line (only it, don't touch the one right after it)
+          // to get the behavior of msvcrt.dll, msvcr70.dll ... msvcr80.dll.
+          // Uncommented else line gets you the behavior of msvcr90.dll ... msvcr120.dll.
+          else
+            state = PLAIN;
+        }
+        else // if (state == PLAIN)
+        {
+          state = QUOT;
+        }
+      }
+      slashes = 0;
+    }
+    else if (slashes)
+    {
+      while (slashes--)
+        *out++ = '\\';
+      slashes = 0;
+      in--;
+    }
+    else if (state == PLAIN && (c == ' ' || c == '\t'))
+    {
+      *out++ = '\0';
+      state = WHITE;
+    }
+    else
+    {
+      *out++ = c;
+    }
+  }
+  if (state != WHITE)
+  {
+    while (slashes--)
+      *out++ = '\\';
+    *out = '\0';
+  }
+
+  argv[cnt] = NULL; // trailing NULL after last argv[]
+
+  return cnt;
+}
+#endif
+
 #ifdef _DOS
 
 #ifdef __HUGE__
@@ -107,17 +205,17 @@ unsigned DosGetPspSeg(void)
 }
 #endif
 
-static char __ProgName__[128];
-static char __ProgParams__[128];
-static int __argc__ = 1;
-static char* __argv__[64] = { "" };
+static char line[80/*executable name*/ + 128/*parameters*/];
+static char* argvs[1/*executable name*/ + 128/2/*parameters*/ + 1/*NULL*/] = { "" };
 
 static
-void __setargs__(int* pargc, char*** pargv)
+int setargs(int* pargc, char*** pargv)
 {
   unsigned psp = DosGetPspSeg();
   unsigned env = peek(psp, 0x2c);
-  unsigned i, j, len;
+  unsigned i, len;
+  char* p = line;
+  char* params;
 
   // First, try to extract the full program name.
 
@@ -136,48 +234,97 @@ void __setargs__(int* pargc, char*** pargv)
   // Are there any other strings afterwards?
   if (peekb(env, i) | peekb(env, i + 1))
   {
-    j = 0;
     i += 2;
     // The first one is the full program name.
-    while ((__ProgName__[j++] = peekb(env, i++)) != 0);
-    __argv__[0] = __ProgName__;
+    while ((*p++ = peekb(env, i++)) != '\0');
+    argvs[0] = line;
   }
+
+  params = p;
 
   // Next, extract program arguments from the PSP.
 
-  j = i = 0;
   len = peekb(psp, 0x80);
+  i = 0;
   while (i < len)
-  {
-    char c;
-    if ((c = peekb(psp, 0x81 + i)) == ' ')
-    {
-      ++i;
-      continue;
-    }
-    __argv__[__argc__++] = __ProgParams__ + j;
-    __ProgParams__[j++] = c;
-    ++i;
-    while (i < len)
-    {
-      if ((c = peekb(psp, 0x81 + i)) == ' ')
-        break;
-      __ProgParams__[j++] = c;
-      ++i;
-    }
-    __ProgParams__[j++] = 0;
-  }
+    *p++ = peekb(psp, 0x81 + i++);
+  *p = '\0';
 
-  *pargc = __argc__;
-  *pargv = __argv__;
+  // Finally, parse them
+
+  *pargc = 1 + __ArgParser__(params, params, argvs + 1);
+  *pargv = argvs;
+
+  return 1;
 }
 
 void __start__(void)
 {
   int argc;
   char** argv;
-  __setargs__(&argc, &argv);
+  setargs(&argc, &argv);
+#ifdef __HUGE__
+  clock(); // start counting ticks now
+#endif
   exit(main(argc, argv));
 }
 
 #endif // _DOS
+
+#ifdef _WINDOWS
+
+#include <string.h>
+#include <stdlib.h>
+#include "iwin32.h"
+#include "istdio.h"
+
+static char emptyarg[] = "", *emptyargv[2] = { emptyarg, NULL };
+
+static
+int setargs(int* pargc, char*** pargv)
+{
+  char* line = GetCommandLineA();
+  unsigned len = strlen(line);
+  char* buf = malloc(len + 1); // receptacle for *argv[] chars because *GetCommandLineA() is read-only
+  char** ptrbuf = malloc(((len + 1) / 2 + 1) * sizeof(char*)); // receptacle for argv[] pointers
+  int cnt;
+
+  if (!buf || !ptrbuf)
+    goto error;
+
+  if ((cnt = __ArgParser__(line, buf, ptrbuf)) == 0)
+    goto error;
+
+  *pargc = cnt;
+  *pargv = ptrbuf;
+
+  return 1;
+
+error:
+
+  *pargc = 1;
+  *pargv = emptyargv;
+
+  if (buf)
+    free(buf);
+
+  if (ptrbuf)
+    free(ptrbuf);
+
+  return 0;
+}
+
+void __start__(void)
+{
+  int argc;
+  char** argv;
+  // Windows doesn't use file handles 0,1,2 for stdin,stdout,stderr.
+  __stdin->fd = GetStdHandle(STD_INPUT_HANDLE);
+  __stdout->fd = GetStdHandle(STD_OUTPUT_HANDLE);
+  __stderr->fd = GetStdHandle(STD_ERROR_HANDLE);
+  setargs(&argc, &argv);
+  clock(); // start counting ticks now
+  exit(main(argc, argv));
+}
+
+#endif // _WINDOWS

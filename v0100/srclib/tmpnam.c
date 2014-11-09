@@ -56,6 +56,14 @@ int DosQueryAttr(char* name, unsigned* attrOrError)
 }
 #endif // __SMALLER_C_16__
 
+#endif // _DOS
+
+#ifdef _WINDOWS
+
+#include "iwin32.h"
+
+#endif // _WINDOWS
+
 static unsigned num;
 
 static char name[L_tmpnam];
@@ -74,8 +82,15 @@ void TryPath(char* path)
     strcat(name, "\\"), plen++;
 
   // Check if name exists in the file system and is a directory
+#ifdef _DOS
   if (!DosQueryAttr(name, &attrOrError) || !(attrOrError & 0x10))
     *name = '\0';
+#endif
+#ifdef _WINDOWS
+  attrOrError = GetFileAttributesA(name);
+  if (attrOrError == INVALID_FILE_ATTRIBUTES || !(attrOrError & FILE_ATTRIBUTE_DIRECTORY))
+    *name = '\0';
+#endif
 }
 
 static
@@ -97,8 +112,8 @@ void TryEnvPath(char* evname)
 
 char* __tmpnam(char* buf, unsigned iterations)
 {
-  unsigned i;
   unsigned attrOrError;
+  unsigned i;
 
   if (!*name)
   {
@@ -139,12 +154,23 @@ char* __tmpnam(char* buf, unsigned iterations)
     }
 
     // Check if buf does not exist in the file system
+#ifdef _DOS
     if (!DosQueryAttr(buf, &attrOrError))
     {
       if (attrOrError == 2)
         return buf;
       break;
     }
+#endif
+#ifdef _WINDOWS
+    attrOrError = GetFileAttributesA(buf);
+    if (attrOrError == INVALID_FILE_ATTRIBUTES)
+    {
+      if (GetLastError() == ERROR_FILE_NOT_FOUND)
+        return buf;
+      break;
+    }
+#endif
   }
 
   return NULL;
@@ -154,5 +180,3 @@ char* tmpnam(char* buf)
 {
   return __tmpnam(buf, TMP_MAX);
 }
-
-#endif

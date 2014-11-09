@@ -210,6 +210,7 @@ static int helper(char exe[FILENAME_MAX], char** cmd)
 
     memcpy(exe, start, clen);
     exe[clen] = '\0';
+    // TBD!!! use another method to check whether or not the file exists, e.g. try getting its attributes
     if ((f = fopen(exe, "rb")) != NULL)
     {
       fclose(f);
@@ -246,6 +247,7 @@ static int helper(char exe[FILENAME_MAX], char** cmd)
       memcpy(exe + plen, start, clen);
       exe[plen + clen] = '\0';
 
+      // TBD!!! use another method to check whether or not the file exists, e.g. try getting its attributes
       if ((f = fopen(exe, "rb")) != NULL)
         break;
     }
@@ -264,6 +266,7 @@ static int helper(char exe[FILENAME_MAX], char** cmd)
     FILE* f;
     memcpy(exe, start, clen);
     exe[clen] = '\0';
+    // TBD!!! use another method to check whether or not the file exists, e.g. try getting its attributes
     if ((f = fopen(exe, "rb")) != NULL)
     {
       fclose(f);
@@ -407,4 +410,67 @@ end:
   return res;
 }
 
-#endif
+#endif // _DOS
+
+#ifdef _WINDOWS
+
+#include "iwin32.h"
+
+int system(char* cmd)
+{
+  char *ev, *comspec = NULL, *params = NULL;
+  unsigned len;
+  int res = -1;
+  STARTUPINFO si;
+  PROCESS_INFORMATION pi;
+
+  ev = __EnvVar;
+  __EnvVar = NULL;
+  comspec = getenv("COMSPEC");
+  __EnvVar = ev; // restore the string previously returned by getenv()
+
+  if (!cmd)
+  {
+    res = comspec != NULL;
+    goto end;
+  }
+
+  if (!comspec)
+  {
+    goto end;
+  }
+
+  memset(&si, 0, sizeof si);
+  memset(&pi, 0, sizeof pi);
+  si.cb = sizeof si;
+
+  if ((len = strlen(cmd)) != 0)
+  {
+    if ((params = malloc(len + sizeof "/C ")) == NULL)
+      goto end;
+    strcpy(params, "/C ");
+    strcat(params, cmd);
+  }
+
+  if (!CreateProcessA(comspec, params, NULL, NULL, 0, 0, NULL, NULL, &si, &pi))
+  {
+    goto end;
+  }
+
+  WaitForSingleObject(pi.hProcess, INFINITE);
+  GetExitCodeProcess(pi.hProcess, &res);
+  CloseHandle(pi.hProcess);
+  CloseHandle(pi.hThread);
+
+end:
+
+  if (comspec)
+    free(comspec);
+
+  if (params)
+    free(params);
+
+  return res;
+}
+
+#endif // _WINDOWS

@@ -54,4 +54,18 @@ int rename(char* old, char* new)
     return 0;
   return -1;
 }
+
 #endif // _DOS
+
+#ifdef _WINDOWS
+
+#include "iwin32.h"
+
+int rename(char* old, char* new)
+{
+  if (MoveFileA(old, new))
+    return 0;
+  return -1;
+}
+
+#endif // _WINDOWS

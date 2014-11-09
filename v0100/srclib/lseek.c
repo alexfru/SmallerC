@@ -36,4 +36,28 @@ off_t lseek(int fd, off_t offset, int whence)
   return -1;
 }
 #endif // __HUGE__
+
 #endif // _DOS
+
+#ifdef _WINDOWS
+
+#include "iwin32.h"
+
+off_t lseek(int fd, off_t offset, int whence)
+{
+  unsigned res;
+
+  // TBD??? Fix this hack???
+  // GetStdHandle(STD_INPUT_HANDLE), GetStdHandle(STD_OUTPUT_HANDLE) and GetStdHandle(STD_ERROR_HANDLE)
+  // appear to always return 3, 7 and 11 when there's no redirection. Other handles (e.g. those of files)
+  // appear to have values that are multiples of 4. I'm not sure if GetStdHandle() can ever return values
+  // 0, 1 and 2 or if any other valid handle can ever be equal to 0, 1 or 2.
+  // If 0, 1 and 2 can be valid handles in the system, I'll need to renumber/translate handles in the C library.
+  if (fd >= STDIN_FILENO && fd <= STDERR_FILENO)
+    fd = GetStdHandle(STD_INPUT_HANDLE - fd);
+
+  res = SetFilePointer(fd, offset, 0, whence);
+  return res;
+}
+
+#endif // _WINDOWS

@@ -81,6 +81,8 @@ char* strcat(char*, char*);
 char* strchr(char*, int);
 char* strrchr(char*, int);
 int strcmp(char*, char*);
+int strncmp(char*, char*, size_t);
+char* strpbrk(char*, char*);
 void* memcpy(void*, void*, size_t);
 void* memset(void*, int, size_t);
 
@@ -433,6 +435,7 @@ long fsize(FILE* binaryStream)
 // Expands "@filename" in program arguments into arguments contained within file "filename".
 // This is a workaround for short DOS command lines limited to 126 characters.
 // Note, the expansion is NOT recursive.
+// TBD!!! parse the file the same way as the command line.
 void fatargs(int* pargc, char*** pargv)
 {
   int i, j = 0;
@@ -517,9 +520,81 @@ void fatargs(int* pargc, char*** pargv)
   *pargv = pp;
 }
 
-void AddOptionInner(char** options, size_t* len, char* option, int separator)
+int EscapingNeeded(char* s)
+{
+  // Looks like DOS' COMMAND.COM and Windows' cmd.exe handle %
+  // specially even inside double quotes (e.g. %path% would always expand).
+  return *s == '\0' || strpbrk(s, " \t\"<>&|^") != NULL;
+}
+
+// TBD!!! I should probably abandon the idea of launching subordinates via
+// shell (using system()) and instead use exec*()/CreateProcess() and such 
+// to avoid this quoting/escaping mess.
+size_t Escape(char* out, char* in, size_t outsz)
+{
+  size_t sz = 0;
+  int c;
+  size_t slashes = 0;
+
+  if (sz++ < outsz)
+    *out++ = '"';
+
+  while ((c = *in++) != '\0')
+  {
+    if (c == '\\')
+    {
+      do
+      {
+        slashes++;
+      } while ((c = *in++) == '\\');
+
+      if (c == '"' || c == '\0')
+        slashes <<= 1;
+    }
+
+    while (slashes)
+    {
+      if (sz++ < outsz)
+        *out++ = '\\';
+      slashes--;
+    }
+
+    if (c == '\0')
+      break;
+
+    if (c == '"')
+    {
+      if (sz++ < outsz)
+        *out++ = '\\';
+    }
+
+    if (sz++ < outsz)
+      *out++ = c;
+  }
+
+  if (sz++ < outsz)
+    *out++ = '"';
+
+  if (sz++ < outsz)
+    *out++ = '\0';
+
+  return sz;
+}
+
+void AddOptionInner(char** options, size_t* len, char* option, int escape)
 {
   size_t l = strlen(option);
+  char* escaped = NULL;
+
+  if (escape && EscapingNeeded(option))
+  {
+    size_t sz = Escape(NULL, option, 0);
+    escaped = Malloc(sz);
+    Escape(escaped, option, sz);
+    option = escaped;
+    l = sz - 1;
+  }
+
   if (!*options)
   {
     *options = Malloc(l + 1);
@@ -528,16 +603,43 @@ void AddOptionInner(char** options, size_t* len, char* option, int separator)
   }
   else
   {
-    *options = Realloc(*options, *len + 1/*separator*/ + l + 1/*NUL*/);
-    (*options)[*len] = separator;
+    *options = Realloc(*options, *len + 1/*space*/ + l + 1/*NUL*/);
+    (*options)[*len] = ' ';
     strcpy(*options + *len + 1, option);
     (*len) += 1 + l;
   }
+
+  if (escaped)
+    free(escaped);
 }
 
+// Adds a command-line option, escaping it if needed
 void AddOption(char** options, size_t* len, char* option)
 {
-  AddOptionInner(options, len, option, ' ');
+  AddOptionInner(options, len, option, 1);
+}
+
+// Adds a command-line option (or several, space-delimited), without escaping
+void AddOptions(char** options, size_t* len, char* optionz)
+{
+  AddOptionInner(options, len, optionz, 0);
+}
+
+void AddFile(char** files, size_t* len, char* file)
+{
+  size_t l = strlen(file);
+  if (!*files)
+  {
+    *files = Malloc(l + 1);
+    strcpy(*files, file);
+    *len = l;
+  }
+  else
+  {
+    *files = Realloc(*files, *len + 1/*NUL*/ + l + 1/*NUL*/);
+    strcpy(*files + *len + 1, file);
+    (*len) += 1 + l;
+  }
 }
 
 void System(char* cmd)
@@ -577,7 +679,7 @@ void System(char* cmd)
     // DOS is not multi-tasking and so there shouldn't be any race condition
     // between doing tmpnam() and fopen().
     ftmp = Fopen(ntmp, "wb");
-    AddOptionInner(&TemporaryFiles, &TemporaryFilesLen, ntmp, '\0');
+    AddFile(&TemporaryFiles, &TemporaryFilesLen, ntmp);
     if (len > l)
       Fwrite(p + 1, len - l, ftmp);
     Fclose(ftmp);
@@ -651,35 +753,32 @@ void Compile(char* name)
     if (!DontLink)
       AddOption(&LinkerOptions, &LinkerOptionsLen, name);
     else if (DoArchive && type == 'O')
-      AddOptionInner(&ArchiveFiles, &ArchiveFilesLen, name, '\0');
+      AddFile(&ArchiveFiles, &ArchiveFilesLen, name);
     return;
   }
 
   if (type == 'c')
   {
-    char* cmd;
+    char* cmd = NULL;
+    size_t cmdlen = 0;
 
     if (InputFileCnt == 1 && OutName && CompileToAsm)
     {
       // Compiling one C file to an assembly file with a given name
       asmName = OutName;
-      cmd = Malloc(CompilerOptionsLen + 1/*space*/ + len + 1/*space*/ + strlen(asmName) + 1/*NUL*/);
     }
     else
     {
       asmName = Malloc(len + 2/*.c -> .asm*/ + 1/*NUL*/);
       strcpy(asmName, name);
       strcpy(asmName + len - 1, "asm");
-      cmd = Malloc(CompilerOptionsLen + 1/*space*/ + len + 1/*space*/ + len + 2/*.c -> .asm*/ + 1/*NUL*/);
     }
 
-    strcpy(cmd, CompilerOptions);
-    strcat(cmd, " ");
-    strcat(cmd, name);
-    strcat(cmd, " ");
-    strcat(cmd, asmName);
+    AddOptions(&cmd, &cmdlen, CompilerOptions);
+    AddOption(&cmd, &cmdlen, name);
+    AddOption(&cmd, &cmdlen, asmName);
 
-    AddOptionInner(&TemporaryFiles, &TemporaryFilesLen, asmName, '\0');
+    AddFile(&TemporaryFiles, &TemporaryFilesLen, asmName);
     // TBD!!! also, if CompileToAsm==0, add .o file to temps here
     System(cmd);
 
@@ -697,7 +796,8 @@ void Compile(char* name)
   if (!CompileToAsm)
   {
     char* objName;
-    char* cmd;
+    char* cmd = NULL;
+    size_t cmdlen = 0;
 
     if (InputFileCnt == 1 && OutName && DontLink && !DoArchive)
     {
@@ -714,16 +814,10 @@ void Compile(char* name)
         strcpy(objName + len - 3, "o"); // .asm -> .o
     }
 
-    if (asmName)
-      len = strlen(asmName);
-
-    cmd = Malloc(AssemblerOptionsLen + 1/*space*/ + len + 1/*space*/ + 2/*-o*/ + 1/*space*/ + strlen(objName) + 1/*NUL*/);
-
-    strcpy(cmd, AssemblerOptions);
-    strcat(cmd, " ");
-    strcat(cmd, asmName ? asmName : name);
-    strcat(cmd, " -o ");
-    strcat(cmd, objName);
+    AddOptions(&cmd, &cmdlen, AssemblerOptions);
+    AddOption(&cmd, &cmdlen, asmName ? asmName : name);
+    AddOption(&cmd, &cmdlen, "-o");
+    AddOption(&cmd, &cmdlen, objName);
 
     System(cmd);
 
@@ -739,12 +833,12 @@ void Compile(char* name)
     {
       AddOption(&LinkerOptions, &LinkerOptionsLen, objName);
       // Temporary object files will be removed at the end
-      AddOptionInner(&TemporaryFiles, &TemporaryFilesLen, objName, '\0');
+      AddFile(&TemporaryFiles, &TemporaryFilesLen, objName);
     }
     else if (DoArchive)
     {
-      AddOptionInner(&ArchiveFiles, &ArchiveFilesLen, objName, '\0');
-      AddOptionInner(&TemporaryFiles, &TemporaryFilesLen, objName, '\0');
+      AddFile(&ArchiveFiles, &ArchiveFilesLen, objName);
+      AddFile(&TemporaryFiles, &TemporaryFilesLen, objName);
     }
 
     if (objName != OutName)
@@ -1144,7 +1238,7 @@ int main(int argc, char* argv[])
 
 #ifdef HOST_LINUX
   AddOption(&CompilerOptions, &CompilerOptionsLen, "smlrc");
-  AddOption(&AssemblerOptions, &AssemblerOptionsLen, "nasm -f elf");
+  AddOptions(&AssemblerOptions, &AssemblerOptionsLen, "nasm -f elf");
   AddOption(&LinkerOptions, &LinkerOptionsLen, "smlrl");
 #else
   // Use explicit extensions (".exe") to let system() know that
@@ -1154,7 +1248,7 @@ int main(int argc, char* argv[])
   // This helps recover the program exit status under DOS and thus
   // stop compilation as soon as one compilation stage fails.
   AddOption(&CompilerOptions, &CompilerOptionsLen, "smlrc.exe");
-  AddOption(&AssemblerOptions, &AssemblerOptionsLen, "nasm.exe -f elf");
+  AddOptions(&AssemblerOptions, &AssemblerOptionsLen, "nasm.exe -f elf");
   AddOption(&LinkerOptions, &LinkerOptionsLen, "smlrl.exe");
 #endif
 
@@ -1213,7 +1307,7 @@ int main(int argc, char* argv[])
     {
       OutputFormat = FormatDosComTiny;
       AddOption(&CompilerOptions, &CompilerOptionsLen, "-seg16");
-      AddOption(&CompilerOptions, &CompilerOptionsLen, "-D _DOS");
+      AddOptions(&CompilerOptions, &CompilerOptionsLen, "-D _DOS");
       AddOption(&LinkerOptions, &LinkerOptionsLen, "-tiny");
       LinkStdLib = 1;
       argv[i] = NULL;
@@ -1231,7 +1325,7 @@ int main(int argc, char* argv[])
     {
       OutputFormat = FormatDosExeSmall;
       AddOption(&CompilerOptions, &CompilerOptionsLen, "-seg16");
-      AddOption(&CompilerOptions, &CompilerOptionsLen, "-D _DOS");
+      AddOptions(&CompilerOptions, &CompilerOptionsLen, "-D _DOS");
       AddOption(&LinkerOptions, &LinkerOptionsLen, "-small");
       LinkStdLib = 1;
       argv[i] = NULL;
@@ -1249,7 +1343,7 @@ int main(int argc, char* argv[])
     {
       OutputFormat = FormatDosExeHuge;
       AddOption(&CompilerOptions, &CompilerOptionsLen, "-huge");
-      AddOption(&CompilerOptions, &CompilerOptionsLen, "-D _DOS");
+      AddOptions(&CompilerOptions, &CompilerOptionsLen, "-D _DOS");
       AddOption(&LinkerOptions, &LinkerOptionsLen, "-huge");
       LinkStdLib = 1;
       argv[i] = NULL;
@@ -1268,7 +1362,7 @@ int main(int argc, char* argv[])
       OutputFormat = FormatWinPe32;
       AddOption(&CompilerOptions, &CompilerOptionsLen, "-seg32");
       AddOption(&CompilerOptions, &CompilerOptionsLen, "-winstack");
-      AddOption(&CompilerOptions, &CompilerOptionsLen, "-D _WINDOWS");
+      AddOptions(&CompilerOptions, &CompilerOptionsLen, "-D _WINDOWS");
       AddOption(&LinkerOptions, &LinkerOptionsLen, "-pe");
       LinkStdLib = 1;
       argv[i] = NULL;
@@ -1286,7 +1380,7 @@ int main(int argc, char* argv[])
     {
       OutputFormat = FormatElf32;
       AddOption(&CompilerOptions, &CompilerOptionsLen, "-seg32");
-      AddOption(&CompilerOptions, &CompilerOptionsLen, "-D _LINUX");
+      AddOptions(&CompilerOptions, &CompilerOptionsLen, "-D _LINUX");
       AddOption(&LinkerOptions, &LinkerOptionsLen, "-elf");
       argv[i] = NULL;
       LinkStdLib = 1;
@@ -1320,10 +1414,26 @@ int main(int argc, char* argv[])
       argv[i] = NULL;
       continue;
     }
-    else if (!strcmp(argv[i], "-I") || !strcmp(argv[i], "-SI") || !strcmp(argv[i], "-D"))
+    else if (argv[i][0] == '-' &&
+             (argv[i][1] == 'D'/*-D*/ ||
+              argv[i][1] == 'I'/*-I*/ ||
+              (argv[i][1] == 'S' && argv[i][2] == 'I')/*-SI*/))
     {
-      if (i + 1 < argc)
+      int len = 2 + (argv[i][1] == 'S');
+      if (argv[i][len] != '\0')
       {
+        // Handle "-Dmacro", "-Ipath", "-SIpath"
+        char opt[3/*longest is -SI*/+1/*NUL*/];
+        memcpy(opt, argv[i], len);
+        opt[len] = '\0';
+        AddOption(&CompilerOptions, &CompilerOptionsLen, opt);
+        AddOption(&CompilerOptions, &CompilerOptionsLen, argv[i] + len);
+        argv[i] = NULL;
+        continue;
+      }
+      else if (i + 1 < argc)
+      {
+        // Handle "-D macro", "-I path", "-SI path"
         AddOption(&CompilerOptions, &CompilerOptionsLen, argv[i]);
         argv[i++] = NULL;
         AddOption(&CompilerOptions, &CompilerOptionsLen, argv[i]);
@@ -1331,10 +1441,18 @@ int main(int argc, char* argv[])
         continue;
       }
     }
-    else if (!strcmp(argv[i], "-SL"))
+    else if (!strncmp(argv[i], "-SL", 3))
     {
-      if (i + 1 < argc)
+      if (argv[i][3] != '\0')
       {
+        // Handle "-SLpath"
+        StdLibPath = argv[i] + 3;
+        argv[i] = NULL;
+        continue;
+      }
+      else if (i + 1 < argc)
+      {
+        // Handle "-SL path"
         argv[i++] = NULL;
         StdLibPath = argv[i];
         argv[i] = NULL;
@@ -1356,7 +1474,7 @@ int main(int argc, char* argv[])
 #ifdef HOST_LINUX
     OutputFormat = FormatElf32;
     AddOption(&CompilerOptions, &CompilerOptionsLen, "-seg32");
-    AddOption(&CompilerOptions, &CompilerOptionsLen, "-D _LINUX");
+    AddOptions(&CompilerOptions, &CompilerOptionsLen, "-D _LINUX");
     AddOption(&LinkerOptions, &LinkerOptionsLen, "-elf");
     LinkStdLib = 1;
 #else
@@ -1364,14 +1482,14 @@ int main(int argc, char* argv[])
     OutputFormat = FormatWinPe32;
     AddOption(&CompilerOptions, &CompilerOptionsLen, "-seg32");
     AddOption(&CompilerOptions, &CompilerOptionsLen, "-winstack");
-    AddOption(&CompilerOptions, &CompilerOptionsLen, "-D _WINDOWS");
+    AddOptions(&CompilerOptions, &CompilerOptionsLen, "-D _WINDOWS");
     AddOption(&LinkerOptions, &LinkerOptionsLen, "-pe");
     LinkStdLib = 1;
 #else
 #ifdef HOST_DOS
     OutputFormat = FormatDosExeHuge;
     AddOption(&CompilerOptions, &CompilerOptionsLen, "-huge");
-    AddOption(&CompilerOptions, &CompilerOptionsLen, "-D _DOS");
+    AddOptions(&CompilerOptions, &CompilerOptionsLen, "-D _DOS");
     AddOption(&LinkerOptions, &LinkerOptionsLen, "-huge");
     LinkStdLib = 1;
 #endif

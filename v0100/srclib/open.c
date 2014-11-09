@@ -109,4 +109,81 @@ int open(char* name, int oflag, ...)
 
   return -1;
 }
+
 #endif // _DOS
+
+#ifdef _WINDOWS
+
+#include "iwin32.h"
+
+int open(char* name, int oflag, ...)
+{
+  mode_t* psmode = (oflag & O_CREAT) ? (&oflag + 1) : 0;
+  int omode = oflag & O_ACCMODE;
+  int attr = FILE_ATTRIBUTE_NORMAL; // archive attribute = 1 = not backed up
+  int action;
+  unsigned handle;
+
+  switch (omode)
+  {
+  default:
+  case O_RDONLY:
+    omode = GENERIC_READ;
+    break;
+  case O_WRONLY:
+    omode = GENERIC_WRITE;
+    break;
+  case O_RDWR:
+    omode = GENERIC_READ | GENERIC_WRITE;
+    break;
+  }
+
+  if ((oflag & (O_CREAT | O_EXCL)) == (O_CREAT | O_EXCL))
+  {
+    action = CREATE_NEW; // fail if exists, else create and open
+  }
+  else if (oflag & O_CREAT)
+  {
+    if (oflag & O_TRUNC)
+      action = CREATE_ALWAYS; // if exists, truncate and open, else create and open
+    else
+      action = OPEN_ALWAYS; // if exists, just open, else create and open
+  }
+  else
+  {
+    if (oflag & O_TRUNC)
+      action = TRUNCATE_EXISTING; // if exists, truncate and open, else fail
+    else
+      action = OPEN_EXISTING; // if exists, just open, else fail
+  }
+
+  if (psmode && (*psmode & S_IWUSR) == 0)
+    attr = FILE_ATTRIBUTE_READONLY; // read-only attribute
+
+  handle = CreateFileA(name,
+                       omode,
+                       FILE_SHARE_READ,
+                       NULL,
+                       action,
+                       attr,
+                       NULL);
+  if (handle != INVALID_HANDLE_VALUE)
+  {
+    // Problem: Windows does not support the append mode directly
+    // (e.g. writes only going to the end of the file and reads allowed anywhere in the file).
+    // Any solution other than maintaining somewhere O_APPEND flag associated with every Windows handle???
+    if (oflag & O_APPEND)
+    {
+      if (lseek(handle, 0, SEEK_END) == -1)
+      {
+        close(handle);
+        return -1;
+      }
+    }
+    return handle;
+  }
+
+  return -1;
+}
+
+#endif // _WINDOWS

@@ -571,6 +571,11 @@ void errSectTooBig(void)
   error("Too much code (or data) or too big origin\n");
 }
 
+void errStackTooSmall(void)
+{
+  error("Too small stack\n");
+}
+
 void errStackTooBig(void)
 {
   error("Too big stack or too much data (or code)\n");
@@ -1561,7 +1566,7 @@ tPeImageOptionalHeader PeOptionalHeader =
   0x400,    // DllCharacteristics
   0x100000, // SizeOfStackReserve
   0x10000,  // SizeOfStackCommit
-  0x10000,  // SizeOfHeapReserve
+  0x4000000,// SizeOfHeapReserve
   0,        // SizeOfHeapCommit
   0,        // LoaderFlags
   16,       // NumberOfRvaAndSizes
@@ -1688,6 +1693,8 @@ void RelocateAndWriteAllSections(void)
     }
     if (StackSize == 0xFFFFFFFF)
       StackSize = 8192; // default stack size if unspecified
+    if (StackSize < 4096)
+      errStackTooSmall();
     if (StackSize > 0xFFFC)
       errStackTooBig();
     pSectDescrs[SectCnt + 2].Start = 0xFFFC - StackSize; // __start_stack__
@@ -1696,6 +1703,12 @@ void RelocateAndWriteAllSections(void)
   case FormatDosExeHuge:
     Origin = sizeof(tDosExeHeader);
     hdrsz = sizeof(tDosExeHeader);
+    if (StackSize == 0xFFFFFFFF)
+      StackSize = 32768; // default stack size if unspecified
+    if (StackSize < 8192)
+      errStackTooSmall();
+    if (StackSize > 0xFFFC)
+      errStackTooBig();
     break;
   case FormatWinPe32:
   case FormatElf32:
@@ -1794,8 +1807,9 @@ void RelocateAndWriteAllSections(void)
           DosExeHeader.PageCnt = (sz + 511) / 512;
           DosExeHeader.InitIp = ip & 0xF;
           DosExeHeader.InitCs = (ip >> 4) - 2;
-          DosExeHeader.InitSs = (sz + 15) / 16 - 2; // data/stack segment starts right after code segment's padding
-          DosExeHeader.MaxAlloc = DosExeHeader.MinAlloc = 4096 + 1; // maximum stack size = 64KB
+          DosExeHeader.InitSs = (sz + 15) / 16 - 2; // stack segment starts right after data segment's padding
+          DosExeHeader.InitSp = StackSize;
+          DosExeHeader.MaxAlloc = DosExeHeader.MinAlloc = (StackSize + 15) / 16 + 1; // maximum stack size = 64KB
           Fwrite(&DosExeHeader, sizeof DosExeHeader, fout);
         }
         break;
@@ -2251,6 +2265,7 @@ long fsize(FILE* binaryStream)
 // Expands "@filename" in program arguments into arguments contained within file "filename".
 // This is a workaround for short DOS command lines limited to 126 characters.
 // Note, the expansion is NOT recursive.
+// TBD!!! parse the file the same way as the command line.
 void fatargs(int* pargc, char*** pargv)
 {
   int i, j = 0;
@@ -2335,6 +2350,28 @@ void fatargs(int* pargc, char*** pargv)
   *pargv = pp;
 }
 
+#ifdef SHOW_MEM_USAGE
+#ifdef _DOS
+void freemem(char* s)
+{
+  void* ap[160+1];
+  unsigned i;
+  for (i = 0; i < 160; i++)
+    if ((ap[i] = malloc(4096)) == NULL)
+    {
+      printf("smlrl: free mem (%s): %u\n", s, i * 4096);
+      ap[i + 1] = NULL;
+      break;
+    }
+  for (i = 0; i < 160; i++)
+    if (ap[i])
+      free(ap[i]);
+    else
+      break;
+}
+#endif
+#endif
+
 int main(int argc, char* argv[])
 {
   uint32 ui32 = 0x44434241;
@@ -2348,6 +2385,12 @@ int main(int argc, char* argv[])
 
   if (memcmp(&ui32, "ABCD", sizeof ui32) || memcmp(&ui16, "12", sizeof ui16))
     error("Little-endian platform required\n");
+
+#ifdef SHOW_MEM_USAGE
+#ifdef _DOS
+  freemem("start");
+#endif
+#endif
 
   fatargs(&argc, &argv);
 
@@ -2472,6 +2515,12 @@ int main(int argc, char* argv[])
   }
   else
     error("No inputs\n");
+
+#ifdef SHOW_MEM_USAGE
+#ifdef _DOS
+  freemem("end");
+#endif
+#endif
 
   return 0;
 }

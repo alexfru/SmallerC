@@ -109,4 +109,18 @@ void* realloc(void* ptr, unsigned size)
   }
 }
 #endif // __SMALLER_C_16__
+
 #endif // _DOS
+
+#ifdef _WINDOWS
+
+#include "iwin32.h"
+
+void* realloc(void* ptr, unsigned size)
+{
+  return ptr ?
+    HeapReAlloc(GetProcessHeap(), 0, ptr, size) :
+    HeapAlloc(GetProcessHeap(), 0, size);
+}
+
+#endif // _WINDOWS

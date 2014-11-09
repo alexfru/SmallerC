@@ -5,6 +5,7 @@
 #include <unistd.h>
 
 #ifdef _DOS
+
 #ifdef __HUGE__
 static
 int __DosSeek(int handle, unsigned short offset[2], int whence)
@@ -27,7 +28,8 @@ int __DosSeek(int handle, unsigned short offset[2], int whence)
   asm("mov [si], bx\n" // offset[0] will have error code on failure
       "mov [si + 2], dx"); // else offset[] will be replaced with new position
 }
-#endif
+#endif // __HUGE__
+
 #ifdef __SMALLER_C_16__
 static
 int __DosSeek(int handle, unsigned short offset[2], int whence)
@@ -47,7 +49,7 @@ int __DosSeek(int handle, unsigned short offset[2], int whence)
   asm("mov [si], bx\n" // offset[0] will have error code on failure
       "mov [si + 2], dx"); // else offset[] will be replaced with new position
 }
-#endif
+#endif // __SMALLER_C_16__
 
 int __lseek(int fd, fpos_t* offset, int whence)
 {
@@ -59,4 +61,28 @@ int __lseek(int fd, fpos_t* offset, int whence)
   }
   return -1;
 }
+
 #endif // _DOS
+
+#ifdef _WINDOWS
+
+#include "iwin32.h"
+
+int __lseek(int fd, fpos_t* offset, int whence)
+{
+  union
+  {
+    fpos_t fo;
+    off_t o;
+  } u;
+  u.fo = *offset;
+
+  if ((u.o = lseek(fd, u.o, whence)) != -1)
+  {
+    *offset = u.fo;
+    return 0;
+  }
+  return -1;
+}
+
+#endif // _WINDOWS

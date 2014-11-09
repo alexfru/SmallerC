@@ -154,7 +154,7 @@ int vfprintf(FILE*, char*, void*);
 // all public macros
 
 #ifndef MAX_IDENT_LEN
-#define MAX_IDENT_LEN        31
+#define MAX_IDENT_LEN        63
 #endif
 #define MAX_STRING_LEN       255
 #define MAX_CHAR_QUEUE_LEN   256

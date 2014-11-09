@@ -91,7 +91,8 @@ void _start(void)
 {
   char hwmsg[] = "Hello, World!\r\n";
   unsigned h = GetStdHandle(-11);
-  WriteFile(h, hwmsg, sizeof hwmsg - 1, 0, 0);
+  unsigned NumberOfBytesWritten;
+  WriteFile(h, hwmsg, sizeof hwmsg - 1, &NumberOfBytesWritten, 0);
   ExitProcess(0);
 }
 #endif

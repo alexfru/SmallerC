@@ -146,4 +146,16 @@ void* malloc(unsigned size)
   return 0;
 }
 #endif
+
 #endif // _DOS
+
+#ifdef _WINDOWS
+
+#include "iwin32.h"
+
+void* malloc(unsigned size)
+{
+  return HeapAlloc(GetProcessHeap(), 0, size);
+}
+
+#endif // _WINDOWS

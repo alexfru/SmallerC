@@ -46,4 +46,30 @@ void exit(int status)
 
   DosTerminate(status);
 }
+
 #endif // _DOS
+
+#ifdef _WINDOWS
+
+#include "iwin32.h"
+
+void _Exit(int status)
+{
+  ExitProcess(status);
+}
+
+void exit(int status)
+{
+  if (__pAtExitIterator)
+    __pAtExitIterator();
+
+  if (__pFileCloser)
+    __pFileCloser();
+
+  fflush(stdout);
+  fflush(stderr);
+
+  ExitProcess(status);
+}
+
+#endif // _WINDOWS

@@ -2,6 +2,8 @@
   Copyright (c) 2014, Alexey Frunze
   2-clause BSD license.
 */
+#include <unistd.h>
+
 #ifdef _DOS
 
 #ifdef __SMALLER_C_16__
@@ -56,4 +58,24 @@ int isatty(int fd)
     return 1;
   return 0;
 }
-#endif
+
+#endif // _DOS
+
+#ifdef _WINDOWS
+
+#include "iwin32.h"
+
+int isatty(int fd)
+{
+  // TBD??? Fix this hack???
+  // GetStdHandle(STD_INPUT_HANDLE), GetStdHandle(STD_OUTPUT_HANDLE) and GetStdHandle(STD_ERROR_HANDLE)
+  // appear to always return 3, 7 and 11 when there's no redirection. Other handles (e.g. those of files)
+  // appear to have values that are multiples of 4. I'm not sure if GetStdHandle() can ever return values
+  // 0, 1 and 2 or if any other valid handle can ever be equal to 0, 1 or 2.
+  // If 0, 1 and 2 can be valid handles in the system, I'll need to renumber/translate handles in the C library.
+  if (fd >= STDIN_FILENO && fd <= STDERR_FILENO)
+    fd = GetStdHandle(STD_INPUT_HANDLE - fd);
+  return GetFileType(fd) == FILE_TYPE_CHAR;
+}
+
+#endif // _WINDOWS

@@ -1,6 +1,9 @@
 /*
   How to compile for DOS:
-    smlrcc -dosh cq.c -o cq.exe
+    smlrcc -dosh cq.c -o cqd.exe
+
+  How to compile for Windows:
+    smlrcc -win cq.c -o cqw.exe
 */
 
 #define float int

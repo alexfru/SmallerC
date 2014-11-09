@@ -49,4 +49,18 @@ int unlink(char* name)
     return 0;
   return -1;
 }
+
 #endif // _DOS
+
+#ifdef _WINDOWS
+
+#include "iwin32.h"
+
+int unlink(char* name)
+{
+  if (DeleteFileA(name))
+    return 0;
+  return -1;
+}
+
+#endif // _WINDOWS

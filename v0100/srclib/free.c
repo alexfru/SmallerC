@@ -57,4 +57,16 @@ void free(void* ptr)
   }
 }
 #endif
+
 #endif // _DOS
+
+#ifdef _WINDOWS
+
+#include "iwin32.h"
+
+void free(void* ptr)
+{
+  HeapFree(GetProcessHeap(), 0, ptr);
+}
+
+#endif // _WINDOWS

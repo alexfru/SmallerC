@@ -12,7 +12,9 @@ typedef struct
   unsigned xsp;    // (e)sp
 } jmp_buf[1];
 */
+
 #ifdef __SMALLER_C_16__
+
 int setjmp(jmp_buf jb)
 {
   asm("mov bx, [bp+4]"); // jb
@@ -58,8 +60,13 @@ void longjmp(jmp_buf jb, int val)
   // return val
   asm("iret");
 }
-#else
+
+#endif // __SMALLER_C_16__
+
+#ifdef __SMALLER_C_32__
+
 #ifdef __HUGE__
+
 int setjmp(jmp_buf jb)
 {
   asm("mov ebx, [bp+8]\n" // jb
@@ -109,9 +116,55 @@ void longjmp(jmp_buf jb, int val)
   // return val
   asm("iret");
 }
-#else
-#ifdef __SMALLER_C_32__
-// TBD!!!
-#endif
-#endif
-#endif
+
+#else // and now __SMALLER_C_32__, not __HUGE__
+
+int setjmp(jmp_buf jb)
+{
+  asm("mov ebx, [ebp+8]"); // jb
+
+  // eip
+  asm("mov eax, [ebp+4]"); // return address
+  asm("mov [ebx], eax");
+  // flags (mainly for IF)
+  asm("pushfd");
+  asm("pop dword [ebx+4]");
+  // ebp
+  asm("mov eax, [ebp]"); // caller's ebp
+  asm("mov [ebx+8], eax");
+  // esp
+  asm("lea eax, [ebp+4*2]"); // caller's esp
+  asm("mov [ebx+12], eax");
+
+  // return 0
+  asm("xor eax, eax");
+}
+
+void longjmp(jmp_buf jb, int val)
+{
+  asm("mov eax, [ebp+12]"); // val
+  // if val is 0, make it 1
+  asm("or eax, eax");
+  asm("setz bl");
+  asm("or al, bl");
+
+  asm("mov ebx, [ebp+8]"); // jb
+
+  // esp
+  asm("mov esp, [ebx+12]");
+  // ebp
+  asm("mov ebp, [ebx+8]");
+  // flags (mainly for IF)
+  asm("push dword [ebx+4]");
+  // cs
+  asm("push cs");
+  // eip
+  asm("push dword [ebx]");
+
+  // return val
+  asm("iretd");
+}
+
+#endif // __HUGE__
+
+#endif // __SMALLER_C_32__

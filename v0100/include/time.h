@@ -29,6 +29,10 @@ typedef unsigned long clock_t;
 #define CLOCKS_PER_SEC 18 // clock() will recalculate result to 18 Hz instead of to 18.2 Hz
 #endif
 
+#ifdef _WINDOWS
+#define CLOCKS_PER_SEC 1000 // clock() uses GetTickCount()
+#endif
+
 struct tm
 {
   int tm_sec;   // seconds after the minute - [0, 60]

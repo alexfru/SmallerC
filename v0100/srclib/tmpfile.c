@@ -7,8 +7,6 @@
 #include <stdlib.h>
 #include "istdio.h"
 
-#ifdef _DOS
-
 FILE* tmpfile(void)
 {
   unsigned i;
@@ -62,5 +60,3 @@ err:
 
   return NULL;
 }
-
-#endif

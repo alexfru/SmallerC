@@ -4,12 +4,12 @@
 */
 #include "itime.h"
 
-#ifdef _DOS
-#ifdef __HUGE__
+#ifdef __SMALLER_C_32__
+
+// gmtime() must take UTC/GMT time and return UTC/GMT time
 struct tm* gmtime(time_t* t)
 {
-  // There's no sane way to support time zones in DOS. Pretend to have local time=UTC/GMT.
   return __breaktime(t);
 }
-#endif
-#endif
+
+#endif // __SMALLER_C_32__
