@@ -6,6 +6,8 @@ extern int main(int argc, char** argv);
 extern void exit(int);
 
 #include <time.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 #ifndef _LINUX
 // Implements the logic of __getmainargs() from msvcrt.dll, msvcr70.dll ... msvcr120.dll.
@@ -105,6 +107,8 @@ int __ArgParser__(char* in, char* out, char** argv)
 
 #ifdef _DOS
 
+#include "idos.h"
+
 #ifdef __HUGE__
 static
 unsigned char peekb(unsigned seg, unsigned ofs)
@@ -187,6 +191,55 @@ void poke(unsigned seg, unsigned ofs, unsigned val)
 */
 
 #ifdef __HUGE__
+void __DosGetVect(int intno, unsigned short farptr[2])
+{
+  asm("mov  ah, 0x35\n"
+      "mov  al, [bp + 8]\n"
+      "int  0x21\n"
+      "mov  esi, [bp + 12]\n"
+      "ror  esi, 4\n"
+      "mov  ds, si\n"
+      "shr  esi, 28\n"
+      "mov  [si], bx\n"
+      "mov  [si + 2], es");
+}
+void __DosSetVect(int intno, unsigned short farptr[2])
+{
+  asm("mov  ah, 0x25\n"
+      "mov  al, [bp + 8]\n"
+      "mov  esi, [bp + 12]\n"
+      "ror  esi, 4\n"
+      "mov  ds, si\n"
+      "shr  esi, 28\n"
+      "lds  dx, [si]\n"
+      "int  0x21");
+}
+#endif
+#ifdef __SMALLER_C_16__
+void __DosGetVect(int intno, unsigned short farptr[2])
+{
+  asm("push es\n"
+      "mov  ah, 0x35\n"
+      "mov  al, [bp + 4]\n"
+      "int  0x21\n"
+      "mov  si, [bp + 6]\n"
+      "mov  [si], bx\n"
+      "mov  [si + 2], es\n"
+      "pop  es");
+}
+void __DosSetVect(int intno, unsigned short farptr[2])
+{
+  asm("push ds\n"
+      "mov  ah, 0x25\n"
+      "mov  al, [bp + 4]\n"
+      "mov  si, [bp + 6]\n"
+      "lds  dx, [si]\n"
+      "int  0x21\n"
+      "pop  ds");
+}
+#endif
+
+#ifdef __HUGE__
 static
 unsigned DosGetPspSeg(void)
 {
@@ -258,14 +311,78 @@ int setargs(int* pargc, char*** pargv)
   return 1;
 }
 
+unsigned short __Int00DE[2];
+unsigned short __Int01DB[2];
+unsigned short __Int03BP[2];
+unsigned short __Int04OF[2];
+unsigned short __Int06UD[2];
+
+#ifdef __HUGE__
+void __interrupt __ExcIsr(void)
+{
+  static char msg[] = "\r\nUnhandled exception!\r\n";
+  write(STDERR_FILENO, msg, sizeof msg - 1);
+  _Exit(EXIT_FAILURE);
+}
+
+void __interrupt __CtrlCIsr(void)
+{
+  // It looks like DOS will terminate the app on Ctrl+C even without a custom int 0x23 handler.
+  // But let's keep the code as I might transform Ctrl+C into SIGINT in the future.
+  _Exit(EXIT_FAILURE);
+}
+#endif
+
 void __start__(void)
 {
   int argc;
   char** argv;
-  setargs(&argc, &argv);
+  unsigned short farptr[2];
+
+  // Register exception handlers
+
+  __DosGetVect(0, __Int00DE);
+  __DosGetVect(1, __Int01DB);
+  __DosGetVect(3, __Int03BP);
+  __DosGetVect(4, __Int04OF);
+  __DosGetVect(6, __Int06UD);
+
 #ifdef __HUGE__
-  clock(); // start counting ticks now
+  farptr[0] = (unsigned)&__ExcIsr & 0xF;
+  farptr[1] = (unsigned)&__ExcIsr >> 4;
 #endif
+#ifdef __SMALLER_C_16__
+extern unsigned short __getCS(void);
+  farptr[0] = (unsigned)&__ExcIsr;
+  farptr[1] = __getCS();
+#endif
+  __DosSetVect(0, farptr);
+  __DosSetVect(1, farptr);
+  __DosSetVect(3, farptr);
+  __DosSetVect(4, farptr);
+  __DosSetVect(6, farptr);
+
+  // Register int 0x23/Ctrl+C handler
+
+#ifdef __HUGE__
+  farptr[0] = (unsigned)&__CtrlCIsr & 0xF;
+  farptr[1] = (unsigned)&__CtrlCIsr >> 4;
+#endif
+#ifdef __SMALLER_C_16__
+extern unsigned short __getCS(void);
+  farptr[0] = (unsigned)&__CtrlCIsr;
+  farptr[1] = __getCS();
+#endif
+  __DosSetVect(0x23, farptr);
+
+  // Set argc and argv
+  setargs(&argc, &argv);
+
+#ifdef __HUGE__
+  // Start counting ticks now
+  clock();
+#endif
+
   exit(main(argc, argv));
 }
 
@@ -314,16 +431,48 @@ error:
   return 0;
 }
 
+static
+int UnhandledExceptionHandler(struct _EXCEPTION_POINTERS* ExceptionInfo)
+{
+  static char msg[] = "\r\nUnhandled exception!\r\n";
+  unsigned NumberOfBytesWritten;
+
+  (void)ExceptionInfo;
+
+  // TBD??? Dump the register state???
+  WriteFile(GetStdHandle(STD_ERROR_HANDLE), msg, sizeof msg - 1, &NumberOfBytesWritten, 0);
+
+  // Terminate immediately w/o invoking Dr. Watson or Windows Error Reporting (WER)
+  ExitProcess(EXIT_FAILURE);
+
+  // The following is not reached because of ExitProcess()
+
+//  return EXCEPTION_CONTINUE_SEARCH;
+  // remove the parameter from the stack since this function is supposed to have the WINAPI calling convention
+  asm("mov   eax, 0\n"
+      "leave\n"
+      "ret   4");
+}
+
 void __start__(void)
 {
   int argc;
   char** argv;
+
   // Windows doesn't use file handles 0,1,2 for stdin,stdout,stderr.
   __stdin->fd = GetStdHandle(STD_INPUT_HANDLE);
   __stdout->fd = GetStdHandle(STD_OUTPUT_HANDLE);
   __stderr->fd = GetStdHandle(STD_ERROR_HANDLE);
+
+  // Register exception handlers
+  SetUnhandledExceptionFilter(&UnhandledExceptionHandler);
+
+  // Set argc and argv
   setargs(&argc, &argv);
-  clock(); // start counting ticks now
+
+  // Start counting ticks now
+  clock();
+
   exit(main(argc, argv));
 }
 

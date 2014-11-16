@@ -29,6 +29,10 @@
 
 #define INFINITE              0xFFFFFFFF
 
+#define EXCEPTION_CONTINUE_SEARCH     0x0
+#define EXCEPTION_EXECUTE_HANDLER     0x1
+#define EXCEPTION_CONTINUE_EXECUTION  0xFFFFFFFF
+
 #define ERROR_FILE_NOT_FOUND  2
 
 typedef struct _SYSTEMTIME
@@ -75,6 +79,9 @@ typedef struct _PROCESS_INFORMATION
   unsigned dwProcessId;
   unsigned dwThreadId;
 } PROCESS_INFORMATION;
+
+struct _EXCEPTION_POINTERS;
+typedef int (*TOP_LEVEL_EXCEPTION_FILTER)(struct _EXCEPTION_POINTERS*);
 
 void ExitProcess(unsigned);
 
@@ -154,5 +161,7 @@ int CreateProcessA(char*,
 int GetExitCodeProcess(unsigned, unsigned*);
 
 unsigned WaitForSingleObject(unsigned, unsigned);
+
+TOP_LEVEL_EXCEPTION_FILTER* SetUnhandledExceptionFilter(TOP_LEVEL_EXCEPTION_FILTER*);
 
 #endif

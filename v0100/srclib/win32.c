@@ -45,6 +45,7 @@ static char h_TzSpecificLocalTimeToSystemTime[] = "\0\0TzSpecificLocalTimeToSyst
 static char h_CreateProcessA         [] = "\0\0CreateProcessA";
 static char h_GetExitCodeProcess     [] = "\0\0GetExitCodeProcess";
 static char h_WaitForSingleObject    [] = "\0\0WaitForSingleObject";
+static char h_SetUnhandledExceptionFilter    [] = "\0\0SetUnhandledExceptionFilter";
 
 static void* hints[] =
 {
@@ -74,6 +75,7 @@ static void* hints[] =
   h_CreateProcessA,
   h_GetExitCodeProcess,
   h_WaitForSingleObject,
+  h_SetUnhandledExceptionFilter,
   0
 };
 
@@ -105,6 +107,7 @@ static void* iat[] =
   h_CreateProcessA,
   h_GetExitCodeProcess,
   h_WaitForSingleObject,
+  h_SetUnhandledExceptionFilter,
   0
 };
 
@@ -355,6 +358,12 @@ unsigned WaitForSingleObject(unsigned hHandle, unsigned dwMilliseconds)
   asm("push dword [ebp+12]\n"
       "push dword [ebp+8]\n"
       "call [_iat + 4*25]");
+}
+
+TOP_LEVEL_EXCEPTION_FILTER* SetUnhandledExceptionFilter(TOP_LEVEL_EXCEPTION_FILTER* lpTopLevelExceptionFilter)
+{
+  asm("push dword [ebp+8]\n"
+      "call [_iat + 4*26]");
 }
 
 #endif // _WINDOWS

@@ -9,6 +9,8 @@ void (*__pFileCloser)(void);
 
 #ifdef _DOS
 
+#include "idos.h"
+
 #ifdef __HUGE__
 static
 void DosTerminate(int e)
@@ -28,48 +30,49 @@ void DosTerminate(int e)
 }
 #endif
 
-void _Exit(int status)
-{
-  DosTerminate(status);
-}
-
-void exit(int status)
-{
-  if (__pAtExitIterator)
-    __pAtExitIterator();
-
-  if (__pFileCloser)
-    __pFileCloser();
-
-  fflush(stdout);
-  fflush(stderr);
-
-  DosTerminate(status);
-}
-
 #endif // _DOS
 
 #ifdef _WINDOWS
 
 #include "iwin32.h"
 
+#endif // _WINDOWS
+
+void __ExitInner(int iterator, int flushclose, int status)
+{
+  if (iterator && __pAtExitIterator)
+    __pAtExitIterator();
+
+  if (flushclose)
+  {
+    if (__pFileCloser)
+      __pFileCloser();
+
+    fflush(stdout);
+    fflush(stderr);
+  }
+
+#ifdef _DOS
+  __DosSetVect(0, __Int00DE);
+  __DosSetVect(1, __Int01DB);
+  __DosSetVect(3, __Int03BP);
+  __DosSetVect(4, __Int04OF);
+  __DosSetVect(6, __Int06UD);
+
+  DosTerminate(status);
+#endif // _DOS
+
+#ifdef _WINDOWS
+  ExitProcess(status);
+#endif // _WINDOWS
+}
+
 void _Exit(int status)
 {
-  ExitProcess(status);
+  __ExitInner(0, 0, status);
 }
 
 void exit(int status)
 {
-  if (__pAtExitIterator)
-    __pAtExitIterator();
-
-  if (__pFileCloser)
-    __pFileCloser();
-
-  fflush(stdout);
-  fflush(stderr);
-
-  ExitProcess(status);
+  __ExitInner(1, 1, status);
 }
-
-#endif // _WINDOWS
