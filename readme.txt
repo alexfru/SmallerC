@@ -7,10 +7,7 @@ that can then be assembled and linked into DOS, Windows and Linux programs.
 
 Code generation for MIPS CPUs is also supported (primarily for RetroBSD).
 
-The core compiler is capable of compiling its own source code.
-
-You can fully recompile the core compiler only with itself and NASM for the
-x86 platform (no linker is necessary).
+The compiler is capable of compiling itself.
 
 The core compiler comes with a linker and a compiler driver (the driver
 invokes the core compiler, the assembler, and the linker and supports
