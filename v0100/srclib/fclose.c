@@ -14,10 +14,14 @@ int fclose(FILE* f)
     return EOF;
 
   res = fflush(f);
-  if ((f->flags & _IOTERM) == 0) // don't close handles of stdin, stdout, stderr
+
+  // close(f->fd), unless f is one of unreopened stdin, stdout, stderr
+  // TBD??? Should I let go of stdin, stdout, stderr handles and close the underlying files???
+  if ((f->flags & _IOTERM) == 0)
   {
     if (close(f->fd) < 0)
       res = EOF;
+    f->fd = -1;
   }
 
   // Delete if temporary
@@ -25,18 +29,23 @@ int fclose(FILE* f)
   {
     remove(f->name);
     free(f->name);
-    f->name = NULL;
   }
+  f->name = NULL;
 
+  // Free buffers from set(v)buf()
   if (f->buf && f->buf != &f->c &&
-      f->next && // don't free buffers of stdin, stdout, stderr
-      !(f->flags & _IOEXTBUF)) // don't free buffers from set(v)buf()
+      !(f->flags & _IOEXTBUF))
   {
     free(f->buf);
-    f->buf = NULL;
   }
+  f->ptr = f->buf = NULL;
+  f->cnt = f->bufsz = 0;
 
-  if (f->next) // don't free global FILEs of stdin, stdout, stderr
+  f->flags = 0;
+
+  // free(f), unless f is one of stdin, stdout, stderr,
+  // which are needed around for freopen()
+  if (f->next)
   {
     f->next->prev = f->prev;
     f->prev->next = f->next;

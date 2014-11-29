@@ -38,5 +38,12 @@ int fflush(FILE* f)
     if (fflush1(f))
       res = EOF;
 
+  if (fflush1(stdin))
+    res = EOF;
+  if (fflush1(stdout))
+    res = EOF;
+  if (fflush1(stderr))
+    res = EOF;
+
   return res;
 }

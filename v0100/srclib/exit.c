@@ -48,8 +48,9 @@ void __ExitInner(int iterator, int flushclose, int status)
     if (__pFileCloser)
       __pFileCloser();
 
-    fflush(stdout);
-    fflush(stderr);
+    fclose(stdin);
+    fclose(stdout);
+    fclose(stderr);
   }
 
 #ifdef _DOS

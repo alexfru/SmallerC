@@ -48,6 +48,7 @@ stdout.c
 stderr.c
 fileno.c
 fopen.c
+freopen.c
 fflush.c
 remove.c
 rename.c

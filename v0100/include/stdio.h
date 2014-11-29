@@ -64,6 +64,7 @@ extern FILE *__stdin, *__stdout, *__stderr;
 #endif
 
 FILE* fopen(char*, char*);
+FILE* freopen(char*, char*, FILE*);
 int fflush(FILE*);
 int fclose(FILE*);
 int remove(char*);

@@ -388,8 +388,6 @@ int system(char* cmd)
 #endif
 
   // Flush everything
-  fflush(stdout);
-  fflush(stderr);
   fflush(NULL);
 
   if (DosExec(comspec, &eparams, &error))
