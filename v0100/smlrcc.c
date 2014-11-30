@@ -1136,92 +1136,83 @@ void AddSystemPaths(char* argv0)
 {
   char* epath;
   char* pinclude = NULL;
-  char* plib = NULL;
 
   (void)argv0;
 
   if (LinkStdLib && StdLibPath)
-    plib = SystemFileExists(StdLibPath, '/', NULL, LibName[OutputFormat]);
+    StdLib = SystemFileExists(StdLibPath, '/', NULL, LibName[OutputFormat]);
 
   epath = getenv("SMLRC");
   if (epath)
   {
-    pinclude = SystemFileExists(epath, '/', "include/", "limits.h");
-    if (pinclude)
-      *strrchr(pinclude, '/') = '\0';
-
-    if (LinkStdLib && !plib)
-      plib = SystemFileExists(epath, '/', "lib/", LibName[OutputFormat]);
-
-    if (pinclude && (plib || !LinkStdLib))
+    if (!pinclude)
     {
-      AddOption(&CompilerOptions, &CompilerOptionsLen, "-SI");
-      AddOption(&CompilerOptions, &CompilerOptionsLen, pinclude);
-      if (plib)
-        StdLib = plib;
-      return;
+      pinclude = SystemFileExists(epath, '/', "include/", "limits.h");
+      if (pinclude)
+        *strrchr(pinclude, '/') = '\0';
     }
+
+    if (LinkStdLib && !StdLib)
+      StdLib = SystemFileExists(epath, '/', "lib/", LibName[OutputFormat]);
+
+    if (pinclude && (StdLib || !LinkStdLib))
+      goto endsearch;
   }
 
 #ifdef HOST_LINUX
   epath = getenv("HOME");
   if (epath)
   {
-    pinclude = SystemFileExists(epath, '/', "smlrc/include/", "limits.h");
+    if (!pinclude)
+    {
+      pinclude = SystemFileExists(epath, '/', "smlrc/include/", "limits.h");
+      if (pinclude)
+        *strrchr(pinclude, '/') = '\0';
+    }
+
+    if (LinkStdLib && !StdLib)
+      StdLib = SystemFileExists(epath, '/', "smlrc/lib/", LibName[OutputFormat]);
+
+    if (pinclude && (StdLib || !LinkStdLib))
+      goto endsearch;
+  }
+
+  if (!pinclude)
+  {
+    pinclude = SystemFileExists("/usr/local/smlrc/include/", 0, NULL, "limits.h");
     if (pinclude)
       *strrchr(pinclude, '/') = '\0';
-
-    if (LinkStdLib && !plib)
-      plib = SystemFileExists(epath, '/', "smlrc/lib/", LibName[OutputFormat]);
-
-    if (pinclude && (plib || !LinkStdLib))
-    {
-      AddOption(&CompilerOptions, &CompilerOptionsLen, "-SI");
-      AddOption(&CompilerOptions, &CompilerOptionsLen, pinclude);
-      if (plib)
-        StdLib = plib;
-      return;
-    }
   }
 
-  pinclude = SystemFileExists("/usr/local/smlrc/include/", 0, NULL, "limits.h");
-  if (pinclude)
-    *strrchr(pinclude, '/') = '\0';
-
-  if (LinkStdLib && !plib)
-    plib = SystemFileExists("/usr/local/smlrc/lib/", 0, NULL, LibName[OutputFormat]);
-
-  if (pinclude && (plib || !LinkStdLib))
-  {
-    AddOption(&CompilerOptions, &CompilerOptionsLen, "-SI");
-    AddOption(&CompilerOptions, &CompilerOptionsLen, pinclude);
-    if (plib)
-      StdLib = plib;
-    return;
-  }
+  if (LinkStdLib && !StdLib)
+    StdLib = SystemFileExists("/usr/local/smlrc/lib/", 0, NULL, LibName[OutputFormat]);
+  // fallthrough to endsearch:
 #else
   epath = exepath(argv0);
   if (epath)
   {
-    pinclude = SystemFileExists(epath, 0, "../include/", "limits.h");
-    if (pinclude)
-      *strrchr(pinclude, '/') = '\0';
-
-    if (LinkStdLib && !plib)
-      plib = SystemFileExists(epath, 0, "../lib/", LibName[OutputFormat]);
-
-    if (pinclude && (plib || !LinkStdLib))
+    if (!pinclude)
     {
-      AddOption(&CompilerOptions, &CompilerOptionsLen, "-SI");
-      AddOption(&CompilerOptions, &CompilerOptionsLen, pinclude);
-      if (plib)
-        StdLib = plib;
-      return;
+      pinclude = SystemFileExists(epath, 0, "../include/", "limits.h");
+      if (pinclude)
+        *strrchr(pinclude, '/') = '\0';
     }
+
+    if (LinkStdLib && !StdLib)
+      StdLib = SystemFileExists(epath, 0, "../lib/", LibName[OutputFormat]);
   }
+  // fallthrough to endsearch:
 #endif
 
-// TBD??? Issue a warning if the location of the system headers and libraries wasn't found
+endsearch:
+
+  if (pinclude)
+  {
+    AddOption(&CompilerOptions, &CompilerOptionsLen, "-SI");
+    AddOption(&CompilerOptions, &CompilerOptionsLen, pinclude);
+  }
+
+  // TBD??? Issue a warning if the location of the system headers and libraries was niether provided nor found???
 }
 
 int main(int argc, char* argv[])

@@ -7685,7 +7685,7 @@ int main(int argc, char** argv)
       if (i + 1 < argc)
       {
         int len = strlen(argv[++i]) + 1;
-        if (argv[i][1] == 'I')
+        if (argv[i - 1][1] == 'I')
         {
           if (MAX_SEARCH_PATH - SearchPathsLen < len)
             //error("Path name too long\n");
