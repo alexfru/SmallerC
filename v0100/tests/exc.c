@@ -29,10 +29,12 @@ int main(int argc, char* argv[])
         {
           one /= zero; // #DE
         }
+/*
         else if (!strcmp(argv[1], "BP"))
         {
           asm("int3"); // #BP
         }
+*/
         else if (!strcmp(argv[1], "OF"))
         {
           asm("mov al, 0x7f\n"
@@ -49,7 +51,7 @@ int main(int argc, char* argv[])
   else
   {
     system("exc.exe DE");
-    system("exc.exe BP");
+//    system("exc.exe BP");
     system("exc.exe OF");
     system("exc.exe UD");
   }

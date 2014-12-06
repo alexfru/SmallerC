@@ -38,7 +38,9 @@ ___getSS:
 _ss dw 0
 
     extern ___DosSetVect
-    extern ___Int00DE, ___Int01DB, ___Int03BP, ___Int04OF, ___Int06UD
+    extern ___Int00DE, ___Int04OF, ___Int06UD
+;    extern ___Int01DB
+;    extern ___Int03BP
 
     ; These ISRs may be called on the stack that does not belong to the app
     ; (e.g. it could be internal DOS stack).
@@ -88,12 +90,12 @@ ___CtrlCIsr:
     push ___Int00DE
     push 0
     call ___DosSetVect
-    push ___Int01DB
-    push 1
-    call ___DosSetVect
-    push ___Int03BP
-    push 3
-    call ___DosSetVect
+;    push ___Int01DB
+;    push 1
+;    call ___DosSetVect
+;    push ___Int03BP
+;    push 3
+;    call ___DosSetVect
     push ___Int04OF
     push 4
     call ___DosSetVect

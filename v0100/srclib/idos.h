@@ -10,8 +10,8 @@ void __DosGetVect(int, unsigned short*);
 void __DosSetVect(int, unsigned short*);
 
 extern unsigned short __Int00DE[2];
-extern unsigned short __Int01DB[2];
-extern unsigned short __Int03BP[2];
+//extern unsigned short __Int01DB[2];
+//extern unsigned short __Int03BP[2];
 extern unsigned short __Int04OF[2];
 extern unsigned short __Int06UD[2];
 

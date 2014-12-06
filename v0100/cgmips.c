@@ -516,16 +516,18 @@ void GenJumpUncond(int label)
                         MipsOpNumLabel, label);
 }
 
-void GenJumpIfNotEqual(int val, int label)
+#ifndef USE_SWITCH_TAB
+void GenJumpIfEqual(int val, int label)
 {
   GenPrintInstr2Operands(MipsInstrLI, 0,
                          MipsOpRegT1, 0,
                          MipsOpConst, val);
-  GenPrintInstr3Operands(MipsInstrBNE, 0,
+  GenPrintInstr3Operands(MipsInstrBEQ, 0,
                          MipsOpRegV0, 0,
                          MipsOpRegT1, 0,
                          MipsOpNumLabel, label);
 }
+#endif
 
 void GenJumpIfZero(int label)
 {
@@ -1684,4 +1686,61 @@ void GenFin(void)
     if (OutputFormat != FormatFlat)
       puts2(CodeFooter);
   }
+
+#ifdef USE_SWITCH_TAB
+  if (SwitchJmpLabel)
+  {
+    char s[1 + 2 + (2 + CHAR_BIT * sizeof SwitchJmpLabel) / 3];
+    char *p = s + sizeof s;
+    int lbl = (LabelCnt += 3) - 3;
+
+    *--p = '\0';
+    p = lab2str(p, SwitchJmpLabel);
+    *--p = '_';
+    *--p = '_';
+
+    if (OutputFormat != FormatFlat)
+      puts2(CodeHeader);
+
+    GenLabel(p, 1);
+
+    puts2("\tlw\t$2, 0($4)\n"
+          "\tlw\t$31, 4($4)");
+    printf2("\tbeq\t$2, $0, "); GenPrintNumLabel(lbl + 2); // beq $2, $0, L3
+    puts2("");
+#ifdef REORDER_WORKAROUND
+    GenNop();
+#endif
+    GenNumLabel(lbl); // L1:
+    puts2("\taddiu\t$4, $4, 8\n"
+          "\tlw\t$6, 0($4)");
+    printf2("\tbne\t$6, $5, "); GenPrintNumLabel(lbl + 1); // bne $6, $6, L2
+    puts2("");
+#ifdef REORDER_WORKAROUND
+    GenNop();
+#endif
+    puts2("\tlw\t$31, 4($4)");
+    printf2("\tj "); GenPrintNumLabel(lbl + 2); // j L3
+    puts2("");
+#ifdef REORDER_WORKAROUND
+    GenNop();
+#endif
+    GenNumLabel(lbl + 1); // L2:
+    puts2("\taddiu\t$2, $2, -1");
+    printf2("\tbne\t$2, $0, "); GenPrintNumLabel(lbl); // bne $2, $0, L1
+    puts2("");
+#ifdef REORDER_WORKAROUND
+    GenNop();
+#endif
+    GenNumLabel(lbl + 2); // L3:
+    puts2("\taddiu\t$29, $29, 16\n"
+          "\tj\t$31");
+#ifdef REORDER_WORKAROUND
+    GenNop();
+#endif
+
+    if (OutputFormat != FormatFlat)
+      puts2(CodeFooter);
+  }
+#endif
 }

@@ -53,6 +53,7 @@ either expressed or implied, of the FreeBSD Project.
 #define NO_TYPEDEF_ENUM
 #define NO_FUNC_
 #define NO_EXTRA_WARNS
+#define NO_FOR_DECL
 #endif
 
 #ifndef __SMALLER_C__
@@ -172,7 +173,7 @@ int vfprintf(FILE*, char*, void*);
 #endif
 
 #ifndef SYNTAX_STACK_MAX
-#define SYNTAX_STACK_MAX (2048+512+32)
+#define SYNTAX_STACK_MAX (2048+512+64)
 #endif
 
 #ifndef MAX_FILE_NAME_LEN
@@ -366,7 +367,9 @@ void GenAddrData(int Size, char* Label, int ofs);
 void GenJumpUncond(int Label);
 void GenJumpIfZero(int Label);
 void GenJumpIfNotZero(int Label);
-void GenJumpIfNotEqual(int val, int Label);
+#ifndef USE_SWITCH_TAB
+void GenJumpIfEqual(int val, int Label);
+#endif
 
 void GenFxnProlog(void);
 void GenFxnEpilog(void);
@@ -481,6 +484,15 @@ int gotoLabels[MAX_GOTO_LABELS][2];
 // gotoLabStat[]: bit 1 = used (by "goto label;"), bit 0 = defined (with "label:")
 char gotoLabStat[MAX_GOTO_LABELS];
 int gotoLabCnt = 0;
+
+#ifndef MAX_CASES
+#define MAX_CASES 128
+#endif
+int Cases[MAX_CASES][2]; // [0] is case constant, [1] is case label number
+int CasesCnt = 0;
+#ifdef USE_SWITCH_TAB
+int SwitchJmpLabel; // label of the function to do table-based switch()
+#endif
 
 // Data structures to support #include
 int FileCnt = 0;
@@ -889,6 +901,15 @@ void UndoNonLabelIdents(int len)
       IdentTableLen += l;
       gotoLabels[i][0] = pto - IdentTable;
     }
+}
+
+void AddCase(int val, int label)
+{
+  if (CasesCnt >= MAX_CASES)
+    error("Case table exhausted\n");
+
+  Cases[CasesCnt][0] = val;
+  Cases[CasesCnt++][1] = label;
 }
 
 #ifndef NO_ANNOTATIONS
@@ -5267,7 +5288,7 @@ int ParseArrayDimension(int AllowEmptyDimension)
 }
 
 void ParseFxnParams(int tok);
-int ParseBlock(int BrkCntSwchTarget[4], int switchBody);
+int ParseBlock(int BrkCntTarget[2], int casesIdx);
 void AddFxnParamSymbols(int SyntaxPtr);
 
 int ParseBase(int tok, int base[2])
@@ -6960,7 +6981,7 @@ void AddFxnParamSymbols(int SyntaxPtr)
   }
 }
 
-int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
+int ParseStatement(int tok, int BrkCntTarget[2], int casesIdx)
 {
 /*
   labeled statements:
@@ -6991,7 +7012,7 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
   + return expression-opt ;
 */
   int gotUnary, synPtr,  constExpr, exprVal;
-  int brkCntSwchTarget[4];
+  int brkCntTarget[2];
   int statementNeeded;
 
   do
@@ -7012,7 +7033,7 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
       GenStartCommentLine(); printf2("{\n");
 #endif
       ParseLevel++;
-      tok = ParseBlock(BrkCntSwchTarget, switchBody / 2);
+      tok = ParseBlock(BrkCntTarget, casesIdx);
       ParseLevel--;
       if (tok != '}')
         //error("ParseStatement(): '}' expected. Unexpected token %s\n", GetTokenName(tok));
@@ -7110,9 +7131,9 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
       }
 
       tok = GetToken();
-      brkCntSwchTarget[0] = labelAfter; // break target
-      brkCntSwchTarget[1] = labelBefore; // continue target
-      tok = ParseStatement(tok, brkCntSwchTarget, 0);
+      brkCntTarget[0] = labelAfter; // break target
+      brkCntTarget[1] = labelBefore; // continue target
+      tok = ParseStatement(tok, brkCntTarget, casesIdx);
 
       GenJumpUncond(labelBefore);
       GenNumLabel(labelAfter);
@@ -7128,9 +7149,9 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
       GenNumLabel(labelBefore);
 
       tok = GetToken();
-      brkCntSwchTarget[0] = labelAfter; // break target
-      brkCntSwchTarget[1] = labelWhile; // continue target
-      tok = ParseStatement(tok, brkCntSwchTarget, 0);
+      brkCntTarget[0] = labelAfter; // break target
+      brkCntTarget[1] = labelWhile; // continue target
+      tok = ParseStatement(tok, brkCntTarget, casesIdx);
       if (tok != tokWhile)
         //error("ParseStatement(): 'while' expected after 'do statement'\n");
         errorUnexpectedToken(tok);
@@ -7236,7 +7257,7 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
       }
 
       tok = GetToken();
-      tok = ParseStatement(tok, BrkCntSwchTarget, 0);
+      tok = ParseStatement(tok, BrkCntTarget, casesIdx);
 
       // DONE: else
       if (tok == tokElse)
@@ -7247,7 +7268,7 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
         GenStartCommentLine(); printf2("else\n");
 #endif
         tok = GetToken();
-        tok = ParseStatement(tok, BrkCntSwchTarget, 0);
+        tok = ParseStatement(tok, BrkCntTarget, casesIdx);
         GenNumLabel(labelAfterElse);
       }
       else
@@ -7261,6 +7282,10 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
       int labelExpr3 = LabelCnt++;
       int labelBody = LabelCnt++;
       int labelAfter = LabelCnt++;
+#ifndef NO_FOR_DECL
+      int decl = 0;
+      int undoSymbolsPtr = 0, undoLocalOfs = 0, undoIdents = 0;
+#endif
 #ifndef NO_ANNOTATIONS
       GenStartCommentLine(); printf2("for\n");
 #endif
@@ -7270,16 +7295,35 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
         errorUnexpectedToken(tok);
 
       tok = GetToken();
-      if ((tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0, 0)) != ';')
-        //error("ParseStatement(): ';' expected after 'for ( expression'\n");
-        errorUnexpectedToken(tok);
-      if (gotUnary)
+#ifndef NO_FOR_DECL
+      if (TokenStartsDeclaration(tok, 1))
       {
-        GenExpr();
+        decl = 1;
+        undoSymbolsPtr = SyntaxStackCnt;
+        undoLocalOfs = CurFxnLocalOfs;
+        undoIdents = IdentTableLen;
+        // Declarations made in the first clause of for should not:
+        // - collide with previous outer declarations
+        // - be visible/exist outside for
+        // For this reason the declaration gets its own subscope.
+        PushSyntax('#'); // mark the beginning of a new scope
+        tok = ParseDecl(tok, NULL, 0, 0);
+      }
+      else
+      // fallthrough
+#endif
+      {
+        if ((tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0, 0)) != ';')
+          //error("ParseStatement(): ';' expected after 'for ( expression'\n");
+          errorUnexpectedToken(tok);
+        if (gotUnary)
+        {
+          GenExpr();
+        }
+        tok = GetToken();
       }
 
       GenNumLabel(labelBefore);
-      tok = GetToken();
       if ((tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0, 0)) != ';')
         //error("ParseStatement(): ';' expected after 'for ( expression ; expression'\n");
         errorUnexpectedToken(tok);
@@ -7325,12 +7369,22 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
 
       GenNumLabel(labelBody);
       tok = GetToken();
-      brkCntSwchTarget[0] = labelAfter; // break target
-      brkCntSwchTarget[1] = labelExpr3; // continue target
-      tok = ParseStatement(tok, brkCntSwchTarget, 0);
+      brkCntTarget[0] = labelAfter; // break target
+      brkCntTarget[1] = labelExpr3; // continue target
+      tok = ParseStatement(tok, brkCntTarget, casesIdx);
       GenJumpUncond(labelExpr3);
 
       GenNumLabel(labelAfter);
+
+#ifndef NO_FOR_DECL
+      // undo any declarations done in the for() parameter set. 
+      if (decl)
+      {
+        UndoNonLabelIdents(undoIdents); // remove all identifier names, except those of labels
+        SyntaxStackCnt = undoSymbolsPtr; // remove all params and locals
+        CurFxnLocalOfs = undoLocalOfs; // destroy on-stack local variables
+      } 
+#endif
     }
     else if (tok == tokBreak)
     {
@@ -7341,10 +7395,10 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
         //error("ParseStatement(): ';' expected\n");
         errorUnexpectedToken(tok);
       tok = GetToken();
-      if (BrkCntSwchTarget == NULL)
+      if (BrkCntTarget == NULL)
         //error("ParseStatement(): 'break' must be within 'while', 'for' or 'switch' statement\n");
         errorCtrlOutOfScope();
-      GenJumpUncond(BrkCntSwchTarget[0]);
+      GenJumpUncond(BrkCntTarget[0]);
     }
     else if (tok == tokCont)
     {
@@ -7355,13 +7409,21 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
         //error("ParseStatement(): ';' expected\n");
         errorUnexpectedToken(tok);
       tok = GetToken();
-      if (BrkCntSwchTarget == NULL || BrkCntSwchTarget[1] == 0)
+      if (BrkCntTarget == NULL || BrkCntTarget[1] == 0)
         //error("ParseStatement(): 'continue' must be within 'while' or 'for' statement\n");
         errorCtrlOutOfScope();
-      GenJumpUncond(BrkCntSwchTarget[1]);
+      GenJumpUncond(BrkCntTarget[1]);
     }
     else if (tok == tokSwitch)
     {
+      int undoCases = CasesCnt;
+      int brkLabel = LabelCnt++;
+#ifdef USE_SWITCH_TAB
+      int tblLabel = LabelCnt++;
+#else
+      int lbl = LabelCnt++;
+#endif
+      int i;
 #ifndef NO_ANNOTATIONS
       GenStartCommentLine(); printf2("switch\n");
 #endif
@@ -7384,61 +7446,122 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
       //error("ParseStatement(): unexpected 'void' expression in 'switch ( expression )'\n");
       scalarTypeCheck(synPtr);
 
+#ifdef USE_SWITCH_TAB
+      // Generate a call to the function that will do table-based switch()
+      if (!SwitchJmpLabel)
+        SwitchJmpLabel = LabelCnt++;
+
+      ins2(0, '(', SizeOfWord * 2);
+      push(',');
+      push2(tokIdent, AddNumericIdent__(tblLabel));
+      push(',');
+      push2(tokIdent, AddNumericIdent__(SwitchJmpLabel));
+      push2(')', SizeOfWord * 2);
+#else
+#endif
+
       GenExpr();
 
       tok = GetToken();
-      if (tok != '{')
-        //error("ParseStatement(): '{' expected after 'switch ( expression )'\n");
-        errorUnexpectedToken(tok);
 
-      brkCntSwchTarget[0] = LabelCnt++; // break target
-      brkCntSwchTarget[1] = 0; // continue target
-      if (BrkCntSwchTarget)
+#ifndef USE_SWITCH_TAB
+      // Skip the code for the cases
+      GenJumpUncond(lbl);
+#endif
+
+      brkCntTarget[0] = brkLabel; // break target
+      brkCntTarget[1] = 0; // continue target
+      if (BrkCntTarget)
       {
-        // preserve the continue target
-        brkCntSwchTarget[1] = BrkCntSwchTarget[1]; // continue target
+        // Preserve the continue target
+        brkCntTarget[1] = BrkCntTarget[1]; // continue target
       }
-      brkCntSwchTarget[2] = LabelCnt++; // default target
-      brkCntSwchTarget[3] = (LabelCnt += 2) - 2; // next case target
-/*
-    ParseBlock(0)
-      ParseStatement(0)
-        switch
-          ParseStatement(2)            // 2 needed to disallow new locals
-            {                          // { in switch(expr){
-              ParseBlock(1)            // new locals are allocated here
-                ParseStatement(1)      // 1 needed for case/default
-                  {                    // inner {} in switch(expr){{}}
-                    ParseBlock(0)
-                    ...
-                  switch               // another switch
-                    ParseStatement(2)  // needed to disallow new locals
-                    ...
-*/
-      GenJumpUncond(brkCntSwchTarget[3]); // next case target
 
-      tok = ParseStatement(tok, brkCntSwchTarget, 2);
+      // Reserve a slot in the case table for the default label
+      AddCase(0, 0);
 
-      // force 'break' if the last 'case'/'default' doesn't end with 'break'
-      GenJumpUncond(brkCntSwchTarget[0]);
+      tok = ParseStatement(tok, brkCntTarget, CasesCnt);
 
-      // next, non-existent case (reached after none of the 'cases' have matched)
-      GenNumLabel(brkCntSwchTarget[3]);
+      // If there's no default target, will use the break target as default
+      if (!Cases[undoCases][1])
+        Cases[undoCases][1] = brkLabel;
 
-      // if there's 'default', 'goto default;' after all unmatched 'cases'
-      if (brkCntSwchTarget[2] < 0)
-        GenJumpUncond(-brkCntSwchTarget[2]);
+#ifdef USE_SWITCH_TAB
+      GenNumLabel(brkLabel); // break label
 
-      GenNumLabel(brkCntSwchTarget[0]); // break label
+      // Generate the case/jump table
+
+      // Store the number of cases in the default slot
+      Cases[undoCases][0] = CasesCnt - undoCases - 1;
+
+      if (OutputFormat != FormatFlat)
+      {
+        puts2(CodeFooter);
+        puts2(DataHeader);
+      }
+      else
+      {
+        GenJumpUncond(brkLabel = LabelCnt++);
+      }
+
+      GenWordAlignment();
+
+      {
+        char s[1 + 2 + (2 + CHAR_BIT * sizeof tblLabel) / 3];
+        char *p = s + sizeof s;
+
+        *--p = '\0';
+        p = lab2str(p, tblLabel);
+        *--p = '_';
+        *--p = '_';
+
+        GenLabel(p, 1);
+      }
+
+      for (i = undoCases; i < CasesCnt; i++)
+      {
+        char s[1 + (2 + CHAR_BIT * sizeof(int)) / 3];
+        char *p = s + sizeof s;
+        *--p = '\0';
+        p = lab2str(p, Cases[i][1]);
+        GenIntData(SizeOfWord, Cases[i][0]);
+        GenAddrData(SizeOfWord, p, 0);
+      }
+
+      if (OutputFormat != FormatFlat)
+      {
+        puts2(DataFooter);
+        puts2(CodeHeader);
+      }
+      else
+      {
+        GenNumLabel(brkLabel);
+      }
+#else
+      // End of switch reached (not via break), skip conditional jumps
+      GenJumpUncond(brkLabel);
+      // Generate conditional jumps
+      GenNumLabel(lbl);
+      for (i = undoCases + 1; i < CasesCnt; i++)
+      {
+        GenJumpIfEqual(Cases[i][0], Cases[i][1]);
+      }
+      // If none of the cases matches, take the default case
+      if (Cases[undoCases][1] != brkLabel)
+        GenJumpUncond(Cases[undoCases][1]);
+      GenNumLabel(brkLabel); // break label
+#endif
+
+      CasesCnt = undoCases;
     }
     else if (tok == tokCase)
     {
-      int lnext;
+      int i;
 #ifndef NO_ANNOTATIONS
       GenStartCommentLine(); printf2("case\n");
 #endif
 
-      if (!switchBody)
+      if (!casesIdx)
         //error("ParseStatement(): 'case' must be within 'switch' statement\n");
         errorCtrlOutOfScope();
 
@@ -7451,16 +7574,16 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
         //error("ParseStatement(): constant integer expression expected in 'case expression :'\n");
         errorNotConst();
 
+      // Check for dups
+      exprVal = truncInt(exprVal);
+      for (i = casesIdx; i < CasesCnt; i++)
+        if (Cases[i][0] == exprVal)
+          error("Duplicate case value\n");
+
+      AddCase(exprVal, LabelCnt);
+      GenNumLabel(LabelCnt++); // case exprVal:
+
       tok = GetToken();
-
-      lnext = (LabelCnt += 2) - 2;
-
-      GenJumpUncond(BrkCntSwchTarget[3] + 1); // fallthrough
-      GenNumLabel(BrkCntSwchTarget[3]);
-      GenJumpIfNotEqual(exprVal, lnext);
-      GenNumLabel(BrkCntSwchTarget[3] + 1);
-
-      BrkCntSwchTarget[3] = lnext;
 
       // a statement is needed after "case:"
       statementNeeded = 1;
@@ -7471,24 +7594,22 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
       GenStartCommentLine(); printf2("default\n");
 #endif
 
-      if (!switchBody)
+      if (!casesIdx)
         //error("ParseStatement(): 'default' must be within 'switch' statement\n");
         errorCtrlOutOfScope();
+
+      if (Cases[casesIdx - 1][1])
+        //error("ParseStatement(): only one 'default' allowed in 'switch'\n");
+        errorUnexpectedToken(tok);
 
       tok = GetToken();
       if (tok != ':')
         //error("ParseStatement(): ':' expected after 'default'\n");
         errorUnexpectedToken(tok);
 
-      if (BrkCntSwchTarget[2] < 0)
-        //error("ParseStatement(): only one 'default' allowed in 'switch'\n");
-        errorUnexpectedToken(tokDefault);
-
       tok = GetToken();
 
-      GenNumLabel(BrkCntSwchTarget[2]); // default:
-
-      BrkCntSwchTarget[2] *= -1; // remember presence of default:
+      GenNumLabel(Cases[casesIdx - 1][1] = LabelCnt++); // default:
 
       // a statement is needed after "default:"
       statementNeeded = 1;
@@ -7559,8 +7680,8 @@ int ParseStatement(int tok, int BrkCntSwchTarget[4], int switchBody)
   return tok;
 }
 
-// TBD!!! think of ways of getting rid of switchBody
-int ParseBlock(int BrkCntSwchTarget[4], int switchBody)
+// TBD!!! think of ways of getting rid of casesIdx
+int ParseBlock(int BrkCntTarget[2], int casesIdx)
 {
   int tok = GetToken();
 
@@ -7587,13 +7708,13 @@ int ParseBlock(int BrkCntSwchTarget[4], int switchBody)
         GenNumLabel(AddGotoLabel(TokenIdentName, 1));
         tok = GetToken();
         // a statement is needed after "label:"
-        tok = ParseStatement(tok, BrkCntSwchTarget, switchBody);
+        tok = ParseStatement(tok, BrkCntTarget, casesIdx);
       }
 #endif
     }
     else if (ParseLevel > 0 || tok == tok_Asm)
     {
-      tok = ParseStatement(tok, BrkCntSwchTarget, switchBody);
+      tok = ParseStatement(tok, BrkCntTarget, casesIdx);
     }
     else
       //error("ParseBlock(): Unexpected token %s\n", GetTokenName(tok));

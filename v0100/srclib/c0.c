@@ -312,8 +312,8 @@ int setargs(int* pargc, char*** pargv)
 }
 
 unsigned short __Int00DE[2];
-unsigned short __Int01DB[2];
-unsigned short __Int03BP[2];
+//unsigned short __Int01DB[2];
+//unsigned short __Int03BP[2];
 unsigned short __Int04OF[2];
 unsigned short __Int06UD[2];
 
@@ -342,8 +342,8 @@ void __start__(void)
   // Register exception handlers
 
   __DosGetVect(0, __Int00DE);
-  __DosGetVect(1, __Int01DB);
-  __DosGetVect(3, __Int03BP);
+//  __DosGetVect(1, __Int01DB);
+//  __DosGetVect(3, __Int03BP);
   __DosGetVect(4, __Int04OF);
   __DosGetVect(6, __Int06UD);
 
@@ -357,8 +357,8 @@ extern unsigned short __getCS(void);
   farptr[1] = __getCS();
 #endif
   __DosSetVect(0, farptr);
-  __DosSetVect(1, farptr);
-  __DosSetVect(3, farptr);
+//  __DosSetVect(1, farptr);
+//  __DosSetVect(3, farptr);
   __DosSetVect(4, farptr);
   __DosSetVect(6, farptr);
 

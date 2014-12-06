@@ -55,8 +55,8 @@ void __ExitInner(int iterator, int flushclose, int status)
 
 #ifdef _DOS
   __DosSetVect(0, __Int00DE);
-  __DosSetVect(1, __Int01DB);
-  __DosSetVect(3, __Int03BP);
+//  __DosSetVect(1, __Int01DB);
+//  __DosSetVect(3, __Int03BP);
   __DosSetVect(4, __Int04OF);
   __DosSetVect(6, __Int06UD);
 
