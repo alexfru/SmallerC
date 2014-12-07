@@ -44,6 +44,7 @@ either expressed or implied, of the FreeBSD Project.
 
 int UseGp = 0;
 
+STATIC
 void GenInit(void)
 {
   // initialization of target-specific code generator
@@ -59,6 +60,7 @@ void GenInit(void)
 #endif
 }
 
+STATIC
 int GenInitParams(int argc, char** argv, int* idx)
 {
   (void)argc;
@@ -77,21 +79,25 @@ int GenInitParams(int argc, char** argv, int* idx)
   return 0;
 }
 
+STATIC
 void GenInitFinalize(void)
 {
   // finalization of initialization of target-specific code generator
 }
 
+STATIC
 void GenStartCommentLine(void)
 {
   printf2(" # ");
 }
 
+STATIC
 void GenWordAlignment(void)
 {
   printf2("\t.align 2\n");
 }
 
+STATIC
 void GenLabel(char* Label, int Static)
 {
   {
@@ -101,6 +107,7 @@ void GenLabel(char* Label, int Static)
   }
 }
 
+STATIC
 void GenPrintLabel(char* Label)
 {
   {
@@ -111,21 +118,25 @@ void GenPrintLabel(char* Label)
   }
 }
 
+STATIC
 void GenNumLabel(int Label)
 {
   printf2("$L%d:\n", Label);
 }
 
+STATIC
 void GenPrintNumLabel(int label)
 {
   printf2("$L%d", label);
 }
 
+STATIC
 void GenZeroData(unsigned Size)
 {
   printf2("\t.space\t%u\n", truncUint(Size)); // or ".fill size"
 }
 
+STATIC
 void GenIntData(int Size, int Val)
 {
   Val = truncInt(Val);
@@ -137,11 +148,13 @@ void GenIntData(int Size, int Val)
     printf2("\t.word\t%d\n", Val);
 }
 
+STATIC
 void GenStartAsciiString(void)
 {
   printf2("\t.ascii\t");
 }
 
+STATIC
 void GenAddrData(int Size, char* Label, int ofs)
 {
   ofs = truncInt(ofs);
@@ -198,6 +211,7 @@ void GenAddrData(int Size, char* Label, int ofs)
 //#define MipsInstrBGTZ   0x26
 //#define MipsInstrBreak  0x27
 
+STATIC
 void GenPrintInstr(int instr, int val)
 {
   char* p = "";
@@ -302,12 +316,14 @@ void GenPrintInstr(int instr, int val)
 #define MipsOpIndLocal                   MipsOpIndRegFp
 
 #ifdef REORDER_WORKAROUND
+STATIC
 void GenNop(void)
 {
   puts2("\tnop");
 }
 #endif
 
+STATIC
 void GenPrintOperand(int op, int val)
 {
   if (op >= MipsOpRegZero && op <= MipsOpRegRa)
@@ -348,22 +364,19 @@ void GenPrintOperand(int op, int val)
   }
 }
 
+STATIC
 void GenPrintOperandSeparator(void)
 {
   printf2(", ");
 }
 
+STATIC
 void GenPrintNewLine(void)
 {
   puts2("");
 }
 
-void GenPrintInstrNoOperand(int instr)
-{
-  GenPrintInstr(instr, 0);
-  GenPrintNewLine();
-}
-
+STATIC
 void GenPrintInstr1Operand(int instr, int instrval, int operand, int operandval)
 {
   GenPrintInstr(instr, instrval);
@@ -376,6 +389,7 @@ void GenPrintInstr1Operand(int instr, int instrval, int operand, int operandval)
 #endif
 }
 
+STATIC
 void GenPrintInstr2Operands(int instr, int instrval, int operand1, int operand1val, int operand2, int operand2val)
 {
   if (operand2 == MipsOpConst && operand2val == 0 &&
@@ -389,6 +403,7 @@ void GenPrintInstr2Operands(int instr, int instrval, int operand1, int operand1v
   GenPrintNewLine();
 }
 
+STATIC
 void GenPrintInstr3Operands(int instr, int instrval,
                             int operand1, int operand1val,
                             int operand2, int operand2val,
@@ -470,6 +485,7 @@ void GenPrintInstr3Operands(int instr, int instrval,
 #endif
 }
 
+STATIC
 void GenExtendRegIfNeeded(int reg, int opSz)
 {
   if (opSz == -1)
@@ -510,6 +526,7 @@ void GenExtendRegIfNeeded(int reg, int opSz)
   }
 }
 
+STATIC
 void GenJumpUncond(int label)
 {
   GenPrintInstr1Operand(MipsInstrJ, 0,
@@ -517,6 +534,7 @@ void GenJumpUncond(int label)
 }
 
 #ifndef USE_SWITCH_TAB
+STATIC
 void GenJumpIfEqual(int val, int label)
 {
   GenPrintInstr2Operands(MipsInstrLI, 0,
@@ -529,6 +547,7 @@ void GenJumpIfEqual(int val, int label)
 }
 #endif
 
+STATIC
 void GenJumpIfZero(int label)
 {
 #ifndef NO_ANNOTATIONS
@@ -540,6 +559,7 @@ void GenJumpIfZero(int label)
                          MipsOpNumLabel, label);
 }
 
+STATIC
 void GenJumpIfNotZero(int label)
 {
 #ifndef NO_ANNOTATIONS
@@ -551,6 +571,7 @@ void GenJumpIfNotZero(int label)
                          MipsOpNumLabel, label);
 }
 
+STATIC
 void GenFxnProlog(void)
 {
   GenPrintInstr3Operands(MipsInstrSubU, 0,
@@ -582,6 +603,7 @@ void GenFxnProlog(void)
   }
 }
 
+STATIC
 void GenLocalAlloc(int size)
 {
   GenPrintInstr3Operands(MipsInstrSubU, 0,
@@ -590,6 +612,7 @@ void GenLocalAlloc(int size)
                          MipsOpConst, size);
 }
 
+STATIC
 void GenFxnEpilog(void)
 {
   GenPrintInstr2Operands(MipsInstrMov, 0,
@@ -613,6 +636,7 @@ void GenFxnEpilog(void)
                         MipsOpRegRa, 0);
 }
 
+STATIC
 int GenGetBinaryOperatorInstr(int tok)
 {
   switch (tok)
@@ -675,6 +699,7 @@ int GenGetBinaryOperatorInstr(int tok)
   }
 }
 
+STATIC
 void GenPreIdentAccess(int label)
 {
   if (UseGp)
@@ -684,6 +709,7 @@ void GenPreIdentAccess(int label)
   puts2(")");
 }
 
+STATIC
 void GenPostIdentAccess(void)
 {
   if (UseGp)
@@ -691,6 +717,7 @@ void GenPostIdentAccess(void)
   puts2("\t.set\tat");
 }
 
+STATIC
 void GenReadIdent(int regDst, int opSz, int label)
 {
   int instr = MipsInstrLW;
@@ -717,6 +744,7 @@ void GenReadIdent(int regDst, int opSz, int label)
   GenPostIdentAccess();
 }
 
+STATIC
 void GenReadLocal(int regDst, int opSz, int ofs)
 {
   int instr = MipsInstrLW;
@@ -741,6 +769,7 @@ void GenReadLocal(int regDst, int opSz, int ofs)
                          MipsOpIndRegFp, ofs);
 }
 
+STATIC
 void GenReadIndirect(int regDst, int regSrc, int opSz)
 {
   int instr = MipsInstrLW;
@@ -765,6 +794,7 @@ void GenReadIndirect(int regDst, int regSrc, int opSz)
                          regSrc + MipsOpIndRegZero, 0);
 }
 
+STATIC
 void GenWriteIdent(int regSrc, int opSz, int label)
 {
   int instr = MipsInstrSW;
@@ -783,6 +813,7 @@ void GenWriteIdent(int regSrc, int opSz, int label)
   GenPostIdentAccess();
 }
 
+STATIC
 void GenWriteLocal(int regSrc, int opSz, int ofs)
 {
   int instr = MipsInstrSW;
@@ -799,6 +830,7 @@ void GenWriteLocal(int regSrc, int opSz, int ofs)
                          MipsOpIndRegFp, ofs);
 }
 
+STATIC
 void GenWriteIndirect(int regDst, int regSrc, int opSz)
 {
   int instr = MipsInstrSW;
@@ -815,6 +847,7 @@ void GenWriteIndirect(int regDst, int regSrc, int opSz)
                          regDst + MipsOpIndRegZero, 0);
 }
 
+STATIC
 void GenIncDecIdent(int regDst, int opSz, int label, int tok)
 {
   int instr = MipsInstrAddU;
@@ -831,6 +864,7 @@ void GenIncDecIdent(int regDst, int opSz, int label, int tok)
   GenExtendRegIfNeeded(regDst, opSz);
 }
 
+STATIC
 void GenIncDecLocal(int regDst, int opSz, int ofs, int tok)
 {
   int instr = MipsInstrAddU;
@@ -847,6 +881,7 @@ void GenIncDecLocal(int regDst, int opSz, int ofs, int tok)
   GenExtendRegIfNeeded(regDst, opSz);
 }
 
+STATIC
 void GenIncDecIndirect(int regDst, int regSrc, int opSz, int tok)
 {
   int instr = MipsInstrAddU;
@@ -863,6 +898,7 @@ void GenIncDecIndirect(int regDst, int regSrc, int opSz, int tok)
   GenExtendRegIfNeeded(regDst, opSz);
 }
 
+STATIC
 void GenPostIncDecIdent(int regDst, int opSz, int label, int tok)
 {
   int instr = MipsInstrAddU;
@@ -883,6 +919,7 @@ void GenPostIncDecIdent(int regDst, int opSz, int label, int tok)
   GenExtendRegIfNeeded(regDst, opSz);
 }
 
+STATIC
 void GenPostIncDecLocal(int regDst, int opSz, int ofs, int tok)
 {
   int instr = MipsInstrAddU;
@@ -903,6 +940,7 @@ void GenPostIncDecLocal(int regDst, int opSz, int ofs, int tok)
   GenExtendRegIfNeeded(regDst, opSz);
 }
 
+STATIC
 void GenPostIncDecIndirect(int regDst, int regSrc, int opSz, int tok)
 {
   int instr = MipsInstrAddU;
@@ -926,6 +964,7 @@ void GenPostIncDecIndirect(int regDst, int regSrc, int opSz, int tok)
 int CanUseTempRegs;
 int TempsUsed;
 
+STATIC
 void GenPushReg(int reg)
 {
   if (CanUseTempRegs && TempsUsed < 6)
@@ -949,6 +988,7 @@ void GenPushReg(int reg)
   TempsUsed++;
 }
 
+STATIC
 int GenPopReg(int reg)
 {
   TempsUsed--;
@@ -971,6 +1011,7 @@ int GenPopReg(int reg)
 
 // Original, primitive stack-based code generator
 // DONE: test 32-bit code generation
+STATIC
 void GenExpr0(void)
 {
   int i;
@@ -1548,6 +1589,7 @@ void GenExpr0(void)
   }
 }
 
+STATIC
 unsigned GenStrData(int generatingCode, unsigned requiredLen)
 {
   int i;
@@ -1641,12 +1683,14 @@ unsigned GenStrData(int generatingCode, unsigned requiredLen)
   return total;
 }
 
+STATIC
 void GenExpr(void)
 {
   GenStrData(1, 0);
   GenExpr0();
 }
 
+STATIC
 void GenFin(void)
 {
   if (StructCpyLabel)
