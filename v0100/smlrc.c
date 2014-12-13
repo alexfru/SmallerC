@@ -3797,7 +3797,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
         }
 
         if (SyntaxStack[*ExprTypeSynPtr][0] == tokUnsigned && tok == tokRShift)
-            stack[oldIdxRight + 1 - (oldSpRight - sp)][0] = tokURShift;
+          stack[oldIdxRight + 1 - (oldSpRight - sp)][0] = tokURShift;
 
         // ignore RightExprTypeSynPtr for the purpose of promotion/conversion of the result of <</>>
         RightExprTypeSynPtr = SymIntSynPtr;
@@ -4215,10 +4215,12 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
         {
         case tokAssignDiv: t = tokAssignUDiv; break;
         case tokAssignMod: t = tokAssignUMod; break;
-        case tokAssignRSh: t = tokAssignURSh; break;
+        case tokAssignRSh:
+          if (SyntaxStack[*ExprTypeSynPtr][0] == tokUnsigned)
+            t = tokAssignURSh;
+          break;
         }
-        if (t != tok)
-          stack[oldIdxRight + 1 - (oldSpRight - sp)][0] = t;
+        stack[oldIdxRight + 1 - (oldSpRight - sp)][0] = t;
       }
 
       *ConstExpr = 0;
