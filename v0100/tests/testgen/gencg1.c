@@ -940,7 +940,6 @@ int main(int argc, char* argv[])
     printf("extern char StAtIcAsSeRt[((-1 >> 1) == -1) ? 1 : -1];\n");
     printf("extern char StAtIcAsSeRt[(sizeof(short) == 2) ? 1 : -1];\n");
     printf("extern char StAtIcAsSeRt[(sizeof(int) == 4) ? 1 : -1];\n");
-    printf("extern char StAtIcAsSeRt[(sizeof(size_t) == 4) ? 1 : -1];\n");
     printf("\n");
   }
   printf("int passthru(int x) { return x; }\n\n");
