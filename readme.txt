@@ -13,8 +13,7 @@ The core compiler comes with a linker and a compiler driver (the driver
 invokes the core compiler, the assembler, and the linker and supports
 options similar to those of gcc).
 
-The standard C library is work-in-progress and it's close to completion
-for DOS and Windows.
+The standard C library is work-in-progress and it's close to completion.
 
 See the Wiki for more up-to-date details:
 http://github.com/alexfru/SmallerC/wiki
