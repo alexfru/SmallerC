@@ -70,3 +70,14 @@ int close(int fd)
 }
 
 #endif // _WINDOWS
+
+#ifdef _LINUX
+
+int close(int fd)
+{
+  asm("mov eax, 6\n" // sys_close
+      "mov ebx, [ebp + 8]\n"
+      "int 0x80");
+}
+
+#endif // _LINUX

@@ -61,3 +61,17 @@ off_t lseek(int fd, off_t offset, int whence)
 }
 
 #endif // _WINDOWS
+
+
+#ifdef _LINUX
+
+off_t lseek(int fd, off_t offset, int whence)
+{
+  asm("mov eax, 19\n" // sys_lseek
+      "mov ebx, [ebp + 8]\n"
+      "mov ecx, [ebp + 12]\n"
+      "mov edx, [ebp + 16]\n"
+      "int 0x80");
+}
+
+#endif // _LINUX

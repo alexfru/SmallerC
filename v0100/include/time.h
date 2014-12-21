@@ -22,7 +22,11 @@ typedef unsigned long time_t;
 #endif
 
 #ifdef __SMALLER_C_32__
+#ifndef _LINUX
 typedef unsigned long clock_t;
+#else
+typedef long clock_t;
+#endif
 #endif
 
 #ifdef _DOS
@@ -33,9 +37,13 @@ typedef unsigned long clock_t;
 #define CLOCKS_PER_SEC 1000 // clock() uses GetTickCount()
 #endif
 
+#ifdef _LINUX
+#define CLOCKS_PER_SEC 1000000 // clock() based on times()'s tms_utime + tms_stime
+#endif
+
 struct tm
 {
-  int tm_sec;   // seconds after the minute - [0, 60]
+  int tm_sec;   // seconds after the minute - [0, 59]
   int tm_min;   // minutes after the hour - [0, 59]
   int tm_hour;  // hours since midnight - [0, 23]
   int tm_mday;  // day of the month - [1, 31]

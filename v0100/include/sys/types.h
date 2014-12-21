@@ -42,4 +42,9 @@ typedef unsigned long time_t;
 #endif
 #endif
 
+#ifndef __PID_T_DEF
+#define __PID_T_DEF
+typedef int pid_t;
+#endif
+
 #endif

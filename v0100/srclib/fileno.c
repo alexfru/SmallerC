@@ -4,7 +4,7 @@
 */
 #include "istdio.h"
 
-#ifdef _DOS
+#ifndef _WINDOWS
 
 int fileno(FILE* f)
 {
@@ -15,7 +15,7 @@ int fileno(FILE* f)
   return f->fd;
 }
 
-#endif // _DOS
+#endif // !_WINDOWS
 
 #ifdef _WINDOWS
 

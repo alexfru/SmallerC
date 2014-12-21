@@ -64,3 +64,14 @@ int unlink(char* name)
 }
 
 #endif // _WINDOWS
+
+#ifdef _LINUX
+
+int unlink(char* name)
+{
+  asm("mov eax, 10\n" // sys_unlink
+      "mov ebx, [ebp + 8]\n"
+      "int 0x80");
+}
+
+#endif // _LINUX

@@ -477,3 +477,16 @@ void __start__(void)
 }
 
 #endif // _WINDOWS
+
+#ifdef _LINUX
+
+char** __environ;
+
+void __start__(int argc, char** argv)
+{
+  __environ = argv + argc + 1;
+
+  exit(main(argc, argv));
+}
+
+#endif // _LINUX

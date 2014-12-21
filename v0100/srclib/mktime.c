@@ -58,3 +58,29 @@ time_t mktime(struct tm* tm)
 }
 
 #endif // _WINDOWS
+
+#ifdef _LINUX
+
+static
+int SysGettimeofday(long tv[2], int tz[2])
+{
+  asm("mov eax, 78\n" // sys_gettimeofday
+      "mov ebx, [ebp + 8]\n"
+      "mov ecx, [ebp + 12]\n"
+      "int 0x80");
+}
+
+// mktime() must take local time and return UTC/GMT time
+time_t mktime(struct tm* tm)
+{
+  // TBD??? struct timezone (or the whole gettimeofday()) is obsolete per POSIX 2008, use something else???
+  // TBD??? honor other TZ settings???
+  time_t tt = __buildtime(tm);
+  long tv[2];
+  int tz[2] = { 0 };
+  if (SysGettimeofday(tv, tz) == 0)
+    tt += tz[0] * 60;
+  return tt;
+}
+
+#endif // _LINUX

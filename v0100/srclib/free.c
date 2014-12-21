@@ -19,8 +19,11 @@ void free(void* ptr)
 }
 
 #endif // __HUGE__
+#endif // _DOS
 
-#ifdef __SMALLER_C_16__
+#ifndef __HUGE__
+#ifndef _WINDOWS
+
 #include "mm.h"
 
 void free(void* ptr)
@@ -56,9 +59,9 @@ void free(void* ptr)
     nxtnxtblk[-1] = sz;
   }
 }
-#endif
 
-#endif // _DOS
+#endif // !_WINDOWS
+#endif // !__HUGE__
 
 #ifdef _WINDOWS
 

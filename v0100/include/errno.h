@@ -7,6 +7,6 @@
 
 extern int errno;
 
-#define ERANGE 1
+#define ERANGE 34
 
 #endif

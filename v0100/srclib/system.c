@@ -472,3 +472,92 @@ end:
 }
 
 #endif // _WINDOWS
+
+#ifdef _LINUX
+
+#include <sys/types.h>
+
+static
+pid_t SysFork(void)
+{
+  asm("mov eax, 2\n" // sys_fork
+      "int 0x80");
+}
+
+static
+pid_t SysWaitpid(pid_t pid, int* status, int options)
+{
+  asm("mov eax, 7\n" // sys_waitpid
+      "mov ebx, [ebp + 8]\n"
+      "mov ecx, [ebp + 12]\n"
+      "mov edx, [ebp + 16]\n"
+      "int 0x80");
+}
+
+static
+int SysExecve(char* path, char* argv[], char* envp[])
+{
+  asm("mov eax, 11\n" // sys_execve
+      "mov ebx, [ebp + 8]\n"
+      "mov ecx, [ebp + 12]\n"
+      "mov edx, [ebp + 16]\n"
+      "int 0x80");
+}
+
+extern char** __environ;
+
+int system(char* cmd)
+{
+  char *comspec;
+  int res = -1;
+  char* argv[4] = { 0 };
+  pid_t pid;
+  int status;
+
+  comspec = getenv("SHELL");
+
+  if (!cmd)
+  {
+    res = comspec != NULL;
+    goto end;
+  }
+
+  if (!comspec)
+  {
+    goto end;
+  }
+
+  if ((pid = SysFork()) == -1)
+  {
+    goto end;
+  }
+
+  if (pid)
+  {
+    if (SysWaitpid(-1, &status, 0) != pid)
+    {
+      goto end;
+    }
+
+    // The caller will need to apply WEXITSTATUS() to the value to get process exit status,
+    // IOW, take bits 8 through 15 of the value returned by system().
+    res = status;
+  }
+  else
+  {
+    argv[0] = comspec;
+    if (*cmd)
+    {
+      argv[1] = "-c";
+      argv[2] = cmd;
+    }
+    SysExecve(argv[0], argv, __environ);
+    _Exit(-1);
+  }
+
+end:
+
+  return res;
+}
+
+#endif // _LINUX

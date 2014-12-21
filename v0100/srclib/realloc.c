@@ -57,9 +57,13 @@ void* realloc(void* ptr, unsigned size)
     return 0;
   }
 }
-#endif // __HUGE__
 
-#ifdef __SMALLER_C_16__
+#endif // __HUGE__
+#endif // _DOS
+
+#ifndef __HUGE__
+#ifndef _WINDOWS
+
 #include "mm.h"
 
 void* realloc(void* ptr, unsigned size)
@@ -108,9 +112,10 @@ void* realloc(void* ptr, unsigned size)
     }
   }
 }
-#endif // __SMALLER_C_16__
 
-#endif // _DOS
+#endif // !_WINDOWS
+#endif // !__HUGE__
+
 
 #ifdef _WINDOWS
 

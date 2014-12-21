@@ -64,9 +64,7 @@ int __lseek(int fd, fpos_t* offset, int whence)
 
 #endif // _DOS
 
-#ifdef _WINDOWS
-
-#include "iwin32.h"
+#ifndef _DOS
 
 int __lseek(int fd, fpos_t* offset, int whence)
 {
@@ -85,4 +83,4 @@ int __lseek(int fd, fpos_t* offset, int whence)
   return -1;
 }
 
-#endif // _WINDOWS
+#endif // !_DOS

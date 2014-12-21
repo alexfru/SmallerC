@@ -187,3 +187,16 @@ int open(char* name, int oflag, ...)
 }
 
 #endif // _WINDOWS
+
+#ifdef _LINUX
+
+int open(char* name, int oflag, ...)
+{
+  asm("mov eax, 5\n" // sys_open
+      "mov ebx, [ebp + 8]\n"
+      "mov ecx, [ebp + 12]\n"
+      "mov edx, [ebp + 16]\n" // may read garbage, but shouldn't crash
+      "int 0x80");
+}
+
+#endif // _LINUX

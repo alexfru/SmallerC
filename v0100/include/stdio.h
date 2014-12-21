@@ -63,6 +63,13 @@ extern FILE *__stdin, *__stdout, *__stderr;
 #define TMP_MAX 10000
 #endif
 
+#ifdef _LINUX
+#define FOPEN_MAX 20
+#define FILENAME_MAX 4096
+#define L_tmpnam 20
+#define TMP_MAX 10000
+#endif
+
 FILE* fopen(char*, char*);
 FILE* freopen(char*, char*, FILE*);
 int fflush(FILE*);

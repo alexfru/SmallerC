@@ -79,3 +79,23 @@ int isatty(int fd)
 }
 
 #endif // _WINDOWS
+
+#ifdef _LINUX
+
+static
+int SysIoctl(int fd, int cmd, ...)
+{
+  asm("mov eax, 54\n" // sys_ioctl
+      "mov ebx, [ebp + 8]\n"
+      "mov ecx, [ebp + 12]\n"
+      "mov edx, [ebp + 16]\n" // may read garbage, but shouldn't crash
+      "int 0x80");
+}
+
+int isatty(int fd)
+{
+  unsigned char termios[60/*sizeof(struct termios)*/];
+  return SysIoctl(fd, 0x00005401/*TCGETS*/, termios) == 0;
+}
+
+#endif // _LINUX

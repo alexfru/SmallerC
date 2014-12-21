@@ -107,3 +107,14 @@ time_t time(time_t* t)
 }
 
 #endif // _WINDOWS
+
+#ifdef _LINUX
+
+time_t time(time_t* t)
+{
+  asm("mov eax, 13\n" // sys_time
+      "mov ebx, [ebp + 8]\n"
+      "int 0x80");
+}
+
+#endif // _LINUX

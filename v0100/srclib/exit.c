@@ -38,6 +38,18 @@ void DosTerminate(int e)
 
 #endif // _WINDOWS
 
+#ifdef _LINUX
+
+static
+void SysExit(int status)
+{
+  asm("mov eax, 1\n" // sys_exit
+      "mov ebx, [ebp + 8]\n"
+      "int 0x80");
+}
+
+#endif // _LINUX
+
 void __ExitInner(int iterator, int flushclose, int status)
 {
   if (iterator && __pAtExitIterator)
@@ -66,6 +78,10 @@ void __ExitInner(int iterator, int flushclose, int status)
 #ifdef _WINDOWS
   ExitProcess(status);
 #endif // _WINDOWS
+
+#ifdef _LINUX
+  SysExit(status);
+#endif // _LINUX
 }
 
 void _Exit(int status)

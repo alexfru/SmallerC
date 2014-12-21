@@ -129,3 +129,16 @@ ssize_t write(int fd, void* buf, size_t size)
 }
 
 #endif // _WINDOWS
+
+#ifdef _LINUX
+
+ssize_t write(int fd, void* buf, size_t size)
+{
+  asm("mov eax, 4\n" // sys_write
+      "mov ebx, [ebp + 8]\n"
+      "mov ecx, [ebp + 12]\n"
+      "mov edx, [ebp + 16]\n"
+      "int 0x80");
+}
+
+#endif // _LINUX

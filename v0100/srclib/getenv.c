@@ -73,7 +73,7 @@ char* getenv(char* name)
   unsigned env = peek(psp, 0x2c);
   unsigned nlen = strlen(name);
   unsigned i, start;
-  
+
   for (start = i = 0; ; i++)
   {
     int c = peekb(env, i);
@@ -168,3 +168,23 @@ err:
 }
 
 #endif // _WINDOWS
+
+#ifdef _LINUX
+
+extern char** __environ;
+
+char* getenv(char* name)
+{
+  char** p = __environ;
+  size_t l = strlen(name);
+  while (*p)
+    if (strlen(*p) > l &&
+        !strncmp(*p, name, l) &&
+        (*p)[l] == '=')
+      return *p + l + 1;
+    else
+      ++p;
+  return NULL;
+}
+
+#endif // _LINUX

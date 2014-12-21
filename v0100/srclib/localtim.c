@@ -63,3 +63,30 @@ struct tm* localtime(time_t* t)
 }
 
 #endif // _WINDOWS
+
+#ifdef _LINUX
+
+static
+int SysGettimeofday(long tv[2], int tz[2])
+{
+  asm("mov eax, 78\n" // sys_gettimeofday
+      "mov ebx, [ebp + 8]\n"
+      "mov ecx, [ebp + 12]\n"
+      "int 0x80");
+}
+
+// localtime() must take UTC/GMT time and return local time
+struct tm* localtime(time_t* t)
+{
+  // TBD??? struct timezone (or the whole gettimeofday()) is obsolete per POSIX 2008, use something else???
+  // TBD??? honor other TZ settings???
+  time_t tt = *t;
+  long tv[2];
+  int tz[2] = { 0 };
+  t = &tt;
+  if (SysGettimeofday(tv, tz) == 0)
+    tt -= tz[0] * 60;
+  return __breaktime(t);
+}
+
+#endif // _LINUX

@@ -26,14 +26,72 @@ void* malloc(unsigned size)
 }
 
 #endif // __HUGE__
+#endif // _DOS
 
-#ifdef __SMALLER_C_16__
+
+#ifdef _LINUX
+
+static
+char* SysBrk(char* newBreak)
+{
+  asm("mov eax, 45\n" // sys_brk
+      "mov ebx, [ebp + 8]\n"
+      "int 0x80");
+}
+
+static char* CurBreak;
+
+void* __sbrk(int increment)
+{
+  char *p;
+
+  if (!CurBreak)
+  {
+    CurBreak = SysBrk(0);
+    if ((unsigned)CurBreak + 1 <= 1) // error if SysBrk() returns -1 or 0
+    {
+      CurBreak = 0;
+      return (void*)-1;
+    }
+  }
+
+  if (increment >= 0)
+  {
+    if ((unsigned)CurBreak + increment < (unsigned)CurBreak)
+    {
+      return (void*)-1;
+    }
+  }
+  else
+  {
+    if ((unsigned)CurBreak + increment >= (unsigned)CurBreak)
+    {
+      return (void*)-1;
+    }
+  }
+
+  p = SysBrk(CurBreak + increment);
+  if (p != CurBreak + increment)
+    return (void*)-1;
+
+  return (CurBreak += increment) - increment;
+}
+
+#endif // _LINUX
+
+
+#ifndef __HUGE__
+#ifndef _WINDOWS
+
 #include "mm.h"
 
 unsigned __heap_start;
 unsigned __heap_stop;
 
-static int init(void)
+#ifdef _DOS
+
+static
+int init(void)
 {
   unsigned start = (unsigned)&_stop_alldata__;
   unsigned stop = (unsigned)&_start_stack__;
@@ -71,6 +129,13 @@ static int init(void)
   //
   // address 0xFFFF
   //
+  //
+  // The above is given for 16-bit versions of malloc()/realloc()/free in the tiny and small
+  // memory models in DOS.
+  //
+  // In 32-bit (s)brk-based version in Linux, the layout is the same, but the header/footer
+  // size is doubled. The alignment is doubled to 16 bytes as well.
+  //
 
   start = ((start + HEADER_FOOTER_SZ - 1) & -HEADER_FOOTER_SZ) | HEADER_FOOTER_SZ; // start or next odd multiple of 4; if we add 4 to it, it will be a multiple of 8
   stop = ((stop - HEADER_FOOTER_SZ) & -HEADER_FOOTER_SZ) | HEADER_FOOTER_SZ; // stop or previous odd multiple of 4
@@ -84,8 +149,8 @@ static int init(void)
   heapsz = stop - start - 2*HEADER_FOOTER_SZ;
 
   *((unsigned*)start + 0) = heapsz;
-  *((unsigned*)start + 1) = 0;
-  *((unsigned*)stop - 2) = 0;
+  *((unsigned*)start + 1) = 0; // free
+  *((unsigned*)stop - 2) = 0; // free
   *((unsigned*)stop - 1) = heapsz;
 
   __heap_start = start;
@@ -93,10 +158,48 @@ static int init(void)
   return 0;
 }
 
+#endif // _DOS
+
+#ifdef _LINUX
+
+static
+int init(void)
+{
+  unsigned start0, start, stop;
+
+  start0 = (unsigned)__sbrk(0);
+  if ((int)start0 == -1)
+    return -1;
+
+  // Create an initial block of zero size with a header and a footer
+
+  start = ((start0 + HEADER_FOOTER_SZ - 1) & -HEADER_FOOTER_SZ) | HEADER_FOOTER_SZ; // start or next odd multiple of 8; if we add 8 to it, it will be a multiple of 16
+  stop = start + 2*HEADER_FOOTER_SZ;
+
+  if ((int)__sbrk((start - start0) + 2*HEADER_FOOTER_SZ) == -1)
+    return -1;
+
+  *((unsigned*)start + 0) = 0;
+  *((unsigned*)start + 1) = 0; // free
+  *((unsigned*)stop - 2) = 0; // free
+  *((unsigned*)stop - 1) = 0;
+
+  __heap_start = start;
+  __heap_stop = stop;
+
+  return 0;
+}
+
+#endif // _LINUX
+
 void* malloc(unsigned size)
 {
   static int uninitialized = -1;
   unsigned* blk;
+#ifdef _LINUX
+  unsigned* last;
+  unsigned togrow;
+#endif
 
   if (uninitialized)
   {
@@ -110,6 +213,9 @@ void* malloc(unsigned size)
 
   size = (size + 2*HEADER_FOOTER_SZ - 1) & -2*HEADER_FOOTER_SZ;
 
+#ifdef _LINUX
+  last =
+#endif
   blk = (unsigned*)__heap_start;
 
   while ((unsigned)blk < __heap_stop)
@@ -140,14 +246,43 @@ void* malloc(unsigned size)
       return (void*)((unsigned)blk + HEADER_FOOTER_SZ);
     }
 
+#ifdef _LINUX
+    last = blk;
+#endif
     blk = nxtblk;
   }
 
-  return 0;
-}
+#ifdef _LINUX
+  if (!last[1]) // if last block is free, it will be reused
+  {
+    togrow = size - last[0];
+    blk = last;
+  }
+  else
+  {
+    togrow = size + 2*HEADER_FOOTER_SZ;
+    if ((int)togrow <= 0)
+      return 0;
+    blk = (unsigned*)__heap_stop;
+  }
+
+  if ((int)__sbrk(togrow) != -1)
+  {
+    unsigned* nxtblk = (unsigned*)((unsigned)blk + 2*HEADER_FOOTER_SZ + size);
+    blk[0] = size;
+    blk[1] = 1; // allocated
+    nxtblk[-2] = 1; // allocated
+    nxtblk[-1] = size;
+    __heap_stop += togrow;
+    return (void*)((unsigned)blk + HEADER_FOOTER_SZ);
+  }
 #endif
 
-#endif // _DOS
+  return 0;
+}
+
+#endif // !_WINDOWS
+#endif // !__HUGE__
 
 #ifdef _WINDOWS
 
@@ -155,7 +290,7 @@ void* malloc(unsigned size)
 
 void* malloc(unsigned size)
 {
-  return HeapAlloc(GetProcessHeap(), 0, size);
+  return HeapAlloc(GetProcessHeap(), 0, size); // 8-byte-aligned
 }
 
 #endif // _WINDOWS

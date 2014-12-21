@@ -862,9 +862,10 @@ void Link(void)
 #ifdef HOST_LINUX
   if (OutputFormat == FormatElf32 && OutName)
   {
-    char* cmd = Malloc(sizeof "chmod +x" + strlen(OutName) + 1/*NUL*/);
-    strcpy(cmd, "chmod +x ");
-    strcat(cmd, OutName);
+    char* cmd = NULL;
+    size_t cmdlen = 0;
+    AddOptions(&cmd, &cmdlen, "chmod +x");
+    AddOption(&cmd, &cmdlen, OutName);
     System(cmd);
     free(cmd);
   }

@@ -47,3 +47,34 @@ clock_t clock(void)
 }
 
 #endif // _WINDOWS
+
+#ifdef _LINUX
+
+struct tms
+{
+  clock_t tms_utime;
+  clock_t tms_stime;
+  clock_t tms_cutime;
+  clock_t tms_cstime;
+};
+
+static
+clock_t SysTimes(struct tms* buf)
+{
+  asm("mov eax, 43\n" // sys_times
+      "mov ebx, [ebp + 8]\n"
+      "int 0x80");
+}
+
+clock_t clock(void)
+{
+  struct tms tms;
+  if (SysTimes(&tms) == (clock_t)-1)
+    return (clock_t)-1;
+  // tms members are in clock ticks, there are sysconf(_SC_CLK_TCK) (always 100?) clock ticks per second in Linux.
+  // OTOH, CLOCKS_PER_SEC is 1000000 (mandated by POSIX).
+  // TBD??? Can sysconf(_SC_CLK_TCK) be obtained somehow w/o being hard-coded here and w/o including system headers?
+  return (tms.tms_utime + tms.tms_stime) * (CLOCKS_PER_SEC / 100);
+}
+
+#endif // _LINUX

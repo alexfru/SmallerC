@@ -69,6 +69,7 @@ static unsigned num;
 static char name[L_tmpnam];
 static size_t plen;
 
+#ifndef _LINUX
 static
 void TryPath(char* path)
 {
@@ -109,6 +110,17 @@ void TryEnvPath(char* evname)
     free(path);
   }
 }
+#else
+static
+int SysAccess(char* name, int amode)
+{
+  asm("mov eax, 33\n" // sys_access
+      "mov ebx, [ebp + 8]\n"
+      "mov ecx, [ebp + 12]\n"
+      "int 0x80");
+}
+
+#endif
 
 char* __tmpnam(char* buf, unsigned iterations)
 {
@@ -118,6 +130,7 @@ char* __tmpnam(char* buf, unsigned iterations)
   if (!*name)
   {
     // On the first use, determine the directory for temporary files
+#ifndef _LINUX
     TryEnvPath("TEMP");
     if (!*name)
       TryEnvPath("TMP");
@@ -127,10 +140,25 @@ char* __tmpnam(char* buf, unsigned iterations)
     // Otherwise stick to the current directory
     if (!*name)
     {
+      // TBD!!! prefix with getcwd(), especially when chdir() is supported
       strcpy(name, ".\\");
       plen = 2;
     }
     strcat(name, "TMP00000.$$$");
+#else
+    if (SysAccess("/tmp", 0/*F_OK*/) == 0)
+    {
+      strcpy(name, "/tmp/");
+      plen = 5;
+    }
+    else
+    {
+      // TBD!!! prefix with getcwd(), especially when chdir() is supported
+      strcpy(name, "./");
+      plen = 2;
+    }
+    strcat(name, "tmp00000.tmp");
+#endif
   }
 
   if (buf)
@@ -167,6 +195,15 @@ char* __tmpnam(char* buf, unsigned iterations)
     if (attrOrError == INVALID_FILE_ATTRIBUTES)
     {
       if (GetLastError() == ERROR_FILE_NOT_FOUND)
+        return buf;
+      break;
+    }
+#endif
+#ifdef _LINUX
+    attrOrError = -SysAccess(buf, 0/*F_OK*/);
+    if (attrOrError)
+    {
+      if (attrOrError == 2/*ENOENT*/)
         return buf;
       break;
     }

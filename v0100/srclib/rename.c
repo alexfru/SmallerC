@@ -69,3 +69,16 @@ int rename(char* old, char* new)
 }
 
 #endif // _WINDOWS
+
+#ifdef _LINUX
+
+int rename(char* old, char* new)
+{
+  asm("mov eax, 38\n" // sys_rename
+      "mov ebx, [ebp + 8]\n"
+      "mov ecx, [ebp + 12]\n"
+      "int 0x80");
+}
+
+#endif // _LINUX
+
