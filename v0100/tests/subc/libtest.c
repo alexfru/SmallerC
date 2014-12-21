@@ -4,6 +4,9 @@
 
   How to compile for Windows:
     smlrcc -win libtest.c -o libtest.exe
+
+  How to compile for Linux:
+    smlrcc -linux libtest.c -o libtest
 */
 
 /*

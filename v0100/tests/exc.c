@@ -5,6 +5,9 @@
 
   How to compile for Windows:
     smlrcc -win exc.c -o exc.exe
+
+  How to compile for Linux:
+    smlrcc -linux exc.c -o exc
 */
 
 #include <stdio.h>
@@ -50,10 +53,17 @@ int main(int argc, char* argv[])
   }
   else
   {
+#ifndef _LINUX
     system("exc.exe DE");
 //    system("exc.exe BP");
     system("exc.exe OF");
     system("exc.exe UD");
+#else
+    system("./exc DE");
+//    system("./exc BP");
+    system("./exc OF");
+    system("./exc UD");
+#endif
   }
 
   return 0;

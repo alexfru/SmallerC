@@ -1,17 +1,23 @@
 /*
   Generator of randomized tests for basic testing of expressions/code generator.
 
-  How to compile and use under DOS:
+  How to compile for and use under DOS:
     smlrcc -dosh gencg1.c -o gencg1.exe
     gencg1.exe >testcg1.c
     smlrcc -dosh testcg1.c -o testcg1.exe
     testcg1.exe
 
-  How to compile under Windows:
+  How to compile for and use under Windows:
     smlrcc -win gencg1.c -o gencg1.exe
     gencg1.exe >testcg1.c
     smlrcc -win testcg1.c -o testcg1.exe
     testcg1.exe
+
+  How to compile for and use under Linux:
+    smlrcc -linux gencg1.c -o gencg1
+    ./gencg1 >testcg1.c
+    smlrcc -linux testcg1.c -o testcg1
+    ./testcg1
 */
 
 #include <limits.h>
@@ -887,6 +893,7 @@ void genTestCase(int no, int depth)
 int main(int argc, char* argv[])
 {
   int i, raw = 0, count = 100, depth = 5;
+  char* outname = NULL;
 
   mySrand(time(NULL));
 
@@ -895,6 +902,16 @@ int main(int argc, char* argv[])
     if (!strcmp(argv[i], "-raw"))
     {
       raw = 1;
+      continue;
+    }
+    else if (!strcmp(argv[i], "-o"))
+    {
+      if (i + 1 < argc)
+      {
+        ++i;
+        outname = argv[i];
+        continue;
+      }
     }
     else if (!strcmp(argv[i], "-seed"))
     {
@@ -923,7 +940,13 @@ int main(int argc, char* argv[])
         continue;
       }
     }
+
+    fprintf(stderr, "Invalid or unsupported command line option '%s'\n", argv[i]);
+    return EXIT_FAILURE;
   }
+
+  if (outname)
+    freopen(outname, "w", stdout);
 
   if (!raw)
   {

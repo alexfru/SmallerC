@@ -4,6 +4,9 @@
 
   How to compile for Windows:
     smlrcc -win cq.c -o cqw.exe
+
+  How to compile for Linux:
+    smlrcc -linux cq.c -o cql
 */
 
 #define float int
