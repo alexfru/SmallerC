@@ -13,6 +13,9 @@ The core compiler comes with a linker and a compiler driver (the driver
 invokes the core compiler, the assembler, and the linker and supports
 options similar to those of gcc).
 
+There's no decent preprocessor in Smaller C as of now, but the compiler
+driver can invoke gcc (or gcc.exe) for preprocessing if instructed.
+
 The standard C library is work-in-progress and it's close to completion.
 
 See the Wiki for more up-to-date details:
