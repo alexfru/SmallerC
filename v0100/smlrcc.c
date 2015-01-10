@@ -85,6 +85,7 @@ int strncmp(char*, char*, size_t);
 char* strpbrk(char*, char*);
 void* memcpy(void*, void*, size_t);
 void* memset(void*, int, size_t);
+void* memmove(void*, void*, size_t);
 
 FILE* fopen(char*, char*);
 int fclose(FILE*);
@@ -160,6 +161,9 @@ const char* LibName[] =
 
 int verbose = 0;
 
+int PreprocessWithGcc = 0;
+int UseExternalPreprocessor = 0;
+
 int DontLink = 0;
 
 int CompileToAsm = 0;
@@ -169,6 +173,9 @@ char* StdLibPath;
 char* StdLib;
 
 int DoArchive = 0;
+
+char* PrepOptions;
+size_t PrepOptionsLen;
 
 char* CompilerOptions;
 size_t CompilerOptionsLen;
@@ -717,7 +724,8 @@ void System(char* cmd)
 void Compile(char* name)
 {
   size_t len = strlen(name);
-  int type = 0;
+  int type = 0, subtype = 0;
+  char* iName = NULL;
   char* asmName = NULL;
 
   if (len > 4 && name[len - 4] == '.')
@@ -732,8 +740,12 @@ void Compile(char* name)
     switch (name[len - 1])
     {
     case 'c': case 'C':
+      type = 'c';
+      subtype = 'c';
+      break;
     case 'i': case 'I':
       type = 'c';
+      subtype = 'i';
       break;
     case 'o': case 'O':
       type = 'O';
@@ -755,6 +767,29 @@ void Compile(char* name)
     else if (DoArchive && type == 'O')
       AddFile(&ArchiveFiles, &ArchiveFilesLen, name);
     return;
+  }
+
+  // Preprocess first, if needed
+  if (UseExternalPreprocessor && subtype == 'c')
+  {
+    char* cmd = NULL;
+    size_t cmdlen = 0;
+
+    iName = Malloc(len + 1/*NUL*/);
+    strcpy(iName, name);
+    iName[len - 1] = 'i'; // .c -> .i
+
+    AddOptions(&cmd, &cmdlen, PrepOptions);
+    AddOption(&cmd, &cmdlen, name);
+    AddOption(&cmd, &cmdlen, "-o");
+    AddOption(&cmd, &cmdlen, iName);
+
+    AddFile(&TemporaryFiles, &TemporaryFilesLen, iName);
+    System(cmd);
+
+    free(cmd);
+
+    name = iName;
   }
 
   if (type == 'c')
@@ -786,6 +821,11 @@ void Compile(char* name)
 
     if (CompileToAsm)
     {
+      if (iName)
+      {
+        remove(iName);
+        free(iName);
+      }
       if (asmName != OutName)
         free(asmName);
       return;
@@ -843,6 +883,12 @@ void Compile(char* name)
 
     if (objName != OutName)
       free(objName);
+  }
+
+  if (iName)
+  {
+    remove(iName);
+    free(iName);
   }
 }
 
@@ -1133,6 +1179,8 @@ char* SystemFileExists(const char* path, int slash, const char* pathsuffix, cons
   return NULL;
 }
 
+void Pass2Prep(char* s);
+
 void AddSystemPaths(char* argv0)
 {
   char* epath;
@@ -1209,16 +1257,31 @@ endsearch:
 
   if (pinclude)
   {
-    AddOption(&CompilerOptions, &CompilerOptionsLen, "-SI");
-    AddOption(&CompilerOptions, &CompilerOptionsLen, pinclude);
+    Pass2Prep(PreprocessWithGcc ? "-isystem" : "-SI");
+    Pass2Prep(pinclude);
   }
 
   // TBD??? Issue a warning if the location of the system headers and libraries was niether provided nor found???
 }
 
+void Pass2Prep(char* s)
+{
+  if (!UseExternalPreprocessor)
+    AddOption(&CompilerOptions, &CompilerOptionsLen, s);
+  else
+    AddOption(&PrepOptions, &PrepOptionsLen, s);
+}
+
+void DefineMacro(char* s)
+{
+  Pass2Prep("-D");
+  Pass2Prep(s);
+}
+
 int main(int argc, char* argv[])
 {
   int i;
+  int UnsignedChar = 0;
 
 #ifdef __SMALLER_C__
 #ifdef DETERMINE_VA_LIST
@@ -1243,6 +1306,29 @@ int main(int argc, char* argv[])
   AddOptions(&AssemblerOptions, &AssemblerOptionsLen, "nasm.exe -f elf");
   AddOption(&LinkerOptions, &LinkerOptionsLen, "smlrl.exe");
 #endif
+
+  // Detect that gcc's preprocessor is to be used.
+  // Do this early as other options will depend on it.
+  // This is ugly.
+  UseExternalPreprocessor = PreprocessWithGcc = getenv("SMLRPPG") != NULL;
+  for (i = 1; i < argc; i++)
+  {
+    if (!strcmp(argv[i], "-ppg"))
+    {
+      UseExternalPreprocessor = PreprocessWithGcc = 1;
+      memmove(argv + i, argv + i + 1, (argc - i) * sizeof(char*));
+      argc--;
+      break;
+    }
+  }
+  if (PreprocessWithGcc)
+  {
+#ifdef HOST_LINUX
+    AddOptions(&PrepOptions, &PrepOptionsLen, "gcc -E -nostdinc");
+#else
+    AddOptions(&PrepOptions, &PrepOptionsLen, "gcc.exe -E -nostdinc");
+#endif
+  }
 
   for (i = 1; i < argc; i++)
   {
@@ -1283,6 +1369,10 @@ int main(int argc, char* argv[])
              !strcmp(argv[i], "-winstack") ||
              !strcmp(argv[i], "-Wall"))
     {
+      if (!strcmp(argv[i], "-unsigned-char"))
+        UnsignedChar = 1;
+      else if (!strcmp(argv[i], "-signed-char"))
+        UnsignedChar = 0;
       AddOption(&CompilerOptions, &CompilerOptionsLen, argv[i]);
       argv[i] = NULL;
       continue;
@@ -1299,7 +1389,7 @@ int main(int argc, char* argv[])
     {
       OutputFormat = FormatDosComTiny;
       AddOption(&CompilerOptions, &CompilerOptionsLen, "-seg16");
-      AddOptions(&CompilerOptions, &CompilerOptionsLen, "-D _DOS");
+      DefineMacro("_DOS");
       AddOption(&LinkerOptions, &LinkerOptionsLen, "-tiny");
       LinkStdLib = 1;
       argv[i] = NULL;
@@ -1317,7 +1407,7 @@ int main(int argc, char* argv[])
     {
       OutputFormat = FormatDosExeSmall;
       AddOption(&CompilerOptions, &CompilerOptionsLen, "-seg16");
-      AddOptions(&CompilerOptions, &CompilerOptionsLen, "-D _DOS");
+      DefineMacro("_DOS");
       AddOption(&LinkerOptions, &LinkerOptionsLen, "-small");
       LinkStdLib = 1;
       argv[i] = NULL;
@@ -1335,7 +1425,7 @@ int main(int argc, char* argv[])
     {
       OutputFormat = FormatDosExeHuge;
       AddOption(&CompilerOptions, &CompilerOptionsLen, "-huge");
-      AddOptions(&CompilerOptions, &CompilerOptionsLen, "-D _DOS");
+      DefineMacro("_DOS");
       AddOption(&LinkerOptions, &LinkerOptionsLen, "-huge");
       LinkStdLib = 1;
       argv[i] = NULL;
@@ -1354,7 +1444,7 @@ int main(int argc, char* argv[])
       OutputFormat = FormatWinPe32;
       AddOption(&CompilerOptions, &CompilerOptionsLen, "-seg32");
       AddOption(&CompilerOptions, &CompilerOptionsLen, "-winstack");
-      AddOptions(&CompilerOptions, &CompilerOptionsLen, "-D _WINDOWS");
+      DefineMacro("_WINDOWS");
       AddOption(&LinkerOptions, &LinkerOptionsLen, "-pe");
       LinkStdLib = 1;
       argv[i] = NULL;
@@ -1372,7 +1462,7 @@ int main(int argc, char* argv[])
     {
       OutputFormat = FormatElf32;
       AddOption(&CompilerOptions, &CompilerOptionsLen, "-seg32");
-      AddOptions(&CompilerOptions, &CompilerOptionsLen, "-D _LINUX");
+      DefineMacro("_LINUX");
       AddOption(&LinkerOptions, &LinkerOptionsLen, "-elf");
       argv[i] = NULL;
       LinkStdLib = 1;
@@ -1412,24 +1502,34 @@ int main(int argc, char* argv[])
               (argv[i][1] == 'S' && argv[i][2] == 'I')/*-SI*/))
     {
       int len = 2 + (argv[i][1] == 'S');
+      char opt[3/*longest is -SI*/+1/*NUL*/], *popt = opt;
+      char* pparam = argv[i] + len;
+      int err = 0;
+
       if (argv[i][len] != '\0')
       {
         // Handle "-Dmacro", "-Ipath", "-SIpath"
-        char opt[3/*longest is -SI*/+1/*NUL*/];
         memcpy(opt, argv[i], len);
         opt[len] = '\0';
-        AddOption(&CompilerOptions, &CompilerOptionsLen, opt);
-        AddOption(&CompilerOptions, &CompilerOptionsLen, argv[i] + len);
         argv[i] = NULL;
-        continue;
       }
       else if (i + 1 < argc)
       {
         // Handle "-D macro", "-I path", "-SI path"
-        AddOption(&CompilerOptions, &CompilerOptionsLen, argv[i]);
+        popt = argv[i];
         argv[i++] = NULL;
-        AddOption(&CompilerOptions, &CompilerOptionsLen, argv[i]);
+        pparam = argv[i];
         argv[i] = NULL;
+      }
+      else
+      {
+        err = 1;
+      }
+
+      if (!err)
+      {
+        Pass2Prep((PreprocessWithGcc && !strcmp(popt, "-SI")) ? "-isystem" : popt);
+        Pass2Prep(pparam);
         continue;
       }
     }
@@ -1466,7 +1566,7 @@ int main(int argc, char* argv[])
 #ifdef HOST_LINUX
     OutputFormat = FormatElf32;
     AddOption(&CompilerOptions, &CompilerOptionsLen, "-seg32");
-    AddOptions(&CompilerOptions, &CompilerOptionsLen, "-D _LINUX");
+    DefineMacro("_LINUX");
     AddOption(&LinkerOptions, &LinkerOptionsLen, "-elf");
     LinkStdLib = 1;
 #else
@@ -1474,14 +1574,14 @@ int main(int argc, char* argv[])
     OutputFormat = FormatWinPe32;
     AddOption(&CompilerOptions, &CompilerOptionsLen, "-seg32");
     AddOption(&CompilerOptions, &CompilerOptionsLen, "-winstack");
-    AddOptions(&CompilerOptions, &CompilerOptionsLen, "-D _WINDOWS");
+    DefineMacro("_WINDOWS");
     AddOption(&LinkerOptions, &LinkerOptionsLen, "-pe");
     LinkStdLib = 1;
 #else
 #ifdef HOST_DOS
     OutputFormat = FormatDosExeHuge;
     AddOption(&CompilerOptions, &CompilerOptionsLen, "-huge");
-    AddOptions(&CompilerOptions, &CompilerOptionsLen, "-D _DOS");
+    DefineMacro("_DOS");
     AddOption(&LinkerOptions, &LinkerOptionsLen, "-huge");
     LinkStdLib = 1;
 #endif
@@ -1522,6 +1622,42 @@ int main(int argc, char* argv[])
   }
 
   AddSystemPaths(argv[0]);
+
+  // Pass to the external preprocessor what would otherwise be defined by smlrc
+  if (UseExternalPreprocessor)
+  {
+    DefineMacro("__SMALLER_C__");
+    switch (OutputFormat)
+    {
+    case FormatDosComTiny:
+      DefineMacro("__SMALLER_C_16__");
+      break;
+    case FormatDosExeSmall:
+      DefineMacro("__SMALLER_C_16__");
+      break;
+    case FormatDosExeHuge:
+      DefineMacro("__SMALLER_C_32__");
+      DefineMacro("__HUGE__");
+      break;
+    case FormatWinPe32:
+      DefineMacro("__SMALLER_C_32__");
+      break;
+    case FormatElf32:
+      DefineMacro("__SMALLER_C_32__");
+      break;
+    case FormatFlat16:
+      DefineMacro("__SMALLER_C_16__");
+      break;
+    case FormatFlat32:
+      DefineMacro("__SMALLER_C_32__");
+      break;
+    }
+    if (UnsignedChar)
+      DefineMacro("__SMALLER_C_UCHAR__");
+    else
+      DefineMacro("__SMALLER_C_SCHAR__");
+    DefineMacro("__SMALLER_PP__");
+  }
 
   for (i = 1; i < argc; i++)
     if (argv[i])

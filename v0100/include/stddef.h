@@ -16,4 +16,8 @@ typedef unsigned size_t;
 
 typedef int ptrdiff_t;
 
+#ifdef __SMALLER_PP__
+#define offsetof(type, member) ((unsigned)&((type*)0)->member)
+#endif
+
 #endif
