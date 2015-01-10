@@ -832,3 +832,4 @@ int main(int argc, char **argv) {
 	test_exit();
 	return EXIT_FAILURE;
 }
+

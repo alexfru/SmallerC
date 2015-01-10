@@ -18,7 +18,6 @@ left operand."
       TEST1((X),short);          \
       TEST1((X),int);            \
       TEST1((X),long);           \
-      TEST1((X),long long);      \
     }                            \
   while (0)
 #define TEST3(X,T) do { TEST2((T)(X)); TEST2((unsigned T)(X)); } while (0)
@@ -28,7 +27,6 @@ left operand."
       TEST3((X),short);          \
       TEST3((X),int);            \
       TEST3((X),long);           \
-      TEST3((X),long long);      \
     }                            \
  while (0)
 
