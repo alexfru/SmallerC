@@ -35,6 +35,7 @@ either expressed or implied, of the FreeBSD Project.
 /*                                                                           */
 /*            Produces 16/32-bit 80386 assembly output for NASM.             */
 /*             Produces 32-bit MIPS assembly output for gcc/as.              */
+/*             Produces 32-bit TR3200 assembly output for vasm.              */
 /*                                                                           */
 /*                                 Main file                                 */
 /*                                                                           */
@@ -2173,7 +2174,11 @@ int GetToken(void)
 #endif
 #include "cgmips.c"
 #else
+#ifdef TR3200
+#include "cgtr3k2.c"
+#else
 #include "cgx86.c"
+#endif // #ifdef TR3200
 #endif // #ifdef MIPS
 
 // expr.c code

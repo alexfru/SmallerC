@@ -6,6 +6,7 @@ Currently it generates 16-bit and 32-bit 80386+ assembly code for NASM
 that can then be assembled and linked into DOS, Windows and Linux programs.
 
 Code generation for MIPS CPUs is also supported (primarily for RetroBSD).
+Code generation for TR3200 CPU assembly code for VASM (read about Trillek)
 
 The compiler is capable of compiling itself.
 
@@ -23,4 +24,6 @@ http://github.com/alexfru/SmallerC/wiki
 
 Links:
 NASM: http://nasm.us/
+VASM: http://sun.hasenbraten.de/vasm/
 RetroBSD: http://retrobsd.org/
+Trillek: http://trillek.org/
