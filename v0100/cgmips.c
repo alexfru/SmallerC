@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2012-2014, Alexey Frunze
+Copyright (c) 2012-2015, Alexey Frunze
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -637,12 +637,20 @@ void GenFxnProlog(void)
 }
 
 STATIC
-void GenLocalAlloc(int size)
+void GenGrowStack(int size)
 {
+  if (!size)
+    return;
   GenPrintInstr3Operands(MipsInstrSubU, 0,
                          MipsOpRegSp, 0,
                          MipsOpRegSp, 0,
                          MipsOpConst, size);
+}
+
+STATIC
+void GenFxnProlog2(void)
+{
+  GenGrowStack(-CurFxnMinLocalOfs);
 }
 
 STATIC
@@ -667,6 +675,12 @@ void GenFxnEpilog(void)
 
   GenPrintInstr1Operand(MipsInstrJ, 0,
                         MipsOpRegRa, 0);
+}
+
+STATIC
+int GenMaxLocalsSize(void)
+{
+  return 0x7FFFFFFF;
 }
 
 STATIC
@@ -1706,7 +1720,7 @@ void GenExpr0(void)
         GenPushReg();
       gotUnary = 0;
       if (maxCallDepth != 1 && v < 16)
-        GenLocalAlloc(16 - v);
+        GenGrowStack(16 - v);
       paramOfs = v - 4;
       if (maxCallDepth == 1 && paramOfs >= 0 && paramOfs <= 12)
       {
@@ -1760,7 +1774,7 @@ void GenExpr0(void)
       }
       else
       {
-        GenLocalAlloc(16);
+        GenGrowStack(16);
       }
       if (stack[i - 1][0] == tokIdent)
       {
@@ -1774,7 +1788,7 @@ void GenExpr0(void)
       }
       if (v < 16)
         v = 16;
-      GenLocalAlloc(-v);
+      GenGrowStack(-v);
       break;
 
     case tokUnaryStar:

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2012-2014, Alexey Frunze
+Copyright (c) 2012-2015, Alexey Frunze
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -827,8 +827,10 @@ void GenFxnProlog(void)
 }
 
 STATIC
-void GenLocalAlloc(int size)
+void GenGrowStack(int size)
 {
+  if (!size)
+    return;
 #ifdef CAN_COMPILE_32BIT
   if (SizeOfWord == 4 &&
       OutputFormat != FormatSegHuge &&
@@ -861,10 +863,26 @@ void GenLocalAlloc(int size)
 }
 
 STATIC
+void GenFxnProlog2(void)
+{
+  GenGrowStack(-CurFxnMinLocalOfs);
+}
+
+STATIC
 void GenFxnEpilog(void)
 {
   GenPrintInstrNoOperand(X86InstrLeave);
   GenPrintInstrNoOperand(X86InstrRet);
+}
+
+STATIC
+int GenMaxLocalsSize(void)
+{
+#ifdef CAN_COMPILE_32BIT
+  if (SizeOfWord == 4 && OutputFormat != FormatSegHuge)
+    return 0x7FFFFFFF;
+#endif
+  return 0x7FFF;
 }
 
 #ifdef CAN_COMPILE_32BIT
@@ -2654,8 +2672,7 @@ void GenExpr1(void)
           GenPrintInstr1Operand(X86InstrCall, 0,
                                 X86OpRegAWord, 0);
       }
-      if (v)
-        GenLocalAlloc(-v);
+      GenGrowStack(-v);
       break;
 
     case '(':
@@ -2759,8 +2776,7 @@ void GenExpr0(void)
 #endif
         GenPrintInstr1Operand(X86InstrCall, 0,
                               X86OpRegAWord, 0);
-      if (v)
-        GenLocalAlloc(-v);
+      GenGrowStack(-v);
       break;
 
     case tokUnaryStar:
@@ -3317,6 +3333,109 @@ void GenFin(void)
     if (OutputFormat != FormatFlat)
       puts2(CodeFooter);
   }
+
+#ifndef NO_STRUCT_BY_VAL
+  if (StructPushLabel)
+  {
+    char s[1 + 2 + (2 + CHAR_BIT * sizeof StructPushLabel) / 3];
+    char *p = s + sizeof s;
+
+    *--p = '\0';
+    p = lab2str(p, StructPushLabel);
+    *--p = '_';
+    *--p = '_';
+
+    if (OutputFormat != FormatFlat)
+      puts2(CodeHeader);
+
+    GenLabel(p, 1);
+    GenFxnProlog();
+
+    if (SizeOfWord == 2)
+    {
+      puts2("\tmov\tdx, [bp+2]\n" // dx = return address
+            "\tmov\tsi, [bp+4]\n" // si = &struct
+            "\tmov\tcx, [bp+6]\n" // cx = sizeof(struct)
+            "\tmov\tbp, [bp]\n"   // restore bp
+
+            "\tmov\tax, cx\n"  // ax = sizeof(struct)
+            "\tinc\tax\n"      // ax = sizeof(struct) + 1
+            "\tand\tax, -2\n"  // ax = sizeof(struct) rounded up to multiple of 2 bytes
+            "\tadd\tsp, 4*2\n" // remove bp, return address and 2 args from stack
+            "\tsub\tsp, ax");  // allocate stack space for struct
+
+      puts2("\tmov\tdi, sp\n" // di = where struct should be copied to
+            "\tcld\n"
+            "\trep\tmovsb\n"  // copy
+
+            "\tpop\tax\n"  // return first 2 bytes of struct in ax
+            "\tpush\tax\n"
+            "\tpush\tbyte 0\n"  // caller will remove this 0 and first 2 bytes of struct from stack (as 2 args)
+            "\tpush\tdx\n" //   and then it will push ax (first 2 bytes of struct) back
+            "\tret");      // actually return to return address saved in dx
+    }
+#ifdef CAN_COMPILE_32BIT
+    else if (OutputFormat != FormatSegHuge)
+    {
+      // Copying the pushed structure to the stack backwards
+      // (from higher to lower addresses) in order to correctly
+      // grow the stack on Windows, page by page
+      puts2("\tmov\tedx, [ebp+4]\n"  // edx = return address
+            "\tmov\tesi, [ebp+8]\n"  // esi = &struct
+            "\tmov\tecx, [ebp+12]\n" // ecx = sizeof(struct)
+            "\tmov\tebp, [ebp]\n"    // restore ebp
+
+            "\tlea\teax, [ecx + 3]\n" // eax = sizeof(struct) + 3
+            "\tand\teax, -4\n"        // eax = sizeof(struct) rounded up to multiple of 4 bytes
+            "\tadd\tesp, 4*4\n"       // remove ebp, return address and 2 args from stack
+            "\tsub\tesp, eax");       // allocate stack space for struct
+
+      puts2("\tlea\tesi, [esi + ecx - 1]\n" // esi = &last byte of struct
+            "\tlea\tedi, [esp + ecx - 1]\n" // edi = where it should be copied to
+            "\tstd\n"
+            "\trep\tmovsb\n"      // copy
+            "\tcld\n"
+
+            "\tmov\teax, [esp]\n" // return first 4 bytes of struct in eax
+            "\tpush\t0\n"         // caller will remove this 0 and first 4 bytes of struct from stack (as 2 args)
+            "\tpush\tedx\n"       //   and then it will push eax (first 4 bytes of struct) back
+            "\tret");             // actually return to return address saved in edx
+    }
+    else
+    {
+      puts2("\tmov\tedx, [ebp+4]\n"  // edx = return address (seg:ofs)
+            "\tmov\tesi, [ebp+8]\n"  // esi = &struct (phys)
+            "\tror\tesi, 4\n"
+            "\tmov\tds, si\n"
+            "\tshr\tesi, 28\n"       // ds:si = &struct (seg:ofs)
+            "\tmov\tecx, [ebp+12]\n" // ecx = sizeof(struct)
+            "\tmov\tebp, [ebp]\n"    // restore ebp
+
+            "\tlea\teax, [ecx + 3]\n" // eax = sizeof(struct) + 3
+            "\tand\teax, -4\n"        // eax = sizeof(struct) rounded up to multiple of 4 bytes
+            "\tadd\tsp, 4*4\n"        // remove ebp, return address and 2 args from stack
+            "\tsub\tsp, ax");         // allocate stack space for struct
+
+      puts2("\tmov\tax, ss\n"
+            "\tmov\tes, ax\n" // es = ss
+            "\tmov\tdi, sp\n" // es:di = where struct should be copied to (seg:ofs)
+            "\tcld\n"
+            "\trep\tmovsb\n"  // copy; limit to ~64KB since stack size itself is ~64KB max
+
+            "\tpop\teax\n"  // return first 4 bytes of struct in eax
+            "\tpush\teax\n"
+            "\tpush\teax\n" // caller will remove this and first 4 bytes of struct from stack (as 2 args)
+            "\tpush\tedx\n" //   and then it will push eax (first 4 bytes of struct) back
+            "\tretf");      // actually return to return address saved in edx
+    }
+#endif
+
+//    GenFxnEpilog();
+
+    if (OutputFormat != FormatFlat)
+      puts2(CodeFooter);
+  }
+#endif
 
 #ifdef USE_SWITCH_TAB
   if (SwitchJmpLabel)

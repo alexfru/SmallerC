@@ -111,6 +111,8 @@ free.c
 realloc.c
 abs.c
 labs.c
+div.c
+ldiv.c
 atoi.c
 atol.c
 strtol.c

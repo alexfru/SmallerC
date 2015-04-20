@@ -31,6 +31,14 @@ int abs(int);
 #ifdef __SMALLER_C_32__
 long labs(long);
 #endif
+
+typedef struct { int quot, rem; } div_t;
+div_t div(int, int);
+#ifdef __SMALLER_C_32__
+typedef struct { long quot, rem; } ldiv_t;
+ldiv_t ldiv(long, long);
+#endif
+
 int atoi(char*);
 #ifdef __SMALLER_C_32__
 long atol(char*);

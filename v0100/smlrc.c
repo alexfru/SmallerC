@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2012-2014, Alexey Frunze
+Copyright (c) 2012-2015, Alexey Frunze
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -56,6 +56,20 @@ either expressed or implied, of the FreeBSD Project.
 #define NO_FUNC_
 #define NO_EXTRA_WARNS
 #define NO_FOR_DECL
+#define NO_STRUCT_BY_VAL
+#endif
+
+// Passing and returning structures by value is currenly supported
+// on x86 only
+#ifdef MIPS
+#ifndef NO_STRUCT_BY_VAL
+#define NO_STRUCT_BY_VAL
+#endif
+#endif
+#ifdef TR3200
+#ifndef NO_STRUCT_BY_VAL
+#define NO_STRUCT_BY_VAL
+#endif
 #endif
 
 #ifndef __SMALLER_C__
@@ -405,12 +419,14 @@ void GenJumpIfEqual(int val, int Label);
 STATIC
 void GenFxnProlog(void);
 STATIC
+void GenFxnProlog2(void);
+STATIC
 void GenFxnEpilog(void);
 void GenIsrProlog(void);
 void GenIsrEpilog(void);
 
 STATIC
-void GenLocalAlloc(int Size);
+int GenMaxLocalsSize(void);
 
 STATIC
 unsigned GenStrData(int generatingCode, unsigned requiredLen);
@@ -632,21 +648,20 @@ int SizeOfWord = 2; // in chars (char can be a multiple of octets); ints and poi
 // TBD??? implement a function to allocate N labels with overflow checks
 int LabelCnt = 1; // label counter for jumps
 int StructCpyLabel = 0; // label of the function to copy structures/unions
+int StructPushLabel = 0; // label of the function to push structures/unions onto the stack
 
 // call stack (from higher to lower addresses):
-//   param n
+//   arg n
 //   ...
-//   param 1
+//   arg 1
 //   return address
 //   saved xbp register
 //   local var 1
 //   ...
 //   local var n
 int CurFxnSyntaxPtr = 0;
-int CurFxnParamCnt = 0;
 int CurFxnParamCntMin = 0;
 int CurFxnParamCntMax = 0;
-int CurFxnParamOfs = 0; // positive
 int CurFxnLocalOfs = 0; // negative
 int CurFxnMinLocalOfs = 0; // negative
 
@@ -3111,6 +3126,26 @@ void simplifyConstExpr(int val, int isConst, int* ExprTypeSynPtr, int top, int b
   del(bottom, top - bottom);
 }
 
+STATIC
+int AllocLocal(unsigned size)
+{
+  // Let's calculate variable's relative on-stack location
+  int oldOfs = CurFxnLocalOfs;
+
+  // Note: local vars are word-aligned on the stack
+  CurFxnLocalOfs = uint2int((CurFxnLocalOfs - size) & ~(SizeOfWord - 1u));
+  if (CurFxnLocalOfs >= oldOfs ||
+      CurFxnLocalOfs != truncInt(CurFxnLocalOfs) ||
+      CurFxnLocalOfs < -GenMaxLocalsSize())
+    //error("AllocLocal(): Local variables take too much space\n");
+    errorVarSize();
+
+  if (CurFxnMinLocalOfs > CurFxnLocalOfs)
+    CurFxnMinLocalOfs = CurFxnLocalOfs;
+
+  return CurFxnLocalOfs;
+}
+
 // DONE: sizeof(type)
 // DONE: "sizeof expr"
 // DONE: constant expressions
@@ -4011,45 +4046,142 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       int tmpSynPtr, c;
       int minParams, maxParams;
       int firstParamSynPtr;
+#ifndef NO_STRUCT_BY_VAL
+      int oldIdx, oldSp;
+      unsigned structSize = 0;
+      int retStruct = 0;
+      int retOfs = 0;
+#endif
       exprval(idx, ExprTypeSynPtr, ConstExpr);
 
       if (!GetFxnInfo(*ExprTypeSynPtr, &minParams, &maxParams, ExprTypeSynPtr, &firstParamSynPtr))
         //error("exprval(): function or function pointer expected\n");
         errorOpType();
 
-      // DONE: validate the number of function parameters
-      // DONE: warnings on int<->pointer substitution in params
+      // DONE: validate the number of function arguments
+      // DONE: warnings on int<->pointer substitution in params/args
 
-      // evaluate function parameters
+#ifndef NO_STRUCT_BY_VAL
+      // If a structure is returned, allocate space for it on the stack
+      // and pass its location as the first (implicit) argument.
+      if (ParseLevel &&
+          *ExprTypeSynPtr >= 0 &&
+          SyntaxStack[*ExprTypeSynPtr][0] == tokStructPtr)
+      {
+        unsigned sz = GetDeclSize(*ExprTypeSynPtr, 0);
+        // Make sure the return structure type is complete
+        if (!sz)
+          errorOpType();
+        retOfs = AllocLocal(sz);
+        // Transform fxn(args) into fxn(pretval, args)
+        ins(*idx + 1, ',');
+        ins2(*idx + 1, tokLocalOfs, retOfs);
+        retStruct = 1;
+      }
+#endif
+
+      // evaluate function arguments
       c = 0;
       while (stack[*idx][0] != '(')
       {
-        // add a comma after the first (last to be pushed) parameter,
-        // so all parameters can be pushed whenever a comma is encountered
+#ifndef NO_STRUCT_BY_VAL
+        int gotStructs;
+#endif
+        // add a comma after the first (last to be pushed) argument,
+        // so all arguments can be pushed whenever a comma is encountered
         if (!c)
           ins(*idx + 1, ',');
 
+#ifndef NO_STRUCT_BY_VAL
+        oldIdx = *idx;
+        oldSp = sp;
+#endif
         exprval(idx, &tmpSynPtr, ConstExpr);
-        //error("exprval(): function parameters cannot be of type 'void'\n");
+        //error("exprval(): function arguments cannot be of type 'void'\n");
+
+#ifdef NO_STRUCT_BY_VAL
         scalarTypeCheck(tmpSynPtr);
+#else
+        nonVoidTypeCheck(tmpSynPtr);
+
+        // If the argument is a structure, push it by calling a dedicated function
+        gotStructs = tmpSynPtr >= 0 && SyntaxStack[tmpSynPtr][0] == tokStructPtr;
+        if (gotStructs)
+        {
+          unsigned sz = GetDeclSize(tmpSynPtr, 0);
+          int i = oldIdx - (oldSp - sp);
+          stack[i][0] = ')';
+          stack[i][1] = SizeOfWord * 2;
+
+          if (!StructPushLabel)
+            StructPushLabel = LabelCnt++;
+
+          // The code generator expects functions to return values.
+          // If a function argument is a value produced by another function,
+          // as is the case here, the code generator will naturally
+          // want/need to push something of the size of the machine word.
+          // This works perfectly with non-structures.
+          // But we only want to push the structure without pushing any other words.
+          // In order to avoid involving changes in the code generator,
+          // we make the function that pushes structures onto the stack
+          // push all words but the first one. The dedicated function will
+          // return this word and the code generator will push it.
+          // This is ugly.
+
+          ins2(i, tokIdent, AddNumericIdent__(StructPushLabel));
+          ins(i, ',');
+          i = *idx + 1;
+          ins(i, ',');
+          ins2(i, tokNumUint, uint2int(sz));
+          ins2(i, '(', SizeOfWord * 2);
+
+          if (sz > (unsigned)GenMaxLocalsSize())
+            errorVarSize();
+          // Structures will be padded to machine word boundary when pushed
+          sz = (sz + SizeOfWord - 1) & ~(SizeOfWord - 1u);
+          // Count the cumulative size of the pushed structures, excluding
+          // the first words that will be pushed by the code generator
+          if (structSize + sz < structSize)
+            errorVarSize();
+          structSize += sz - SizeOfWord;
+          if (structSize > (unsigned)GenMaxLocalsSize())
+            errorVarSize();
+          // TBD??? complete overflow checks (an expression may contain more than one call)?
+        }
+#endif
 
         if (++c > maxParams)
-          error("Too many function parameters\n");
+          error("Too many function arguments\n");
+
+#ifndef NO_STRUCT_BY_VAL
+#ifndef CHECK_FXN_ARGS
+#define CHECK_FXN_ARGS
+#endif
+#endif
 
 #ifndef NO_EXTRA_WARNS
-        // Issue a warning if the parameter has to be a pointer but isn't and vice versa.
+#ifndef CHECK_FXN_ARGS
+#define CHECK_FXN_ARGS
+#endif
+#endif
+
+#ifdef CHECK_FXN_ARGS
+        // Issue a warning if the argument has to be a pointer but isn't and vice versa.
+        // DONE: struct type compat checks
         // TBD??? Compare pointer types deeply as in compatCheck()???
         // TBD??? Issue a similar warning for return values and initializers???
         if (c <= minParams)
         {
+          int t;
+#ifndef NO_EXTRA_WARNS
           int gotPtr = tmpSynPtr < 0;
           int needPtr;
-          int t;
           if (!gotPtr)
           {
             t = SyntaxStack[tmpSynPtr][0];
             gotPtr = (t == '*') | (t == '[') | (t == '('); // arrays and functions decay to pointers
           }
+#endif
           // Find the type of the formal parameter in the function declaration
           while ((t = SyntaxStack[firstParamSynPtr][0]) != tokIdent)
           {
@@ -4066,6 +4198,17 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
             firstParamSynPtr++;
           }
           firstParamSynPtr++;
+#ifndef NO_STRUCT_BY_VAL
+          gotStructs += (SyntaxStack[firstParamSynPtr][0] == tokStructPtr) * 2;
+          if (gotStructs)
+          {
+            // Structures must be of the same type
+            if (gotStructs != 3 ||
+                SyntaxStack[tmpSynPtr][1] != SyntaxStack[firstParamSynPtr][1])
+              errorOpType();
+          }
+#endif
+#ifndef NO_EXTRA_WARNS
           needPtr = SyntaxStack[firstParamSynPtr][0] == '*';
           if (needPtr != gotPtr &&
               // Make an exception for integer constants equal to 0, treat them as NULL pointers
@@ -4075,9 +4218,10 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
                  !stack[*idx + 1][1]
                )
              )
-            warning("Expected %spointer in parameter %d\n", needPtr ? "" : "non-", c);
+            warning("Expected %spointer in argument %d\n", needPtr ? "" : "non-", c);
+#endif
         }
-#endif // NO_EXTRA_WARNS
+#endif // CHECK_FXN_ARGS
 
         if (stack[*idx][0] == ',')
           --*idx;
@@ -4085,10 +4229,31 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       --*idx;
 
       if (c < minParams)
-        error("Too few function parameters\n");
+        error("Too few function arguments\n");
 
-      // store the cumulative parameter size in the function call operators
-      stack[1 + *idx][1] = stack[oldIdxRight + 1 - (oldSpRight - sp)][1] = c * SizeOfWord;
+      // store the cumulative argument size in the function call operators
+      {
+        int i = oldIdxRight + 1 - (oldSpRight - sp);
+#ifndef NO_STRUCT_BY_VAL
+        // Count the implicit param/arg for returned structure
+        c += retStruct;
+#endif
+        stack[1 + *idx][1] = stack[i][1] = c * SizeOfWord;
+#ifndef NO_STRUCT_BY_VAL
+        // Correct the value by which the stack pointer
+        // will be incremented after the call
+        stack[i][1] += structSize;
+        // If a structure is returned, transform
+        // fxn(pretval, args) into *(fxn(pretval, args), pretval)
+        if (retStruct)
+        {
+          ins(i + 1, tokUnaryStar);
+          ins(i + 1, tokComma);
+          ins2(i + 1, tokLocalOfs, retOfs);
+          ins(i + 1, tokVoid);
+        }
+#endif
+      }
 
       *ConstExpr = 0;
     }
@@ -4098,6 +4263,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
   case tokComma:
     {
       int oldIdxLeft, oldSpLeft;
+      int retStruct = 0;
       s = exprval(idx, &RightExprTypeSynPtr, &constExpr[1]);
       oldIdxLeft = *idx;
       oldSpLeft = sp;
@@ -4108,6 +4274,8 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       exprval(idx, ExprTypeSynPtr, &constExpr[0]);
       *ConstExpr = constExpr[0] && constExpr[1];
       *ExprTypeSynPtr = RightExprTypeSynPtr;
+      retStruct = RightExprTypeSynPtr >= 0 && SyntaxStack[RightExprTypeSynPtr][0] == tokStructPtr;
+
       if (*ConstExpr)
       {
         // both subexprs are const, remove both and comma
@@ -4115,9 +4283,26 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       }
       else if (constExpr[0])
       {
-        // only left subexpr is const, remove it and comma
+        // only left subexpr is const, remove it
         del(*idx + 1, oldIdxLeft - (oldSpLeft - sp) - *idx);
-        del(oldIdxRight + 1 - (oldSpRight - sp), 1);
+
+        if (!retStruct)
+          // Ensure non-lvalue-ness of the result by changing comma to unary plus
+          // and thus hiding dereference, if any
+          stack[oldIdxRight + 1 - (oldSpRight - sp)][0] = tokUnaryPlus;
+        else
+          // However, (something, struct).member should still be allowed,
+          // so, comma needs to produce lvalue
+          del(oldIdxRight + 1 - (oldSpRight - sp), 1);
+      }
+      else if (retStruct)
+      {
+        // However, (something, struct).member should still be allowed,
+        // so, comma needs to produce lvalue. Swap comma and structure dereference.
+        int i = oldIdxRight + 1 - (oldSpRight - sp);
+        stack[i][0] = tokUnaryStar;
+        stack[i][1] = stack[i - 1][1];
+        stack[i - 1][0] = tokComma;
       }
     }
     break;
@@ -4398,6 +4583,9 @@ STATIC
 int ParseExpr(int tok, int* GotUnary, int* ExprTypeSynPtr, int* ConstExpr, int* ConstVal, int option, int option2)
 {
   int identFirst = tok == tokIdent;
+#ifndef NO_STRUCT_BY_VAL
+  int oldOfs = CurFxnLocalOfs;
+#endif
   *ConstVal = *ConstExpr = 0;
   *ExprTypeSynPtr = SymVoidSynPtr;
 
@@ -4549,6 +4737,11 @@ int ParseExpr(int tok, int* GotUnary, int* ExprTypeSynPtr, int* ConstExpr, int* 
   }
 
   ExprLevel--;
+#ifndef NO_STRUCT_BY_VAL
+  // Reclaim stack space used by temporary structure/union objects
+  // returned by functions
+  CurFxnLocalOfs = oldOfs;
+#endif
 
   return tok;
 }
@@ -4575,7 +4768,7 @@ void DetermineVaListType(void)
   char testbuf[3][CHAR_BIT * sizeof(void*) + 1];
 
   // TBD!!! This is not good. Really need the va_something macros.
-  // Test whether va_list is a pointer to the first optional parameter or
+  // Test whether va_list is a pointer to the first optional argument or
   // an array of one element containing said pointer
   testptr[0] = &testptr[1];
   testptr[1] = &testptr[0];
@@ -5581,7 +5774,7 @@ int ParseBase(int tok, int base[2])
       }
       else if (ParamLevel)
       {
-        // structure/union/enum declarations aren't supported in function parameters
+        // new structure/union/enum declarations aren't supported in function parameters
         errorDecl();
       }
 
@@ -5600,7 +5793,7 @@ int ParseBase(int tok, int base[2])
     {
       unsigned structInfo[4], sz, alignment, tmp;
 
-      // structure/union/enum declarations aren't supported in expressions and function parameters
+      // new structure/union/enum declarations aren't supported in expressions and function parameters
       if (ExprLevel || ParamLevel)
         errorDecl();
 
@@ -6383,11 +6576,13 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
 
       isFxn = SyntaxStack[lastSyntaxPtr + 1][0] == '(';
 
+#ifdef NO_STRUCT_BY_VAL
       if (isFxn &&
           SyntaxStack[SyntaxStackCnt - 1][0] == tokStructPtr &&
           SyntaxStack[SyntaxStackCnt - 2][0] == ')')
         // structure returning isn't supported currently
         errorDecl();
+#endif
 
       isArray = SyntaxStack[lastSyntaxPtr + 1][0] == '[';
       isIncompleteArr = isArray && SyntaxStack[lastSyntaxPtr + 2][1] == 0;
@@ -6739,26 +6934,9 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
 
         if (isLocal)
         {
-          int oldOfs;
-          // Let's calculate variable's relative on-stack location
-          oldOfs = CurFxnLocalOfs;
-
-          // Note: local vars are word-aligned on the stack
-          CurFxnLocalOfs = uint2int((CurFxnLocalOfs + 0u - sz) & ~(SizeOfWord - 1u));
-          if (CurFxnLocalOfs >= oldOfs || CurFxnLocalOfs != truncInt(CurFxnLocalOfs))
-            //error("ParseDecl(): Local variables take too much space\n");
-            errorVarSize();
-#ifdef CAN_COMPILE_32BIT
-          if (OutputFormat == FormatSegHuge && CurFxnLocalOfs < -0x7FFF)
-            errorVarSize();
-#endif
-
           // Now that the size of the local is certainly known,
           // update its offset in the offset token
-          SyntaxStack[lastSyntaxPtr + 1][1] = CurFxnLocalOfs;
-
-          if (CurFxnMinLocalOfs > CurFxnLocalOfs)
-            CurFxnMinLocalOfs = CurFxnLocalOfs;
+          SyntaxStack[lastSyntaxPtr + 1][1] = AllocLocal(sz);
 
 #ifndef NO_ANNOTATIONS
           DumpDecl(lastSyntaxPtr, 0);
@@ -6813,6 +6991,7 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
             // Since a local integer variable always takes as much space as a whole int,
             // we can optimize code generation a bit by storing the initializer as an int.
             // This is an old accidental optimization and I preserve it for now.
+            // Note, this implies a little-endian CPU.
             stack[sp - 1][1] = SizeOfWord;
           }
 
@@ -6845,6 +7024,14 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
 
         ParseLevel++;
         GetFxnInfo(lastSyntaxPtr, &CurFxnParamCntMin, &CurFxnParamCntMax, &CurFxnReturnExprTypeSynPtr, NULL); // get return type
+
+#ifndef NO_STRUCT_BY_VAL
+        // Make sure the return structure type is complete
+        if (CurFxnReturnExprTypeSynPtr >= 0 &&
+            SyntaxStack[CurFxnReturnExprTypeSynPtr][0] == tokStructPtr &&
+            !GetDeclSize(CurFxnReturnExprTypeSynPtr, 0))
+          errorDecl();
+#endif
 
         if (OutputFormat != FormatFlat)
           puts2(CodeHeader);
@@ -6918,8 +7105,7 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
         GenFxnEpilog();
 
         GenNumLabel(locAllocLabel + 1);
-        if (CurFxnMinLocalOfs)
-          GenLocalAlloc(-CurFxnMinLocalOfs);
+        GenFxnProlog2();
         GenJumpUncond(locAllocLabel);
         if (OutputFormat != FormatFlat)
           puts2(CodeFooter);
@@ -7066,11 +7252,13 @@ void ParseFxnParams(int tok)
           errorUnexpectedVoid();
       }
 
+#ifdef NO_STRUCT_BY_VAL
       if (SyntaxStack[SyntaxStackCnt - 1][0] == tokStructPtr &&
           t != '*' &&
           t != ']')
         // structure passing and returning isn't supported currently
         errorDecl();
+#endif
 
       if (tok == ')')
         break;
@@ -7088,6 +7276,7 @@ STATIC
 void AddFxnParamSymbols(int SyntaxPtr)
 {
   int i;
+  unsigned paramOfs = 2 * SizeOfWord; // ret addr, xbp
 
   if (SyntaxPtr < 0 ||
       SyntaxPtr > SyntaxStackCnt - 3 ||
@@ -7097,10 +7286,28 @@ void AddFxnParamSymbols(int SyntaxPtr)
     errorInternal(6);
 
   CurFxnSyntaxPtr = SyntaxPtr;
-  CurFxnParamCnt = 0;
-  CurFxnParamOfs = 2 * SizeOfWord; // ret addr, xbp
   CurFxnLocalOfs = 0;
   CurFxnMinLocalOfs = 0;
+
+#ifndef NO_STRUCT_BY_VAL
+  if (CurFxnReturnExprTypeSynPtr >= 0 &&
+      SyntaxStack[CurFxnReturnExprTypeSynPtr][0] == tokStructPtr)
+  {
+    // The function returns a struct/union via an implicit param/arg (pointer to struct/union)
+    // before its first formal param/arg, add this implicit param/arg
+#ifndef NO_ANNOTATIONS
+    int paramPtr = SyntaxStackCnt;
+#endif
+    PushSyntax2(tokIdent, AddIdent("@")); // special implicit param/arg (pretval) pointing to structure receptacle
+    PushSyntax2(tokLocalOfs, paramOfs);
+    PushSyntax('*');
+    PushSyntax2(tokStructPtr, SyntaxStack[CurFxnReturnExprTypeSynPtr][1]);
+    paramOfs += SizeOfWord;
+#ifndef NO_ANNOTATIONS
+    DumpDecl(paramPtr, 0);
+#endif
+  }
+#endif
 
   SyntaxPtr += 2; // skip "ident("
 
@@ -7110,7 +7317,7 @@ void AddFxnParamSymbols(int SyntaxPtr)
 
     if (tok == tokIdent)
     {
-      int sz;
+      unsigned sz;
 #ifndef NO_ANNOTATIONS
       int paramPtr;
 #endif
@@ -7124,19 +7331,28 @@ void AddFxnParamSymbols(int SyntaxPtr)
       if (SyntaxStack[i + 1][0] == tokEllipsis) // "ident(something,...)" = no more params
         break;
 
+      // Make sure the parameter is not an incomplete structure
       sz = GetDeclSize(i, 0);
       if (sz == 0)
         //error("Internal error: AddFxnParamSymbols(): GetDeclSize() = 0\n");
-        errorInternal(8);
+        //errorInternal(8);
+        errorDecl();
 
       // Let's calculate this parameter's relative on-stack location
-      CurFxnParamOfs = (CurFxnParamOfs + SizeOfWord - 1) / SizeOfWord * SizeOfWord;
 #ifndef NO_ANNOTATIONS
       paramPtr = SyntaxStackCnt;
 #endif
       PushSyntax2(SyntaxStack[i][0], SyntaxStack[i][1]);
-      PushSyntax2(tokLocalOfs, CurFxnParamOfs);
-      CurFxnParamOfs += sz;
+      PushSyntax2(tokLocalOfs, paramOfs);
+
+      if (sz + SizeOfWord - 1 < sz)
+        errorVarSize();
+      sz = (sz + SizeOfWord - 1) & ~(SizeOfWord - 1u);
+      if (paramOfs + sz < paramOfs)
+        errorVarSize();
+      paramOfs += sz;
+      if (paramOfs > (unsigned)GenMaxLocalsSize())
+        errorVarSize();
 
       // Duplicate this parameter in the symbol table
       i++;
@@ -7145,7 +7361,6 @@ void AddFxnParamSymbols(int SyntaxPtr)
         tok = SyntaxStack[i][0];
         if (tok == tokIdent || tok == ')')
         {
-          CurFxnParamCnt++;
 #ifndef NO_ANNOTATIONS
           DumpDecl(paramPtr, 0);
 #endif
@@ -7274,10 +7489,49 @@ int ParseStatement(int tok, int BrkCntTarget[2], int casesIdx)
           errorUnexpectedToken(tok);
         if (gotUnary)
           //error("ParseStatement(): cannot return a value of type 'void'\n");
+#ifdef NO_STRUCT_BY_VAL
           scalarTypeCheck(synPtr);
+#else
+          nonVoidTypeCheck(synPtr);
+#endif
       }
       if (gotUnary)
+      {
+#ifndef NO_STRUCT_BY_VAL
+        int structs = (synPtr >= 0 && SyntaxStack[synPtr][0] == tokStructPtr) +
+          (CurFxnReturnExprTypeSynPtr >= 0 && SyntaxStack[CurFxnReturnExprTypeSynPtr][0] == tokStructPtr) * 2;
+
+        if (structs)
+        {
+          if (structs != 3 ||
+              SyntaxStack[synPtr][1] != SyntaxStack[CurFxnReturnExprTypeSynPtr][1])
+            errorOpType();
+
+          // Transform "return *pstruct" into structure assignment ("*pretval = *pstruct")
+          // via function call "fxn(sizeof *pretval, pstruct, pretval)".
+
+          // There are a couple of differences to how this is implemented in the assignment operator:
+          // - the structure dereference has already been dropped from *pstruct by ParseExpr(),
+          //   so it isn't removed here
+          // - we don't add the structure dereference on top of the value returned by "fxn()"
+          //   because the return statement is not an expression that can be an operand into another
+          //   operator
+
+          ins(0, ',');
+          ins2(0, tokUnaryStar, SizeOfWord); // dereference to extract the implicit param/arg (pretval) from the stack
+          ins2(0, tokLocalOfs, SyntaxStack[FindSymbol("@") + 1][1]); // special implicit param/arg (pretval) pointing to structure receptacle
+          ins2(0, '(', SizeOfWord * 3);
+          push(',');
+          push2(tokNumUint, GetDeclSize(synPtr, 0));
+          push(',');
+          if (!StructCpyLabel)
+            StructCpyLabel = LabelCnt++;
+          push2(tokIdent, AddNumericIdent__(StructCpyLabel));
+          push2(')', SizeOfWord * 3);
+        }
+#endif
         GenExpr();
+      }
       GenJumpUncond(CurFxnEpilogLabel);
       tok = GetToken();
     }
@@ -7577,7 +7831,7 @@ int ParseStatement(int tok, int BrkCntTarget[2], int casesIdx)
       GenNumLabel(labelAfter);
 
 #ifndef NO_FOR_DECL
-      // undo any declarations done in the for() parameter set. 
+      // undo any declarations made in the first clause of for
       if (decl)
       {
         UndoNonLabelIdents(undoIdents); // remove all identifier names, except those of labels
@@ -7936,7 +8190,7 @@ int main(int argc, char** argv)
 
   GenInit();
 
-  // Parse the command line parameters
+  // Parse the command line arguments
   for (i = 1; i < argc; i++)
   {
     // DONE: move code-generator-specific options to

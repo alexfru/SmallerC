@@ -505,22 +505,22 @@ void GenFxnProlog(void)
                          Tr32OpRegSp, 0);
 }
 
-int GenHack;
+STATIC
+void GenGrowStack(int size)
+{
+  if (!size)
+    return;
+  GenPrintInstr3Operands(Tr32InstrSub, 0,
+                         Tr32OpRegSp, 0,
+                         Tr32OpRegSp, 0,
+                         Tr32OpConst, size);
+}
 
 STATIC
-void GenLocalAlloc(int size)
+void GenFxnProlog2(void)
 {
-  // TBD!!! This is a hack.
-  if (size != -1)
-    GenPrintInstr3Operands(Tr32InstrSub, 0,
-                           Tr32OpRegSp, 0,
-                           Tr32OpRegSp, 0,
-                           Tr32OpConst, size);
-  if (GenHack)
-  {
-    GenSaveRestoreRegs(1);
-    GenHack = 0;
-  }
+  GenGrowStack(-CurFxnMinLocalOfs);
+  GenSaveRestoreRegs(1);
 }
 
 STATIC
@@ -536,13 +536,12 @@ void GenFxnEpilog(void)
                         Tr32OpRegBp, 0);
 
   GenPrintInstrNoOperand(Tr32InstrRet, 0);
+}
 
-  // TBD!!! This is a hack.
-  // GenLocalAlloc(-CurFxnMinLocalOfs) will only be called after GenFxnEpilog()
-  // if CurFxnMinLocalOfs != 0. It needs to be called in order to save the used registers.
-  GenHack = 1;
-  if (!CurFxnMinLocalOfs)
-    CurFxnMinLocalOfs = 1;
+STATIC
+int GenMaxLocalsSize(void)
+{
+  return 0x7FFFFFFF;
 }
 
 STATIC
@@ -1443,7 +1442,7 @@ void GenExpr0(void)
         GenPrintInstr1Operand(Tr32InstrCall, 0,
                               GenWreg, 0);
       }
-      GenLocalAlloc(-v);
+      GenGrowStack(-v);
       break;
 
     case tokUnaryStar:

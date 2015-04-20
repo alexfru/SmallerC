@@ -8,8 +8,8 @@
 typedef char* va_list;
 
 #ifdef __SMALLER_PP__
-#define va_start(vl, last)      { (vl) = (char*)&(last) + sizeof(int); }
-#define va_arg(vl, type)        (*(type*)(((vl) += sizeof(int)) - sizeof(int)))
+#define va_start(vl, last)      { (vl) = (char*)&(last) + ((sizeof(last) + sizeof(int) - 1) & -sizeof(int)); }
+#define va_arg(vl, type)        (*(type*)(((vl) += ((sizeof(type) + sizeof(int) - 1) & -sizeof(int))) - ((sizeof(type) + sizeof(int) - 1) & -sizeof(int))))
 #define va_end(vl)
 #endif
 
