@@ -3293,7 +3293,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
           break;
         default:
 #ifdef CAN_COMPILE_32BIT
-          if (castSize && castSize != SizeOfWord && -castSize != SizeOfWord)
+          if (castSize && castSize != SizeOfWord)
           {
             if (castSize == 2)
             {
@@ -3309,7 +3309,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
                 s -= 0x10000;
             }
           }
-          else
+          else // fallthrough
 #endif
           {
             // cast to int/unsigned/pointer
@@ -4512,8 +4512,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       --*idx;
       exprval(idx, ExprTypeSynPtr, ConstExpr);
 
-      if (*ExprTypeSynPtr >= 0 && SyntaxStack[*ExprTypeSynPtr][0] == '*')
-        *ExprTypeSynPtr = -(*ExprTypeSynPtr + 1); // TBD!!! shouldn't this be done elsewhere?
+      decayArray(ExprTypeSynPtr, 0);
 
       if (*ExprTypeSynPtr >= 0 ||
           SyntaxStack[-*ExprTypeSynPtr][0] != tokStructPtr)
@@ -7529,7 +7528,35 @@ int ParseStatement(int tok, int BrkCntTarget[2], int casesIdx)
           push2(tokIdent, AddNumericIdent__(StructCpyLabel));
           push2(')', SizeOfWord * 3);
         }
+        else // fallthrough
 #endif
+        {
+          // If return value (per function declaration) is a scalar type smaller than machine word,
+          // properly zero- or sign-extend the returned value to machine word size.
+          // TBD??? Move this cast to the caller?
+          int castSize = GetDeclSize(CurFxnReturnExprTypeSynPtr, 1);
+          if (castSize != SizeOfWord &&
+              (synPtr < 0 || castSize != GetDeclSize(synPtr, 1)))
+          {
+            switch (castSize)
+            {
+            case 1:
+              push(tokUChar);
+              break;
+            case -1:
+              push(tokSChar);
+              break;
+#ifdef CAN_COMPILE_32BIT
+            case 2:
+              push(tokUShort);
+              break;
+            case -2:
+              push(tokShort);
+              break;
+#endif
+            }
+          }
+        }
         GenExpr();
       }
       GenJumpUncond(CurFxnEpilogLabel);
