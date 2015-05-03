@@ -80,7 +80,7 @@ STATIC
 void GenLabel(char* Label, int Static)
 {
   {
-    if (OutputFormat != FormatFlat && !Static && GenExterns)
+    if (!Static && GenExterns)
       printf2("\t.global\t_%s\n", Label);
     printf2("_%s:\n", Label);
   }
@@ -976,7 +976,7 @@ void GenPrep(int* idx)
         // Change unsigned division to right shift and unsigned modulo to bitwise and
         else if (tok == tokUMod || tok == tokAssignUMod)
         {
-          stack[oldIdxRight][1] = uint2int(m - 1);
+          stack[oldIdxRight][1] = (int)(m - 1);
           tok = (tok == tokUMod) ? '&' : tokAssignAnd;
         }
         else
@@ -1782,8 +1782,7 @@ unsigned GenStrData(int generatingCode, unsigned requiredLen)
       int label = atoi(p);
       unsigned len;
 
-      p = FindString(label);
-      len = *p++ & 0xFF;
+      p = FindString(label, &len);
 
       // If this is a string literal initializing an array of char,
       // truncate or pad it as necessary.
@@ -1804,15 +1803,8 @@ unsigned GenStrData(int generatingCode, unsigned requiredLen)
 
       if (generatingCode)
       {
-        if (OutputFormat == FormatFlat)
-        {
-          GenJumpUncond(label + 1);
-        }
-        else
-        {
-          puts2(CodeFooter);
-          puts2(DataHeader);
-        }
+        puts2(CodeFooter);
+        puts2(DataHeader);
       }
 
       GenNumLabel(label);
@@ -1844,15 +1836,8 @@ unsigned GenStrData(int generatingCode, unsigned requiredLen)
 
       if (generatingCode)
       {
-        if (OutputFormat == FormatFlat)
-        {
-          GenNumLabel(label + 1);
-        }
-        else
-        {
-          puts2(DataFooter);
-          puts2(CodeHeader);
-        }
+        puts2(DataFooter);
+        puts2(CodeHeader);
       }
     }
   }
@@ -1881,8 +1866,7 @@ void GenFin(void)
     *--p = '_';
     *--p = '_';
 
-    if (OutputFormat != FormatFlat)
-      puts2(CodeHeader);
+    puts2(CodeHeader);
 
     GenLabel(p, 1);
     puts2("\tpush\t%r1\n"
@@ -1906,8 +1890,7 @@ void GenFin(void)
           "\tpop\t%r1\n"
           "\tret");
 
-    if (OutputFormat != FormatFlat)
-      puts2(CodeFooter);
+    puts2(CodeFooter);
   }
 
 #ifdef USE_SWITCH_TAB
@@ -1923,8 +1906,7 @@ void GenFin(void)
     *--p = '_';
     *--p = '_';
 
-    if (OutputFormat != FormatFlat)
-      puts2(CodeHeader);
+    puts2(CodeHeader);
 
     GenLabel(p, 1);
 
@@ -1948,8 +1930,7 @@ void GenFin(void)
     puts2("\taddiu\t$29, $29, 16\n"
           "\tj\t$31");
 
-    if (OutputFormat != FormatFlat)
-      puts2(CodeFooter);
+    puts2(CodeFooter);
   }
 #endif
 }

@@ -60,7 +60,7 @@ void GenAddGlobal(char* s, int use)
 {
   int i = 0;
   int l;
-  if (OutputFormat != FormatFlat && GenExterns)
+  if (GenExterns)
   {
     while (i < GlobalsTableLen)
     {
@@ -86,7 +86,7 @@ void GenInit(void)
 {
   // initialization of target-specific code generator
   SizeOfWord = 2;
-  OutputFormat = FormatSegTurbo;
+  OutputFormat = FormatSegmented;
   UseLeadingUnderscores = 1;
 }
 
@@ -96,31 +96,16 @@ int GenInitParams(int argc, char** argv, int* idx)
   (void)argc;
   // initialization of target-specific code generator with parameters
 
-  if (!strcmp(argv[*idx], "-seg16t"))
+  if (!strcmp(argv[*idx], "-seg16"))
   {
     // this is the default option for x86
-    OutputFormat = FormatSegTurbo; SizeOfWord = 2;
-    return 1;
-  }
-  else if (!strcmp(argv[*idx], "-seg16"))
-  {
     OutputFormat = FormatSegmented; SizeOfWord = 2;
-    return 1;
-  }
-  else if (!strcmp(argv[*idx], "-flat16"))
-  {
-    OutputFormat = FormatFlat; SizeOfWord = 2;
     return 1;
   }
 #ifdef CAN_COMPILE_32BIT
   else if (!strcmp(argv[*idx], "-seg32"))
   {
     OutputFormat = FormatSegmented; SizeOfWord = 4;
-    return 1;
-  }
-  else if (!strcmp(argv[*idx], "-flat32"))
-  {
-    OutputFormat = FormatFlat; SizeOfWord = 4;
     return 1;
   }
   else if (!strcmp(argv[*idx], "-huge"))
@@ -144,27 +129,12 @@ void GenInitFinalize(void)
   // finalization of initialization of target-specific code generator
 
   // Change the output assembly format/content according to the options
-  if (OutputFormat == FormatSegTurbo)
-  {
-    FileHeader = "SEGMENT _TEXT PUBLIC CLASS=CODE USE16\n"
-                 "SEGMENT _DATA PUBLIC CLASS=DATA\n";
-    CodeHeader = "SEGMENT _TEXT";
-    CodeFooter = "; SEGMENT _TEXT";
-    DataHeader = "SEGMENT _DATA";
-    DataFooter = "; SEGMENT _DATA";
-  }
+  CodeHeader = "section .text";
+  DataHeader = "section .data";
+  if (SizeOfWord == 2 || OutputFormat == FormatSegHuge)
+    FileHeader = "bits 16\n";
   else
-  {
-    if (OutputFormat == FormatSegmented || OutputFormat == FormatSegHuge)
-    {
-      CodeHeader = "section .text";
-      DataHeader = "section .data";
-    }
-    if (SizeOfWord == 2 || OutputFormat == FormatSegHuge)
-      FileHeader = "bits 16\n";
-    else
-      FileHeader = "bits 32\n";
-  }
+    FileHeader = "bits 32\n";
 }
 
 STATIC
@@ -184,13 +154,13 @@ void GenLabel(char* Label, int Static)
 {
   if (UseLeadingUnderscores)
   {
-    if (OutputFormat != FormatFlat && !Static && GenExterns)
+    if (!Static && GenExterns)
       printf2("\tglobal\t_%s\n", Label);
     printf2("_%s:\n", Label);
   }
   else
   {
-    if (OutputFormat != FormatFlat && !Static && GenExterns)
+    if (!Static && GenExterns)
       printf2("\tglobal\t$%s\n", Label);
     printf2("$%s:\n", Label);
   }
@@ -3134,8 +3104,7 @@ unsigned GenStrData(int generatingCode, unsigned requiredLen)
       int quot = 0;
       unsigned len;
 
-      p = FindString(label);
-      len = *p++ & 0xFF;
+      p = FindString(label, &len);
 
       // If this is a string literal initializing an array of char,
       // truncate or pad it as necessary.
@@ -3156,15 +3125,8 @@ unsigned GenStrData(int generatingCode, unsigned requiredLen)
 
       if (generatingCode)
       {
-        if (OutputFormat == FormatFlat)
-        {
-          GenJumpUncond(label + 1);
-        }
-        else
-        {
-          puts2(CodeFooter);
-          puts2(DataHeader);
-        }
+        puts2(CodeFooter);
+        puts2(DataHeader);
       }
 
       GenNumLabel(label);
@@ -3211,15 +3173,8 @@ unsigned GenStrData(int generatingCode, unsigned requiredLen)
 
       if (generatingCode)
       {
-        if (OutputFormat == FormatFlat)
-        {
-          GenNumLabel(label + 1);
-        }
-        else
-        {
-          puts2(DataFooter);
-          puts2(CodeHeader);
-        }
+        puts2(DataFooter);
+        puts2(CodeHeader);
       }
     }
   }
@@ -3230,7 +3185,7 @@ unsigned GenStrData(int generatingCode, unsigned requiredLen)
 STATIC
 void GenExpr(void)
 {
-  if (OutputFormat != FormatFlat && GenExterns)
+  if (GenExterns)
   {
     int i;
     for (i = 0; i < sp; i++)
@@ -3258,8 +3213,7 @@ void GenFin(void)
     *--p = '_';
     *--p = '_';
 
-    if (OutputFormat != FormatFlat)
-      puts2(CodeHeader);
+    puts2(CodeHeader);
 
     GenLabel(p, 1);
     GenFxnProlog();
@@ -3330,8 +3284,7 @@ void GenFin(void)
 
     GenFxnEpilog();
 
-    if (OutputFormat != FormatFlat)
-      puts2(CodeFooter);
+    puts2(CodeFooter);
   }
 
 #ifndef NO_STRUCT_BY_VAL
@@ -3345,8 +3298,7 @@ void GenFin(void)
     *--p = '_';
     *--p = '_';
 
-    if (OutputFormat != FormatFlat)
-      puts2(CodeHeader);
+    puts2(CodeHeader);
 
     GenLabel(p, 1);
     GenFxnProlog();
@@ -3432,8 +3384,7 @@ void GenFin(void)
 
 //    GenFxnEpilog();
 
-    if (OutputFormat != FormatFlat)
-      puts2(CodeFooter);
+    puts2(CodeFooter);
   }
 #endif
 
@@ -3448,8 +3399,7 @@ void GenFin(void)
     *--p = '_';
     *--p = '_';
 
-    if (OutputFormat != FormatFlat)
-      puts2(CodeHeader);
+    puts2(CodeHeader);
 
     GenLabel(p, 1);
     GenFxnProlog();
@@ -3539,8 +3489,7 @@ void GenFin(void)
     // from the stack
 //    GenFxnEpilog();
 
-    if (OutputFormat != FormatFlat)
-      puts2(CodeFooter);
+    puts2(CodeFooter);
   }
 #endif
 
@@ -3558,8 +3507,7 @@ void GenFin(void)
     *--p = '_';
     *--p = '_';
 
-    if (OutputFormat != FormatFlat)
-      puts2(CodeHeader);
+    puts2(CodeHeader);
 
     GenLabel(p, 1);
     puts2("\tlea\tebx, [esp+4]\n"
@@ -3574,12 +3522,11 @@ void GenFin(void)
     printf2("\tjne\t"); GenPrintNumLabel(lbl); // jne L1
     puts2("\n\tret");
 
-    if (OutputFormat != FormatFlat)
-      puts2(CodeFooter);
+    puts2(CodeFooter);
   }
 #endif
 
-  if (OutputFormat != FormatFlat && GenExterns)
+  if (GenExterns)
   {
     int i = 0;
 

@@ -76,6 +76,8 @@ unsigned long strtoul(char*, char**, int);
 
 void qsort(void*, size_t, size_t, int (*)(void*, void*));
 
+#define EXIT_FAILURE 1
+
 void exit(int);
 
 size_t strlen(char*);
@@ -510,7 +512,7 @@ void DetermineVaListType(void)
     // va_list is something else, and
     // the code may have long crashed by now
     printf("Internal error: Indeterminate underlying type of va_list\n");
-    exit(-1);
+    exit(EXIT_FAILURE);
   }
 }
 #endif // DETERMINE_VA_LIST
@@ -558,7 +560,7 @@ void error(char* format, ...)
   va_end(vl);
 #endif
 
-  exit(-1);
+  exit(EXIT_FAILURE);
 }
 
 void errMem(void)

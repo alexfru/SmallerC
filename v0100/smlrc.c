@@ -127,6 +127,8 @@ either expressed or implied, of the FreeBSD Project.
 #endif
 #endif
 
+#define EXIT_FAILURE 1
+
 void exit(int);
 int atoi(char*);
 
@@ -173,19 +175,22 @@ int vfprintf(FILE*, char*, void*);
 #ifndef MAX_IDENT_LEN
 #define MAX_IDENT_LEN        63
 #endif
-#define MAX_STRING_LEN       255
-#define MAX_CHAR_QUEUE_LEN   256
+
+#ifndef MAX_STRING_LEN
+#define MAX_STRING_LEN       255 // must be less than min(MAX_STRING_TABLE_LEN,16383)
+#endif
+#define MAX_CHAR_QUEUE_LEN   (MAX_STRING_LEN + 1) // must be greater than MAX_STRING_LEN
 
 #ifndef MAX_MACRO_TABLE_LEN
 #define MAX_MACRO_TABLE_LEN  4096
 #endif
 
 #ifndef MAX_STRING_TABLE_LEN
-#define MAX_STRING_TABLE_LEN (512+128)
+#define MAX_STRING_TABLE_LEN (512+128) // must be greater than MAX_STRING_LEN
 #endif
 
 #ifndef MAX_IDENT_TABLE_LEN
-#define MAX_IDENT_TABLE_LEN  (4096+656)
+#define MAX_IDENT_TABLE_LEN  (4096+656) // must be greater than MAX_IDENT_LEN
 #endif
 
 #ifndef SYNTAX_STACK_MAX
@@ -322,9 +327,9 @@ int vfprintf(FILE*, char*, void*);
 #define tokEnumPtr    0x93
 #define tokIntr       0x94
 
-#define FormatFlat      0
+//#define FormatFlat      0
 #define FormatSegmented 1
-#define FormatSegTurbo  2
+//#define FormatSegTurbo  2
 #define FormatSegHuge   3
 
 #define SymVoidSynPtr 0
@@ -343,8 +348,6 @@ int vfprintf(FILE*, char*, void*);
 #define SymLocalArr  5
 
 // all public prototypes
-STATIC
-int uint2int(unsigned);
 STATIC
 unsigned truncUint(unsigned);
 STATIC
@@ -367,7 +370,7 @@ void PurgeStringTable(void);
 STATIC
 void AddString(int label, char* str, int len);
 STATIC
-char* FindString(int label);
+char* FindString(int label, unsigned* plen);
 
 STATIC
 int AddIdent(char* name);
@@ -551,7 +554,8 @@ int MacroTableLen = 0;
   String table entry format:
     labell uchar:   temporary identifier's (char*) label number low 8 bits
     labelh uchar:   temporary identifier's (char*) label number high 8 bits
-    len uchar:      string length (<= 255)
+    lenl uchar:     string length, low 7 bits
+    lenh uchar:     string length, high 7 bits; lenh is present IFF lenl >= 0x80
     str char[len]:  string (ASCII)
 */
 char StringTable[MAX_STRING_TABLE_LEN];
@@ -625,12 +629,6 @@ int opsp = 0;
 int OutputFormat = FormatSegmented;
 int GenExterns = 1;
 
-#ifdef CAN_COMPILE_32BIT
-// Name of the function to call in main()'s prolog to construct C++ objects/init data.
-// gcc calls __main().
-char* MainPrologCtorFxn = NULL;
-#endif
-
 // Names of C functions and variables are usually prefixed with an underscore.
 // One notable exception is the ELF format used by gcc in Linux.
 // Global C identifiers in the ELF format should not be predixed with an underscore.
@@ -693,30 +691,6 @@ int SyntaxStackCnt = 8; // number of explicitly initialized elements in SyntaxSt
 // all code
 
 STATIC
-int uint2int(unsigned n)
-{
-  int r;
-  // Convert n to (int)n in such a way that (unsigned)(int)n == n,
-  // IOW, avoid signed overflows in (int)n that result in an implementation-defined value/signal.
-  // We're assuming ints are 2's complement.
-
-  // "n < INT_MAX + 1u" is equivalent to "n <= INT_MAX" without the
-  // possible warning about comparing signed and unsigned types
-  if (n < INT_MAX + 1u)
-  {
-    r = n;
-  }
-  else
-  {
-    n = n - INT_MAX - 1; // Now, 0 <= n <= INT_MAX, n is representable in int
-    r = n;
-    r = r - INT_MAX - 1; // Now, INT_MIN <= r <= -1
-  }
-
-  return r;
-}
-
-STATIC
 unsigned truncUint(unsigned n)
 {
   // Truncate n to SizeOfWord * 8 bits
@@ -746,7 +720,7 @@ int truncInt(int n)
     un |= (((un >> 8 >> 12 >> 11) & 1) * ~0u) << 8 << 12 << 12;
   }
 #endif
-  return uint2int(un);
+  return (int)un;
 }
 
 // prep.c code
@@ -886,36 +860,51 @@ void AddString(int label, char* str, int len)
   if (len > MAX_STRING_LEN)
     error("String literal too long\n");
 
-  if (MAX_STRING_TABLE_LEN - StringTableLen < 2 + 1 + len)
+  if (MAX_STRING_TABLE_LEN - StringTableLen < 2 + 2 + len)
     error("String table exhausted\n");
 
   StringTable[StringTableLen++] = label & 0xFF;
   StringTable[StringTableLen++] = (label >> 8) & 0xFF;
 
-  StringTable[StringTableLen++] = len;
+  StringTable[StringTableLen] = len & 0x7F;
+  if (len > 0x7F)
+  {
+    StringTable[StringTableLen++] |= 0x80;
+    StringTable[StringTableLen] = (len >> 7) & 0x7F;
+  }
+  StringTableLen++;
+
   memcpy(StringTable + StringTableLen, str, len);
   StringTableLen += len;
 }
 
 STATIC
-char* FindString(int label)
+char* FindString(int label, unsigned* plen)
 {
   int i;
 
   for (i = 0; i < StringTableLen; )
   {
-    int lab;
+    int lab, len;
 
-    lab = StringTable[i] & 0xFF;
-    lab += (StringTable[i + 1] & 0xFFu) << 8;
+    lab = StringTable[i++] & 0xFF;
+    lab += (StringTable[i++] & 0xFFu) << 8;
+
+    if ((len = (StringTable[i++] & 0xFF)) > 0x7F)
+    {
+      len = len - 0x80 + ((StringTable[i++] & 0x7F) << 7);
+    }
 
     if (lab == label)
-      return StringTable + i + 2;
+    {
+      *plen = len;
+      return StringTable + i;
+    }
 
-    i += 2;
-    i += 1 + (StringTable[i] & 0xFF);
+    i += len;
   }
 
+  *plen = 0;
   return NULL;
 }
 
@@ -1650,7 +1639,7 @@ int GetNumber(void)
      )
     error("Constant too big for %d-bit type\n", SizeOfWord * 8);
 
-  TokenValueInt = uint2int(n);
+  TokenValueInt = (int)n;
 
   // Unsuffixed (with 'u') integer constants (octal, decimal, hex)
   // fitting into 15(31) out of 16(32) bits are signed ints
@@ -2930,8 +2919,8 @@ void shiftCountCheck(int *psr, int idx, int ExprTypeSynPtr)
   // can't shift by a negative count and by a count exceeding
   // the number of bits in int
   if ((SyntaxStack[ExprTypeSynPtr][0] != tokUnsigned && sr < 0) ||
-      (sr + 0u) >= CHAR_BIT * sizeof(int) ||
-      (sr + 0u) >= 8u * SizeOfWord)
+      (unsigned)sr >= CHAR_BIT * sizeof(int) ||
+      (unsigned)sr >= 8u * SizeOfWord)
   {
     //error("exprval(): Invalid shift count\n");
     warning("Shift count out of range\n");
@@ -2953,8 +2942,8 @@ int divCheckAndCalc(int tok, int* psl, int sr, int Unsigned, int ConstExpr[2])
 
   if (Unsigned)
   {
-    sl = uint2int(truncUint(sl));
-    sr = uint2int(truncUint(sr));
+    sl = (int)truncUint(sl);
+    sr = (int)truncUint(sr);
   }
   else
   {
@@ -2979,9 +2968,9 @@ int divCheckAndCalc(int tok, int* psl, int sr, int Unsigned, int ConstExpr[2])
     if (Unsigned)
     {
       if (tok == '/')
-        sl = uint2int((sl + 0u) / sr);
+        sl = (int)((unsigned)sl / sr);
       else
-        sl = uint2int((sl + 0u) % sr);
+        sl = (int)((unsigned)sl % sr);
     }
     else
     {
@@ -3133,7 +3122,7 @@ int AllocLocal(unsigned size)
   int oldOfs = CurFxnLocalOfs;
 
   // Note: local vars are word-aligned on the stack
-  CurFxnLocalOfs = uint2int((CurFxnLocalOfs - size) & ~(SizeOfWord - 1u));
+  CurFxnLocalOfs = (int)((CurFxnLocalOfs - size) & ~(SizeOfWord - 1u));
   if (CurFxnLocalOfs >= oldOfs ||
       CurFxnLocalOfs != truncInt(CurFxnLocalOfs) ||
       CurFxnLocalOfs < -GenMaxLocalsSize())
@@ -3487,9 +3476,9 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       sl = exprval(idx, ExprTypeSynPtr, &constExpr[0]);
 
       if (tok == '+')
-        s = uint2int(sl + 0u + sr);
+        s = (int)((unsigned)sl + sr);
       else
-        s = uint2int(sl + 0u - sr);
+        s = (int)((unsigned)sl - sr);
 
       scalarTypeCheck(RightExprTypeSynPtr);
       scalarTypeCheck(*ExprTypeSynPtr);
@@ -3507,7 +3496,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
 
         if (constExpr[0]) // integer constant in left-hand expression
         {
-          s = uint2int((sl + 0u) * incSize);
+          s = (int)((unsigned)sl * incSize);
           stack[oldIdxLeft - (oldSpLeft - sp)][1] = s;
           // optimize a little if possible
           {
@@ -3520,7 +3509,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
             // addition/subtraction
             if (stack[i][0] == tokNumInt || stack[i][0] == tokNumUint || stack[i][0] == tokLocalOfs)
             {
-              s = uint2int(stack[i][1] + 0u + s);
+              s = (int)((unsigned)stack[i][1] + s);
               stack[i][1] = s; // TBD!!! need extra truncation?
               del(oldIdxLeft - (oldSpLeft - sp), 1);
               del(oldIdxRight - (oldSpRight - sp) + 1, 1);
@@ -3540,7 +3529,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
         incSize = GetDeclSize(-*ExprTypeSynPtr, 0);
         if (constExpr[1]) // integer constant in right-hand expression
         {
-          s = uint2int((sr + 0u) * incSize);
+          s = (int)((unsigned)sr * incSize);
           stack[oldIdxRight - (oldSpRight - sp)][1] = s;
           // optimize a little if possible
           {
@@ -3554,8 +3543,8 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
             if (stack[i][0] == tokNumInt || stack[i][0] == tokNumUint || stack[i][0] == tokLocalOfs)
             {
               if (tok == '-')
-                s = uint2int(-(s + 0u));
-              s = uint2int(stack[i][1] + 0u + s);
+                s = (int)~(s - 1u);
+              s = (int)((unsigned)stack[i][1] + s);
               stack[i][1] = s; // TBD!!! need extra truncation?
               del(oldIdxRight - (oldSpRight - sp), 2);
             }
@@ -3747,7 +3736,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
     {
     case '~':           s = ~s; break;
     case tokUnaryPlus:  s = +s; break;
-    case tokUnaryMinus: s = uint2int(~(s - 1u)); break;
+    case tokUnaryMinus: s = (int)~(s - 1u); break;
     }
     promoteType(ExprTypeSynPtr, ExprTypeSynPtr);
     simplifyConstExpr(s, *ConstExpr, ExprTypeSynPtr, oldIdxRight + 1 - (oldSpRight - sp), *idx + 1);
@@ -3798,7 +3787,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
         break;
 
       case '*':
-        sl = uint2int((sl + 0u) * sr);
+        sl = (int)((unsigned)sl * sr);
         break;
 
       case tokLShift:
@@ -3808,7 +3797,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
           if (SyntaxStack[RightExprTypeSynPtr][0] != tokUnsigned)
             sr = truncInt(sr);
           else
-            sr = uint2int(truncUint(sr));
+            sr = (int)truncUint(sr);
           shiftCountCheck(&sr, oldIdxRight - (oldSpRight - sp), RightExprTypeSynPtr);
         }
         if (*ConstExpr)
@@ -3816,22 +3805,22 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
           if (tok == tokLShift)
           {
             // left shift is the same for signed and unsigned ints
-            sl = uint2int((sl + 0u) << sr);
+            sl = (int)((unsigned)sl << sr);
           }
           else
           {
             if (SyntaxStack[*ExprTypeSynPtr][0] == tokUnsigned)
             {
               // right shift for unsigned ints
-              sl = uint2int(truncUint(sl) >> sr);
+              sl = (int)(truncUint(sl) >> sr);
             }
             else if (sr)
             {
               // right shift for signed ints is arithmetic, sign-bit-preserving
               // don't depend on the compiler's implementation, do it "manually"
               sl = truncInt(sl);
-              sl = uint2int((truncUint(sl) >> sr) |
-                            ((sl < 0) * (~0u << (8 * SizeOfWord - sr))));
+              sl = (int)((truncUint(sl) >> sr) |
+                         ((sl < 0) * (~0u << (8 * SizeOfWord - sr))));
             }
           }
         }
@@ -3906,14 +3895,14 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
         }
         else
         {
-          sl = uint2int(truncUint(sl));
-          sr = uint2int(truncUint(sr));
+          sl = (int)truncUint(sl);
+          sr = (int)truncUint(sr);
           switch (tok)
           {
-          case '<':    sl = sl + 0u <  sr + 0u; break;
-          case '>':    sl = sl + 0u >  sr + 0u; break;
-          case tokLEQ: sl = sl + 0u <= sr + 0u; break;
-          case tokGEQ: sl = sl + 0u >= sr + 0u; break;
+          case '<':    sl = (unsigned)sl <  (unsigned)sr; break;
+          case '>':    sl = (unsigned)sl >  (unsigned)sr; break;
+          case tokLEQ: sl = (unsigned)sl <= (unsigned)sr; break;
+          case tokGEQ: sl = (unsigned)sl >= (unsigned)sr; break;
           case tokEQ:  sl = sl == sr; break;
           case tokNEQ: sl = sl != sr; break;
           }
@@ -4132,7 +4121,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
           ins(i, ',');
           i = *idx + 1;
           ins(i, ',');
-          ins2(i, tokNumUint, uint2int(sz));
+          ins2(i, tokNumUint, (int)sz);
           ins2(i, '(', SizeOfWord * 2);
 
           if (sz > (unsigned)GenMaxLocalsSize())
@@ -4368,7 +4357,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
           if (SyntaxStack[RightExprTypeSynPtr][0] != tokUnsigned)
             sr = truncInt(sr);
           else
-            sr = uint2int(truncUint(sr));
+            sr = (int)truncUint(sr);
           shiftCountCheck(&sr, oldIdxRight - (oldSpRight - sp), RightExprTypeSynPtr);
         }
       }
@@ -4389,7 +4378,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
         incSize = GetDeclSize(-*ExprTypeSynPtr, 0);
         if (constExpr[1])
         {
-          int t = uint2int(stack[oldIdxRight - (oldSpRight - sp)][1] * (incSize + 0u));
+          int t = (int)(stack[oldIdxRight - (oldSpRight - sp)][1] * (unsigned)incSize);
           stack[oldIdxRight - (oldSpRight - sp)][1] = t;
         }
         else if (incSize != 1)
@@ -4561,7 +4550,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
         // addition/subtraction
         if (stack[i][0] == tokNumInt || stack[i][0] == tokNumUint || stack[i][0] == tokLocalOfs)
         {
-          stack[i][1] = uint2int(stack[i][1] + 0u + ofs); // TBD!!! need extra truncation?
+          stack[i][1] = (int)((unsigned)stack[i][1] + ofs); // TBD!!! need extra truncation?
           del(oldIdxRight - (oldSpRight - sp), 2);
         }
       }
@@ -4790,7 +4779,7 @@ void DetermineVaListType(void)
     // va_list is something else, and
     // the code may have long crashed by now
     printf("Internal error: Indeterminate underlying type of va_list\n");
-    exit(-1);
+    exit(EXIT_FAILURE);
   }
 }
 #endif // DETERMINE_VA_LIST
@@ -4935,7 +4924,7 @@ void error(char* format, ...)
   va_end(vl);
 #endif
 
-  exit(-1);
+  exit(EXIT_FAILURE);
 }
 
 STATIC
@@ -5327,7 +5316,7 @@ int GetDeclSize(int SyntaxPtr, int SizeForDeref)
         return -1; // 1 byte, needing sign extension when converted to int/unsigned int
       // fallthrough
     case tokUChar:
-      return uint2int(size);
+      return (int)size;
 #ifdef CAN_COMPILE_32BIT
     case tokShort:
       if (!arr && SizeForDeref)
@@ -5341,7 +5330,7 @@ int GetDeclSize(int SyntaxPtr, int SizeForDeref)
       if (size != truncUint(size))
         //error("Variable too big\n");
         errorVarSize();
-      return uint2int(size);
+      return (int)size;
 #endif
     case tokInt:
     case tokUnsigned:
@@ -5354,7 +5343,7 @@ int GetDeclSize(int SyntaxPtr, int SizeForDeref)
       if (size != truncUint(size))
         //error("Variable too big\n");
         errorVarSize();
-      return uint2int(size);
+      return (int)size;
     case '[':
       if (SyntaxStack[i + 1][0] != tokNumInt && SyntaxStack[i + 1][0] != tokNumUint)
         errorInternal(11);
@@ -5383,7 +5372,7 @@ int GetDeclSize(int SyntaxPtr, int SizeForDeref)
         size *= s;
         if (size != truncUint(size))
           errorVarSize();
-        return uint2int(size);
+        return (int)size;
       }
       return 0;
     case tokVoid:
@@ -5655,7 +5644,7 @@ int ParseArrayDimension(int AllowEmptyDimension)
     if ((SyntaxStack[synPtr][0] == tokInt && exprVal < 1) || (SyntaxStack[synPtr][0] == tokUnsigned && exprValU < 1))
       error("Array dimension less than 1\n");
 
-    exprVal = uint2int(exprValU);
+    exprVal = (int)exprValU;
   }
 
   PushSyntax2(tokNumUint, exprVal);
@@ -5859,7 +5848,7 @@ int ParseBase(int tok, int base[2])
 
           PushSyntax2(tokIdent, ident);
           PushSyntax2(tokNumInt, val);
-          val = uint2int(val + 1u);
+          val = (int)(val + 1u);
 
           if (tok == ',')
             tok = GetToken();
@@ -5913,7 +5902,7 @@ int ParseBase(int tok, int base[2])
         sz = (sz + alignment - 1) & ~(alignment - 1);
         if (sz < tmp || sz != truncUint(sz))
           errorVarSize();
-        SyntaxStack[typePtr + 2][1] = uint2int(sz);
+        SyntaxStack[typePtr + 2][1] = (int)sz;
 
         tok = GetToken();
       }
@@ -6237,9 +6226,15 @@ int InitVar(int synPtr, int tok)
     while (i < StringTableLen)
     {
       char *p = s + sizeof s;
+      int len;
 
-      lab = StringTable[i] & 0xFF;
-      lab += (StringTable[i + 1] & 0xFFu) << 8;
+      lab = StringTable[i++] & 0xFF;
+      lab += (StringTable[i++] & 0xFFu) << 8;
+
+      if ((len = (StringTable[i++] & 0xFF)) > 0x7F)
+      {
+        len = len - 0x80 + ((StringTable[i++] & 0x7F) << 7);
+      }
 
       // Reconstruct the identifier for the definition: char #[len] = "...";
       *--p = '\0';
@@ -6253,8 +6248,7 @@ int InitVar(int synPtr, int tok)
       // string literals and the table is nearly full.
       IdentTableLen = undoIdents; // remove all temporary identifier names from e.g. "sizeof" or "str"
 
-      i += 2;
-      i += 1 + (StringTable[i] & 0xFF);
+      i += len;
     }
   }
 
@@ -6287,7 +6281,7 @@ int InitScalar(int synPtr, int tok)
     // so they are always in range?
     GenIntData(elementSz, stack[0][1]);
   }
-  else if (elementSz == SizeOfWord + 0u)
+  else if (elementSz == (unsigned)SizeOfWord)
   {
     if (ttop == tokIdent)
     {
@@ -6746,7 +6740,7 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
           unsigned tmp;
           unsigned newAlignment = alignment;
 #ifndef NO_PPACK
-          if (alignment > PragmaPackValue + 0u)
+          if (alignment > (unsigned)PragmaPackValue)
             newAlignment = PragmaPackValue;
 #endif
           // Update structure/union alignment
@@ -6759,7 +6753,7 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
             errorVarSize();
           // Change tokIdent to tokMemberIdent and insert a local var offset token
           SyntaxStack[lastSyntaxPtr][0] = tokMemberIdent;
-          InsertSyntax2(lastSyntaxPtr + 1, tokLocalOfs, uint2int(structInfo[2]));
+          InsertSyntax2(lastSyntaxPtr + 1, tokLocalOfs, (int)structInfo[2]);
 
           // Advance member offset for structures, keep it zero for unions
           if (structInfo[0] == tokStruct)
@@ -6770,7 +6764,7 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
               errorVarSize();
           }
           // Update max member size for unions
-          else if (structInfo[3] < sz + 0u)
+          else if (structInfo[3] < (unsigned)sz)
           {
             structInfo[3] = sz;
           }
@@ -6828,7 +6822,6 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
         int hasInit = tok == '=';
         int needsGlobalInit = isGlobal & !external;
         int sz = GetDeclSize(lastSyntaxPtr, 0);
-        int skipLabel = 0;
         int initLabel = 0;
 
 #ifndef NO_ANNOTATIONS
@@ -6849,25 +6842,9 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
           if (isLocal | (Static && ParseLevel))
           {
             // Global data appears inside code of a function
-            if (OutputFormat == FormatFlat)
-            {
-              skipLabel = LabelCnt++;
-              GenJumpUncond(skipLabel);
-            }
-            else
-            {
-              puts2(CodeFooter);
-              puts2(DataHeader);
-            }
+            puts2(CodeFooter);
           }
-          else
-          {
-            // Global data appears between functions
-            if (OutputFormat != FormatFlat)
-            {
-              puts2(DataHeader);
-            }
-          }
+          puts2(DataHeader);
 
           // DONE: imperfect condition for alignment
           if (alignment != 1)
@@ -6908,26 +6885,11 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
             GenZeroData(sz);
           }
 
+          puts2(DataFooter);
           if (isLocal | (Static && ParseLevel))
           {
             // Global data appears inside code of a function
-            if (OutputFormat == FormatFlat)
-            {
-              GenNumLabel(skipLabel);
-            }
-            else
-            {
-              puts2(DataFooter);
-              puts2(CodeHeader);
-            }
-          }
-          else
-          {
-            // Global data appears between functions
-            if (OutputFormat != FormatFlat)
-            {
-              puts2(DataFooter);
-            }
+            puts2(CodeHeader);
           }
         }
 
@@ -7032,8 +6994,7 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
           errorDecl();
 #endif
 
-        if (OutputFormat != FormatFlat)
-          puts2(CodeHeader);
+        puts2(CodeHeader);
 
         GenLabel(IdentTable + SyntaxStack[lastSyntaxPtr][1], Static);
         CurFxnEpilogLabel = LabelCnt++;
@@ -7057,19 +7018,6 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
           CurFxnNameLabel = LabelCnt++;
           SyntaxStack[SymFuncPtr][1] = AddNumericIdent__(CurFxnNameLabel);
           SyntaxStack[SymFuncPtr + 2][1] = strlen(CurFxnName) + 1;
-        }
-#endif
-
-#ifdef CAN_COMPILE_32BIT
-        if (MainPrologCtorFxn &&
-            Main &&
-            OutputFormat == FormatSegmented && SizeOfWord == 4)
-        {
-          sp = 0;
-          push('(');
-          push2(tokIdent, AddIdent(MainPrologCtorFxn));
-          push(')');
-          GenExpr();
         }
 #endif
 
@@ -7106,8 +7054,7 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
         GenNumLabel(locAllocLabel + 1);
         GenFxnProlog2();
         GenJumpUncond(locAllocLabel);
-        if (OutputFormat != FormatFlat)
-          puts2(CodeFooter);
+        puts2(CodeFooter);
 
 #ifndef NO_FUNC_
         if (CurFxnNameLabel < 0)
@@ -7115,8 +7062,7 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
           PurgeStringTable();
           AddString(-CurFxnNameLabel, CurFxnName, SyntaxStack[SymFuncPtr + 2][1]);
 
-          if (OutputFormat != FormatFlat)
-            puts2(DataHeader);
+          puts2(DataHeader);
 
           GenLabel(IdentTable + SyntaxStack[SymFuncPtr][1], 1);
 
@@ -7125,8 +7071,7 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
           stack[0][1] = SyntaxStack[SymFuncPtr][1] + 2;
           GenStrData(0, 0);
 
-          if (OutputFormat != FormatFlat)
-            puts2(DataFooter);
+          puts2(DataFooter);
 
           CurFxnNameLabel = 0;
         }
@@ -7975,15 +7920,8 @@ int ParseStatement(int tok, int BrkCntTarget[2], int casesIdx)
       // Store the number of cases in the default slot
       Cases[undoCases][0] = CasesCnt - undoCases - 1;
 
-      if (OutputFormat != FormatFlat)
-      {
-        puts2(CodeFooter);
-        puts2(DataHeader);
-      }
-      else
-      {
-        GenJumpUncond(brkLabel = LabelCnt++);
-      }
+      puts2(CodeFooter);
+      puts2(DataHeader);
 
       GenWordAlignment();
 
@@ -8009,15 +7947,8 @@ int ParseStatement(int tok, int BrkCntTarget[2], int casesIdx)
         GenAddrData(SizeOfWord, p, 0);
       }
 
-      if (OutputFormat != FormatFlat)
-      {
-        puts2(DataFooter);
-        puts2(CodeHeader);
-      }
-      else
-      {
-        GenNumLabel(brkLabel);
-      }
+      puts2(DataFooter);
+      puts2(CodeHeader);
 #else
       // End of switch reached (not via break), skip conditional jumps
       GenJumpUncond(brkLabel);
@@ -8237,16 +8168,6 @@ int main(int argc, char** argv)
       CharIsSigned = 0;
       continue;
     }
-#ifdef CAN_COMPILE_32BIT
-    else if (!strcmp(argv[i], "-ctor-fxn"))
-    {
-      if (i + 1 < argc)
-      {
-        MainPrologCtorFxn = argv[++i];
-        continue;
-      }
-    }
-#endif
     else if (!strcmp(argv[i], "-leading-underscore"))
     {
       // this is the default option for x86

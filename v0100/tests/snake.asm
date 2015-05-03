@@ -3,6 +3,8 @@ bits 16
 org 0x100
 ; glb main : (void) int
 ; glb start : (void) void
+section .text
+	global	_start
 _start:
 	push	bp
 	mov	bp, sp
@@ -17,6 +19,7 @@ L3:
 	ret
 L2:
 	jmp	L1
+
 ; RPN'ized expression: "40 25 * "
 ; Expanded expression: "1000 "
 ; Expression value: 1000
@@ -24,29 +27,46 @@ L2:
 ; Expanded expression: "2 "
 ; Expression value: 2
 ; glb snake : [1000u] [2u] unsigned
+section .data
 	align 2
+	global	_snake
 _snake:
 	times	4000 db 0
+
 ; glb length : unsigned
+section .data
 	align 2
+	global	_length
 _length:
 	times	2 db 0
+
 ; glb direction : unsigned
+section .data
 	align 2
+	global	_direction
 _direction:
 	times	2 db 0
+
 ; RPN'ized expression: "2 "
 ; Expanded expression: "2 "
 ; Expression value: 2
 ; glb target : [2u] unsigned
+section .data
 	align 2
+	global	_target
 _target:
 	times	4 db 0
+
 ; glb score : unsigned
+section .data
 	align 2
+	global	_score
 _score:
 	times	2 db 0
+
 ; glb BiosKeyAvailable : (void) int
+section .text
+	global	_BiosKeyAvailable
 _BiosKeyAvailable:
 	push	bp
 	mov	bp, sp
@@ -61,7 +81,10 @@ L7:
 	ret
 L6:
 	jmp	L5
+
 ; glb BiosReadKey : (void) unsigned
+section .text
+	global	_BiosReadKey
 _BiosReadKey:
 	push	bp
 	mov	bp, sp
@@ -74,9 +97,12 @@ L11:
 	ret
 L10:
 	jmp	L9
+
 ; glb BiosSetGfxMode : (
 ; prm     mode : unsigned
 ;     ) void
+section .text
+	global	_BiosSetGfxMode
 _BiosSetGfxMode:
 	push	bp
 	mov	bp, sp
@@ -91,11 +117,14 @@ L15:
 	ret
 L14:
 	jmp	L13
+
 ; glb pokeb : (
 ; prm     seg : unsigned
 ; prm     ofs : unsigned
 ; prm     val : unsigned char
 ;     ) void
+section .text
+	global	_pokeb
 _pokeb:
 	push	bp
 	mov	bp, sp
@@ -115,11 +144,14 @@ L19:
 	ret
 L18:
 	jmp	L17
+
 ; glb poke : (
 ; prm     seg : unsigned
 ; prm     ofs : unsigned
 ; prm     val : unsigned
 ;     ) void
+section .text
+	global	_poke
 _poke:
 	push	bp
 	mov	bp, sp
@@ -139,10 +171,13 @@ L23:
 	ret
 L22:
 	jmp	L21
+
 ; glb peekb : (
 ; prm     seg : unsigned
 ; prm     ofs : unsigned
 ;     ) unsigned char
+section .text
+	global	_peekb
 _peekb:
 	push	bp
 	mov	bp, sp
@@ -161,10 +196,13 @@ L27:
 	ret
 L26:
 	jmp	L25
+
 ; glb peek : (
 ; prm     seg : unsigned
 ; prm     ofs : unsigned
 ;     ) unsigned
+section .text
+	global	_peek
 _peek:
 	push	bp
 	mov	bp, sp
@@ -182,12 +220,15 @@ L31:
 	ret
 L30:
 	jmp	L29
+
 ; RPN'ized expression: "2 "
 ; Expanded expression: "2 "
 ; Expression value: 2
 ; glb BiosGetTicks : (
 ; prm     ticks : * unsigned
 ;     ) void
+section .text
+	global	_BiosGetTicks
 _BiosGetTicks:
 	push	bp
 	mov	bp, sp
@@ -260,9 +301,12 @@ L35:
 L34:
 	sub	sp, 6
 	jmp	L33
+
 ; glb delay : (
 ; prm     milliseconds : unsigned
 ;     ) void
+section .text
+	global	_delay
 _delay:
 	push	bp
 	mov	bp, sp
@@ -363,6 +407,7 @@ L42:
 L41:
 	sub	sp, 10
 	jmp	L40
+
 ; glb lineh : (
 ; prm     x : unsigned
 ; prm     y : unsigned
@@ -370,6 +415,8 @@ L41:
 ; prm     chr : unsigned
 ; prm     color : unsigned
 ;     ) void
+section .text
+	global	_lineh
 _lineh:
 	push	bp
 	mov	bp, sp
@@ -431,6 +478,7 @@ L55:
 L54:
 	sub	sp, 4
 	jmp	L53
+
 ; glb linev : (
 ; prm     x : unsigned
 ; prm     y : unsigned
@@ -438,6 +486,8 @@ L54:
 ; prm     chr : unsigned
 ; prm     color : unsigned
 ;     ) void
+section .text
+	global	_linev
 _linev:
 	push	bp
 	mov	bp, sp
@@ -499,6 +549,7 @@ L61:
 L60:
 	sub	sp, 4
 	jmp	L59
+
 ; glb box : (
 ; prm     x : unsigned
 ; prm     y : unsigned
@@ -508,6 +559,8 @@ L60:
 ; prm     color : unsigned
 ; prm     solid : unsigned
 ;     ) void
+section .text
+	global	_box
 _box:
 	push	bp
 	mov	bp, sp
@@ -611,12 +664,15 @@ L67:
 	ret
 L66:
 	jmp	L65
+
 ; glb text : (
 ; prm     x : unsigned
 ; prm     y : unsigned
 ; prm     s : * char
 ; prm     color : unsigned
 ;     ) void
+section .text
+	global	_text
 _text:
 	push	bp
 	mov	bp, sp
@@ -685,12 +741,15 @@ L75:
 L74:
 	sub	sp, 4
 	jmp	L73
+
 ; glb number : (
 ; prm     x : unsigned
 ; prm     y : unsigned
 ; prm     n : unsigned
 ; prm     color : unsigned
 ;     ) void
+section .text
+	global	_number
 _number:
 	push	bp
 	mov	bp, sp
@@ -778,11 +837,14 @@ L81:
 L80:
 	sub	sp, 8
 	jmp	L79
+
 ; RPN'ized expression: "2 "
 ; Expanded expression: "2 "
 ; Expression value: 2
 ; glb rand_next : [2u] unsigned
+section .data
 	align 2
+	global	_rand_next
 _rand_next:
 ; =
 ; RPN'ized expression: "1 "
@@ -793,7 +855,10 @@ _rand_next:
 ; Expanded expression: "0 "
 ; Expression value: 0
 	dw	0
+
 ; glb rand : (void) int
+section .text
+	global	_rand
 _rand:
 	push	bp
 	mov	bp, sp
@@ -811,9 +876,12 @@ L89:
 	ret
 L88:
 	jmp	L87
+
 ; glb srand : (
 ; prm     seed : unsigned
 ;     ) void
+section .text
+	global	_srand
 _srand:
 	push	bp
 	mov	bp, sp
@@ -832,8 +900,11 @@ L93:
 	ret
 L92:
 	jmp	L91
+
 ; glb play : (void) void
 ; glb main : (void) int
+section .text
+	global	_main
 _main:
 	push	bp
 	mov	bp, sp
@@ -851,10 +922,12 @@ L95:
 	sub	sp, -2
 ; RPN'ized expression: "( 0 15 | , L99 , 25 2 / , 40 20 - 2 / text ) "
 ; Expanded expression: " 15  L99  12  10  text ()8 "
-	jmp	L100
+
+section .data
 L99:
 	db	"Press a key to start",0
-L100:
+
+section .text
 ; Fused expression:    "( 15 , L99 , 12 , 10 , text )8 "
 	push	15
 	push	L99
@@ -919,7 +992,10 @@ L97:
 L96:
 	sub	sp, 4
 	jmp	L95
+
 ; glb newtarget : (void) void
+section .text
+	global	_newtarget
 _newtarget:
 	push	bp
 	mov	bp, sp
@@ -1070,10 +1146,12 @@ L118:
 L110:
 ; RPN'ized expression: "( 32 14 | , L120 , target 1 + *u , target 0 + *u text ) "
 ; Expanded expression: " 46  L120  target 2 + *(2)  target 0 + *(2)  text ()8 "
-	jmp	L121
+
+section .data
 L120:
 	db	"$",0
-L121:
+
+section .text
 ; Fused expression:    "( 46 , L120 , + target 2 *(2) ax , + target 0 *(2) ax , text )8 "
 	push	46
 	push	L120
@@ -1092,7 +1170,10 @@ L105:
 L104:
 	sub	sp, 4
 	jmp	L103
+
 ; glb play : (void) void
+section .text
+	global	_play
 _play:
 	push	bp
 	mov	bp, sp
@@ -1126,10 +1207,12 @@ L122:
 	sub	sp, -14
 ; RPN'ized expression: "( 96 0 | , L126 , 0 , 40 12 - 2 / text ) "
 ; Expanded expression: " 96  L126  0  14  text ()8 "
-	jmp	L127
+
+section .data
 L126:
 	db	"Score: ",0
-L127:
+
+section .text
 ; Fused expression:    "( 96 , L126 , 0 , 14 , text )8 "
 	push	96
 	push	L126
@@ -1201,10 +1284,12 @@ L130:
 	mov	[bx], ax
 ; RPN'ized expression: "( 32 14 | , L132 , snake length + *u 1 + *u , snake length + *u 0 + *u text ) "
 ; Expanded expression: " 46  L132  snake length *(2) 4 * + 2 + *(2)  snake length *(2) 4 * + 0 + *(2)  text ()8 "
-	jmp	L133
+
+section .data
 L132:
 	db	"O",0
-L133:
+
+section .text
 ; Fused expression:    "( 46 , L132 , * *length 4 + snake ax + ax 2 *(2) ax , * *length 4 + snake ax + ax 0 *(2) ax , text )8 "
 	push	46
 	push	L132
@@ -1379,10 +1464,12 @@ L141:
 L140:
 ; RPN'ized expression: "( 32 14 | , L155 , snake length 1 - + *u 1 + *u , snake length 1 - + *u 0 + *u text ) "
 ; Expanded expression: " 46  L155  snake length *(2) 1 - 4 * + 2 + *(2)  snake length *(2) 1 - 4 * + 0 + *(2)  text ()8 "
-	jmp	L156
+
+section .data
 L155:
 	db	" ",0
-L156:
+
+section .text
 ; Fused expression:    "( 46 , L155 , - *length 1 * ax 4 + snake ax + ax 2 *(2) ax , - *length 1 * ax 4 + snake ax + ax 0 *(2) ax , text )8 "
 	push	46
 	push	L155
@@ -1551,10 +1638,12 @@ L162:
 L161:
 ; RPN'ized expression: "( 32 14 | , L167 , snake 0 + *u 1 + *u , snake 0 + *u 0 + *u text ) "
 ; Expanded expression: " 46  L167  snake 2 + *(2)  snake 0 + *(2)  text ()8 "
-	jmp	L168
+
+section .data
 L167:
 	db	"O",0
-L168:
+
+section .text
 ; Fused expression:    "( 46 , L167 , + snake 2 *(2) ax , + snake 0 *(2) ax , text )8 "
 	push	46
 	push	L167
@@ -1821,10 +1910,12 @@ L183:
 L137:
 ; RPN'ized expression: "( 0 15 | , L186 , 25 2 / , 40 10 - 2 / text ) "
 ; Expanded expression: " 15  L186  12  15  text ()8 "
-	jmp	L187
+
+section .data
 L186:
 	db	"Game Over!",0
-L187:
+
+section .text
 ; Fused expression:    "( 15 , L186 , 12 , 15 , text )8 "
 	push	15
 	push	L186
@@ -1863,6 +1954,8 @@ L124:
 L123:
 	sub	sp, 6
 	jmp	L122
+
+
 
 ; Syntax/declaration table/stack:
 ; Bytes used: 1752/20992
