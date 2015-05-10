@@ -1958,7 +1958,7 @@ L123:
 
 
 ; Syntax/declaration table/stack:
-; Bytes used: 1752/20992
+; Bytes used: 1752/21248
 
 
 ; Macro table:
@@ -2050,7 +2050,7 @@ L123:
 ; Ident seed
 ; Ident play
 ; Ident newtarget
-; Bytes used: 320/4752
+; Bytes used: 320/4784
 
 ; Next label number: 190
 ; Compilation succeeded.

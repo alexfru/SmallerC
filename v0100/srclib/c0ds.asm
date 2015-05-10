@@ -1,10 +1,12 @@
 ;
-;  Copyright (c) 2014, Alexey Frunze
+;  Copyright (c) 2014-2015, Alexey Frunze
 ;  2-clause BSD license.
 ;
 bits 16
 
     extern ___start__
+    extern __start__bss
+    extern __stop__bss
 
 section .text
 
@@ -33,6 +35,14 @@ __start:
     jmp terminate
 
 exe:
+    ; Init .bss
+    mov di, __start__bss
+    mov cx, __stop__bss
+    sub cx, di
+    xor al, al
+    cld
+    rep stosb
+
     jmp ___start__ ; __start__() will set up argc and argv for main() and call exit(main(argc, argv))
 
     global ___getCS
@@ -121,3 +131,8 @@ _excmsg_end:
 
 _64kbmsg db "Not enough memory!",13,10
 _64kbmsg_end:
+
+
+section .bss
+    ; .bss must exist for __start__bss and __stop__bss to also exist
+    resw    1

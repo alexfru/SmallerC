@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014, Alexey Frunze
+Copyright (c) 2014-2015, Alexey Frunze
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -452,6 +452,7 @@ const char* EntryPoint = "__start";
 #define FormatWinPe32     6
 #define FormatElf32       7
 int OutputFormat = 0;
+int UseBss = 1;
 
 int verbose = 0;
 
@@ -848,7 +849,7 @@ void loadElfObj(tElfMeta* pMeta, const char* ElfName, FILE* file, uint32 objOfs)
         // as there can be section symbols :(
         // pMeta->LocalSymsCnt = pSect->h.sh_info;
 
-        sz = cnt * sizeof(Elf32_Sym); // TBD!!! overflow
+        sz = cnt * sizeof(Elf32_Sym); // TBD!!! overflow checks
         pSect->d.pSym = Malloc(sz);
 
         ofs = pSect->h.sh_offset;
@@ -1088,7 +1089,7 @@ int FindSymbolByName(const char* SymName)
   {
     // Don't error out on symbols of:
     // - section start, e.g. __start__text (for .text)
-    // - section and, e.g. __stop__text (for .text)
+    // - section end, e.g. __stop__text (for .text)
     // - stack start, e.g. __start_stack__
     // which aren't defined yet
     if (!strcmp(SymName, "__start_allcode__") || !strcmp(SymName, "__stop_allcode__") ||
@@ -1279,6 +1280,11 @@ void FindAllSections(void)
 
   if (!(pSectDescrs[0].Attrs & SHF_EXECINSTR))
     error("Executable section not found\n");
+
+  for (i = 0; i < SectCnt; i++)
+    if ((pSectDescrs[i].Attrs & SHF_EXECINSTR) &&
+        (pSectDescrs[i].Attrs & (SHT_NOBITS | SHF_WRITE)))
+      error("Inconsistent section type/flags\n");
 
   // Add 3 hidden pseudo sections:
   // - one for all code sections combined
@@ -1665,16 +1671,234 @@ Elf32_Phdr ElfProgramHeaders[2] =
   }
 };
 
-void RelocateAndWriteAllSections(void)
+void Pass(int pass, FILE* fout, uint32 hdrsz)
 {
-  uint32 hdrsz = 0;
-  uint32 imageBase = 0;
-  uint32 peImportsStart = 0;
-  int hasData = !(pSectDescrs[SectCnt - 1].Attrs & SHF_EXECINSTR); // non-executable/data sections, if any, are last
-  FILE* fout;
-  int pass;
+  uint32 startOfs = Origin;
+  uint32 ofs = Origin;
+  uint32 written = 0;
+  uint32 j, fIdx, sectIdx, relSectIdx;
 
-  fout = Fopen(OutName, "wb+");
+  // Two passes:
+  //   pass 0 (may be repeated for flat binaries) is used to find out section and symbol locations
+  //   pass 1 is used to perform actual relocation and write the executable file
+
+  if (!pass)
+  {
+    // Will use these to find the minimum and maximum offsets/addresses within combined sections/segments
+    pSectDescrs[SectCnt].Start = 0xFFFFFFFF;
+    pSectDescrs[SectCnt].Stop = 0;
+    pSectDescrs[SectCnt + 1].Start = 0xFFFFFFFF;
+    pSectDescrs[SectCnt + 1].Stop = 0;
+  }
+
+  // Handle individual sections
+  for (j = 0; j < SectCnt; j++)
+  {
+    int isDataSection = !(pSectDescrs[j].Attrs & SHF_EXECINSTR);
+
+    if (!pass)
+    {
+      // Will use these to find the minimum and maximum offsets/addresses within individual sections/segments
+      pSectDescrs[j].Start = 0xFFFFFFFF;
+      pSectDescrs[j].Stop = 0;
+    }
+
+    for (fIdx = 0; fIdx < ObjFileCnt; fIdx++)
+    {
+      tElfMeta* pMeta = &pMetas[fIdx];
+      if (!pMeta->Needed)
+        continue;
+      for (sectIdx = 0; sectIdx < pMeta->SectionCnt; sectIdx++)
+      {
+        tElfSection* pSect = &pMeta->pSections[sectIdx];
+        tElfSection* pRelSect = NULL;
+        if (strcmp(pSectDescrs[j].pName, pMeta->pSectNames + pSect->h.sh_name))
+          continue;
+        // Find relocations for this section, if any
+        for (relSectIdx = 0; relSectIdx < pMeta->SectionCnt; relSectIdx++)
+        {
+          if (pMeta->pSections[relSectIdx].h.sh_type == SHT_REL &&
+              pMeta->pSections[relSectIdx].h.sh_info == sectIdx)
+          {
+            pRelSect = &pMeta->pSections[relSectIdx];
+            break;
+          }
+        }
+
+        // Align the section and check for segment overflow
+        {
+          uint32 newOfs, align = pSect->h.sh_addralign;
+          switch (OutputFormat)
+          {
+          case FormatDosComTiny:
+          case FormatFlat16:
+          case FormatDosExeSmall:
+            // Don't use unreasonably large alignments (greater than 4) in 16-bit code segments
+            // (in ELF32 object files produced by NASM, .text sections are 16-byte aligned)
+            if (!isDataSection && align > 4)
+              align = 4;
+            break;
+          case FormatDosExeHuge:
+            // Force 4-byte alignment of the .relot and .relod relocation sections in the huge mode(l)
+            if (!strcmp(pMeta->pSectNames + pSect->h.sh_name, ".relot") ||
+                !strcmp(pMeta->pSectNames + pSect->h.sh_name, ".relod"))
+              align = 4;
+            break;
+          }
+
+          if (align > 1)
+          {
+            newOfs = (ofs + align - 1) / align * align;
+            if (newOfs < ofs)
+              errSectTooBig();
+            if (pass)
+            {
+              if (pSect->h.sh_type == SHT_PROGBITS ||
+                  !UseBss)
+              {
+                unsigned char fillByte = 0xCC * !isDataSection; // int3
+                FillWithByte(fillByte, newOfs - ofs, fout);
+              }
+            }
+            ofs = newOfs;
+          }
+
+          newOfs = ofs + pSect->h.sh_size;
+          if (newOfs < ofs)
+            errSectTooBig();
+          switch (OutputFormat)
+          {
+          case FormatDosComTiny:
+          case FormatFlat16:
+          case FormatDosExeSmall:
+            if (newOfs > 0x10000)
+              errSectTooBig();
+            break;
+          }
+        }
+
+        pSect->OutOffset = ofs;
+        pSect->OutFileOffset = hdrsz + written + (ofs - startOfs);
+
+        if (!pass)
+        {
+          // Calculate start addresses of combined sections
+          if (pSectDescrs[j].Start > pSect->OutOffset)
+            pSectDescrs[j].Start = pSect->OutOffset;
+
+          if (pSectDescrs[SectCnt + isDataSection].Start > pSectDescrs[j].Start)
+            pSectDescrs[SectCnt + isDataSection].Start = pSectDescrs[j].Start;
+        }
+
+        if (pass)
+        {
+          // Relocate (if needed) and write the section
+          if (pSect->h.sh_type == SHT_PROGBITS)
+          {
+            FILE* fin = Fopen(pMeta->ElfName, "rb");
+            if (verbose)
+              printf("Relocating %s in %s:\n", pMeta->pSectNames + pSect->h.sh_name, pMeta->ElfName);
+            Fseek(fin, pMeta->ObjOffset + pSect->h.sh_offset, SEEK_SET);
+            RelocateAndWriteSection(fout, fin, pSect->h.sh_size, pMeta, pRelSect);
+            Fclose(fin);
+            if (verbose)
+              puts("");
+          }
+          else if (!UseBss) // if (pSect->h.sh_type == SHT_NOBITS)
+          {
+            FillWithByte(0, pSect->h.sh_size, fout);
+          }
+        }
+
+        ofs += pSect->h.sh_size;
+
+        if (!pass)
+        {
+          // Calculate stop addresses of combined sections (actually, the addresses right after the end)
+          if (pSectDescrs[j].Stop < pSect->OutOffset + pSect->h.sh_size)
+            pSectDescrs[j].Stop = pSect->OutOffset + pSect->h.sh_size;
+
+          if (pSectDescrs[SectCnt + isDataSection].Stop < pSectDescrs[j].Stop)
+            pSectDescrs[SectCnt + isDataSection].Stop = pSectDescrs[j].Stop;
+        }
+      } // endof: for (sectIdx = 0; sectIdx < pMeta->SectionCnt; sectIdx++)
+    } // endof: for (fIdx = 0; fIdx < ObjFileCnt; fIdx++)
+
+    // Trailing section/segment/executable padding
+    switch (OutputFormat)
+    {
+    case FormatDosExeSmall:
+      if (!isDataSection &&
+          (j + 1 == SectCnt ||
+           !(pSectDescrs[j + 1].Attrs & SHF_EXECINSTR))) // last code section or last code section before first data section
+      {
+        // The code segment has been written, prepare for writing the data segment.
+        // Pad the code segment to an integral number of 16-byte paragraphs
+        uint32 newOfs = (ofs + 15) / 16 * 16;
+        if (pass)
+        {
+          FillWithByte(0xCC, newOfs - ofs, fout); // int3
+        }
+        ofs = newOfs;
+        // Reset the offset for the data segment
+        written += ofs - startOfs;
+        ofs = startOfs = 0;
+        // Reserve several bytes so that variables don't appear at address/offset 0 (NULL)
+        if (j + 1 != SectCnt)
+        {
+          if (pass)
+          {
+            Fwrite("NULL", 4, fout);
+          }
+          ofs += 4;
+        }
+      }
+      break;
+    case FormatWinPe32:
+    case FormatElf32:
+      if (!isDataSection &&
+          (j + 1 == SectCnt ||
+           !(pSectDescrs[j + 1].Attrs & SHF_EXECINSTR))) // last code section or last code section before first data section
+      {
+        // The code section has been written, prepare for writing the data section.
+        // Pad the code section to an integral number of 4KB pages
+        uint32 newOfs = (ofs + 4095) / 4096 * 4096;
+        if (newOfs < ofs)
+          errSectTooBig();
+        if (pass)
+        {
+          FillWithByte(0xCC, newOfs - ofs, fout); // int3
+        }
+        ofs = newOfs;
+      }
+      else if ((!UseBss && j + 1 == SectCnt) ||
+               (UseBss &&
+                !(pSectDescrs[j].Attrs & SHT_NOBITS) &&
+                (j + 1 == SectCnt ||
+                 (pSectDescrs[j + 1].Attrs & SHT_NOBITS)))) // last written data section
+      {
+        // The data section has been written.
+        // Pad the data section to an integral number of 4KB pages
+        uint32 newOfs = (ofs + 4095) / 4096 * 4096;
+        if (newOfs < ofs)
+          errSectTooBig();
+        if (pass)
+        {
+          FillWithByte(0, newOfs - ofs, fout);
+        }
+        ofs = newOfs;
+      }
+      break;
+    }
+  } // endof: for (j = 0; j < SectCnt; j++)
+}
+
+void RwFlat(void)
+{
+  int hasData = !(pSectDescrs[SectCnt - 1].Attrs & SHF_EXECINSTR); // non-executable/data sections, if any, are last
+  FILE* fout = Fopen(OutName, "wb+");
+  uint32 hdrsz = 0;
+  uint32 ip;
 
   // Based on the file format, figure out:
   // - header sizes
@@ -1683,16 +1907,79 @@ void RelocateAndWriteAllSections(void)
   switch (OutputFormat)
   {
   case FormatDosComTiny:
+    Origin = 0x100;
+    if (StackSize == 0xFFFFFFFF)
+      StackSize = 8192; // default stack size if unspecified
+    if (StackSize < 4096)
+      errStackTooSmall();
+    if (StackSize > 0xFFFC)
+      errStackTooBig();
+    pSectDescrs[SectCnt + 2].Start = 0xFFFC - StackSize; // __start_stack__
+    pSectDescrs[SectCnt + 2].Stop = 0xFFFC; // __stop_stack__ should be unused
+    break;
+  case FormatFlat16:
+  case FormatFlat32:
+    if (Origin == 0xFFFFFFFF)
+      Origin = 0; // default origin if unspecified
+    if (OutputFormat == FormatFlat16 && Origin > 0xFFFF)
+      errSectTooBig();
+    break;
+  }
+
+  Pass(0, NULL, 0);
+
+  // Ensure the entry point in flat binaries is at the very first byte
+  ip = FindSymbolAddress(EntryPoint);
+  if (ip != Origin)
+  {
+    uint32 newOrigin;
+    uint32 imm;
+    // The entry point is not at the very first byte of the flat binary,
+    // start the binary with a jump to the entry point
+    hdrsz = (OutputFormat == FormatFlat32) ? 1+4 : 1+2; // size of the jump instruction
+    newOrigin = Origin + hdrsz; // adjust origin w.r.t. the jump instruction size
+    if (newOrigin < Origin)
+      errSectTooBig();
+    if (OutputFormat == FormatFlat16 && newOrigin > 0xFFFF)
+      errSectTooBig();
+    Origin = newOrigin;
+
+    Pass(0, NULL, hdrsz); // repeat pass 0, now with a fake header containing a jump instruction to the entry point
+
+    // It was determined in pass 0 that the entry point was not
+    // at the very first byte of the flat binary,
+    // a fake header containing a jump instruction to the entry point is needed
+    ip = FindSymbolAddress(EntryPoint);
+    imm = ip - Origin;
+    Fwrite("\xE9", 1, fout); // jmp rel16/32 to entry point
+    Fwrite(&imm, hdrsz - 1, fout);
+  }
+
+  // Check for code/data colliding with the stack
+  if (OutputFormat == FormatDosComTiny &&
+      pSectDescrs[SectCnt + hasData].Stop > pSectDescrs[SectCnt + 2].Start)
+    errStackTooBig();
+
+  Pass(1, fout, hdrsz);
+
+  Fclose(fout);
+}
+
+void RwDosExe(void)
+{
+  int hasData = !(pSectDescrs[SectCnt - 1].Attrs & SHF_EXECINSTR); // non-executable/data sections, if any, are last
+  FILE* fout = Fopen(OutName, "wb+");
+  uint32 hdrsz = 0;
+
+  // Based on the file format, figure out:
+  // - header sizes
+  // - start offsets/base addresses
+  // - stack size and location
+  switch (OutputFormat)
+  {
   case FormatDosExeSmall:
-    if (OutputFormat == FormatDosComTiny)
-    {
-      Origin = 0x100;
-    }
-    else
-    {
-      Origin = sizeof(tDosExeHeader);
-      hdrsz = sizeof(tDosExeHeader);
-    }
+    Origin = sizeof(tDosExeHeader);
+    hdrsz = sizeof(tDosExeHeader);
     if (StackSize == 0xFFFFFFFF)
       StackSize = 8192; // default stack size if unspecified
     if (StackSize < 4096)
@@ -1712,412 +1999,226 @@ void RelocateAndWriteAllSections(void)
     if (StackSize > 0xFFFC)
       errStackTooBig();
     break;
-  case FormatWinPe32:
-  case FormatElf32:
-    if (Origin == 0xFFFFFFFF)
-      imageBase = (OutputFormat == FormatWinPe32) ? 0x00400000 : 0x08048000; // default image base if origin is unspecified
-    else
-      imageBase = Origin & 0xFFFFF000;
-    if (imageBase >= 0xFFFFF000)
-      errSectTooBig();
-    hdrsz = 4096; // make the first section page-aligned
-    Origin = imageBase + hdrsz;
+  }
+
+  Pass(0, NULL, hdrsz);
+
+  // Check for code/data colliding with the stack
+  if (OutputFormat == FormatDosExeSmall &&
+      pSectDescrs[SectCnt + hasData].Stop > pSectDescrs[SectCnt + 2].Start)
+    errStackTooBig();
+
+  switch (OutputFormat)
+  {
+  case FormatDosExeSmall:
+    {
+      uint32 dsz = 0, fsz;
+      if (hasData)
+        dsz = pSectDescrs[SectCnt + 1].Stop; // data size
+      fsz = (pSectDescrs[SectCnt].Stop + 15) / 16 * 16; // code size + padding
+      if ((pSectDescrs[SectCnt - 1].Attrs & SHT_NOBITS) && UseBss)
+      {
+        uint32 i = SectCnt - 1;
+        while (pSectDescrs[i].Attrs & SHT_NOBITS)
+          i--;
+        if (!(pSectDescrs[i].Attrs & SHF_EXECINSTR))
+        {
+          fsz += pSectDescrs[i].Stop; // + non-bss data size (includes "NULL")
+          dsz -= pSectDescrs[i].Stop;
+        }
+        else
+        {
+          fsz += 4; // account for "NULL" at the beginning of the data/stack segment
+          dsz -= 4;
+        }
+      }
+      else
+      {
+        fsz += dsz; // + non-bss data size
+      }
+      DosExeHeader.PartPage = fsz % 512;
+      DosExeHeader.PageCnt = (fsz + 511) / 512;
+      DosExeHeader.InitIp = FindSymbolAddress(EntryPoint);
+      DosExeHeader.InitCs = 0xFFFE;
+      DosExeHeader.InitSs = (pSectDescrs[SectCnt].Stop + 15) / 16 - 2; // data/stack segment starts right after code segment's padding
+      DosExeHeader.MaxAlloc = DosExeHeader.MinAlloc = 4096 - dsz / 16; // maximum stack size = data segment size - data size
+      Fwrite(&DosExeHeader, sizeof DosExeHeader, fout);
+    }
     break;
-  case FormatFlat16:
-  case FormatFlat32:
-    if (Origin == 0xFFFFFFFF)
-      Origin = 0; // default origin if unspecified
-    if (OutputFormat == FormatFlat16 && Origin > 0xFFFF)
-      errSectTooBig();
+  case FormatDosExeHuge:
+    {
+      uint32 ip = FindSymbolAddress(EntryPoint);
+      uint32 sz = pSectDescrs[SectCnt].Stop; // code size
+      uint32 fsz;
+      if (hasData)
+        sz = pSectDescrs[SectCnt + 1].Stop; // code size + data size
+      if (sz > 524288)
+        error("Executable too big (bigger than 512KB)\n");
+      if ((pSectDescrs[SectCnt - 1].Attrs & SHT_NOBITS) && UseBss)
+      {
+        uint32 i = SectCnt - 1;
+        while (pSectDescrs[i].Attrs & SHT_NOBITS)
+          i--;
+        fsz = pSectDescrs[i].Stop;
+      }
+      else
+      {
+        fsz = sz;
+      }
+      DosExeHeader.PartPage = fsz % 512;
+      DosExeHeader.PageCnt = (fsz + 511) / 512;
+      DosExeHeader.InitIp = ip & 0xF;
+      DosExeHeader.InitCs = (ip >> 4) - 2;
+      DosExeHeader.InitSs = (sz + 15) / 16 - 2; // stack segment starts right after data segment's padding
+      DosExeHeader.InitSp = StackSize;
+      DosExeHeader.MaxAlloc = DosExeHeader.MinAlloc = (sz - fsz + 15) / 16 + (StackSize + 15) / 16 + 1; // maximum stack size = 64KB
+      Fwrite(&DosExeHeader, sizeof DosExeHeader, fout);
+    }
     break;
   }
 
-  // Two passes:
-  //   pass 0 (may be repeated for flat binaries) is used to find out section and symbol locations
-  //   pass 1 is used to perform actual relocation and write the executable file
-  for (pass = 0; pass < 2; pass++)
+  Pass(1, fout, hdrsz);
+
+  Fclose(fout);
+}
+
+void RwPeElf(void)
+{
+  int hasData = !(pSectDescrs[SectCnt - 1].Attrs & SHF_EXECINSTR); // non-executable/data sections, if any, are last
+  FILE* fout = Fopen(OutName, "wb+");
+  uint32 hdrsz = 0;
+  uint32 imageBase = 0;
+  uint32 peImportsStart = 0;
+
+  // Based on the file format, figure out:
+  // - header sizes
+  // - start offsets/base addresses
+  // - stack size and location
+  if (Origin == 0xFFFFFFFF)
+    imageBase = (OutputFormat == FormatWinPe32) ? 0x00400000 : 0x08048000; // default image base if origin is unspecified
+  else
+    imageBase = Origin & 0xFFFFF000;
+  if (imageBase >= 0xFFFFF000)
+    errSectTooBig();
+  hdrsz = 4096; // make the first section page-aligned
+  Origin = imageBase + hdrsz;
+
+  Pass(0, NULL, hdrsz);
+
+  switch (OutputFormat)
   {
-    uint32 startOfs = Origin;
-    uint32 ofs = Origin;
-    uint32 written = 0;
-    uint32 j, fIdx, sectIdx, relSectIdx;
-
-    if (!pass)
+  case FormatWinPe32:
     {
-      // Will use these to find the minimum and maximum offsets/addresses within combined sections/segments
-      pSectDescrs[SectCnt].Start = 0xFFFFFFFF;
-      pSectDescrs[SectCnt].Stop = 0;
-      pSectDescrs[SectCnt + 1].Start = 0xFFFFFFFF;
-      pSectDescrs[SectCnt + 1].Stop = 0;
+      uint32 hsz = sizeof DosMzExeStub +
+                   sizeof "PE\0" +
+                   sizeof PeFileHeader +
+                   sizeof PeOptionalHeader +
+                   sizeof PeSectionHeaders;
+      uint32 start, stop;
+
+      PeFileHeader.NumberOfSections = 1 + hasData;
+
+      PeOptionalHeader.ImageBase = imageBase;
+      PeOptionalHeader.AddressOfEntryPoint = FindSymbolAddress(EntryPoint) - imageBase;
+
+      start = pSectDescrs[SectCnt].Start & 0xFFFFF000;
+      stop = (pSectDescrs[SectCnt].Stop + 0xFFF) & 0xFFFFF000;
+      PeOptionalHeader.BaseOfCode = start;
+      PeSectionHeaders[0].VirtualAddress = PeSectionHeaders[0].PointerToRawData =
+        start - imageBase;
+      PeSectionHeaders[0].Misc.VirtualSize = PeSectionHeaders[0].SizeOfRawData =
+        PeOptionalHeader.SizeOfCode = stop - start;
+
+      if (hasData)
+      {
+        start = pSectDescrs[SectCnt + 1].Start & 0xFFFFF000;
+        stop = (pSectDescrs[SectCnt + 1].Stop + 0xFFF) & 0xFFFFF000;
+        PeOptionalHeader.BaseOfData = start;
+        PeSectionHeaders[1].VirtualAddress = PeSectionHeaders[1].PointerToRawData =
+          start - imageBase;
+        PeSectionHeaders[1].Misc.VirtualSize =
+          PeOptionalHeader.SizeOfInitializedData = stop - start;
+
+        if ((pSectDescrs[SectCnt - 1].Attrs & SHT_NOBITS) && UseBss)
+        {
+          uint32 i = SectCnt - 1;
+          while (pSectDescrs[i].Attrs & SHT_NOBITS)
+            i--;
+          PeSectionHeaders[1].SizeOfRawData = ((pSectDescrs[i].Stop + 0xFFF) & 0xFFFFF000) - start;
+        }
+        else
+        {
+          PeSectionHeaders[1].SizeOfRawData = stop - start;
+        }
+      }
+      else
+      {
+        memset(&PeSectionHeaders[1], 0, sizeof PeSectionHeaders[1]);
+      }
+
+      PeOptionalHeader.SizeOfImage = stop - imageBase;
+
+      peImportsStart = FindSymbolAddress("__dll_imports");
+      if (peImportsStart)
+        PeOptionalHeader.DataDirectory[1].VirtualAddress = peImportsStart - imageBase;
+
+      Fwrite(DosMzExeStub, sizeof DosMzExeStub, fout);
+      Fwrite("PE\0", sizeof "PE\0", fout);
+      Fwrite(&PeFileHeader, sizeof PeFileHeader, fout);
+      Fwrite(&PeOptionalHeader, sizeof PeOptionalHeader, fout);
+      Fwrite(PeSectionHeaders, sizeof PeSectionHeaders, fout);
+      FillWithByte(0, 4096 - hsz, fout);
     }
-
-    // Check for code/data colliding with the stack
-    if (pass)
+    break;
+  case FormatElf32:
     {
-      switch (OutputFormat)
+      uint32 hsz = sizeof ElfHeader +
+                   sizeof ElfProgramHeaders;
+      uint32 start, stop;
+
+      ElfHeader.e_phnum = 1 + hasData;
+
+      ElfHeader.e_entry = FindSymbolAddress(EntryPoint);
+
+      start = pSectDescrs[SectCnt].Start & 0xFFFFF000;
+      stop = (pSectDescrs[SectCnt].Stop + 0xFFF) & 0xFFFFF000;
+      ElfProgramHeaders[0].p_offset = start - imageBase;
+      ElfProgramHeaders[0].p_vaddr = ElfProgramHeaders[0].p_paddr = start;
+      ElfProgramHeaders[0].p_filesz = ElfProgramHeaders[0].p_memsz = stop - start;
+
+      if (hasData)
       {
-      case FormatDosComTiny:
-      case FormatDosExeSmall:
-        if (pSectDescrs[SectCnt + hasData].Stop > pSectDescrs[SectCnt + 2].Start)
-          errStackTooBig();
-        break;
+        start = pSectDescrs[SectCnt + 1].Start & 0xFFFFF000;
+        stop = (pSectDescrs[SectCnt + 1].Stop + 0xFFF) & 0xFFFFF000;
+        ElfProgramHeaders[1].p_offset = start - imageBase;
+        ElfProgramHeaders[1].p_vaddr = ElfProgramHeaders[1].p_paddr = start;
+        ElfProgramHeaders[1].p_memsz = stop - start;
+
+        if ((pSectDescrs[SectCnt - 1].Attrs & SHT_NOBITS) && UseBss)
+        {
+          uint32 i = SectCnt - 1;
+          while (pSectDescrs[i].Attrs & SHT_NOBITS)
+            i--;
+          ElfProgramHeaders[1].p_filesz = ((pSectDescrs[i].Stop + 0xFFF) & 0xFFFFF000) - start;
+        }
+        else
+        {
+          ElfProgramHeaders[1].p_filesz = stop - start;
+        }
       }
+      else
+      {
+        memset(&ElfProgramHeaders[1], 0, sizeof ElfProgramHeaders[1]);
+      }
+
+      Fwrite(&ElfHeader, sizeof ElfHeader, fout);
+      Fwrite(ElfProgramHeaders, sizeof ElfProgramHeaders, fout);
+      FillWithByte(0, 4096 - hsz, fout);
     }
+    break;
+  }
 
-    // Write out the executable header, if any
-    if (pass && hdrsz)
-    {
-      switch (OutputFormat)
-      {
-      case FormatDosComTiny:
-      case FormatFlat16:
-      case FormatFlat32:
-        {
-          // It was determined in pass 0 that the entry point was not
-          // at the very first byte of a flat binary,
-          // a fake header containing a jump instruction to the entry point is needed
-          uint32 ip = FindSymbolAddress(EntryPoint);
-          uint32 imm = ip - ofs;
-          Fwrite("\xE9", 1, fout); // jmp rel16/32 to entry point
-          Fwrite(&imm, hdrsz - 1, fout);
-        }
-        break;
-      case FormatDosExeSmall:
-        {
-          uint32 dsz = 0, sz;
-          if (hasData)
-            dsz = pSectDescrs[SectCnt + 1].Stop; // data size
-          sz = (pSectDescrs[SectCnt].Stop + 15) / 16 * 16 + dsz; // code size + padding + data size
-          DosExeHeader.PartPage = sz % 512;
-          DosExeHeader.PageCnt = (sz + 511) / 512;
-          DosExeHeader.InitIp = FindSymbolAddress(EntryPoint);
-          DosExeHeader.InitCs = 0xFFFE;
-          DosExeHeader.InitSs = (pSectDescrs[SectCnt].Stop + 15) / 16 - 2; // data/stack segment starts right after code segment's padding
-          DosExeHeader.MaxAlloc = DosExeHeader.MinAlloc = 4096 - dsz / 16; // maximum stack size = data segment size - data size
-          Fwrite(&DosExeHeader, sizeof DosExeHeader, fout);
-        }
-        break;
-      case FormatDosExeHuge:
-        {
-          uint32 ip = FindSymbolAddress(EntryPoint);
-          uint32 sz = pSectDescrs[SectCnt].Stop; // code size
-          if (hasData)
-            sz = pSectDescrs[SectCnt + 1].Stop; // code size + data size
-          if (sz > 524288)
-            error("Executable too big (bigger than 512KB)\n");
-          DosExeHeader.PartPage = sz % 512;
-          DosExeHeader.PageCnt = (sz + 511) / 512;
-          DosExeHeader.InitIp = ip & 0xF;
-          DosExeHeader.InitCs = (ip >> 4) - 2;
-          DosExeHeader.InitSs = (sz + 15) / 16 - 2; // stack segment starts right after data segment's padding
-          DosExeHeader.InitSp = StackSize;
-          DosExeHeader.MaxAlloc = DosExeHeader.MinAlloc = (StackSize + 15) / 16 + 1; // maximum stack size = 64KB
-          Fwrite(&DosExeHeader, sizeof DosExeHeader, fout);
-        }
-        break;
-      case FormatWinPe32:
-        {
-          uint32 hsz = sizeof DosMzExeStub +
-                       sizeof "PE\0" +
-                       sizeof PeFileHeader +
-                       sizeof PeOptionalHeader +
-                       sizeof PeSectionHeaders;
-          uint32 start, stop;
-
-          PeFileHeader.NumberOfSections = 1 + hasData;
-
-          PeOptionalHeader.ImageBase = imageBase;
-          PeOptionalHeader.AddressOfEntryPoint = FindSymbolAddress(EntryPoint) - imageBase;
-
-          start = pSectDescrs[SectCnt].Start & 0xFFFFF000;
-          stop = (pSectDescrs[SectCnt].Stop + 0xFFF) & 0xFFFFF000;
-          PeOptionalHeader.BaseOfCode = start;
-          PeSectionHeaders[0].VirtualAddress = PeSectionHeaders[0].PointerToRawData =
-            start - imageBase;
-          PeSectionHeaders[0].Misc.VirtualSize = PeSectionHeaders[0].SizeOfRawData =
-            PeOptionalHeader.SizeOfCode = stop - start;
-
-          if (hasData)
-          {
-            start = pSectDescrs[SectCnt + 1].Start & 0xFFFFF000;
-            stop = (pSectDescrs[SectCnt + 1].Stop + 0xFFF) & 0xFFFFF000;
-            PeOptionalHeader.BaseOfData = start;
-            PeSectionHeaders[1].VirtualAddress = PeSectionHeaders[1].PointerToRawData =
-              start - imageBase;
-            PeSectionHeaders[1].Misc.VirtualSize = PeSectionHeaders[1].SizeOfRawData =
-              PeOptionalHeader.SizeOfInitializedData = stop - start;
-          }
-          else
-          {
-            memset(&PeSectionHeaders[1], 0, sizeof PeSectionHeaders[1]);
-          }
-
-          PeOptionalHeader.SizeOfImage = stop - imageBase;
-
-          peImportsStart = FindSymbolAddress("__dll_imports");
-          if (peImportsStart)
-            PeOptionalHeader.DataDirectory[1].VirtualAddress = peImportsStart - imageBase;
-
-          Fwrite(DosMzExeStub, sizeof DosMzExeStub, fout);
-          Fwrite("PE\0", sizeof "PE\0", fout);
-          Fwrite(&PeFileHeader, sizeof PeFileHeader, fout);
-          Fwrite(&PeOptionalHeader, sizeof PeOptionalHeader, fout);
-          Fwrite(PeSectionHeaders, sizeof PeSectionHeaders, fout);
-          FillWithByte(0, 4096 - hsz, fout);
-        }
-        break;
-      case FormatElf32:
-        {
-          uint32 hsz = sizeof ElfHeader +
-                       sizeof ElfProgramHeaders;
-          uint32 start, stop;
-
-          ElfHeader.e_phnum = 1 + hasData;
-
-          ElfHeader.e_entry = FindSymbolAddress(EntryPoint);
-
-          start = pSectDescrs[SectCnt].Start & 0xFFFFF000;
-          stop = (pSectDescrs[SectCnt].Stop + 0xFFF) & 0xFFFFF000;
-          ElfProgramHeaders[0].p_offset = start - imageBase;
-          ElfProgramHeaders[0].p_vaddr = ElfProgramHeaders[0].p_paddr = start;
-          ElfProgramHeaders[0].p_filesz = ElfProgramHeaders[0].p_memsz = stop - start;
-
-          if (hasData)
-          {
-            start = pSectDescrs[SectCnt + 1].Start & 0xFFFFF000;
-            stop = (pSectDescrs[SectCnt + 1].Stop + 0xFFF) & 0xFFFFF000;
-            ElfProgramHeaders[1].p_offset = start - imageBase;
-            ElfProgramHeaders[1].p_vaddr = ElfProgramHeaders[1].p_paddr = start;
-            ElfProgramHeaders[1].p_filesz = ElfProgramHeaders[1].p_memsz = stop - start;
-          }
-          else
-          {
-            memset(&ElfProgramHeaders[1], 0, sizeof ElfProgramHeaders[1]);
-          }
-
-          Fwrite(&ElfHeader, sizeof ElfHeader, fout);
-          Fwrite(ElfProgramHeaders, sizeof ElfProgramHeaders, fout);
-          FillWithByte(0, 4096 - hsz, fout);
-        }
-        break;
-      }
-    }
-
-    // Handle individual sections
-    for (j = 0; j < SectCnt; j++)
-    {
-      int isDataSection = !(pSectDescrs[j].Attrs & SHF_EXECINSTR);
-
-      if (!pass)
-      {
-        // Will use these to find the minimum and maximum offsets/addresses within individual sections/segments
-        pSectDescrs[j].Start = 0xFFFFFFFF;
-        pSectDescrs[j].Stop = 0;
-      }
-
-      for (fIdx = 0; fIdx < ObjFileCnt; fIdx++)
-      {
-        tElfMeta* pMeta = &pMetas[fIdx];
-        if (!pMeta->Needed)
-          continue;
-        for (sectIdx = 0; sectIdx < pMeta->SectionCnt; sectIdx++)
-        {
-          tElfSection* pSect = &pMeta->pSections[sectIdx];
-          tElfSection* pRelSect = NULL;
-          if (strcmp(pSectDescrs[j].pName, pMeta->pSectNames + pSect->h.sh_name))
-            continue;
-          // Find relocations for this section, if any
-          for (relSectIdx = 0; relSectIdx < pMeta->SectionCnt; relSectIdx++)
-          {
-            if (pMeta->pSections[relSectIdx].h.sh_type == SHT_REL &&
-                pMeta->pSections[relSectIdx].h.sh_info == sectIdx)
-            {
-              pRelSect = &pMeta->pSections[relSectIdx];
-              break;
-            }
-          }
-
-          // Align the section and check for segment overflow
-          {
-            uint32 newOfs, align = pSect->h.sh_addralign;
-            switch (OutputFormat)
-            {
-            case FormatDosComTiny:
-            case FormatFlat16:
-            case FormatDosExeSmall:
-              // Don't use unreasonably large alignments (greater than 4) in 16-bit code segments
-              // (in ELF32 object files produced by NASM, .text sections are 16-byte aligned)
-              if (!isDataSection && align > 4)
-                align = 4;
-              break;
-            case FormatDosExeHuge:
-              // Force 4-byte alignment of the .relot and .relod relocation sections in the huge mode(l)
-              if (!strcmp(pMeta->pSectNames + pSect->h.sh_name, ".relot") ||
-                  !strcmp(pMeta->pSectNames + pSect->h.sh_name, ".relod"))
-                align = 4;
-              break;
-            }
-
-            if (align > 1)
-            {
-              newOfs = (ofs + align - 1) / align * align;
-              if (newOfs < ofs)
-                errSectTooBig();
-              if (pass)
-              {
-                unsigned char fillByte = 0xCC * !isDataSection; // int3
-                FillWithByte(fillByte, newOfs - ofs, fout);
-              }
-              ofs = newOfs;
-            }
-
-            newOfs = ofs + pSect->h.sh_size;
-            if (newOfs < ofs)
-              errSectTooBig();
-            switch (OutputFormat)
-            {
-            case FormatDosComTiny:
-            case FormatFlat16:
-            case FormatDosExeSmall:
-              if (newOfs > 0x10000)
-                errSectTooBig();
-              break;
-            }
-          }
-
-          pSect->OutOffset = ofs;
-          pSect->OutFileOffset = hdrsz + written + (ofs - startOfs);
-
-          if (!pass)
-          {
-            // Calculate start addresses of combined sections
-            if (pSectDescrs[j].Start > pSect->OutOffset)
-              pSectDescrs[j].Start = pSect->OutOffset;
-
-            if (pSectDescrs[SectCnt + isDataSection].Start > pSectDescrs[j].Start)
-              pSectDescrs[SectCnt + isDataSection].Start = pSectDescrs[j].Start;
-          }
-
-          if (pass)
-          {
-            // Relocate (if needed) and write the section
-            if (pSect->h.sh_type == SHT_PROGBITS)
-            {
-              FILE* fin = Fopen(pMeta->ElfName, "rb");
-              if (verbose)
-                printf("Relocating %s in %s:\n", pMeta->pSectNames + pSect->h.sh_name, pMeta->ElfName);
-              Fseek(fin, pMeta->ObjOffset + pSect->h.sh_offset, SEEK_SET);
-              RelocateAndWriteSection(fout, fin, pSect->h.sh_size, pMeta, pRelSect);
-              Fclose(fin);
-              if (verbose)
-                puts("");
-            }
-            else // if (pSect->h.sh_type == SHT_NOBITS)
-            {
-              // TBD!!! don't actually store .bss
-              FillWithByte(0, pSect->h.sh_size, fout);
-            }
-          }
-
-          ofs += pSect->h.sh_size;
-
-          if (!pass)
-          {
-            // Calculate stop addresses of combined sections (actually, the addresses right after the end)
-            if (pSectDescrs[j].Stop < pSect->OutOffset + pSect->h.sh_size)
-              pSectDescrs[j].Stop = pSect->OutOffset + pSect->h.sh_size;
-
-            if (pSectDescrs[SectCnt + isDataSection].Stop < pSectDescrs[j].Stop)
-              pSectDescrs[SectCnt + isDataSection].Stop = pSectDescrs[j].Stop;
-          }
-        } // endof: for (sectIdx = 0; sectIdx < pMeta->SectionCnt; sectIdx++)
-      } // endof: for (fIdx = 0; fIdx < ObjFileCnt; fIdx++)
-
-      // Trailing section/segment/executable padding
-      switch (OutputFormat)
-      {
-      case FormatDosExeSmall:
-        if (!isDataSection &&
-            (j + 1 == SectCnt ||
-             !(pSectDescrs[j + 1].Attrs & SHF_EXECINSTR))) // last code section or last code section before first data section
-        {
-          // The code segment has been written, prepare for writing the data segment.
-          // Pad the code segment to an integral number of 16-byte paragraphs
-          uint32 newOfs = (ofs + 15) / 16 * 16;
-          if (pass)
-            FillWithByte(0xCC/*int 3*/, newOfs - ofs, fout);
-          ofs = newOfs;
-          // Reset the offset for the data segment
-          written += ofs - startOfs;
-          ofs = startOfs = 0;
-          // Reserve several bytes so that variables don't appear at address/offset 0 (NULL)
-          if (j + 1 != SectCnt)
-          {
-            if (pass)
-              Fwrite("NULL", 4, fout);
-            ofs += 4;
-          }
-        }
-        break;
-      case FormatWinPe32:
-      case FormatElf32:
-        if (!isDataSection &&
-            (j + 1 == SectCnt ||
-             !(pSectDescrs[j + 1].Attrs & SHF_EXECINSTR))) // last code section or last code section before first data section
-        {
-          // The code section has been written, prepare for writing the data section.
-          // Pad the code section to an integral number of 4KB pages
-          uint32 newOfs = (ofs + 4095) / 4096 * 4096;
-          if (newOfs < ofs)
-            errSectTooBig();
-          if (pass)
-            FillWithByte(0xCC/*int 3*/, newOfs - ofs, fout);
-          ofs = newOfs;
-        }
-        else if (j + 1 == SectCnt)
-        {
-          // The data section has been written.
-          // Pad the data section to an integral number of 4KB pages
-          uint32 newOfs = (ofs + 4095) / 4096 * 4096;
-          if (newOfs < ofs)
-            errSectTooBig();
-          if (pass)
-            FillWithByte(0, newOfs - ofs, fout);
-          ofs = newOfs;
-        }
-        break;
-      }
-    } // endof: for (j = 0; j < SectCnt; j++)
-
-    // Ensure the entry point in flat binaries is at the very first byte
-    if (!pass && !hdrsz)
-    {
-      switch (OutputFormat)
-      {
-      case FormatDosComTiny:
-      case FormatFlat16:
-      case FormatFlat32:
-        {
-          uint32 ip = FindSymbolAddress(EntryPoint);
-          if (ip != Origin)
-          {
-            uint32 newOrigin;
-            // The entry point is not at the very first byte of a flat binary,
-            // start the binary with a jump to the entry point
-            hdrsz = (OutputFormat == FormatFlat32) ? 1+4 : 1+2; // size of the jump instruction
-            newOrigin = Origin + hdrsz; // adjust origin w.r.t. the jump instruction size
-            if (newOrigin < Origin)
-              errSectTooBig();
-            if (OutputFormat == FormatFlat16 && newOrigin > 0xFFFF)
-              errSectTooBig();
-            Origin = newOrigin;
-            pass--; // repeat pass 0, now with a fake header containing a jump instruction to the entry point
-          }
-        }
-        break;
-      }
-    }
-  } // endof: for (pass = 0; pass < 2; pass++)
+  Pass(1, fout, hdrsz);
 
   // In PE, some importing-related addresses must be relative to the image base, so make them relative
   if (OutputFormat == FormatWinPe32 && peImportsStart)
@@ -2163,6 +2264,26 @@ void RelocateAndWriteAllSections(void)
   }
 
   Fclose(fout);
+}
+
+void RelocateAndWriteAllSections(void)
+{
+  switch (OutputFormat)
+  {
+  case FormatDosComTiny:
+  case FormatFlat16:
+  case FormatFlat32:
+    RwFlat();
+    break;
+  case FormatDosExeSmall:
+  case FormatDosExeHuge:
+    RwDosExe();
+    break;
+  case FormatWinPe32:
+  case FormatElf32:
+    RwPeElf();
+    break;
+  }
 }
 
 void GenerateMap(void)
@@ -2456,6 +2577,11 @@ int main(int argc, char* argv[])
           StackSize = strtoul(argv[i], NULL, 0);
           continue;
         }
+      }
+      else if (!strcmp(argv[i], "-nobss"))
+      {
+        UseBss = 0;
+        continue;
       }
       else if (!strcmp(argv[i], "-tiny"))
       {

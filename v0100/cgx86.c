@@ -96,7 +96,12 @@ int GenInitParams(int argc, char** argv, int* idx)
   (void)argc;
   // initialization of target-specific code generator with parameters
 
-  if (!strcmp(argv[*idx], "-seg16"))
+  if (!strcmp(argv[*idx], "-nobss"))
+  {
+    UseBss = 0;
+    return 1;
+  }
+  else if (!strcmp(argv[*idx], "-seg16"))
   {
     // this is the default option for x86
     OutputFormat = FormatSegmented; SizeOfWord = 2;
@@ -131,6 +136,7 @@ void GenInitFinalize(void)
   // Change the output assembly format/content according to the options
   CodeHeader = "section .text";
   DataHeader = "section .data";
+  BssHeader = "section .bss";
   if (SizeOfWord == 2 || OutputFormat == FormatSegHuge)
     FileHeader = "bits 16\n";
   else
@@ -144,9 +150,9 @@ void GenStartCommentLine(void)
 }
 
 STATIC
-void GenWordAlignment(void)
+void GenWordAlignment(int bss)
 {
-  printf2("\talign %d\n", SizeOfWord);
+  printf2(bss ? "\talignb %d\n" : "\talign %d\n", SizeOfWord);
 }
 
 STATIC
@@ -205,9 +211,9 @@ void GenPrintNumLabel(int label)
 }
 
 STATIC
-void GenZeroData(unsigned Size)
+void GenZeroData(unsigned Size, int bss)
 {
-  printf2("\ttimes\t%u db 0\n", truncUint(Size));
+  printf2(bss ? "\tresb\t%u\n" : "\ttimes\t%u db 0\n", truncUint(Size));
 }
 
 STATIC

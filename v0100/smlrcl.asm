@@ -1,5 +1,5 @@
 ; /*
-; Copyright (c) 2014, Alexey Frunze
+; Copyright (c) 2014-2015, Alexey Frunze
 ; All rights reserved.
 ; 
 ; Redistribution and use in source and binary forms, with or without
@@ -36,10 +36,10 @@
 ; /*****************************************************************************/
 ; 
 ; Compile:
-;   smlrc -seg32 -no-externs -D _LINUX lb.c lb.asm
-;   smlrc -seg32 -no-externs -label 1001 smlrc.c smlrc.asm
+;   smlrc -nobss -seg32 -no-externs -D _LINUX lb.c lb.asm
+;   smlrc -nobss -seg32 -no-externs -label 1001 smlrc.c smlrc.asm
 ;   nasm -f bin smlrcl.asm -o smlrcl
-;   chmod 775 smlrcl
+;   chmod +x smlrcl
 ;
 
 ImageBase         equ 0x08048000

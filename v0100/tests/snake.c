@@ -1,6 +1,6 @@
 /*
   Compile:
-    smlrc -seg16 snake.c snake.asm
+    smlrc -seg16 -nobss snake.c snake.asm
     nasm -f bin snake.asm -o snake.com
 
   Run snake.com in DOS, 32-bit Windows or DosBox.

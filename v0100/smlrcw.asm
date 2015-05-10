@@ -1,5 +1,5 @@
 ; /*
-; Copyright (c) 2014, Alexey Frunze
+; Copyright (c) 2014-2015, Alexey Frunze
 ; All rights reserved.
 ; 
 ; Redistribution and use in source and binary forms, with or without
@@ -36,8 +36,8 @@
 ; /*****************************************************************************/
 ; 
 ; Compile:
-;   smlrc -seg32 -no-externs -D _WIN32 lb.c lb.asm
-;   smlrc -seg32 -no-externs -label 1001 smlrc.c smlrc.asm
+;   smlrc -nobss -seg32 -no-externs -D _WIN32 lb.c lb.asm
+;   smlrc -nobss -seg32 -no-externs -label 1001 smlrc.c smlrc.asm
 ;   nasm -f bin mzstub.asm -o mzstub.bin
 ;   nasm -f bin smlrcw.asm -o smlrcw.exe
 ;

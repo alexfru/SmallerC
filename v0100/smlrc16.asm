@@ -1,5 +1,5 @@
 ; /*
-; Copyright (c) 2013, Alexey Frunze
+; Copyright (c) 2013-2015, Alexey Frunze
 ; All rights reserved.
 ; 
 ; Redistribution and use in source and binary forms, with or without
@@ -36,8 +36,8 @@
 ; /*****************************************************************************/
 ; 
 ; Compile:
-;   smlrc -seg16 -no-externs lb.c lb.asm
-;   smlrc -seg16 -no-externs -label 1001 smlrc.c smlrc.asm
+;   smlrc -nobss -seg16 -no-externs lb.c lb.asm
+;   smlrc -nobss -seg16 -no-externs -label 1001 smlrc.c smlrc.asm
 ;   nasm -f bin smlrc16.asm -o smlrc16.exe
 ; 
 

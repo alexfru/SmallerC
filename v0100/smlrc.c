@@ -190,11 +190,11 @@ int vfprintf(FILE*, char*, void*);
 #endif
 
 #ifndef MAX_IDENT_TABLE_LEN
-#define MAX_IDENT_TABLE_LEN  (4096+656) // must be greater than MAX_IDENT_LEN
+#define MAX_IDENT_TABLE_LEN  (4096+656+32) // must be greater than MAX_IDENT_LEN
 #endif
 
 #ifndef SYNTAX_STACK_MAX
-#define SYNTAX_STACK_MAX (2048+512+64)
+#define SYNTAX_STACK_MAX (2048+512+64+32)
 #endif
 
 #ifndef MAX_FILE_NAME_LEN
@@ -394,13 +394,13 @@ void GenInitFinalize(void);
 STATIC
 void GenStartCommentLine(void);
 STATIC
-void GenWordAlignment(void);
+void GenWordAlignment(int bss);
 STATIC
 void GenLabel(char* Label, int Static);
 STATIC
 void GenNumLabel(int Label);
 STATIC
-void GenZeroData(unsigned Size);
+void GenZeroData(unsigned Size, int bss);
 STATIC
 void GenIntData(int Size, int Val);
 STATIC
@@ -628,6 +628,7 @@ int opsp = 0;
 
 int OutputFormat = FormatSegmented;
 int GenExterns = 1;
+int UseBss = 1;
 
 // Names of C functions and variables are usually prefixed with an underscore.
 // One notable exception is the ELF format used by gcc in Linux.
@@ -639,6 +640,8 @@ char* CodeHeader = "";
 char* CodeFooter = "";
 char* DataHeader = "";
 char* DataFooter = "";
+char* BssHeader = "";
+char* BssFooter = "";
 
 int CharIsSigned = 1;
 int SizeOfWord = 2; // in chars (char can be a multiple of octets); ints and pointers are of word size
@@ -674,18 +677,7 @@ int CurFxnNameLabel = 0;
 int ParseLevel = 0; // Parse level/scope (file:0, fxn:1+)
 int ParamLevel = 0; // 1+ if parsing params, 0 otherwise
 
-int SyntaxStack[SYNTAX_STACK_MAX][2] =
-{
-  { tokVoid },     // SymVoidSynPtr
-  { tokInt },      // SymIntSynPtr
-  { tokUnsigned }, // SymUintSynPtr
-  { tokIdent },    // SymFuncPtr
-  { '[' },
-  { tokNumUint },
-  { ']' },
-  { tokChar }
-};
-
+int SyntaxStack[SYNTAX_STACK_MAX][2];
 int SyntaxStackCnt = 8; // number of explicitly initialized elements in SyntaxStack[][2]
 
 // all code
@@ -6408,7 +6400,7 @@ int InitArray(int synPtr, int tok)
       errorUnexpectedToken('}');
 
     if (elementCnt < elementsRequired)
-      GenZeroData((elementsRequired - elementCnt) * elementSz);
+      GenZeroData((elementsRequired - elementCnt) * elementSz, 0);
 
     tok = GetToken();
   }
@@ -6460,7 +6452,7 @@ int InitStruct(int synPtr, int tok)
 
     // Alignment
     if (ofs < elementOfs)
-      GenZeroData(elementOfs - ofs);
+      GenZeroData(elementOfs - ofs, 0);
 
     if (elementType == '[')
     {
@@ -6492,7 +6484,7 @@ int InitStruct(int synPtr, int tok)
 
   // Implicit initialization of the rest and trailing padding
   if (ofs < size)
-    GenZeroData(size - ofs);
+    GenZeroData(size - ofs, 0);
 
   tok = GetToken();
 
@@ -6823,6 +6815,7 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
         int needsGlobalInit = isGlobal & !external;
         int sz = GetDeclSize(lastSyntaxPtr, 0);
         int initLabel = 0;
+        int bss = (!hasInit) & UseBss;
 
 #ifndef NO_ANNOTATIONS
         if (isGlobal)
@@ -6844,11 +6837,11 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
             // Global data appears inside code of a function
             puts2(CodeFooter);
           }
-          puts2(DataHeader);
+          puts2(bss ? BssHeader : DataHeader);
 
           // DONE: imperfect condition for alignment
           if (alignment != 1)
-            GenWordAlignment();
+            GenWordAlignment(bss);
 
           if (isGlobal)
           {
@@ -6882,10 +6875,10 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
           }
           else
           {
-            GenZeroData(sz);
+            GenZeroData(sz, bss);
           }
 
-          puts2(DataFooter);
+          puts2(bss ? BssFooter : DataFooter);
           if (isLocal | (Static && ParseLevel))
           {
             // Global data appears inside code of a function
@@ -7923,7 +7916,7 @@ int ParseStatement(int tok, int BrkCntTarget[2], int casesIdx)
       puts2(CodeFooter);
       puts2(DataHeader);
 
-      GenWordAlignment();
+      GenWordAlignment(0);
 
       {
         char s[1 + 2 + (2 + CHAR_BIT * sizeof tblLabel) / 3];
@@ -8139,6 +8132,21 @@ int main(int argc, char** argv)
 {
   // gcc/MinGW inserts a call to __main() here.
   int i;
+
+  // Run-time initializer for SyntaxStack[][] to reduce
+  // executable file size (SyntaxStack[][] will be in .bss)
+  static const int SyntaxStackInit[][2] =
+  {
+    { tokVoid },     // SymVoidSynPtr
+    { tokInt },      // SymIntSynPtr
+    { tokUnsigned }, // SymUintSynPtr
+    { tokIdent },    // SymFuncPtr
+    { '[' },
+    { tokNumUint },
+    { ']' },
+    { tokChar }
+  }; // SyntaxStackCnt must be initialized to the number of elements in SyntaxStackInit[][]
+  memcpy(SyntaxStack, SyntaxStackInit, sizeof SyntaxStackInit);
 
 #ifdef __SMALLER_C__
 #ifdef DETERMINE_VA_LIST

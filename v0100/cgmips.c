@@ -48,6 +48,7 @@ void GenInit(void)
   OutputFormat = FormatSegmented;
   CodeHeader = "\t.text";
   DataHeader = "\t.data";
+  BssHeader = "\t.bss";
   UseLeadingUnderscores = 0;
 #ifdef REORDER_WORKAROUND
   FileHeader = "\t.set\tnoreorder";
@@ -83,8 +84,9 @@ void GenStartCommentLine(void)
 }
 
 STATIC
-void GenWordAlignment(void)
+void GenWordAlignment(int bss)
 {
+  (void)bss;
   printf2("\t.align 2\n");
 }
 
@@ -122,8 +124,9 @@ void GenPrintNumLabel(int label)
 }
 
 STATIC
-void GenZeroData(unsigned Size)
+void GenZeroData(unsigned Size, int bss)
 {
+  (void)bss;
   printf2("\t.space\t%u\n", truncUint(Size)); // or ".fill size"
 }
 

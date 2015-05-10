@@ -1,5 +1,5 @@
 ;
-;  Copyright (c) 2014, Alexey Frunze
+;  Copyright (c) 2014-2015, Alexey Frunze
 ;  2-clause BSD license.
 ;
 bits 16
@@ -7,6 +7,8 @@ bits 16
     extern ___start__
     extern __start__relot, __stop__relot
     extern __start__relod, __stop__relod
+    extern __start__bss
+    extern __stop__bss
 
 section .text
 
@@ -83,9 +85,54 @@ relo_data_done:
     xor     ebp, ebp
     and     esp, 0xFFFF
 
-    mov     eax, ___start__
-    add     eax, ebx
+    ; Init .bss
+
+    push    ebx
+
+    lea     edi, [ebx + __start__bss]
+    lea     ebx, [ebx + __stop__bss]
+    sub     ebx, edi
+    ror     edi, 4
+    mov     es, di
+    shr     edi, 28
+    xor     al, al
+    cld
+
+bss1:
+    mov     ecx, 32768
+    cmp     ebx, ecx
+    jc      bss2
+
+    sub     ebx, ecx
+    rep     stosb
+    and     di, 15
+    mov     si, es
+    add     si, 2048
+    mov     es, si
+    jmp     bss1
+
+bss2:
+    mov     cx, bx
+    rep     stosb
+
+    pop     ebx
+
+    lea     eax, [ebx + ___start__]
     shl     eax, 12
     rol     ax, 4
     push    eax
     retf        ; __start__() will set up argc and argv for main() and call exit(main(argc, argv))
+
+section .text
+rt: dd      rt
+section .relot
+    dd      rt ; .relot must exist for __start__relot and __stop__relot to also exist
+
+section .data
+rd: dd      rd
+section .relod
+    dd      rd ; .relod must exist for __start__relod and __stop__relod to also exist
+
+section .bss
+    ; .bss must exist for __start__bss and __stop__bss to also exist
+    resd    1

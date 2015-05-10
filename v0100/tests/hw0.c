@@ -1,14 +1,14 @@
 /*
   How to compile for DOS (all mode(l)s: tiny/.COM, small/.EXE, huge/.EXE):
-    smlrcc -dost hw0.c -o hw0dt.com
-    smlrcc -doss hw0.c -o hw0ds.exe
-    smlrcc -dosh hw0.c -o hw0dh.exe
+    smlrcc -dost -nobss hw0.c -o hw0dt.com
+    smlrcc -doss -nobss hw0.c -o hw0ds.exe
+    smlrcc -dosh -nobss hw0.c -o hw0dh.exe
 
   How to compile for Windows:
-    smlrcc -win hw0.c -o hw0w.exe
+    smlrcc -win -nobss hw0.c -o hw0w.exe
 
   How to compile for Linux:
-    smlrcc -linux hw0.c -o hw0l
+    smlrcc -linux -nobss hw0.c -o hw0l
 */
 
 #ifdef _WINDOWS
@@ -87,10 +87,12 @@ int WriteFile(unsigned Handle,
       "call [_iat + 4*2]");
 }
 
+#define STD_OUTPUT_HANDLE (-11u)
+
 void _start(void)
 {
   char hwmsg[] = "Hello, World!\r\n";
-  unsigned h = GetStdHandle(-11);
+  unsigned h = GetStdHandle(STD_OUTPUT_HANDLE);
   unsigned NumberOfBytesWritten;
   WriteFile(h, hwmsg, sizeof hwmsg - 1, &NumberOfBytesWritten, 0);
   ExitProcess(0);
