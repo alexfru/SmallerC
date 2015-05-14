@@ -2971,12 +2971,16 @@ void GenExpr0(void)
         GenPrintInstr2Operands(X86InstrMov, 0,
                                X86OpRegCWord, 0,
                                X86OpRegAWord, 0);
-        GenPrintInstr2Operands(instr, 0,
-                               GenSelectByteOrWord(X86OpIndRegBExplicitByteOrWord, v), 0,
-                               X86OpRegCByte, 0);
         GenPrintInstr2Operands(X86InstrMov, 0,
                                GenSelectByteOrWord(X86OpRegAByteOrWord, v), 0,
                                X86OpIndRegB, 0);
+        GenExtendRegAIfNeeded(v);
+        GenPrintInstr2Operands(instr, 0,
+                               X86OpRegAWord, 0,
+                               X86OpRegCByte, 0);
+        GenPrintInstr2Operands(X86InstrMov, 0,
+                               X86OpIndRegB, 0,
+                               GenSelectByteOrWord(X86OpRegAByteOrWord, v), 0);
         GenExtendRegAIfNeeded(v);
       }
       break;
@@ -3042,6 +3046,18 @@ void GenExpr0(void)
                              X86OpRegAWord, 0,
                              X86OpConst, 0xFF);
       break;
+#ifdef CAN_COMPILE_32BIT
+    case tokShort:
+      GenPrintInstr2Operands(X86InstrMovSx, 0,
+                             X86OpRegAWord, 0,
+                             X86OpRegAHalfWord, 0);
+      break;
+    case tokUShort:
+      GenPrintInstr2Operands(X86InstrMovZx, 0,
+                             X86OpRegAWord, 0,
+                             X86OpRegAHalfWord, 0);
+      break;
+#endif
 
     case tokShortCirc:
 #ifndef NO_ANNOTATIONS
