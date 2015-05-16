@@ -72,11 +72,14 @@ _exe_start_:
     mov es, ax
     jmp ___start__ ; __start__() will set up argc and argv for main() and call exit(main(argc, argv))
 
-section .data
+section .rodata
 
-; _data_start_: file offset = 0x10000, SP = file offset & 0xFFFF = 0
-_data_start_:
+; _rodata_start_: file offset = 0x10000, SP = file offset & 0xFFFF = 0
+_rodata_start_:
     db  "NULL" ; reserve several bytes so that variables don't appear at address/offset 0 (NULL)
+
+section .data
+_data_start_:
 
 ;;;;;;;;;;;;;;;;
 
@@ -89,8 +92,12 @@ section .text
 
     times (0x10000 - ($ - _text_start_)) db 0xCC ; int3
 
+section .rodata
+align 4, db 0
+_rodata_end_:
+
 section .data
 
-    times (0x10000 - ($ - _data_start_)) db 0xCC ; int3
+    times (0x10000 - (_rodata_end_ - _rodata_start_) - ($ - _data_start_)) db 0xCC ; int3
 
 ; file end: file offset = 0x20000

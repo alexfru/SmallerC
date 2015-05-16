@@ -48,7 +48,6 @@ char    *patdoc[] = {
    "       beginning of a line.",
    "'$'    A dollar-sign at the end of an expression matches the end of a line.",
    "'.'    A period matches any character except \"new-line\".",
-#ifndef __SMALLER_C__
    "':a'   A colon matches a class of characters described by the following",
    "':d'     character.  \":a\" matches any alphabetic, \":d\" matches digits,",
    "':n'     \":n\" matches alphanumerics, \": \" matches spaces, tabs, and",
@@ -69,9 +68,6 @@ char    *patdoc[] = {
    "       specified by two characters separated by \"-\".  Note that,",
    "       [a-z] matches alphabetics, while [z-a] never matches.",
    "The concatenation of regular expressions is a regular expression.",
-#else
-   "...", // string table exhausted :-(
-#endif
    0};
 
 #define LMAX    512

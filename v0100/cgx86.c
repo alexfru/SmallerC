@@ -134,9 +134,10 @@ void GenInitFinalize(void)
   // finalization of initialization of target-specific code generator
 
   // Change the output assembly format/content according to the options
-  CodeHeader = "section .text";
-  DataHeader = "section .data";
-  BssHeader = "section .bss";
+  CodeHeaderFooter[0] = "section .text";
+  DataHeaderFooter[0] = "section .data";
+  RoDataHeaderFooter[0] = "section .rodata";
+  BssHeaderFooter[0] = "section .bss";
   if (SizeOfWord == 2 || OutputFormat == FormatSegHuge)
     FileHeader = "bits 16\n";
   else
@@ -245,7 +246,7 @@ void GenAddrData(int Size, char* Label, int ofs)
   {
     int lab = LabelCnt++;
     printf2("section .relod\n\tdd\t"); GenPrintNumLabel(lab); puts2("");
-    puts2(DataHeader);
+    puts2(DataHeaderFooter[0]);
     GenNumLabel(lab);
   }
 #endif
@@ -617,7 +618,7 @@ void GenPrintInstr1Operand(int instr, int instrval, int operand, int operandval)
     {
       int lab = LabelCnt++;
       printf2("section .relod\n\tdd\t"); GenPrintNumLabel(lab); puts2("");
-      puts2(CodeHeader);
+      puts2(CodeHeaderFooter[0]);
       puts2("\tdb\t0x66, 0x68"); // push dword const
       GenNumLabel(lab);
       printf2("\tdd\t"); GenPrintLabel(IdentTable + operandval); puts2("");
@@ -666,7 +667,7 @@ void GenPrintInstr2Operands(int instr, int instrval, int operand1, int operand1v
       {
         int lab = LabelCnt++;
         printf2("section .relod\n\tdd\t"); GenPrintNumLabel(lab); puts2("");
-        puts2(CodeHeader);
+        puts2(CodeHeaderFooter[0]);
         puts2("\tdb\t0x66, 0xB8"); // mov eax, const
         GenNumLabel(lab);
         printf2("\tdd\t"); GenPrintLabel(IdentTable + operand2val); puts2("");
@@ -754,7 +755,6 @@ void GenJumpUncond(int label)
                         X86OpNumLabel, label);
 }
 
-#ifndef USE_SWITCH_TAB
 STATIC
 void GenJumpIfEqual(int val, int label)
 {
@@ -764,7 +764,6 @@ void GenJumpIfEqual(int val, int label)
   GenPrintInstr1Operand(X86InstrJcc, tokEQ,
                         X86OpNumLabel, label);
 }
-#endif
 
 STATIC
 void GenJumpIfZero(int label)
@@ -815,21 +814,14 @@ void GenGrowStack(int size)
   {
     // When targeting Windows, call equivalent of _chkstk() to
     // correctly grow the stack page by page by probing it
-    char s[1 + 2 + (2 + CHAR_BIT * sizeof WinChkStkLabel) / 3];
-    char *p = s + sizeof s;
-
     if (!WinChkStkLabel)
       WinChkStkLabel = LabelCnt++;
 
     GenPrintInstr2Operands(X86InstrMov, 0,
                            X86OpRegAWord, 0,
                            X86OpConst, size);
-    *--p = '\0';
-    p = lab2str(p, WinChkStkLabel);
-    *--p = '_';
-    *--p = '_';
     printf2("\tcall\t");
-    GenPrintLabel(p);
+    GenPrintNumLabel(WinChkStkLabel); // TBD??? use dedicated instr/op fxn???
     puts2("");
   }
 #endif
@@ -2618,7 +2610,7 @@ void GenExpr1(void)
           int lab = LabelCnt++;
           puts2("\tdb\t0x9A"); // call far seg:ofs
           printf2("section .relot\n\tdd\t"); GenPrintNumLabel(lab); puts2("");
-          puts2(CodeHeader);
+          puts2(CodeHeaderFooter[0]);
           GenNumLabel(lab);
           printf2("\tdd\t"); GenPrintLabel(IdentTable + stack[i - 1][1]); puts2("");
         }
@@ -2635,7 +2627,7 @@ void GenExpr1(void)
           int lab = (LabelCnt += 3) - 3;
           puts2("\tdb\t0x9A"); // call far seg:ofs (only to generate return address)
           printf2("section .relot\n\tdd\t"); GenPrintNumLabel(lab); puts2("");
-          puts2(CodeHeader);
+          puts2(CodeHeaderFooter[0]);
           GenNumLabel(lab);
           printf2("\tdd\t"); GenPrintNumLabel(lab + 1); puts2("");
           GenNumLabel(lab + 1);
@@ -2740,7 +2732,7 @@ void GenExpr0(void)
         int lab = (LabelCnt += 3) - 3;
         puts2("\tdb\t0x9A"); // call far seg:ofs (only to generate return address)
         printf2("section .relot\n\tdd\t"); GenPrintNumLabel(lab); puts2("");
-        puts2(CodeHeader);
+        puts2(CodeHeaderFooter[0]);
         GenNumLabel(lab);
         printf2("\tdd\t"); GenPrintNumLabel(lab + 1); puts2("");
         GenNumLabel(lab + 1);
@@ -3110,98 +3102,48 @@ void GenExpr0(void)
 #endif // #ifndef CG_STACK_BASED
 
 STATIC
-unsigned GenStrData(int generatingCode, unsigned requiredLen)
+void GenDumpChar(int ch)
 {
-  int i;
-  unsigned total = 0;
+  static int quot = 0;
 
-  // insert string literals into the code
-  for (i = 0; i < sp; i++)
+  if (ch < 0)
   {
-    int tok = stack[i][0];
-    char* p = IdentTable + stack[i][1];
-    if (tok == tokIdent && isdigit(*p))
+    if (quot)
     {
-      int label = atoi(p);
-      int quot = 0;
-      unsigned len;
-
-      p = FindString(label, &len);
-
-      // If this is a string literal initializing an array of char,
-      // truncate or pad it as necessary.
-      if (requiredLen)
-      {
-        if (len >= requiredLen)
-        {
-          len = requiredLen; // copy count
-          requiredLen = 0; // count to be zeroed out
-        }
-        else
-        {
-          requiredLen -= len; // count to be zeroed out
-        }
-      }
-      // Also, calculate its real size for incompletely typed arrays.
-      total = len + requiredLen;
-
-      if (generatingCode)
-      {
-        puts2(CodeFooter);
-        puts2(DataHeader);
-      }
-
-      GenNumLabel(label);
-
-      GenStartAsciiString();
-      while (len--)
-      {
-        // quote ASCII chars for better readability
-        if (*p >= 0x20 && *p <= 0x7E && *p != '\"')
-        {
-          if (!quot)
-          {
-            quot = 1;
-            printf2("\"");
-          }
-          printf2("%c", *p);
-        }
-        else
-        {
-          if (quot)
-          {
-            quot = 0;
-            printf2("\",");
-          }
-          printf2("%u", *p & 0xFFu);
-          if (len || requiredLen)
-            printf2(",");
-        }
-        p++;
-      }
-      if (quot)
-      {
-        printf2("\"");
-        if (requiredLen)
-          printf2(",");
-      }
-      while (requiredLen)
-      {
-        printf2("0");
-        if (--requiredLen)
-          printf2(",");
-      }
-      puts2("");
-
-      if (generatingCode)
-      {
-        puts2(DataFooter);
-        puts2(CodeHeader);
-      }
+      printf2("\"");
+      quot = 0;
     }
+    if (TokenStringLen)
+      printf2("\n");
+    return;
   }
 
-  return total;
+  if (TokenStringLen == 0)
+    GenStartAsciiString();
+
+  // quote ASCII chars for better readability
+  if (ch >= 0x20 && ch <= 0x7E && ch != '"')
+  {
+    if (!quot)
+    {
+      quot = 1;
+      if (TokenStringLen)
+        printf2(",");
+      printf2("\"");
+    }
+    printf2("%c", ch);
+  }
+  else
+  {
+    if (quot)
+    {
+      quot = 0;
+      printf2("\"");
+    }
+    if (TokenStringLen)
+      printf2(",");
+    printf2("%u", ch & 0xFFu);
+  }
 }
 
 STATIC
@@ -3214,7 +3156,6 @@ void GenExpr(void)
       if (stack[i][0] == tokIdent && !isdigit(IdentTable[stack[i][1]]))
         GenAddGlobal(IdentTable + stack[i][1], 2);
   }
-  GenStrData(1, 0);
 #ifndef CG_STACK_BASED
   GenExpr1();
 #else
@@ -3227,17 +3168,9 @@ void GenFin(void)
 {
   if (StructCpyLabel)
   {
-    char s[1 + 2 + (2 + CHAR_BIT * sizeof StructCpyLabel) / 3];
-    char *p = s + sizeof s;
+    puts2(CodeHeaderFooter[0]);
 
-    *--p = '\0';
-    p = lab2str(p, StructCpyLabel);
-    *--p = '_';
-    *--p = '_';
-
-    puts2(CodeHeader);
-
-    GenLabel(p, 1);
+    GenNumLabel(StructCpyLabel);
     GenFxnProlog();
 
     if (SizeOfWord == 2)
@@ -3306,23 +3239,15 @@ void GenFin(void)
 
     GenFxnEpilog();
 
-    puts2(CodeFooter);
+    puts2(CodeHeaderFooter[1]);
   }
 
 #ifndef NO_STRUCT_BY_VAL
   if (StructPushLabel)
   {
-    char s[1 + 2 + (2 + CHAR_BIT * sizeof StructPushLabel) / 3];
-    char *p = s + sizeof s;
+    puts2(CodeHeaderFooter[0]);
 
-    *--p = '\0';
-    p = lab2str(p, StructPushLabel);
-    *--p = '_';
-    *--p = '_';
-
-    puts2(CodeHeader);
-
-    GenLabel(p, 1);
+    GenNumLabel(StructPushLabel);
     GenFxnProlog();
 
     if (SizeOfWord == 2)
@@ -3406,112 +3331,7 @@ void GenFin(void)
 
 //    GenFxnEpilog();
 
-    puts2(CodeFooter);
-  }
-#endif
-
-#ifdef USE_SWITCH_TAB
-  if (SwitchJmpLabel)
-  {
-    char s[1 + 2 + (2 + CHAR_BIT * sizeof SwitchJmpLabel) / 3];
-    char *p = s + sizeof s;
-
-    *--p = '\0';
-    p = lab2str(p, SwitchJmpLabel);
-    *--p = '_';
-    *--p = '_';
-
-    puts2(CodeHeader);
-
-    GenLabel(p, 1);
-    GenFxnProlog();
-
-    if (SizeOfWord == 2)
-    {
-      int lbl = (LabelCnt += 3) - 3;
-      puts2("\tmov\tbx, [bp + 4]\n"
-            "\tmov\tsi, [bx + 2]\n"
-            "\tmov\tcx, [bx]");
-      printf2("\tjcxz\t"); GenPrintNumLabel(lbl + 2); // jcxz L3
-      puts2("\n\tmov\tax, [bp + 6]");
-      GenNumLabel(lbl); // L1:
-      puts2("\tadd\tbx, 4\n"
-            "\tcmp\tax, [bx]");
-      printf2("\tjne\t"); GenPrintNumLabel(lbl + 1); // jne L2
-      puts2("\n\tmov\tsi, [bx + 2]");
-      printf2("\tjmp\t"); GenPrintNumLabel(lbl + 2); // jmp L3
-      puts2("");
-      GenNumLabel(lbl + 1); // L2:
-      printf2("\tloop\t"); GenPrintNumLabel(lbl); // loop L1
-      puts2("");
-      GenNumLabel(lbl + 2); // L3:
-      puts2("\tmov\t[bp + 2], si\n"
-            "\tleave\n"
-            "\tret\t4");
-    }
-#ifdef CAN_COMPILE_32BIT
-    else if (OutputFormat != FormatSegHuge)
-    {
-      int lbl = (LabelCnt += 3) - 3;
-      puts2("\tmov\tebx, [ebp + 8]\n"
-            "\tmov\tesi, [ebx + 4]\n"
-            "\tmov\tecx, [ebx]");
-      printf2("\tjecxz\t"); GenPrintNumLabel(lbl + 2); // jecxz L3
-      puts2("\n\tmov\teax, [ebp + 12]");
-      GenNumLabel(lbl); // L1:
-      puts2("\tadd\tebx, 8\n"
-            "\tcmp\teax, [ebx]");
-      printf2("\tjne\t"); GenPrintNumLabel(lbl + 1); // jne L2
-      puts2("\n\tmov\tesi, [ebx + 4]");
-      printf2("\tjmp\t"); GenPrintNumLabel(lbl + 2); // jmp L3
-      puts2("");
-      GenNumLabel(lbl + 1); // L2:
-      printf2("\tloop\t"); GenPrintNumLabel(lbl); // loop L1
-      puts2("");
-      GenNumLabel(lbl + 2); // L3:
-      puts2("\tmov\t[ebp + 4], esi\n"
-            "\tleave\n"
-            "\tret\t8");
-    }
-    else
-    {
-      int lbl = (LabelCnt += 3) - 3;
-      puts2("\tmov\tebx, [bp + 8]\n"
-            "\tror\tebx, 4\n"
-            "\tmov\tds, ebx\n"
-            "\tshr\tebx, 28\n"
-            "\tmov\tsi, [bx + 4]\n"
-            "\tmov\tcx, [bx]"); // use only 16 bits of case counter
-      printf2("\tjcxz\t"); GenPrintNumLabel(lbl + 2); // jcxz L3
-      puts2("\n\tmov\teax, [bp + 12]");
-      GenNumLabel(lbl); // L1:
-      // No segment reload inside the loop, hence the number of cases is limited to ~8190
-      puts2("\tadd\tbx, 8\n"
-            "\tcmp\teax, [bx]");
-      printf2("\tjne\t"); GenPrintNumLabel(lbl + 1); // jne L2
-      puts2("\n\tmov\tsi, [bx + 4]");
-      printf2("\tjmp\t"); GenPrintNumLabel(lbl + 2); // jmp L3
-      puts2("");
-      GenNumLabel(lbl + 1); // L2:
-      printf2("\tloop\t"); GenPrintNumLabel(lbl); // loop L1
-      puts2("");
-      GenNumLabel(lbl + 2); // L3:
-      // Preserve CS on return
-      puts2("\tmov\tax, [bp + 6]\n"
-            "\tshl\tax, 4\n"
-            "\tsub\tsi, ax\n"
-            "\tmov\t[bp + 4], si\n"
-            "\tdb\t0x66\n"
-            "\tleave\n"
-            "\tretf\t8");
-    }
-#endif
-
-    // Not using GenFxnEpilog() here because we need to remove the parameters
-    // from the stack
-//    GenFxnEpilog();
-
-    puts2(CodeFooter);
+    puts2(CodeHeaderFooter[1]);
   }
 #endif
 
@@ -3520,18 +3340,11 @@ void GenFin(void)
   {
     // When targeting Windows, simulate _chkstk() to
     // correctly grow the stack page by page by probing it
-    char s[1 + 2 + (2 + CHAR_BIT * sizeof WinChkStkLabel) / 3];
-    char *p = s + sizeof s;
     int lbl = LabelCnt++;
 
-    *--p = '\0';
-    p = lab2str(p, WinChkStkLabel);
-    *--p = '_';
-    *--p = '_';
+    puts2(CodeHeaderFooter[0]);
 
-    puts2(CodeHeader);
-
-    GenLabel(p, 1);
+    GenNumLabel(WinChkStkLabel);
     puts2("\tlea\tebx, [esp+4]\n"
           "\tmov\tecx, ebx\n"
           "\tsub\tecx, eax\n"
@@ -3544,7 +3357,7 @@ void GenFin(void)
     printf2("\tjne\t"); GenPrintNumLabel(lbl); // jne L1
     puts2("\n\tret");
 
-    puts2(CodeFooter);
+    puts2(CodeHeaderFooter[1]);
   }
 #endif
 

@@ -45,11 +45,12 @@ bits 16
 org 0
 
 _text_size_      equ ((_text_end_ - _text_start_ + 3) & ~3)
+_rodata_size_    equ ((_rodata_end_ - _rodata_start_ + 3) & ~3)
 _data_size_      equ ((_data_end_ - _data_start_ + 3) & ~3)
 _relo_text_size_ equ ((_relo_text_end_ - _relo_text_start_ + 3) & ~3)
 _relo_data_size_ equ ((_relo_data_end_ - _relo_data_start_ + 3) & ~3)
 _stack_size_     equ ((_stack_end_ - _stack_start_ + 3) & ~3)
-_exe_size_       equ (_text_size_ + _data_size_ + _relo_text_size_ + _relo_data_size_ + _stack_size_)
+_exe_size_       equ (_text_size_ + _rodata_size_ + _data_size_ + _relo_text_size_ + _relo_data_size_ + _stack_size_)
 
 section .text align=4
 
@@ -146,6 +147,9 @@ relo_data_done:
     push    eax
     retf        ; __start__() will set up argc and argv for main() and call exit(main(argc, argv))
 
+section .rodata align=4
+_rodata_start_:
+
 section .data align=4
 _data_start_:
 
@@ -164,6 +168,9 @@ _relo_data_start_:
 
 section .text
 _text_end_:
+
+section .rodata
+_rodata_end_:
 
 section .data
 _data_end_:

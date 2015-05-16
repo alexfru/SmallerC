@@ -47,7 +47,7 @@ FileAlignment     equ 512
 SectionAlignment  equ 4096
 
 _text_size_      equ (_text_end_ - _text_start_)
-_data_size_      equ (_data_end_ - _data_start_)
+_data_size_      equ ((_rodata_end_ - _rodata_start_) + (_data_end_ - _data_start_))
 ImageSize        equ (HeadersSize + GapSize + _text_size_ + _data_size_)
 
 bits 32
@@ -75,7 +75,7 @@ OptionalHeader:
     dd 0                            ; SizeOfUninitializedData
     dd Entry - ImageBase            ; AddressOfEntryPoint
     dd _text_start_                 ; BaseOfCode
-    dd _data_start_                 ; BaseOfData
+    dd _rodata_start_               ; BaseOfData
     dd ImageBase                    ; ImageBase
     dd SectionAlignment             ; SectionAlignment
     dd FileAlignment                ; FileAlignment
@@ -131,9 +131,9 @@ SectionDescriptors:
 
     db ".data", 0, 0, 0         ; Name
     dd _data_size_              ; VirtualSize
-    dd _data_start_ - ImageBase ; VirtualAddress
+    dd _rodata_start_ - ImageBase ; VirtualAddress
     dd _data_size_              ; SizeOfRawData
-    dd _data_start_ - ImageBase ; PointerToRawData
+    dd _rodata_start_ - ImageBase ; PointerToRawData
     dd 0                        ; PointerToRelocations
     dd 0                        ; PointerToLinenumbers
     dw 0                        ; NumberOfRelocations
@@ -150,6 +150,10 @@ align SectionAlignment, db 0
 _text_start_:
 Entry:
     jmp ___start__ ; __start__() will set up argc and argv for main() and call exit(main(argc, argv))
+
+section .rodata
+align SectionAlignment, db 0
+_rodata_start_:
 
 section .data
 align SectionAlignment, db 0
@@ -201,6 +205,10 @@ align 4, db 0
 section .text
 align SectionAlignment, db 0
 _text_end_:
+
+section .rodata
+align SectionAlignment, db 0
+_rodata_end_:
 
 section .data
 align SectionAlignment, db 0

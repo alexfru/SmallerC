@@ -46,7 +46,7 @@ ImageBase         equ 0x08048000
 SectionAlignment  equ 4096
 
 _text_size_     equ (_text_end_ - _text_start_)
-_data_size_     equ (_data_end_ - _data_start_)
+_data_size_      equ ((_rodata_end_ - _rodata_start_) + (_data_end_ - _data_start_))
 
 bits 32
 org ImageBase
@@ -80,9 +80,9 @@ ProgHeaders:
     dd SectionAlignment                     ; p_align
 ; .data
     dd 1                                    ; p_type (load)
-    dd _data_start_ - ImageBase             ; p_offset
-    dd _data_start_                         ; p_vaddr
-    dd _data_start_                         ; p_paddr
+    dd _rodata_start_ - ImageBase           ; p_offset
+    dd _rodata_start_                       ; p_vaddr
+    dd _rodata_start_                       ; p_paddr
     dd _data_size_                          ; p_filesz
     dd _data_size_                          ; p_memsz
     dd 6                                    ; p_flags (readable, writable)
@@ -96,6 +96,10 @@ Entry:
     push esp ; argv
     push eax ; argc
     call ___start__ ; __start__(arc, argv) will call exit(main(argc, argv))
+
+section .rodata
+align SectionAlignment, db 0
+_rodata_start_:
 
 section .data
 align SectionAlignment, db 0
@@ -111,6 +115,10 @@ _data_start_:
 section .text
 align SectionAlignment, db 0
 _text_end_:
+
+section .rodata
+align SectionAlignment, db 0
+_rodata_end_:
 
 section .data
 align SectionAlignment, db 0

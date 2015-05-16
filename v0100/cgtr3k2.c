@@ -43,9 +43,10 @@ void GenInit(void)
   // initialization of target-specific code generator
   SizeOfWord = 4;
   OutputFormat = FormatSegmented;
-  CodeHeader = "\t.text";
-  DataHeader = "\t.data";
-  BssHeader = "\t.data"; // TBD!!! use the .bss section
+  CodeHeaderFooter[0] = "\t.text";
+  DataHeaderFooter[0] = "\t.data";
+  RoDataHeaderFooter[0] = "\t.rodata";
+  BssHeaderFooter[0] = "\t.data"; // TBD!!! use the .bss section
 }
 
 STATIC
@@ -1770,88 +1771,36 @@ void GenExpr0(void)
 }
 
 STATIC
-unsigned GenStrData(int generatingCode, unsigned requiredLen)
+void GenDumpChar(int ch)
 {
-  int i;
-  unsigned total = 0;
-
-  // insert string literals into the code
-  for (i = 0; i < sp; i++)
+  if (ch < 0)
   {
-    int tok = stack[i][0];
-    char* p = IdentTable + stack[i][1];
-    if (tok == tokIdent && isdigit(*p))
-    {
-      int label = atoi(p);
-      unsigned len;
-
-      p = FindString(label, &len);
-
-      // If this is a string literal initializing an array of char,
-      // truncate or pad it as necessary.
-      if (requiredLen)
-      {
-        if (len >= requiredLen)
-        {
-          len = requiredLen; // copy count
-          requiredLen = 0; // count to be zeroed out
-        }
-        else
-        {
-          requiredLen -= len; // count to be zeroed out
-        }
-      }
-      // Also, calculate its real size for incompletely typed arrays.
-      total = len + requiredLen;
-
-      if (generatingCode)
-      {
-        puts2(CodeFooter);
-        puts2(DataHeader);
-      }
-
-      GenNumLabel(label);
-
-      GenStartAsciiString();
-      printf2("\"");
-      while (len--)
-      {
-        // quote ASCII chars for better readability
-        if (*p >= 0x20 && *p <= 0x7E)
-        {
-          if (*p == '\"' || *p == '\\')
-            printf2("\\");
-          printf2("%c", *p);
-        }
-        else
-        {
-          printf2("\\%03o", *p & 0xFFu);
-        }
-        p++;
-      }
-      while (requiredLen)
-      {
-        printf2("\\000");
-        requiredLen--;
-      }
-      printf2("\"");
-      puts2("");
-
-      if (generatingCode)
-      {
-        puts2(DataFooter);
-        puts2(CodeHeader);
-      }
-    }
+    if (TokenStringLen)
+      printf2("\"\n");
+    return;
   }
 
-  return total;
+  if (TokenStringLen == 0)
+  {
+    GenStartAsciiString();
+    printf2("\"");
+  }
+
+  if (ch >= 0x20 && ch <= 0x7E)
+  {
+    if (ch == '"' || ch == '\\')
+      printf2("\\");
+    printf2("%c", ch);
+  }
+  else
+  {
+    printf2("\\%03o", ch);
+  }
 }
 
 STATIC
 void GenExpr(void)
 {
-  GenStrData(1, 0);
   GenExpr0();
 }
 
@@ -1860,18 +1809,11 @@ void GenFin(void)
 {
   if (StructCpyLabel)
   {
-    char s[1 + 2 + (2 + CHAR_BIT * sizeof StructCpyLabel) / 3];
-    char *p = s + sizeof s;
     int lbl = LabelCnt++;
 
-    *--p = '\0';
-    p = lab2str(p, StructCpyLabel);
-    *--p = '_';
-    *--p = '_';
+    puts2(CodeHeaderFooter[0]);
 
-    puts2(CodeHeader);
-
-    GenLabel(p, 1);
+    GenNumLabel(StructCpyLabel);
     puts2("\tpush\t%r1\n"
           "\tpush\t%r2\n"
           "\tpush\t%r3\n"
@@ -1893,47 +1835,6 @@ void GenFin(void)
           "\tpop\t%r1\n"
           "\tret");
 
-    puts2(CodeFooter);
+    puts2(CodeHeaderFooter[1]);
   }
-
-#ifdef USE_SWITCH_TAB
-  // TBD??? convert from MIPS??? USE_SWITCH_TAB isn't the default.
-  if (SwitchJmpLabel)
-  {
-    char s[1 + 2 + (2 + CHAR_BIT * sizeof SwitchJmpLabel) / 3];
-    char *p = s + sizeof s;
-    int lbl = (LabelCnt += 3) - 3;
-
-    *--p = '\0';
-    p = lab2str(p, SwitchJmpLabel);
-    *--p = '_';
-    *--p = '_';
-
-    puts2(CodeHeader);
-
-    GenLabel(p, 1);
-
-    puts2("\tlw\t$2, 0($4)\n"
-          "\tlw\t$31, 4($4)");
-    printf2("\tbeq\t$2, $0, "); GenPrintNumLabel(lbl + 2); // beq $2, $0, L3
-    puts2("");
-    GenNumLabel(lbl); // L1:
-    puts2("\taddiu\t$4, $4, 8\n"
-          "\tlw\t$6, 0($4)");
-    printf2("\tbne\t$6, $5, "); GenPrintNumLabel(lbl + 1); // bne $6, $6, L2
-    puts2("");
-    puts2("\tlw\t$31, 4($4)");
-    printf2("\tj "); GenPrintNumLabel(lbl + 2); // j L3
-    puts2("");
-    GenNumLabel(lbl + 1); // L2:
-    puts2("\taddiu\t$2, $2, -1");
-    printf2("\tbne\t$2, $0, "); GenPrintNumLabel(lbl); // bne $2, $0, L1
-    puts2("");
-    GenNumLabel(lbl + 2); // L3:
-    puts2("\taddiu\t$29, $29, 16\n"
-          "\tj\t$31");
-
-    puts2(CodeFooter);
-  }
-#endif
 }
