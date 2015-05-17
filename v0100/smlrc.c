@@ -60,12 +60,7 @@ either expressed or implied, of the FreeBSD Project.
 #endif
 
 // Passing and returning structures by value is currenly supported
-// on x86 only
-#ifdef MIPS
-#ifndef NO_STRUCT_BY_VAL
-#define NO_STRUCT_BY_VAL
-#endif
-#endif
+// on x86 and MIPS only
 #ifdef TR3200
 #ifndef NO_STRUCT_BY_VAL
 #define NO_STRUCT_BY_VAL
@@ -4161,12 +4156,12 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
 #ifndef NO_STRUCT_BY_VAL
         // Count the implicit param/arg for returned structure
         c += retStruct;
+        // Correct the value by which the stack pointer
+        // will be incremented after the call
+        c += structSize / SizeOfWord;
 #endif
         stack[1 + *idx][1] = stack[i][1] = c * SizeOfWord;
 #ifndef NO_STRUCT_BY_VAL
-        // Correct the value by which the stack pointer
-        // will be incremented after the call
-        stack[i][1] += structSize;
         // If a structure is returned, transform
         // fxn(pretval, args) into *(fxn(pretval, args), pretval)
         if (retStruct)

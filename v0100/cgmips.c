@@ -2188,4 +2188,42 @@ void GenFin(void)
 
     puts2(CodeHeaderFooter[1]);
   }
+
+#ifndef NO_STRUCT_BY_VAL
+  if (StructPushLabel)
+  {
+    int lbl = LabelCnt++;
+
+    puts2(CodeHeaderFooter[0]);
+
+    GenNumLabel(StructPushLabel);
+
+    puts2("\tmove\t$6, $5\n"
+          "\taddiu\t$6, $6, 3\n"
+          "\tli\t$3, -4\n"
+          "\tand\t$6, $6, $3\n"
+          "\tsubu\t$29, $29, $6\n"
+          "\taddiu\t$3, $29, 16\n"
+          "\tmove\t$2, $3");
+    GenNumLabel(lbl);
+    puts2("\tlbu\t$6, 0($4)\n"
+          "\taddiu\t$4, $4, 1\n"
+          "\taddiu\t$5, $5, -1\n"
+          "\tsb\t$6, 0($3)\n"
+          "\taddiu\t$3, $3, 1");
+    printf2("\tbne\t$5, $0, "); GenPrintNumLabel(lbl);
+    puts2("");
+#ifdef REORDER_WORKAROUND
+    GenNop();
+#endif
+    puts2("\tlw\t$2, 0($2)\n"
+          "\taddiu\t$29, $29, 4\n"
+          "\tj\t$31");
+#ifdef REORDER_WORKAROUND
+    GenNop();
+#endif
+
+    puts2(CodeHeaderFooter[1]);
+  }
+#endif
 }
