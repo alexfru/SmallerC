@@ -483,7 +483,6 @@ void GenJumpUncond(int label)
 
 extern int GenWreg; // GenWreg is defined below
 
-#ifndef USE_SWITCH_TAB
 STATIC
 void GenJumpIfEqual(int val, int label)
 {
@@ -495,7 +494,6 @@ void GenJumpIfEqual(int val, int label)
                          TEMP_REG_B, 0,
                          MipsOpNumLabel, label);
 }
-#endif
 
 STATIC
 void GenJumpIfZero(int label)

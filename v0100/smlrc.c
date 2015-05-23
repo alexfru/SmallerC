@@ -200,6 +200,8 @@ int vfprintf(FILE*, char*, void*);
 #define MAX_INCLUDES         1
 #define PREP_STACK_SIZE      1
 #define MAX_SEARCH_PATH      1
+#undef MAX_STRING_LEN
+#define MAX_STRING_LEN       (MAX_FILE_NAME_LEN + 3)
 #endif
 
 /* +-~* /% &|^! << >> && || < <= > >= == !=  () *[] ++ -- = += -= ~= *= /= %= &= |= ^= <<= >>= {} ,;: -> ... */
@@ -1301,9 +1303,8 @@ void GetIdent(void)
 }
 
 STATIC
-int GetString(char terminator, int option)
+void GetString(char terminator, int option)
 {
-  int res = tokEof;
   char* p = CharQueue;
   int ch = '\0';
 
@@ -1401,10 +1402,10 @@ int GetString(char terminator, int option)
     case 'd': // string literal / array of char in expression or initializer
       // Dump the char data to the appropriate data section
       GenDumpChar(ch & 0xFFu);
+      // fallthrough
+    default: // skipped string literal (we may still need the size)
       if (TokenStringLen++ == UINT_MAX)
         errorStrLen();
-      break;
-    default: // skipped string literal
       break;
     } // endof switch (option)
   } // endof while (!(*p == '\0' || *p == terminator || strchr("\n\r", *p)))
@@ -1421,7 +1422,6 @@ int GetString(char terminator, int option)
 
     TokenValueInt = ch & 0xFFu;
     TokenValueInt -= (CharIsSigned && TokenValueInt >= 0x80) * 0x100;
-    res = tokNumInt;
   }
   else if (option == 'd')
   {
@@ -1431,8 +1431,6 @@ int GetString(char terminator, int option)
   ShiftCharN(1);
 
   SkipSpace(option != '#');
-
-  return res;
 }
 
 #ifndef NO_PREPROCESSOR
@@ -1657,7 +1655,8 @@ int GetTokenInner(void)
   // parse character and string constants
   if (ch == '\'')
   {
-    return GetString(ch, 'd');
+    GetString(ch, 'd');
+    return tokNumInt;
   }
   else if (ch == '"')
   {
@@ -2312,13 +2311,20 @@ char* lab2str(char* p, int n)
 STATIC
 int exprUnary(int tok, int* gotUnary, int commaSeparator, int argOfSizeOf)
 {
+  static int sizeofLevel = 0;
+
   int decl = 0;
   *gotUnary = 0;
 
   if (isop(tok) && (isunary(tok) || strchr("&*+-", tok)))
   {
     int lastTok = tok;
-    tok = exprUnary(GetToken(), gotUnary, commaSeparator, lastTok == tokSizeof);
+    int sizeofLevelInc = lastTok == tokSizeof;
+
+    sizeofLevel += sizeofLevelInc;
+    tok = exprUnary(GetToken(), gotUnary, commaSeparator, sizeofLevelInc);
+    sizeofLevel -= sizeofLevelInc;
+
     if (!*gotUnary)
       //error("exprUnary(): primary expression expected after token %s\n", GetTokenName(lastTok));
       errorUnexpectedToken(tok);
@@ -2368,15 +2374,18 @@ int exprUnary(int tok, int* gotUnary, int commaSeparator, int argOfSizeOf)
 
       // imitate definition: char #[len] = "...";
 
-      if (CurHeaderFooter)
-        puts2(CurHeaderFooter[1]);
-      puts2(RoDataHeaderFooter[0]);
+      if (!sizeofLevel)
+      {
+        if (CurHeaderFooter)
+          puts2(CurHeaderFooter[1]);
+        puts2(RoDataHeaderFooter[0]);
 
-      GenNumLabel(lbl);
+        GenNumLabel(lbl);
+      }
 
       do
       {
-        GetString('"', 'd');
+        GetString('"', sizeofLevel ? 0 : 'd'); // throw away string data inside sizeof, e.g. sizeof "a" or sizeof("a" + 1)
         if (len + TokenStringLen < len ||
             len + TokenStringLen >= truncUint(-1))
           errorStrLen();
@@ -2384,11 +2393,14 @@ int exprUnary(int tok, int* gotUnary, int commaSeparator, int argOfSizeOf)
         tok = GetToken();
       } while (tok == tokLitStr); // concatenate adjacent string literals
 
-      GenZeroData(1, 0);
+      if (!sizeofLevel)
+      {
+        GenZeroData(1, 0);
 
-      puts2(RoDataHeaderFooter[1]);
-      if (CurHeaderFooter)
-        puts2(CurHeaderFooter[0]);
+        puts2(RoDataHeaderFooter[1]);
+        if (CurHeaderFooter)
+          puts2(CurHeaderFooter[0]);
+      }
 
       // DONE: can this break incomplete yet declarations???, e.g.: int x[sizeof("az")][5];
       PushSyntax2(tokIdent, id = AddNumericIdent(lbl));
@@ -6138,16 +6150,33 @@ int InitVar(int synPtr, int tok)
   int p = synPtr, t;
   int undoIdents = IdentTableLen;
 
-  while ((SyntaxStack[p][0] == tokIdent) | (SyntaxStack[p][0] == tokLocalOfs))
+  while ((t = SyntaxStack[p][0]), (t == tokIdent) | (t == tokLocalOfs))
     p++;
 
-  t = SyntaxStack[p][0];
-  if (t == '[')
+  switch (t)
+  {
+  case '[':
+    // Initializers for aggregates must be enclosed in braces,
+    // except for arrays of char initialized with string literals,
+    // in which case braces are optional
+    if (tok != '{')
+    {
+      t = SyntaxStack[p + 3][0];
+      if ((tok != tokLitStr) | ((t != tokChar) & (t != tokUChar) & (t != tokSChar)))
+        errorUnexpectedToken(tok);
+    }
     tok = InitArray(p, tok);
-  else if (t == tokStructPtr)
+    break;
+  case tokStructPtr:
+    // Initializers for aggregates must be enclosed in braces
+    if (tok != '{')
+      errorUnexpectedToken(tok);
     tok = InitStruct(p, tok);
-  else
+    break;
+  default:
     tok = InitScalar(p, tok);
+    break;
+  }
 
   if (!strchr(",;", tok))
     errorUnexpectedToken(tok);
@@ -6165,11 +6194,26 @@ int InitScalar(int synPtr, int tok)
   int oldssp = SyntaxStackCnt;
   int undoIdents = IdentTableLen;
   int ttop;
+  int braces = 0;
+
+  // Initializers for scalars can be optionally enclosed in braces
+  if (tok == '{')
+  {
+    braces = 1;
+    tok = GetToken();
+  }
 
   tok = ParseExpr(tok, &gotUnary, &synPtr2, &constExpr, &exprVal, ',', 0);
 
   if (!gotUnary)
     errorUnexpectedToken(tok);
+
+  if (braces)
+  {
+    if (tok != '}')
+      errorUnexpectedToken(tok);
+    tok = GetToken();
+  }
 
   scalarTypeCheck(synPtr2);
 
@@ -6236,14 +6280,6 @@ int InitArray(int synPtr, int tok)
     braces = 1;
     tok = GetToken();
   }
-  else
-  {
-    // Only fully-bracketed (sic) initialization of arrays is supported,
-    // except for arrays of char initialized with string literals
-    // (the string literals may be optionally enclosed in braces)
-    if (!(arrOfChar & (tok == tokLitStr)))
-      errorUnexpectedToken(tok);
-  }
 
   if (arrOfChar & (tok == tokLitStr))
   {
@@ -6292,8 +6328,13 @@ int InitArray(int synPtr, int tok)
         tok = InitScalar(elementTypePtr, tok);
       }
 
-      if (++elementCnt > elementsRequired && elementsRequired)
-        error("Too many array initializers\n");
+      // Last element?
+      if (++elementCnt >= elementsRequired && elementsRequired)
+      {
+        if (braces & (tok == ','))
+          tok = GetToken();
+        break;
+      }
 
       if (tok == ',')
         tok = GetToken();
@@ -6301,13 +6342,15 @@ int InitArray(int synPtr, int tok)
         errorUnexpectedToken(tok);
     }
 
-    if (!elementCnt)
-      errorUnexpectedToken('}');
+    if (braces)
+    {
+      if ((!elementCnt) | (tok != '}'))
+        errorUnexpectedToken(tok);
+      tok = GetToken();
+    }
 
     if (elementCnt < elementsRequired)
       GenZeroData((elementsRequired - elementCnt) * elementSz, 0);
-
-    tok = GetToken();
   }
 
   // Store the element count if it's an incomplete array
@@ -6322,33 +6365,35 @@ int InitStruct(int synPtr, int tok)
 {
   int isUnion;
   unsigned size, ofs = 0;
+  int braces = 0;
+  int c = 1;
 
   synPtr = SyntaxStack[synPtr][1];
   isUnion = SyntaxStack[synPtr++][0] == tokUnion;
   size = SyntaxStack[++synPtr][1];
   synPtr += 3; // step inside the {} body of the struct/union
 
-  if (tok != '{')
-    errorUnexpectedToken(tok);
-  tok = GetToken();
+  if (tok == '{')
+  {
+    braces = 1;
+    tok = GetToken();
+  }
+
+  // Find the first member
+  while (c)
+  {
+    int t = SyntaxStack[synPtr][0];
+    c += (t == '(') - (t == ')') + (t == '{') - (t == '}');
+    if (c == 1 && t == tokMemberIdent)
+      break;
+    synPtr++;
+  }
 
   while (tok != '}')
   {
     int c = 1;
     int elementTypePtr, elementType;
     unsigned elementOfs, elementSz;
-
-    // Find the next member or the closing brace
-    while (c)
-    {
-      int t = SyntaxStack[synPtr][0];
-      c += (t == '(') - (t == ')') + (t == '{') - (t == '}');
-      if (c == 1 && t == tokMemberIdent)
-        break;
-      synPtr++;
-    }
-    if (!c)
-      errorUnexpectedToken(tok); // too many initializers
 
     elementOfs = SyntaxStack[++synPtr][1];
     elementTypePtr = ++synPtr;
@@ -6374,24 +6419,41 @@ int InitStruct(int synPtr, int tok)
 
     ofs = elementOfs + elementSz;
 
+    // Find the next member or the closing brace
+    while (c)
+    {
+      int t = SyntaxStack[synPtr][0];
+      c += (t == '(') - (t == ')') + (t == '{') - (t == '}');
+      if (c == 1 && t == tokMemberIdent)
+        break;
+      synPtr++;
+    }
+
+    // Last member?
+    // Only one member (first) is initialized in unions explicitly
+    if ((!c) | isUnion)
+    {
+      if (braces & (tok == ','))
+        tok = GetToken();
+      break;
+    }
+
     if (tok == ',')
       tok = GetToken();
     else if (tok != '}')
       errorUnexpectedToken(tok);
-
-    // Only one member (first) is initialized in unions explicitly
-    if (isUnion && tok != '}')
-      errorUnexpectedToken(tok);
   }
 
-  if (!ofs)
-    errorUnexpectedToken('}');
+  if (braces)
+  {
+    if ((!ofs) | (tok != '}'))
+      errorUnexpectedToken(tok);
+    tok = GetToken();
+  }
 
   // Implicit initialization of the rest and trailing padding
   if (ofs < size)
     GenZeroData(size - ofs, 0);
-
-  tok = GetToken();
 
   return tok;
 }
@@ -6808,21 +6870,13 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
           sp = 0;
 
           push2('(', SizeOfWord * 3);
-
           push2(tokLocalOfs, SyntaxStack[lastSyntaxPtr + 1][1]);
-
           push(',');
-
           push2(tokIdent, AddNumericIdent(initLabel));
-
           push(',');
-
           push2(tokNumUint, sz);
-
           push(',');
-
           push2(tokIdent, AddNumericIdent(StructCpyLabel));
-
           push2(')', SizeOfWord * 3);
 
           GenExpr();
@@ -6831,12 +6885,27 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
         else if (hasInit & !needsGlobalInit)
         {
           int gotUnary, synPtr, constExpr, exprVal;
+          int brace = 0;
+
+          // Initializers for scalars can be optionally enclosed in braces
+          if ((!isStruct) & (tok == '{'))
+          {
+            brace = 1;
+            tok = GetToken();
+          }
 
           // ParseExpr() will transform the initializer expression into an assignment expression here
           tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, '=', SyntaxStack[lastSyntaxPtr][1]);
 
           if (!gotUnary)
             errorUnexpectedToken(tok);
+
+          if (brace)
+          {
+            if (tok != '}')
+              errorUnexpectedToken(tok);
+            tok = GetToken();
+          }
 
           if (!isStruct)
           {
