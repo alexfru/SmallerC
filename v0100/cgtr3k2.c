@@ -43,10 +43,10 @@ void GenInit(void)
   // initialization of target-specific code generator
   SizeOfWord = 4;
   OutputFormat = FormatSegmented;
-  CodeHeaderFooter[0] = "\t.text";
-  DataHeaderFooter[0] = "\t.data";
-  RoDataHeaderFooter[0] = "\t.rodata";
-  BssHeaderFooter[0] = "\t.data"; // TBD!!! use the .bss section
+  CodeHeaderFooter[0] = "\tsection .text";
+  DataHeaderFooter[0] = "\tsection .data";
+  RoDataHeaderFooter[0] = "\tsection .rodata";
+  BssHeaderFooter[0] = "\tsection .bss";
 }
 
 STATIC
@@ -1773,28 +1773,45 @@ void GenExpr0(void)
 STATIC
 void GenDumpChar(int ch)
 {
+  static int quot = 0;
+
   if (ch < 0)
   {
+    if (quot)
+    {
+      printf2("\"");
+      quot = 0;
+    }
     if (TokenStringLen)
-      printf2("\"\n");
+      printf2("\n");
     return;
   }
 
   if (TokenStringLen == 0)
-  {
     GenStartAsciiString();
-    printf2("\"");
-  }
 
-  if (ch >= 0x20 && ch <= 0x7E)
+  // quote ASCII chars for better readability
+  if (ch >= 0x20 && ch <= 0x7E && ch != '"')
   {
-    if (ch == '"' || ch == '\\')
-      printf2("\\");
+    if (!quot)
+    {
+      quot = 1;
+      if (TokenStringLen)
+        printf2(",");
+      printf2("\"");
+    }
     printf2("%c", ch);
   }
   else
   {
-    printf2("\\%03o", ch);
+    if (quot)
+    {
+      quot = 0;
+      printf2("\"");
+    }
+    if (TokenStringLen)
+      printf2(",");
+    printf2("%u", ch & 0xFFu);
   }
 }
 
