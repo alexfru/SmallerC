@@ -6,7 +6,8 @@ Currently it generates 16-bit and 32-bit 80386+ assembly code for NASM
 that can then be assembled and linked into DOS, Windows and Linux programs.
 
 Code generation for MIPS CPUs is also supported (primarily for RetroBSD).
-Code generation for TR3200 CPU assembly code for VASM (read about Trillek)
+
+Code generation for the TR3200 CPU and VASM is supported (see Trillek).
 
 The compiler is capable of compiling itself.
 
@@ -24,6 +25,14 @@ http://github.com/alexfru/SmallerC/wiki
 
 Links:
 NASM: http://nasm.us/
-VASM: http://sun.hasenbraten.de/vasm/
 RetroBSD: http://retrobsd.org/
+VASM: http://sun.hasenbraten.de/vasm/
 Trillek: http://trillek.org/
+
+Normative and other useful documents on C:
+C99 + TC1 + TC2 + TC3, WG14 N1256:
+  http://www.open-std.org/jtc1/sc22/wg14/www/docs/n1256.pdf
+Rationale for C99:
+  http://www.open-std.org/jtc1/sc22/wg14/www/docs/C99RationaleV5.10.pdf
+The New C Standard: An Economic and Cultural Commentary:
+  http://www.knosof.co.uk/cbook/cbook.html
