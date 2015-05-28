@@ -393,8 +393,9 @@ void GenExtendRegIfNeeded(int reg, int opSz)
 {
   if (opSz == -1)
   {
-    GenPrintInstr1Operand(Tr32InstrSigxB, 0,
-                          reg, 0);
+    GenPrintInstr2Operands(Tr32InstrSigxB, 0,
+                           reg, 0,
+                           reg, 0);
   }
   else if (opSz == 1)
   {
@@ -405,8 +406,9 @@ void GenExtendRegIfNeeded(int reg, int opSz)
   }
   else if (opSz == -2)
   {
-    GenPrintInstr1Operand(Tr32InstrSigxW, 0,
-                          reg, 0);
+    GenPrintInstr2Operands(Tr32InstrSigxW, 0,
+                           reg, 0,
+                           reg, 0);
   }
   else if (opSz == 2)
   {
@@ -632,11 +634,13 @@ void GenReadIdent(int regDst, int opSz, int label)
                          Tr32OpLabel, label);
 
   if (opSz == -1)
-    GenPrintInstr1Operand(Tr32InstrSigxB, 0,
-                          regDst, 0);
+    GenPrintInstr2Operands(Tr32InstrSigxB, 0,
+                           regDst, 0,
+                           regDst, 0);
   else if (opSz == -2)
-    GenPrintInstr1Operand(Tr32InstrSigxW, 0,
-                          regDst, 0);
+    GenPrintInstr2Operands(Tr32InstrSigxW, 0,
+                           regDst, 0,
+                           regDst, 0);
 }
 
 STATIC
@@ -656,11 +660,13 @@ void GenReadLocal(int regDst, int opSz, int ofs)
                          Tr32OpIndRegBp, ofs);
 
   if (opSz == -1)
-    GenPrintInstr1Operand(Tr32InstrSigxB, 0,
-                          regDst, 0);
+    GenPrintInstr2Operands(Tr32InstrSigxB, 0,
+                           regDst, 0,
+                           regDst, 0);
   else if (opSz == -2)
-    GenPrintInstr1Operand(Tr32InstrSigxW, 0,
-                          regDst, 0);
+    GenPrintInstr2Operands(Tr32InstrSigxW, 0,
+                           regDst, 0,
+                           regDst, 0);
 }
 
 STATIC
@@ -680,11 +686,13 @@ void GenReadIndirect(int regDst, int regSrc, int opSz)
                          regSrc + Tr32OpIndReg0, 0);
 
   if (opSz == -1)
-    GenPrintInstr1Operand(Tr32InstrSigxB, 0,
-                          regDst, 0);
+    GenPrintInstr2Operands(Tr32InstrSigxB, 0,
+                           regDst, 0,
+                           regDst, 0);
   else if (opSz == -2)
-    GenPrintInstr1Operand(Tr32InstrSigxW, 0,
-                          regDst, 0);
+    GenPrintInstr2Operands(Tr32InstrSigxW, 0,
+                           regDst, 0,
+                           regDst, 0);
 }
 
 STATIC
@@ -1698,8 +1706,9 @@ void GenExpr0(void)
       break;
 
     case tokSChar:
-      GenPrintInstr1Operand(Tr32InstrSigxB, 0,
-                            GenWreg, 0);
+      GenPrintInstr2Operands(Tr32InstrSigxB, 0,
+                             GenWreg, 0,
+                             GenWreg, 0);
       break;
     case tokUChar:
       GenPrintInstr3Operands(Tr32InstrAnd, 0,
@@ -1708,8 +1717,9 @@ void GenExpr0(void)
                              Tr32OpConst, 0xFF);
       break;
     case tokShort:
-      GenPrintInstr1Operand(Tr32InstrSigxW, 0,
-                            GenWreg, 0);
+      GenPrintInstr2Operands(Tr32InstrSigxW, 0,
+                             GenWreg, 0,
+                             GenWreg, 0);
       break;
     case tokUShort:
       GenPrintInstr3Operands(Tr32InstrAnd, 0,
