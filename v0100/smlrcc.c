@@ -48,6 +48,10 @@ either expressed or implied, of the FreeBSD Project.
 #endif
 #endif
 
+#ifndef PATH_PREFIX
+#define PATH_PREFIX "/usr/local"
+#endif
+
 #ifndef __SMALLER_C__
 
 #include <limits.h>
@@ -1228,13 +1232,13 @@ void AddSystemPaths(char* argv0)
 
   if (!pinclude)
   {
-    pinclude = SystemFileExists("/usr/local/smlrc/include/", 0, NULL, "limits.h");
+    pinclude = SystemFileExists(PATH_PREFIX "/smlrc/include/", 0, NULL, "limits.h");
     if (pinclude)
       *strrchr(pinclude, '/') = '\0';
   }
 
   if (LinkStdLib && !StdLib)
-    StdLib = SystemFileExists("/usr/local/smlrc/lib/", 0, NULL, LibName[OutputFormat]);
+    StdLib = SystemFileExists(PATH_PREFIX "/smlrc/lib/", 0, NULL, LibName[OutputFormat]);
   // fallthrough to endsearch:
 #else
   epath = exepath(argv0);
