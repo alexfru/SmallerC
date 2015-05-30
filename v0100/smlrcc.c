@@ -1031,9 +1031,9 @@ void Archive(void)
 
 #ifndef HOST_LINUX
 // Returns the path to the executable in forms like these (not an exhaustive list):
-// - "c:\\path\\"
+// - "c:\\path"
 // - "c:"
-// - ".\\"
+// - "."
 char* exepath(char* argv0)
 {
   char* name = argv0;
@@ -1063,12 +1063,12 @@ char* exepath(char* argv0)
 
   // If there's no slash, it could be "c:file"
   if (!pslash && ((*name >= 'A' && *name <= 'Z') || (*name >= 'a' && *name <= 'z')) && name[1] == ':')
-    pslash = name + 1;
+    pslash = name + 2 /* keep an extra char to retain the colon */;
 
   // If there's a slash or a colon, we're done
   if (pslash)
   {
-    len = pslash + 1/*retain the slash or the colon*/ - name;
+    len = pslash - name;
     p = Malloc(len + 1/*NUL*/);
     memcpy(p, name, len);
     p[len] = '\0';
@@ -1104,8 +1104,8 @@ char* exepath(char* argv0)
     fclose(f);
     if (name != argv0)
       free(name);
-    p = Malloc(sizeof ".\\"); // strangely, "./" may not always work
-    strcpy(p, ".\\");
+    p = Malloc(sizeof ".");
+    strcpy(p, ".");
     return p;
   }
 
@@ -1142,7 +1142,7 @@ char* exepath(char* argv0)
       free(paths);
       if (name != argv0)
         free(name);
-      p[plen] = '\0';
+      p[--plen] = '\0';
       return p;
     }
 
@@ -1191,67 +1191,40 @@ void AddSystemPaths(char* argv0)
   if (LinkStdLib && StdLibPath)
     StdLib = SystemFileExists(StdLibPath, '/', NULL, LibName[OutputFormat]);
 
-  epath = getenv("SMLRC");
-  if (epath)
-  {
-    if (!pinclude)
-    {
-      pinclude = SystemFileExists(epath, '/', "include/", "limits.h");
-      if (pinclude)
-        *strrchr(pinclude, '/') = '\0';
-    }
-
-    if (LinkStdLib && !StdLib)
-      StdLib = SystemFileExists(epath, '/', "lib/", LibName[OutputFormat]);
-
-    if (pinclude && (StdLib || !LinkStdLib))
-      goto endsearch;
-  }
-
+  for (int n = 0;; n++) {
+    switch (n) {
+    case 0:
+      epath = getenv("SMLRC");
+      break;
 #ifdef HOST_LINUX
-  epath = getenv("HOME");
-  if (epath)
-  {
+    case 1:
+      epath = getenv("HOME");
+      break;
+    case 2:
+      epath = "/usr/local";
+      break;
+#else
+    case 1:
+      epath = exepath(argv0);
+      break;
+#endif
+    default:
+      goto endsearch;
+    }
+    if (!epath)
+      continue;
     if (!pinclude)
     {
       pinclude = SystemFileExists(epath, '/', "smlrc/include/", "limits.h");
       if (pinclude)
         *strrchr(pinclude, '/') = '\0';
     }
-
     if (LinkStdLib && !StdLib)
       StdLib = SystemFileExists(epath, '/', "smlrc/lib/", LibName[OutputFormat]);
 
     if (pinclude && (StdLib || !LinkStdLib))
       goto endsearch;
   }
-
-  if (!pinclude)
-  {
-    pinclude = SystemFileExists("/usr/local/smlrc/include/", 0, NULL, "limits.h");
-    if (pinclude)
-      *strrchr(pinclude, '/') = '\0';
-  }
-
-  if (LinkStdLib && !StdLib)
-    StdLib = SystemFileExists("/usr/local/smlrc/lib/", 0, NULL, LibName[OutputFormat]);
-  // fallthrough to endsearch:
-#else
-  epath = exepath(argv0);
-  if (epath)
-  {
-    if (!pinclude)
-    {
-      pinclude = SystemFileExists(epath, 0, "../include/", "limits.h");
-      if (pinclude)
-        *strrchr(pinclude, '/') = '\0';
-    }
-
-    if (LinkStdLib && !StdLib)
-      StdLib = SystemFileExists(epath, 0, "../lib/", LibName[OutputFormat]);
-  }
-  // fallthrough to endsearch:
-#endif
 
 endsearch:
 
