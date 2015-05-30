@@ -48,6 +48,10 @@ either expressed or implied, of the FreeBSD Project.
 #endif
 #endif
 
+#ifndef PATH_PREFIX
+#define PATH_PREFIX "/usr/local"
+#endif
+
 #ifndef __SMALLER_C__
 
 #include <limits.h>
@@ -1201,7 +1205,7 @@ void AddSystemPaths(char* argv0)
       epath = getenv("HOME");
       break;
     case 2:
-      epath = "/usr/local";
+      epath = PATH_PREFIX;
       break;
 #else
     case 1:
