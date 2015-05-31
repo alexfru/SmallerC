@@ -23,6 +23,9 @@ The standard C library is work-in-progress and it's close to completion.
 See the Wiki for more up-to-date details:
 http://github.com/alexfru/SmallerC/wiki
 
+For the lack of a better place, you can discuss Smaller C here:
+https://hackaday.io/project/5569-smaller-c
+
 Links:
 NASM: http://nasm.us/
 RetroBSD: http://retrobsd.org/
