@@ -4,9 +4,9 @@ libdir = $(prefix)/smlrc/lib
 incdir = $(prefix)/smlrc/include
 
 CFLAGS = -pipe -Wall -O2
-CFLAGS += -DHOST_LINUX
+CFLAGS += -DHOST_LINUX -DPATH_PREFIX='"$(prefix)"'
 
-CC = gcc
+CC = gcc -std=c99
 
 bins = smlrc smlrl smlrcc
 libs = lcdh.a lcds.a lcw.a lcl.a
