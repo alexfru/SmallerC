@@ -1389,43 +1389,50 @@ void Relocate(tElfMeta* pMeta, tElfSection* pRelSect, Elf32_Rel* pRel, unsigned 
   tElfSection* pSymSect = &pMeta->pSections[pRelSect->h.sh_link];
   Elf32_Sym* pSym = NULL;
   const char* name = NULL;
-  uint32 symAddr;
+  uint32 symAddr = 0;
 
-  if (symIdx >= pSymSect->h.sh_info)
+  if (symIdx == 0)
   {
-    // it's a global symbol
-    pSym = &pSymSect->d.pSym[symIdx - pSymSect->h.sh_info + pSymSect->h.sh_addralign];
+    // it's an absolute symbol
   }
   else
   {
-    // it's a local section symbol
-    uint32 i;
-    for (i = 0; i < pSymSect->h.sh_addralign; i++)
-      if (pSymSect->d.pSym[i].st_value == symIdx)
-      {
-        pSym = &pSymSect->d.pSym[i];
-        break;
-      }
-  }
+    if (symIdx >= pSymSect->h.sh_info)
+    {
+      // it's a global symbol
+      pSym = &pSymSect->d.pSym[symIdx - pSymSect->h.sh_info + pSymSect->h.sh_addralign];
+    }
+    else
+    {
+      // it's a local section symbol
+      uint32 i;
+      for (i = 0; i < pSymSect->h.sh_addralign; i++)
+        if (pSymSect->d.pSym[i].st_value == symIdx)
+        {
+          pSym = &pSymSect->d.pSym[i];
+          break;
+        }
+    }
 
-  if (pSym->st_name)
-    name = pMeta->pSections[pSymSect->h.sh_link].d.pStr + pSym->st_name;
-  else if ((pSym->st_info & 0xF) == STT_SECTION && pSym->st_shndx)
-    name = pMeta->pSectNames + pMeta->pSections[pSym->st_shndx].h.sh_name;
+    if (pSym->st_name)
+      name = pMeta->pSections[pSymSect->h.sh_link].d.pStr + pSym->st_name;
+    else if ((pSym->st_info & 0xF) == STT_SECTION && pSym->st_shndx)
+      name = pMeta->pSectNames + pMeta->pSections[pSym->st_shndx].h.sh_name;
 
-  if ((pSym->st_info & 0xF) == STT_SECTION)
-  {
-    symAddr = pMeta->pSections[pSym->st_shndx].OutOffset;
+    if ((pSym->st_info & 0xF) == STT_SECTION)
+    {
+      symAddr = pMeta->pSections[pSym->st_shndx].OutOffset;
+    }
+    else if ((pSym->st_info >> 4) == STB_GLOBAL && name)
+    {
+      symAddr = FindSymbolAddress(name);
+    }
+    else
+      error("Unsupported relocation symbol type\n");
   }
-  else if ((pSym->st_info >> 4) == STB_GLOBAL && name)
-  {
-    symAddr = FindSymbolAddress(name);
-  }
-  else
-    error("Unsupported relocation symbol type\n");
 
   if (verbose)
-    printf("%08lX  %3lu  %08lX  %s\n", (ulong)fileOff, (ulong)relType, (ulong)symAddr, name);
+    printf("%08lX  %3lu  %08lX  %s\n", (ulong)fileOff, (ulong)relType, (ulong)symAddr, name ? name : "*ABS*");
 
   if (relType == R_386_32 || relType == R_386_PC32)
   {
