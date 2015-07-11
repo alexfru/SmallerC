@@ -159,6 +159,17 @@ int fprintf(FILE*, char*, ...);
 int vprintf(char*, void*);
 //int vfprintf(FILE*, char*, va_list);
 int vfprintf(FILE*, char*, void*);
+struct fpos_t_
+{
+  union
+  {
+    unsigned short halves[2]; // for 16-bit memory models without 32-bit longs
+    int align; // for alignment on machine word boundary
+  } u;
+}; // keep in sync with stdio.h !!!
+#define fpos_t struct fpos_t_
+int fgetpos(FILE*, fpos_t*);
+int fsetpos(FILE*, fpos_t*);
 
 #endif // #ifndef __SMALLER_C__
 
@@ -405,8 +416,6 @@ void GenJumpIfEqual(int val, int Label);
 
 STATIC
 void GenFxnProlog(void);
-STATIC
-void GenFxnProlog2(void);
 STATIC
 void GenFxnEpilog(void);
 void GenIsrProlog(void);
@@ -4726,31 +4735,24 @@ void DetermineVaListType(void)
 #endif // DETERMINE_VA_LIST
 #endif // __SMALLER_C__
 
-// Equivalent to puts() but outputs to OutFile
-// if it's not NULL.
+// Equivalent to puts() but outputs to OutFile.
 STATIC
 int puts2(char* s)
 {
   int res;
-  if (OutFile)
+  if (!OutFile)
+    return 0;
+  // Turbo C++ 1.01's fputs() returns EOF if s is empty, which is wrong.
+  // Hence the workaround.
+  if (*s == '\0' || (res = fputs(s, OutFile)) >= 0)
   {
-    // Turbo C++ 1.01's fputs() returns EOF if s is empty, which is wrong.
-    // Hence the workaround.
-    if (*s == '\0' || (res = fputs(s, OutFile)) >= 0)
-    {
-      // unlike puts(), fputs() doesn't append '\n', append it manually
-      res = fputc('\n', OutFile);
-    }
-  }
-  else
-  {
-    res = puts(s);
+    // unlike puts(), fputs() doesn't append '\n', append it manually
+    res = fputc('\n', OutFile);
   }
   return res;
 }
 
-// Equivalent to printf() but outputs to OutFile
-// if it's not NULL.
+// Equivalent to printf() but outputs to OutFile.
 STATIC
 int printf2(char* format, ...)
 {
@@ -4763,31 +4765,24 @@ int printf2(char* format, ...)
   void* vl = &format + 1;
 #endif
 
+  if (!OutFile)
+    return 0;
 #ifndef __SMALLER_C__
-  if (OutFile)
-    res = vfprintf(OutFile, format, vl);
-  else
-    res = vprintf(format, vl);
+  res = vfprintf(OutFile, format, vl);
 #else
   // TBD!!! This is not good. Really need the va_something macros.
 #ifdef DETERMINE_VA_LIST
   if (VaListType == 2)
   {
     // va_list is a one-element array containing a pointer
-    if (OutFile)
-      res = vfprintf(OutFile, format, &vl);
-    else
-      res = vprintf(format, &vl);
+    res = vfprintf(OutFile, format, &vl);
   }
   else // if (VaListType == 1)
   // fallthrough
 #endif // DETERMINE_VA_LIST
   {
     // va_list is a pointer
-    if (OutFile)
-      res = vfprintf(OutFile, format, vl);
-    else
-      res = vprintf(format, vl);
+    res = vfprintf(OutFile, format, vl);
   }
 #endif // __SMALLER_C__
 
@@ -4881,7 +4876,7 @@ void warning(char* format, ...)
 
   warnCnt++;
 
-  if (!(warnings && OutFile))
+  if (!warnings)
     return;
 
   printf("Warning in \"%s\" (%d:%d)\n", FileNames[fidx], LineNo, LinePos);
@@ -6928,7 +6923,6 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
         // local variables to the symbol table and parse the body.
         int undoSymbolsPtr = SyntaxStackCnt;
         int undoIdents = IdentTableLen;
-        int locAllocLabel = (LabelCnt += 2) - 2;
         int i;
         int Main;
 
@@ -6941,7 +6935,7 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
 
         gotoLabCnt = 0;
 
-        if (verbose && OutFile)
+        if (verbose)
           printf("%s()\n", CurFxnName);
 
         ParseLevel++;
@@ -6959,7 +6953,6 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
         puts2(CurHeaderFooter[0]);
 
         GenLabel(CurFxnName, Static);
-        CurFxnEpilogLabel = LabelCnt++;
 
 #ifndef MIPS
 #ifdef CAN_COMPILE_32BIT
@@ -6969,9 +6962,7 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
 #endif
 #endif
         GenFxnProlog();
-
-        GenJumpUncond(locAllocLabel + 1);
-        GenNumLabel(locAllocLabel);
+        CurFxnEpilogLabel = LabelCnt++;
 
         AddFxnParamSymbols(lastSyntaxPtr);
 
@@ -7012,10 +7003,6 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
 #endif
 #endif
         GenFxnEpilog();
-
-        GenNumLabel(locAllocLabel + 1);
-        GenFxnProlog2();
-        GenJumpUncond(locAllocLabel);
 
         puts2(CurHeaderFooter[1]);
         CurHeaderFooter = NULL;
@@ -8223,6 +8210,8 @@ int main(int argc, char** argv)
 
   if (!FileCnt)
     error("Input file not specified\n");
+  if (!OutFile)
+    error("Output file not specified\n");
 
   GenInitFinalize();
 
@@ -8272,7 +8261,7 @@ int main(int argc, char** argv)
 
   GenStartCommentLine(); printf2("Next label number: %d\n", LabelCnt);
 
-  if (warnings && warnCnt && OutFile)
+  if (warnings && warnCnt)
     printf("%d warnings\n", warnCnt);
   GenStartCommentLine(); printf2("Compilation succeeded.\n");
 

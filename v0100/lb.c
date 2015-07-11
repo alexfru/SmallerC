@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2013-2014, Alexey Frunze
+Copyright (c) 2013-2015, Alexey Frunze
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -748,6 +748,22 @@ int WriteFile(unsigned Handle,
       "push dword [ebp+8]\n"
       "call [__imp__WriteFile]");
 }
+
+extern unsigned (*_imp__SetFilePointer)(unsigned Handle,
+                                        int lDistanceToMove,
+                                        int* lpDistanceToMoveHigh,
+                                        unsigned dwMoveMethod);
+unsigned SetFilePointer(unsigned Handle,
+                        int lDistanceToMove,
+                        int* lpDistanceToMoveHigh,
+                        unsigned dwMoveMethod)
+{
+  asm("push dword [ebp+20]\n"
+      "push dword [ebp+16]\n"
+      "push dword [ebp+12]\n"
+      "push dword [ebp+8]\n"
+      "call [__imp__SetFilePointer]");
+}
 #endif // _WIN32
 
 #ifdef _RETROBSD
@@ -1053,6 +1069,67 @@ int OsWrite(int fd, void* p, unsigned s)
 #endif
 #endif
 }
+
+#ifndef __SMALLER_C_16__
+long OsLseek(int fd, long ofs, int whence)
+{
+#ifdef _RETROBSD
+  long pos;
+  asm volatile ("move $4, %1\n"
+                "move $5, %2\n"
+                "move $6, %3\n"
+                "syscall 19\n" // SYS_lseek
+                "nop\n"
+                "nop\n"
+                "move %0, $2\n"
+                : "=r" (pos)
+                : "r" (fd), "r" (ofs), "r" (whence)
+                : "$2", "$4", "$5", "$6");
+  return pos;
+#else
+#ifdef _LINUX
+  asm("mov eax, 19\n" // sys_lseek
+      "mov ebx, [ebp + 8]\n"
+      "mov ecx, [ebp + 12]\n"
+      "mov edx, [ebp + 16]\n"
+      "int 0x80");
+#else
+#ifdef _WIN32
+  return SetFilePointer(fd, ofs, 0, whence);
+#else
+  asm("mov ah, 0x42\n"
+      "mov bx, [bp + 8]\n"
+      "mov dx, [bp + 12]\n"
+      "mov cx, [bp + 12 + 2]\n"
+      "mov al, [bp + 16]\n"
+      "int 0x21");
+  asm("sbb ebx, ebx\n"
+      "and eax, 0xffff\n"
+      "shl edx, 16\n"
+      "or  eax, edx\n"
+      "or  eax, ebx");
+#endif
+#endif
+#endif
+}
+#else
+int OsLseek16(int fd, unsigned short ofs[2], int whence)
+{
+  asm("mov ah, 0x42\n"
+      "mov bx, [bp + 4]\n"
+      "mov si, [bp + 6]");
+  asm("mov dx, [si]\n"
+      "mov cx, [si + 2]\n"
+      "mov al, [bp + 8]\n"
+      "int 0x21");
+  asm("sbb bx, bx\n"
+      "or  ax, bx\n"
+      "or  dx, bx\n"
+      "mov [si], ax\n"
+      "mov [si + 2], dx\n"
+      "mov ax, bx");
+}
+#endif
 
 #ifdef _DOS
 unsigned DosGetPspSeg(void)
@@ -1396,4 +1473,81 @@ int fclose(FILE* stream)
   __FileHandles__[i] = 0;
   --__FileCnt__;
   return OsClose(fd);
+}
+
+struct fpos_t_
+{
+  union
+  {
+    unsigned short halves[2]; // for 16-bit memory models without 32-bit longs
+    int align; // for alignment on machine word boundary
+  } u;
+}; // keep in sync with stdio.h !!!
+#define fpos_t struct fpos_t_
+
+// Note, these fgetpos() and fsetpos() are implemented for write-only files
+
+int fgetpos(FILE* stream, fpos_t* pos)
+{
+  unsigned i = (unsigned)stream, fd;
+
+  fd = __FileHandles__[--i];
+
+#ifndef __SMALLER_C_16__
+{
+  long p;
+  if ((p = OsLseek(fd, 0, 1/*SEEK_CUR*/)) < 0)
+    return -1;
+
+  p += __FileBufPos__[i];
+  pos->u.align = p;
+}
+#else
+{
+  unsigned short p[2];
+  p[0] = p[1] = 0;
+  if (OsLseek16(fd, p, 1/*SEEK_CUR*/) < 0)
+    return -1;
+  p[1] += __FileBufPos__[i] > 0xFFFF - p[0];
+  p[0] += __FileBufPos__[i];
+  pos->u.halves[0] = p[0];
+  pos->u.halves[1] = p[1];
+}
+#endif
+  return 0;
+}
+
+int fsetpos(FILE* stream, fpos_t* pos)
+{
+  unsigned i = (unsigned)stream, fd;
+  unsigned sz;
+
+  fd = __FileHandles__[--i];
+
+  // flush
+  sz = __FileBufPos__[i];
+  if (sz)
+  {
+    if ((unsigned)OsWrite(fd, __FileBufs__[i], sz) != sz)
+      return -1;
+  }
+
+  // seek
+#ifndef __SMALLER_C_16__
+{
+  long p = pos->u.align;
+  if ((p = OsLseek(fd, p, 0/*SEEK_SET*/)) < 0)
+    return -1;
+}
+#else
+{
+  if (OsLseek16(fd, pos->u.halves, 0/*SEEK_SET*/) < 0)
+    return -1;
+}
+#endif
+
+  __FileBufDirty__[i] = 0;
+  __FileBufSize__[i] = __FileBufPos__[i] = 0;
+
+  return 0;
 }

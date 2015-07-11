@@ -171,6 +171,7 @@ Kernel32Hints:
                         dd hint_CloseHandle - ImageBase
                         dd hint_ReadFile - ImageBase
                         dd hint_WriteFile - ImageBase
+                        dd hint_SetFilePointer - ImageBase
                         dd 0
 
 Kernel32IatStart:
@@ -181,6 +182,7 @@ __imp__CreateFileA      dd hint_CreateFileA - ImageBase
 __imp__CloseHandle      dd hint_CloseHandle - ImageBase
 __imp__ReadFile         dd hint_ReadFile - ImageBase
 __imp__WriteFile        dd hint_WriteFile - ImageBase
+__imp__SetFilePointer   dd hint_SetFilePointer - ImageBase
                         dd 0
 
 hint_ExitProcess        db 0, 0, "ExitProcess", 0
@@ -190,6 +192,7 @@ hint_CreateFileA        db 0, 0, "CreateFileA", 0
 hint_CloseHandle        db 0, 0, "CloseHandle", 0
 hint_ReadFile           db 0, 0, "ReadFile", 0
 hint_WriteFile          db 0, 0, "WriteFile", 0
+hint_SetFilePointer     db 0, 0, "SetFilePointer", 0
 
 Kernel32name            db "kernel32.dll", 0
 

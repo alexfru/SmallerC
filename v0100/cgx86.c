@@ -791,6 +791,50 @@ void GenJumpIfNotZero(int label)
                         X86OpNumLabel, label);
 }
 
+fpos_t GenPrologPos;
+
+STATIC
+void GenWriteFrameSize(void)
+{
+  unsigned size = -CurFxnMinLocalOfs;
+  int pfx = size ? ' ' : ';';
+#ifdef CAN_COMPILE_32BIT
+  if (SizeOfWord == 4 &&
+      OutputFormat != FormatSegHuge &&
+      WindowsStack)
+  {
+    int pfx = (size >= 4096) ? ' ' : ';';
+    // When targeting Windows, call equivalent of _chkstk() to
+    // correctly grow the stack page by page by probing it
+    if (!WinChkStkLabel)
+      WinChkStkLabel = -LabelCnt++; // reserve a label for _chkstk() and mark unused
+    if (WinChkStkLabel < 0 && pfx == ' ')
+      WinChkStkLabel = -WinChkStkLabel; // _chkstk() has been used at least once
+
+    printf2("\t%cmov\teax, %10u\n", pfx, size); // 10 chars are enough for 32-bit unsigned ints
+    printf2("\t%ccall\t", pfx);
+    GenPrintNumLabel((WinChkStkLabel < 0) ? -WinChkStkLabel : WinChkStkLabel);
+    puts2("");
+  }
+#endif
+  if (SizeOfWord == 2)
+    printf2("\t%csub\tsp, %10u\n", pfx, size); // 10 chars are enough for 32-bit unsigned ints
+#ifdef CAN_COMPILE_32BIT
+  else
+    printf2("\t%csub\tesp, %10u\n", pfx, size); // 10 chars are enough for 32-bit unsigned ints
+#endif
+}
+
+STATIC
+void GenUpdateFrameSize(void)
+{
+  fpos_t pos;
+  fgetpos(OutFile, &pos);
+  fsetpos(OutFile, &GenPrologPos);
+  GenWriteFrameSize();
+  fsetpos(OutFile, &pos);
+}
+
 STATIC
 void GenFxnProlog(void)
 {
@@ -799,6 +843,8 @@ void GenFxnProlog(void)
   GenPrintInstr2Operands(X86InstrMov, 0,
                          X86OpRegBpWord, 0,
                          X86OpRegSpWord, 0);
+  fgetpos(OutFile, &GenPrologPos);
+  GenWriteFrameSize();
 }
 
 STATIC
@@ -806,39 +852,15 @@ void GenGrowStack(int size)
 {
   if (!size)
     return;
-#ifdef CAN_COMPILE_32BIT
-  if (SizeOfWord == 4 &&
-      OutputFormat != FormatSegHuge &&
-      WindowsStack &&
-      size >= 4096)
-  {
-    // When targeting Windows, call equivalent of _chkstk() to
-    // correctly grow the stack page by page by probing it
-    if (!WinChkStkLabel)
-      WinChkStkLabel = LabelCnt++;
-
-    GenPrintInstr2Operands(X86InstrMov, 0,
-                           X86OpRegAWord, 0,
-                           X86OpConst, size);
-    printf2("\tcall\t");
-    GenPrintNumLabel(WinChkStkLabel); // TBD??? use dedicated instr/op fxn???
-    puts2("");
-  }
-#endif
   GenPrintInstr2Operands(X86InstrSub, 0,
                          X86OpRegSpWord, 0,
                          X86OpConst, size);
 }
 
 STATIC
-void GenFxnProlog2(void)
-{
-  GenGrowStack(-CurFxnMinLocalOfs);
-}
-
-STATIC
 void GenFxnEpilog(void)
 {
+  GenUpdateFrameSize();
   GenPrintInstrNoOperand(X86InstrLeave);
   GenPrintInstrNoOperand(X86InstrRet);
 }
@@ -899,10 +921,13 @@ void GenIsrProlog(void)
 
   puts2("\tpush\tebp\n"
         "\tmov\tebp, esp");
+  fgetpos(OutFile, &GenPrologPos);
+  GenWriteFrameSize();
 }
 
 void GenIsrEpilog(void)
 {
+  GenUpdateFrameSize();
   puts2("\tdb\t0x66\n\tleave");
 
   puts2("\tpop\teax"); // fake return address
@@ -3171,6 +3196,7 @@ void GenFin(void)
     puts2(CodeHeaderFooter[0]);
 
     GenNumLabel(StructCpyLabel);
+    CurFxnMinLocalOfs = 0;
     GenFxnProlog();
 
     if (SizeOfWord == 2)
@@ -3248,6 +3274,7 @@ void GenFin(void)
     puts2(CodeHeaderFooter[0]);
 
     GenNumLabel(StructPushLabel);
+    CurFxnMinLocalOfs = 0;
     GenFxnProlog();
 
     if (SizeOfWord == 2)
@@ -3336,7 +3363,7 @@ void GenFin(void)
 #endif
 
 #ifdef CAN_COMPILE_32BIT
-  if (WinChkStkLabel)
+  if (WinChkStkLabel > 0) // if _chkstk() has been used at least once
   {
     // When targeting Windows, simulate _chkstk() to
     // correctly grow the stack page by page by probing it

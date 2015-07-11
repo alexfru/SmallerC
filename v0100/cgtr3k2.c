@@ -483,9 +483,17 @@ void GenSaveRestoreRegs(int save)
     rstart = Tr32OpRegFlags, rstop = Tr32OpReg0, rinc = -1;
 
   for (r = rstart; r != rstop; r += rinc)
-    if (mask & (1 << r))
-      GenPrintInstr1Operand(save ? Tr32InstrPush : Tr32InstrPop, 0,
-                            r, 0);
+  {
+    int used = (mask & (1 << r)) != 0;
+    if (save || used)
+    {
+      int pfx = used ? ' ' : ';';
+      printf2(save ? "\t%cpush\t" : "\t%cpop\t", pfx);
+      GenPrintOperand(r, 0);
+      GenPrintNewLine();
+    }
+  }
+  GenRegsUsed = mask; // undo changes in GenRegsUsed by GenPrintOperand()
 }
 
 void GenIsrProlog(void)
@@ -496,6 +504,27 @@ void GenIsrProlog(void)
 void GenIsrEpilog(void)
 {
   // TBD???
+}
+
+fpos_t GenPrologPos;
+
+STATIC
+void GenWriteFrameSize(void)
+{
+  unsigned size = -CurFxnMinLocalOfs;
+  int pfx = size ? ' ' : ';';
+  printf2("\t%csub\t%%sp, %%sp, %10u\n", pfx, size); // 10 chars are enough for 32-bit unsigned ints
+  GenSaveRestoreRegs(1);
+}
+
+STATIC
+void GenUpdateFrameSize(void)
+{
+  fpos_t pos;
+  fgetpos(OutFile, &pos);
+  fsetpos(OutFile, &GenPrologPos);
+  GenWriteFrameSize();
+  fsetpos(OutFile, &pos);
 }
 
 STATIC
@@ -509,6 +538,9 @@ void GenFxnProlog(void)
   GenPrintInstr2Operands(Tr32InstrMov, 0,
                          Tr32OpRegBp, 0,
                          Tr32OpRegSp, 0);
+
+  fgetpos(OutFile, &GenPrologPos);
+  GenWriteFrameSize();
 }
 
 STATIC
@@ -523,15 +555,10 @@ void GenGrowStack(int size)
 }
 
 STATIC
-void GenFxnProlog2(void)
-{
-  GenGrowStack(-CurFxnMinLocalOfs);
-  GenSaveRestoreRegs(1);
-}
-
-STATIC
 void GenFxnEpilog(void)
 {
+  GenUpdateFrameSize();
+
   GenSaveRestoreRegs(0);
 
   GenPrintInstr2Operands(Tr32InstrMov, 0,

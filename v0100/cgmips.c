@@ -519,6 +519,26 @@ void GenJumpIfNotZero(int label)
                          MipsOpNumLabel, label);
 }
 
+fpos_t GenPrologPos;
+
+STATIC
+void GenWriteFrameSize(void)
+{
+  unsigned size = -CurFxnMinLocalOfs;
+  int pfx = size ? ' ' : '#';
+  printf2("\t%csubu\t$29, $29, %10u\n", pfx, size); // 10 chars are enough for 32-bit unsigned ints
+}
+
+STATIC
+void GenUpdateFrameSize(void)
+{
+  fpos_t pos;
+  fgetpos(OutFile, &pos);
+  fsetpos(OutFile, &GenPrologPos);
+  GenWriteFrameSize();
+  fsetpos(OutFile, &pos);
+}
+
 STATIC
 void GenFxnProlog(void)
 {
@@ -549,6 +569,9 @@ void GenFxnProlog(void)
                              MipsOpRegA0 + i, 0,
                              MipsOpIndRegFp, 8 + 4 * i);
   }
+
+  fgetpos(OutFile, &GenPrologPos);
+  GenWriteFrameSize();
 }
 
 STATIC
@@ -563,14 +586,10 @@ void GenGrowStack(int size)
 }
 
 STATIC
-void GenFxnProlog2(void)
-{
-  GenGrowStack(-CurFxnMinLocalOfs);
-}
-
-STATIC
 void GenFxnEpilog(void)
 {
+  GenUpdateFrameSize();
+
   GenPrintInstr2Operands(MipsInstrMov, 0,
                          MipsOpRegSp, 0,
                          MipsOpRegFp, 0);
