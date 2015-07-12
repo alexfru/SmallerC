@@ -801,7 +801,7 @@ int OsCreateOrTruncate(char* name)
 #ifdef _LINUX
   asm("mov eax, 5\n" // sys_open
       "mov ebx, [ebp + 8]\n"
-      "mov ecx, 0x641\n" // truncate if exists, else create, writing only
+      "mov ecx, 0x241\n" // truncate if exists, else create, writing only
       "mov edx, 664o\n" // rw-rw-r--
       "int 0x80\n"
       "mov ebx, eax\n"
