@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014, Alexey Frunze
+Copyright (c) 2014-2015, Alexey Frunze
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -145,10 +145,11 @@ char* OutName;
 #define FormatDosComTiny  1
 #define FormatDosExeSmall 2
 #define FormatDosExeHuge  3
-#define FormatFlat16      4
-#define FormatFlat32      5
-#define FormatWinPe32     6
-#define FormatElf32       7
+#define FormatAoutDpmi    4
+#define FormatFlat16      5
+#define FormatFlat32      6
+#define FormatWinPe32     7
+#define FormatElf32       8
 int OutputFormat = 0;
 
 const char* LibName[] =
@@ -157,6 +158,7 @@ const char* LibName[] =
   "lcds.a", // FormatDosComTiny
   "lcds.a", // FormatDosExeSmall
   "lcdh.a", // FormatDosExeHuge
+  "lcdp.a", // FormatAoutDpmi
   NULL,     // FormatFlat16
   NULL,     // FormatFlat32
   "lcw.a",  // FormatWinPe32
@@ -175,6 +177,10 @@ int CompileToAsm = 0;
 int LinkStdLib = 0;
 char* StdLibPath;
 char* StdLib;
+
+int GotStub = 0;
+char* StubName = "dpstub.exe";
+char* Stub;
 
 int DoArchive = 0;
 
@@ -901,6 +907,12 @@ void Link(void)
   if (StdLib)
     AddOption(&LinkerOptions, &LinkerOptionsLen, StdLib);
 
+  if (Stub)
+  {
+    AddOption(&LinkerOptions, &LinkerOptionsLen, "-stub");
+    AddOption(&LinkerOptions, &LinkerOptionsLen, Stub);
+  }
+
   if (OutName)
   {
     AddOption(&LinkerOptions, &LinkerOptionsLen, "-o");
@@ -1189,11 +1201,16 @@ void AddSystemPaths(char* argv0)
 {
   char* epath;
   char* pinclude = NULL;
+  int stubNeeded = !GotStub && LinkStdLib && OutputFormat == FormatAoutDpmi;
 
   (void)argv0;
 
   if (LinkStdLib && StdLibPath)
+  {
     StdLib = SystemFileExists(StdLibPath, '/', NULL, LibName[OutputFormat]);
+    if (StdLib && stubNeeded && !Stub)
+      Stub = SystemFileExists(StdLibPath, '/', NULL, StubName);
+  }
 
   epath = getenv("SMLRC");
   if (epath)
@@ -1206,7 +1223,11 @@ void AddSystemPaths(char* argv0)
     }
 
     if (LinkStdLib && !StdLib)
+    {
       StdLib = SystemFileExists(epath, '/', "lib/", LibName[OutputFormat]);
+      if (StdLib && stubNeeded && !Stub)
+        Stub = SystemFileExists(epath, '/', "lib/", StubName);
+    }
 
     if (pinclude && (StdLib || !LinkStdLib))
       goto endsearch;
@@ -1224,7 +1245,11 @@ void AddSystemPaths(char* argv0)
     }
 
     if (LinkStdLib && !StdLib)
+    {
       StdLib = SystemFileExists(epath, '/', "smlrc/lib/", LibName[OutputFormat]);
+      if (StdLib && stubNeeded && !Stub)
+        Stub = SystemFileExists(epath, '/', "smlrc/lib/", StubName);
+    }
 
     if (pinclude && (StdLib || !LinkStdLib))
       goto endsearch;
@@ -1238,7 +1263,11 @@ void AddSystemPaths(char* argv0)
   }
 
   if (LinkStdLib && !StdLib)
+  {
     StdLib = SystemFileExists(PATH_PREFIX "/smlrc/lib/", 0, NULL, LibName[OutputFormat]);
+    if (StdLib && stubNeeded && !Stub)
+      Stub = SystemFileExists(PATH_PREFIX "/smlrc/lib/", 0, NULL, StubName);
+  }
   // fallthrough to endsearch:
 #else
   epath = exepath(argv0);
@@ -1252,7 +1281,11 @@ void AddSystemPaths(char* argv0)
     }
 
     if (LinkStdLib && !StdLib)
+    {
       StdLib = SystemFileExists(epath, 0, "../lib/", LibName[OutputFormat]);
+      if (StdLib && stubNeeded && !Stub)
+        Stub = SystemFileExists(epath, 0, "../lib/", StubName);
+    }
   }
   // fallthrough to endsearch:
 #endif
@@ -1355,10 +1388,13 @@ int main(int argc, char* argv[])
     else if (!strcmp(argv[i], "-map") ||
              !strcmp(argv[i], "-entry") ||
              !strcmp(argv[i], "-origin") ||
-             !strcmp(argv[i], "-stack"))
+             !strcmp(argv[i], "-stack") ||
+             !strcmp(argv[i], "-stub"))
     {
       if (i + 1 < argc)
       {
+        if (!strcmp(argv[i], "-stub"))
+          GotStub = 1;
         AddOption(&LinkerOptions, &LinkerOptionsLen, argv[i]);
         argv[i++] = NULL;
         AddOption(&LinkerOptions, &LinkerOptionsLen, argv[i]);
@@ -1438,6 +1474,25 @@ int main(int argc, char* argv[])
       AddOption(&CompilerOptions, &CompilerOptionsLen, "-huge");
       DefineMacro("_DOS");
       AddOption(&LinkerOptions, &LinkerOptionsLen, "-huge");
+      LinkStdLib = 1;
+      argv[i] = NULL;
+      continue;
+    }
+    else if (!strcmp(argv[i], "-aout"))
+    {
+      OutputFormat = FormatAoutDpmi;
+      AddOption(&CompilerOptions, &CompilerOptionsLen, "-seg32");
+      AddOption(&LinkerOptions, &LinkerOptionsLen, argv[i]);
+      argv[i] = NULL;
+      continue;
+    }
+    else if (!strcmp(argv[i], "-dosp"))
+    {
+      OutputFormat = FormatAoutDpmi;
+      AddOption(&CompilerOptions, &CompilerOptionsLen, "-seg32");
+      DefineMacro("_DOS");
+      DefineMacro("_DPMI");
+      AddOption(&LinkerOptions, &LinkerOptionsLen, "-aout");
       LinkStdLib = 1;
       argv[i] = NULL;
       continue;
@@ -1613,6 +1668,9 @@ int main(int argc, char* argv[])
     case FormatWinPe32:
       OutName = "aout.exe";
       break;
+    case FormatAoutDpmi:
+      OutName = LinkStdLib ? "aout.exe" : "a.out";
+      break;
     case FormatElf32:
       OutName = "a.out";
       break;
@@ -1649,6 +1707,9 @@ int main(int argc, char* argv[])
     case FormatDosExeHuge:
       DefineMacro("__SMALLER_C_32__");
       DefineMacro("__HUGE__");
+      break;
+    case FormatAoutDpmi:
+      DefineMacro("__SMALLER_C_32__");
       break;
     case FormatWinPe32:
       DefineMacro("__SMALLER_C_32__");

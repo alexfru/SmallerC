@@ -373,6 +373,43 @@ C_ASSERT(sizeof(tPeImageImportDescriptor) == 20);
 
 typedef struct
 {
+  uint32 magic; // machine ID and magic
+#define OMAGIC 0x107
+//#define NMAGIC 0x108
+//#define ZMAGIC 0x10B
+//#define QMAGIC 0x0CC
+  uint32 text;
+  uint32 data;
+  uint32 bss;
+  uint32 syms;
+  uint32 entry;
+  uint32 trsize;
+  uint32 drsize;
+} tAout;
+
+typedef struct
+{
+  uint32 address;
+  uint32 info; // bit field:
+  //  0-23 symbolnum
+#define N_UNDF 0
+#define N_ABS  2
+#define N_TEXT 4
+#define N_DATA 6
+#define N_BSS  8
+  // 24-24 pcrel
+  // 25-26 length: 0 for 8-bit relocations, 1 for 16-bit rel's, 2 for 32-bit rel's
+  // 27-27 extern
+  // 28-31 nothing
+} tAoutRel;
+
+#ifndef __SMALLER_C__
+C_ASSERT(sizeof(tAout) == 32);
+C_ASSERT(sizeof(tAoutRel) == 8);
+#endif
+
+typedef struct
+{
   char name[16];
   char date[12];
   char uid[6];
@@ -444,6 +481,8 @@ const char* MapName;
 
 const char* EntryPoint = "__start";
 
+const char* StubName;
+
 #define FormatDosComTiny  1
 #define FormatDosExeSmall 2
 #define FormatDosExeHuge  3
@@ -451,6 +490,7 @@ const char* EntryPoint = "__start";
 #define FormatFlat32      5
 #define FormatWinPe32     6
 #define FormatElf32       7
+#define FormatAout        8
 int OutputFormat = 0;
 int UseBss = 1;
 
@@ -1678,6 +1718,18 @@ Elf32_Phdr ElfProgramHeaders[2] =
   }
 };
 
+tAout AoutHeader =
+{
+  OMAGIC | 0x640000/*80386*/, // magic
+  0, // text
+  0, // data
+  0, // bss
+  0, // syms
+  0, // entry
+  0, // trsize
+  0  // drsize
+};
+
 void Pass(int pass, FILE* fout, uint32 hdrsz)
 {
   uint32 startOfs = Origin;
@@ -1863,6 +1915,7 @@ void Pass(int pass, FILE* fout, uint32 hdrsz)
       break;
     case FormatWinPe32:
     case FormatElf32:
+    case FormatAout:
       if (!isDataSection &&
           (j + 1 == SectCnt ||
            !(pSectDescrs[j + 1].Attrs & SHF_EXECINSTR))) // last code section or last code section before first data section
@@ -1972,6 +2025,160 @@ void RwFlat(void)
   Fclose(fout);
 }
 
+void RwAout(void)
+{
+  int hasData = !(pSectDescrs[SectCnt - 1].Attrs & SHF_EXECINSTR); // non-executable/data sections, if any, are last
+  FILE* fout = Fopen(OutName, "wb+");
+  uint32 start, stop;
+  uint32 hdrsz = sizeof AoutHeader;
+  uint32 j, fIdx, sectIdx, relSectIdx, relIdx;
+
+  Origin = 0;
+
+  // Copy the DPMI stub
+  if (StubName)
+  {
+    static unsigned char buf[FBUF_SIZE]; // must be larger than tDosExeHeader
+    tDosExeHeader h;
+    static uint32 stubInfo[16];
+    FILE* fin = Fopen(StubName, "rb");
+    uint32 sz;
+    uint32 header = 0, i = 0;
+    while ((sz = fread(buf, 1, sizeof buf, fin)) != 0)
+    {
+      Fwrite(buf, sz, fout);
+      hdrsz += sz;
+      if (i == 0 && sz >= sizeof h)
+      {
+        // Preserve the EXE header for simple validation
+        memcpy(&h, buf, sizeof h);
+        header = 1;
+      }
+      i++;
+    }
+    Fclose(fin);
+    if (header)
+    {
+      // The header must contain the correct size of the stub file.
+      // The stub will use the size from the header to locate the extra info and the a.out portion.
+      uint32 sz = ((uint32)h.PageCnt - (h.PartPage != 0)) * 512 + h.PartPage;
+      if (h.Signature[0] != 'M' || h.Signature[1] != 'Z' ||
+          sizeof AoutHeader + sz != hdrsz)
+        header = 0;
+    }
+    if (!header)
+      error("Invalid stub\n");
+    // Add extra info for the stub to use
+    stubInfo[0] = 0x21245044; // magic number ("DP$!")
+    if (StackSize == 0xFFFFFFFF)
+      StackSize = 65536; // default stack size if unspecified
+    StackSize = (StackSize + 0xFFF) & 0xFFFFF000;
+    stubInfo[1] = StackSize;
+    Fwrite(stubInfo, sizeof stubInfo, fout);
+    hdrsz += sizeof stubInfo;
+  }
+
+  // TBD??? insert a jump to the entry point at the beginning to ensure no function is at address/offset 0(NULL)
+
+  Pass(0, NULL, hdrsz);
+
+  AoutHeader.entry = FindSymbolAddress(EntryPoint);
+  start = pSectDescrs[SectCnt].Start & 0xFFFFF000;
+  stop = (pSectDescrs[SectCnt].Stop + 0xFFF) & 0xFFFFF000;
+  AoutHeader.text = stop - start;
+  if (hasData)
+  {
+    start = pSectDescrs[SectCnt + 1].Start & 0xFFFFF000;
+    stop = (pSectDescrs[SectCnt + 1].Stop + 0xFFF) & 0xFFFFF000;
+    AoutHeader.data = stop - start;
+    if ((pSectDescrs[SectCnt - 1].Attrs & SHT_NOBITS) && UseBss)
+    {
+      uint32 i = SectCnt - 1;
+      uint32 datasz = 0;
+      while (pSectDescrs[i].Attrs & SHT_NOBITS)
+        i--;
+      if ((pSectDescrs[i].Attrs & SHF_EXECINSTR) == 0)
+        datasz = ((pSectDescrs[i].Stop + 0xFFF) & 0xFFFFF000) - start;
+      AoutHeader.bss = AoutHeader.data - datasz;
+      AoutHeader.data = datasz;
+    }
+  }
+  Fwrite(&AoutHeader, sizeof AoutHeader, fout);
+
+  Pass(1, fout, hdrsz);
+
+  // Write relocation table
+
+  // Handle individual sections
+  for (j = 0; j < SectCnt; j++)
+  {
+    int isDataSection = !(pSectDescrs[j].Attrs & SHF_EXECINSTR);
+
+    for (fIdx = 0; fIdx < ObjFileCnt; fIdx++)
+    {
+      tElfMeta* pMeta = &pMetas[fIdx];
+      if (!pMeta->Needed)
+        continue;
+      for (sectIdx = 0; sectIdx < pMeta->SectionCnt; sectIdx++)
+      {
+        tElfSection* pSect = &pMeta->pSections[sectIdx];
+        tElfSection* pRelSect = NULL;
+        if (pSect->h.sh_type != SHT_PROGBITS)
+          continue;
+        if (strcmp(pSectDescrs[j].pName, pMeta->pSectNames + pSect->h.sh_name))
+          continue;
+        // Find relocations for this section, if any
+        for (relSectIdx = 0; relSectIdx < pMeta->SectionCnt; relSectIdx++)
+        {
+          if (pMeta->pSections[relSectIdx].h.sh_type == SHT_REL &&
+              pMeta->pSections[relSectIdx].h.sh_info == sectIdx)
+          {
+            pRelSect = &pMeta->pSections[relSectIdx];
+            break;
+          }
+        }
+        if (!pRelSect)
+          continue;
+
+        // Write relocation records
+        for (relIdx = 0; relIdx < pRelSect->h.sh_entsize; relIdx++)
+        {
+          Elf32_Rel* pRel = &pRelSect->d.pRel[relIdx];
+          uint32 symIdx = pRel->r_info >> 8;
+          uint32 absSym = symIdx == 0;
+          uint32 relType = pRel->r_info & 0xFFu;
+          uint32 relative = relType == R_386_PC16 || relType == R_386_PC32;
+          uint32 length = (relType == R_386_32 || relType == R_386_PC32) * 2 +
+                          (relType == R_386_16 || relType == R_386_PC16);
+          tAoutRel aoutRel;
+
+          if (absSym != relative)
+            continue;
+
+          aoutRel.address = pRel->r_offset + pMeta->pSections[pRelSect->h.sh_info].OutOffset -
+            pSectDescrs[SectCnt + isDataSection].Start;
+          aoutRel.info = (relative << 24) | (length << 25);
+          // TBD??? use N_TEXT, N_DATA and N_BSS instead of N_UNDF
+          aoutRel.info |= absSym ? N_ABS : N_UNDF;
+
+          Fwrite(&aoutRel, sizeof aoutRel, fout);
+
+          AoutHeader.trsize += !isDataSection;
+          AoutHeader.drsize += isDataSection;
+        }
+      } // endof: for (sectIdx = 0; sectIdx < pMeta->SectionCnt; sectIdx++)
+    } // endof: for (fIdx = 0; fIdx < ObjFileCnt; fIdx++)
+  } // endof: for (j = 0; j < SectCnt; j++)
+
+  // update AoutHeader
+  AoutHeader.trsize *= sizeof(tAoutRel);
+  AoutHeader.drsize *= sizeof(tAoutRel);
+  Fseek(fout, hdrsz - sizeof AoutHeader, SEEK_SET);
+  Fwrite(&AoutHeader, sizeof AoutHeader, fout);
+
+  Fclose(fout);
+}
+
 void RwDosExe(void)
 {
   int hasData = !(pSectDescrs[SectCnt - 1].Attrs & SHF_EXECINSTR); // non-executable/data sections, if any, are last
@@ -2031,12 +2238,12 @@ void RwDosExe(void)
         if (!(pSectDescrs[i].Attrs & SHF_EXECINSTR))
         {
           fsz += pSectDescrs[i].Stop; // + non-bss data size (includes "NULL")
-          dsz -= pSectDescrs[i].Stop;
+          dsz = pSectDescrs[i].Stop;
         }
         else
         {
           fsz += 4; // account for "NULL" at the beginning of the data/stack segment
-          dsz -= 4;
+          dsz = 4;
         }
       }
       else
@@ -2281,6 +2488,9 @@ void RelocateAndWriteAllSections(void)
   case FormatFlat16:
   case FormatFlat32:
     RwFlat();
+    break;
+  case FormatAout:
+    RwAout();
     break;
   case FormatDosExeSmall:
   case FormatDosExeHuge:
@@ -2624,6 +2834,19 @@ int main(int argc, char* argv[])
       {
         OutputFormat = FormatFlat32;
         continue;
+      }
+      else if (!strcmp(argv[i], "-aout"))
+      {
+        OutputFormat = FormatAout;
+        continue;
+      }
+      else if (!strcmp(argv[i], "-stub"))
+      {
+        if (i + 1 < argc)
+        {
+          StubName = argv[++i];
+          continue;
+        }
       }
       else if (argv[i][0] == '-')
       {
