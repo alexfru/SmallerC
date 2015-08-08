@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014, Alexey Frunze
+  Copyright (c) 2014-2015, Alexey Frunze
   2-clause BSD license.
 */
 #include <unistd.h>
@@ -26,6 +26,7 @@ int DosQueryDevFileFlags(int handle, unsigned* flagsOrError)
       "mov [si], bx");
 }
 #endif
+
 #ifdef __HUGE__
 static
 int DosQueryDevFileFlags(int handle, unsigned* flagsOrError)
@@ -49,6 +50,27 @@ int DosQueryDevFileFlags(int handle, unsigned* flagsOrError)
       "mov [si], ebx");
 }
 #endif
+
+#ifdef _DPMI
+static
+int DosQueryDevFileFlags(int handle, unsigned* flagsOrError)
+{
+  asm("mov ax, 0x4400\n"
+      "mov bx, [ebp + 8]\n"
+      "int 0x21");
+  asm("movzx ebx, ax\n"
+      "cmc\n"
+      "sbb ax, ax");
+  asm("and dx, ax\n"
+      "mov cx, ax\n"
+      "not cx\n"
+      "and bx, cx\n"
+      "or  bx, dx");
+  asm("and eax, 1\n"
+      "mov esi, [ebp + 12]\n"
+      "mov [esi], ebx");
+}
+#endif // _DPMI
 
 int isatty(int fd)
 {

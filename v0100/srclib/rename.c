@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014, Alexey Frunze
+  Copyright (c) 2014-2015, Alexey Frunze
   2-clause BSD license.
 */
 #ifdef _DOS
@@ -46,6 +46,33 @@ int DosRename(char* old, char* new, unsigned* error)
       "mov [si], bx");
 }
 #endif // __SMALLER_C_16__
+
+#ifdef _DPMI
+#include <string.h>
+#include "idpmi.h"
+static
+int DosRename(char* old, char* new, unsigned* error)
+{
+  __dpmi_int_regs regs;
+  unsigned lold = strlen(old) + 1;
+  char* pnew = (char*)__dpmi_iobuf + lold;
+  memcpy(__dpmi_iobuf, old, lold);
+  strcpy(pnew, new);
+  memset(&regs, 0, sizeof regs);
+  regs.eax = 0x5600;
+  regs.edx = (unsigned)__dpmi_iobuf & 0xF;
+  regs.ds = (unsigned)__dpmi_iobuf >> 4;
+  regs.edi = (unsigned)pnew & 0xF;
+  regs.es = (unsigned)pnew >> 4;
+  if (__dpmi_int(0x21, &regs))
+  {
+    *error = -1;
+    return 0;
+  }
+  *error = regs.eax & 0xFFFF;
+  return (regs.flags & 1) ^ 1; // carry
+}
+#endif // _DPMI
 
 int rename(char* old, char* new)
 {

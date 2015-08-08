@@ -1,10 +1,10 @@
 /*
-  Copyright (c) 2014, Alexey Frunze
+  Copyright (c) 2014-2015, Alexey Frunze
   2-clause BSD license.
 */
 #ifdef _DOS
-#ifdef __HUGE__
 
+#ifdef __HUGE__
 static
 unsigned DosMemAlloc(unsigned paras)
 {
@@ -24,8 +24,28 @@ void* malloc(unsigned size)
 
   return (void*)(DosMemAlloc((size + 15) >> 4) << 4);
 }
-
 #endif // __HUGE__
+
+#ifdef _DPMI
+#include "idpmi.h"
+// TBD!!! proper DPMI memory manager
+void* malloc(unsigned size)
+{
+  void* p;
+  unsigned id;
+  if (!size || size + 2*sizeof(unsigned) < size)
+    return 0;
+  size += 2*sizeof(unsigned);
+  if ((p = __dpmi_alloc(size, &id)) != 0)
+  {
+    *(unsigned*)p = id;
+    *((unsigned*)p + 1) = size;
+    p = (unsigned*)p + 2;
+  }
+  return p;
+}
+#endif // _DPMI
+
 #endif // _DOS
 
 
@@ -80,6 +100,7 @@ void* __sbrk(int increment)
 #endif // _LINUX
 
 
+#ifndef _DPMI
 #ifndef __HUGE__
 #ifndef _WINDOWS
 
@@ -283,6 +304,7 @@ void* malloc(unsigned size)
 
 #endif // !_WINDOWS
 #endif // !__HUGE__
+#endif // !_DPMI
 
 #ifdef _WINDOWS
 

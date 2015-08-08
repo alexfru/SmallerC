@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014, Alexey Frunze
+  Copyright (c) 2014-2015, Alexey Frunze
   2-clause BSD license.
 */
 #include <unistd.h>
@@ -50,6 +50,27 @@ int __DosSeek(int handle, unsigned short offset[2], int whence)
       "mov [si + 2], dx"); // else offset[] will be replaced with new position
 }
 #endif // __SMALLER_C_16__
+
+#ifdef _DPMI
+static
+int __DosSeek(int handle, unsigned short offset[2], int whence)
+{
+  asm("mov ah, 0x42\n"
+      "mov bx, [ebp + 8]\n"
+      "mov esi, [ebp + 12]");
+  asm("mov dx, [esi]\n"
+      "mov cx, [esi + 2]\n"
+      "mov al, [ebp + 16]\n"
+      "int 0x21");
+  asm("mov bx, ax\n"
+      "cmc\n"
+      "sbb ax, ax\n"
+      "and dx, ax\n"
+      "and eax, 1");
+  asm("mov [esi], bx\n" // offset[0] will have error code on failure
+      "mov [esi + 2], dx"); // else offset[] will be replaced with new position
+}
+#endif // _DPMI
 
 int __lseek(int fd, fpos_t* offset, int whence)
 {

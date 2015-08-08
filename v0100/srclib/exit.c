@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014, Alexey Frunze
+  Copyright (c) 2014-2015, Alexey Frunze
   2-clause BSD license.
 */
 #include "istdio.h"
@@ -27,6 +27,16 @@ void DosTerminate(int e)
   asm("mov ah, 0x4c\n"
       "mov al, [bp + 4]\n"
       "int 0x21");
+}
+#endif
+#ifdef _DPMI
+#include "idpmi.h"
+static
+void DosTerminate(int e)
+{
+  // Exit using the initial 16-bit code and data selectors and free the 32-bit ones,
+  // so they aren't leaked
+  __dpmi_terminate(e);
 }
 #endif
 
@@ -66,11 +76,13 @@ void __ExitInner(int iterator, int flushclose, int status)
   }
 
 #ifdef _DOS
+#ifndef _DPMI
   __DosSetVect(0, __Int00DE);
 //  __DosSetVect(1, __Int01DB);
 //  __DosSetVect(3, __Int03BP);
   __DosSetVect(4, __Int04OF);
   __DosSetVect(6, __Int06UD);
+#endif
 
   DosTerminate(status);
 #endif // _DOS

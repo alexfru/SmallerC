@@ -29,6 +29,7 @@ __start:
         mov     ds, ax
         mov     [ds_seg], ax
         mov     [psp_seg], es
+        mov     [cs_seg], cs
 
         ; find %PATH% and argv[0]
         mov     es, [es:0x2c]   ; es = environment segment
@@ -198,6 +199,7 @@ got_dpmi32:
         mov     ax, 0x501
         int     0x31
         jc      err_nodpmimem
+
         and     ecx, 0xffff
         shl     ebx, 16
         or      ecx, ebx
@@ -236,8 +238,16 @@ got_dpmi32:
 
         ; jump to the entry point
 
-        mov     ebx, [image_base]
         mov     cx, [data32_sel]
+        mov     es, cx
+
+        movzx   ebx, word [cs_seg]
+        shl     ebx, 4
+        add     ebx, ds_sel
+        mov     [es:ebx], ds ; store ds in [cs:ds_sel] for exit
+        mov     [exit_sp], sp ; store sp for exit
+
+        mov     ebx, [image_base]
 
         mov     eax, [aout_header_text]
         add     eax, [aout_header_data]
@@ -259,8 +269,17 @@ got_dpmi32:
         lea     eax, [edx + argv0] ; pass argv[0]
         push    eax
 
+        movzx   eax, word [env_seg] ; pass environment location
+        shl     eax, 4
+        push    eax
+
         movzx   eax, word [psp_seg] ; pass PSP location
         shl     eax, 4
+        push    eax
+
+        mov     ax, cs
+        shl     eax, 16
+        mov     ax, exit ; pass exit address
         push    eax
 
         push    eax ; dummy return address, as if this is a call
@@ -272,7 +291,6 @@ got_dpmi32:
         push    eax
 
         mov     ds, cx
-        mov     es, cx
 
         db 0x66
         retf
@@ -531,6 +549,29 @@ zero_regs:
         pop     es
         ret
 
+exit:
+        ; 32-bit code should jump here to terminate instead of invoking
+        ; fxn 0x4c of int 0x21, we'll free the 32-bit code and data
+        ; selectors/descriptors allocated earlier to reduce LDT descriptor
+        ; leaks, which are possible under Windows and some (0.9?) DPMI hosts
+        cli
+        mov     cx, [cs:ds_sel]
+        mov     ds, cx
+        mov     es, cx
+        mov     ss, cx
+        movzx   esp, word [exit_sp]
+        push    ax ; save status
+        mov     bx, [data32_sel]
+        mov     ax, 1
+        int     0x31
+        mov     bx, [code32_sel]
+        mov     ax, 1
+        int     0x31
+        pop     ax
+        mov     ah, 0x4c
+        int     0x21
+ds_sel  dw      0x9090
+
 err_nodpmi32:
         mov     dx, msg_nodpmi32
         jmp     error
@@ -657,10 +698,13 @@ align 16
 
 section .bss ; Note, we aren't zeroing .bss!
 
+cs_seg      resw 1
 ds_seg      resw 1
 psp_seg     resw 1
 env_seg     resw 1
 path_ofs    resw 1
+
+exit_sp     resw 1
 
 argv0       resb 81 ; shared with 32-bit code
 

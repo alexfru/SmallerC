@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014, Alexey Frunze
+  Copyright (c) 2014-2015, Alexey Frunze
   2-clause BSD license.
 */
 #include <fcntl.h>
@@ -50,6 +50,31 @@ int DosExtOpen(char* name, int mode, int attr, int action, unsigned* handleOrErr
       "mov [si], bx");
 }
 #endif // __SMALLER_C_16__
+
+#ifdef _DPMI
+#include <string.h>
+#include "idpmi.h"
+static
+int DosExtOpen(char* name, int mode, int attr, int action, unsigned* handleOrError)
+{
+  __dpmi_int_regs regs;
+  strcpy(__dpmi_iobuf, name);
+  memset(&regs, 0, sizeof regs);
+  regs.eax = 0x6c00;
+  regs.ebx = mode;
+  regs.ecx = attr;
+  regs.edx = action;
+  regs.esi = (unsigned)__dpmi_iobuf & 0xF;
+  regs.ds = (unsigned)__dpmi_iobuf >> 4;
+  if (__dpmi_int(0x21, &regs))
+  {
+    *handleOrError = -1;
+    return 0;
+  }
+  *handleOrError = regs.eax & 0xFFFF;
+  return (regs.flags & 1) ^ 1; // carry
+}
+#endif // _DPMI
 
 int open(char* name, int oflag, ...)
 {

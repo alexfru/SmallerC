@@ -41,7 +41,7 @@ unsigned esp(void)
   return &a;
 }
 
-void _start(void* psp, char* argv0, void* stubInfo, void* fbuf)
+void _start(unsigned long exitAddr, void* psp, void* env, char* argv0, void* stubInfo, void* fbuf)
 {
   char* args = (char*)psp + 0x80;
   int argsLen = *args++;
@@ -66,6 +66,9 @@ void _start(void* psp, char* argv0, void* stubInfo, void* fbuf)
 
   prints("PSP at: ");
     printh(psp); printeol();
+
+  prints("Environment at: ");
+    printh(env); printeol();
 
   for (i = 0; i < 48*1024; i++) *((char*)fbuf + i) = 0;
   prints("48KB I/O buffer for DOS at: ");

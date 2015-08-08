@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014, Alexey Frunze
+  Copyright (c) 2014-2015, Alexey Frunze
   2-clause BSD license.
 */
 #include "istdio.h"
@@ -55,6 +55,28 @@ int DosQueryAttr(char* name, unsigned* attrOrError)
       "mov [si], bx");
 }
 #endif // __SMALLER_C_16__
+
+#ifdef _DPMI
+#include <string.h>
+#include "idpmi.h"
+static
+int DosQueryAttr(char* name, unsigned* attrOrError)
+{
+  __dpmi_int_regs regs;
+  strcpy(__dpmi_iobuf, name);
+  memset(&regs, 0, sizeof regs);
+  regs.eax = 0x4300;
+  regs.edx = (unsigned)__dpmi_iobuf & 0xF;
+  regs.ds = (unsigned)__dpmi_iobuf >> 4;
+  if (__dpmi_int(0x21, &regs))
+  {
+    *attrOrError = -1;
+    return 0;
+  }
+  *attrOrError = ((regs.flags & 1) ? regs.eax : regs.ecx) & 0xFFFF;
+  return (regs.flags & 1) ^ 1; // carry
+}
+#endif // _DPMI
 
 #endif // _DOS
 

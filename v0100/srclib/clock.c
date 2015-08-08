@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014, Alexey Frunze
+  Copyright (c) 2014-2015, Alexey Frunze
   2-clause BSD license.
 */
 #include <time.h>
@@ -18,7 +18,21 @@ unsigned long helper(void)
       "inc ecx\n"
       "div ecx");
 }
+#endif // __HUGE__
 
+#ifdef _DPMI
+static
+unsigned long helper(void)
+{
+  asm("mov eax, [0x46c]\n"
+      "mov ecx, 90\n"
+      "mul ecx\n"
+      "inc ecx\n"
+      "div ecx");
+}
+#endif // _DPMI
+
+#ifdef __SMALLER_C_32__
 clock_t clock(void)
 {
   static unsigned initialized, initticks;

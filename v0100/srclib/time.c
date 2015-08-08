@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014, Alexey Frunze
+  Copyright (c) 2014-2015, Alexey Frunze
   2-clause BSD license.
 */
 #include <string.h>
@@ -42,7 +42,40 @@ void DosGetTime(unsigned short t[3/*[0]-hour,[1]-minutes,[2]-seconds*/])
       "mov [si+4], dh\n"
       "mov [si+5], al");
 }
+#endif // __HUGE__
 
+#ifdef _DPMI
+static
+void DosGetDate(unsigned short d[3/*[0]-year,[1]-month,[2]-day*/])
+{
+  asm("mov ah, 0x2a\n"
+      "int 0x21\n"
+      "mov esi, [ebp + 8]\n"
+      "xor al, al\n"
+      "mov [esi], cx\n"
+      "mov [esi+2], dh\n"
+      "mov [esi+3], al\n"
+      "mov [esi+4], dl\n"
+      "mov [esi+5], al");
+}
+
+static
+void DosGetTime(unsigned short t[3/*[0]-hour,[1]-minutes,[2]-seconds*/])
+{
+  asm("mov ah, 0x2c\n"
+      "int 0x21\n"
+      "mov esi, [ebp + 8]\n"
+      "xor al, al\n"
+      "mov [esi], ch\n"
+      "mov [esi+1], al\n"
+      "mov [esi+2], cl\n"
+      "mov [esi+3], al\n"
+      "mov [esi+4], dh\n"
+      "mov [esi+5], al");
+}
+#endif // _DPMI
+
+#ifdef __SMALLER_C_32__
 // time() must return UTC/GMT time
 time_t time(time_t* t)
 {
@@ -75,7 +108,7 @@ time_t time(time_t* t)
     *t = res;
   return res;
 }
-#endif // __HUGE__
+#endif
 
 #endif // _DOS
 

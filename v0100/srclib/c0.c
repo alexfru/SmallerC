@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014, Alexey Frunze
+  Copyright (c) 2014-2015, Alexey Frunze
   2-clause BSD license.
 */
 extern int main(int argc, char** argv);
@@ -261,6 +261,7 @@ unsigned DosGetPspSeg(void)
 static char line[80/*executable name*/ + 128/*parameters*/];
 static char* argvs[1/*executable name*/ + 128/2/*parameters*/ + 1/*NULL*/] = { "" };
 
+#ifndef _DPMI
 static
 int setargs(int* pargc, char*** pargv)
 {
@@ -316,6 +317,30 @@ unsigned short __Int00DE[2];
 //unsigned short __Int03BP[2];
 unsigned short __Int04OF[2];
 unsigned short __Int06UD[2];
+#endif
+
+#ifdef _DPMI
+#include <string.h>
+#include <stdlib.h>
+#include "idpmi.h"
+#include "istdio.h"
+
+static
+int setargs(int* pargc, char*** pargv, void* psp, char* argv0)
+{
+  unsigned char* p = (unsigned char*)psp + 0x80;
+  unsigned len = *p++;
+  // First, store the full program name.
+  argvs[0] = argv0;
+  // Next, copy program arguments from the PSP.
+  memcpy(line, p, len);
+  line[len] = '\0';
+  // Finally, parse them
+  *pargc = 1 + __ArgParser__(line, line, argvs + 1);
+  *pargv = argvs;
+  return 1;
+}
+#endif
 
 #ifdef __HUGE__
 void __interrupt __ExcIsr(void)
@@ -333,6 +358,7 @@ void __interrupt __CtrlCIsr(void)
 }
 #endif
 
+#ifndef _DPMI
 void __start__(void)
 {
   int argc;
@@ -385,6 +411,29 @@ extern unsigned short __getCS(void);
 
   exit(main(argc, argv));
 }
+#endif
+
+#ifdef _DPMI
+void _start(unsigned long exitAddr, void* psp, void* env, char* argv0, void* stubInfo, void* fbuf)
+{
+  int argc;
+  char** argv;
+
+  __dpmi_exit_addr = exitAddr;
+  __dpmi_psp = psp;
+  __dpmi_env = env;
+  __dpmi_stubInfo = stubInfo;
+  __dpmi_iobuf = fbuf;
+
+  // Set argc and argv
+  setargs(&argc, &argv, psp, argv0);
+
+  // Start counting ticks now
+  clock();
+
+  exit(main(argc, argv));
+}
+#endif
 
 #endif // _DOS
 

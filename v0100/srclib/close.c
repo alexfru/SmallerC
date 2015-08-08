@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014, Alexey Frunze
+  Copyright (c) 2014-2015, Alexey Frunze
   2-clause BSD license.
 */
 #include <unistd.h>
@@ -40,6 +40,23 @@ int DosClose(int handle, unsigned* error)
       "mov [si], bx");
 }
 #endif // __SMALLER_C_16__
+
+#ifdef _DPMI
+static
+int DosClose(int handle, unsigned* error)
+{
+  asm("mov ah, 0x3e\n"
+      "mov ebx, [ebp + 8]\n"
+      "int 0x21");
+  asm("mov ebx, eax\n"
+      "cmc\n"
+      "sbb eax, eax\n"
+      "and eax, 1\n"
+      "mov esi, [ebp + 12]\n"
+      "and ebx, 0xffff\n"
+      "mov [esi], ebx");
+}
+#endif // _DPMI
 
 int close(int fd)
 {

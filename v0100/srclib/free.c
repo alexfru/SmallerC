@@ -1,10 +1,10 @@
 /*
-  Copyright (c) 2014, Alexey Frunze
+  Copyright (c) 2014-2015, Alexey Frunze
   2-clause BSD license.
 */
 #ifdef _DOS
-#ifdef __HUGE__
 
+#ifdef __HUGE__
 static
 void DosMemFree(unsigned seg)
 {
@@ -17,10 +17,24 @@ void free(void* ptr)
 {
   DosMemFree((unsigned)ptr >> 4);
 }
-
 #endif // __HUGE__
+
+#ifdef _DPMI
+#include "idpmi.h"
+// TBD!!! proper DPMI memory manager
+void free(void* ptr)
+{
+  if (ptr)
+  {
+    unsigned id = *((unsigned*)ptr - 2);
+    __dpmi_free(id);
+  }
+}
+#endif // _DPMI
+
 #endif // _DOS
 
+#ifndef _DPMI
 #ifndef __HUGE__
 #ifndef _WINDOWS
 
@@ -62,6 +76,7 @@ void free(void* ptr)
 
 #endif // !_WINDOWS
 #endif // !__HUGE__
+#endif // !_DPMI
 
 #ifdef _WINDOWS
 

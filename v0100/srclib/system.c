@@ -143,6 +143,147 @@ unsigned DosGetExitCode(void)
 }
 #endif // __SMALLER_C_16__
 
+#ifdef _DPMI
+#include <string.h>
+#include "idpmi.h"
+
+static
+unsigned cs(void)
+{
+  asm("xor eax, eax\n"
+      "mov ax, cs");
+}
+
+static
+int DpmiGetLdtDescr(int sel, unsigned long descr[2])
+{
+  asm("mov ebx, [ebp + 8]\n"
+      "mov edi, [ebp + 12]\n"
+      "mov ax, 0xb\n"
+      "int 0x31\n"
+      "sbb eax, eax");
+}
+
+static
+int DpmiFreeLdtDescr(int sel)
+{
+  asm("mov ebx, [ebp + 8]\n"
+      "mov ax, 1\n"
+      "int 0x31\n"
+      "sbb eax, eax");
+}
+
+static
+int DosExec(char* comspec, char* params, unsigned* error)
+{
+  unsigned short* penvsel = (unsigned short*)((char*)__dpmi_psp + 0x2c);
+  unsigned short envsel = *penvsel;
+  unsigned plen = strlen(params);
+  struct fcb fcbinit = { 0, "        ", "   " }; // Don't know FCBs, don't care
+
+  struct fcb* pfcb1 = (struct fcb*)__dpmi_iobuf;
+  struct fcb* pfcb2 = pfcb1 + 1;
+  struct execparams* peparams = (struct execparams*)(pfcb2 + 1);
+  char* pparams = (char*)(peparams + 1);
+  char* pcomspec = pparams + plen;
+
+  __dpmi_int_regs regs;
+  int e;
+
+  *pfcb2 = *pfcb1 = fcbinit;
+  peparams->EnvSeg = 0;
+  peparams->ParamsOfs = (unsigned)pparams & 0xF;
+  peparams->ParamsSeg = (unsigned)pparams >> 4;
+  peparams->Fcb1Ofs = (unsigned)pfcb1 & 0xF;
+  peparams->Fcb1Seg = (unsigned)pfcb1 >> 4;
+  peparams->Fcb2Ofs = (unsigned)pfcb2 & 0xF;
+  peparams->Fcb2Seg = (unsigned)pfcb2 >> 4;
+  strcpy(pparams, params);
+  strcpy(pcomspec, comspec);
+
+  memset(&regs, 0, sizeof regs);
+  regs.eax = 0x4b00;
+  regs.edx = (unsigned)pcomspec & 0xF;
+  regs.ds = (unsigned)pcomspec >> 4;
+  regs.ebx = (unsigned)peparams & 0xF;
+  regs.es = (unsigned)peparams >> 4;
+
+  // Windows XP's NTVDM leaks LDT descriptors of child DPMI processes and eventually
+  // runs out of available ones in the LDT, which limits the number of DPMI child
+  // processes. Here we try to work around this issue by first noting which
+  // descriptors are allocated before starting a new child and then we see again
+  // which are allocated and compare the two sets. If there are any new descriptors,
+  // we free them. We look only at a relatively small number of descriptors in the
+  // vicinity of the descriptor of the current code segment. LDT descriptors tend
+  // to be allocated more or less sequentially.
+#define DESCR_COUNT 64
+  static int first = 1;
+  static unsigned short startsel;
+  static char unused[DESCR_COUNT];
+  unsigned long descr[2];
+  int i, count;
+  unsigned short sel;
+
+  if (first)
+  {
+    startsel = (cs() - (DESCR_COUNT / 2 * 8)) | 7; // 7: ldt, dpl=3
+    sel = startsel;
+    i = 0;
+    count = DESCR_COUNT;
+    while (count--)
+    {
+      unused[i++] = DpmiGetLdtDescr(sel, descr);
+      sel += 8;
+    }
+    first = 0;
+  }
+
+  // DPMI hosts convert the environment segment inside the PSP to a selector
+  // Temporarily change the selector back to the original segment so DOS can
+  // use it to create a copy of the current environment.
+  *penvsel = (unsigned)__dpmi_env >> 4;
+  e = __dpmi_int(0x21, &regs);
+  *penvsel = envsel;
+
+  // Workaround the problem described in DJGPP's __maybe_fix_w2k_ntvdm_bug(),
+  // which prevents execution of child DPMI processes under Windows.
+  // It looks like on Windows XP it's sufficient to simply read the current PSP
+  // using function 0x51 of int 0x21 and NTVDM will update the internal value
+  // of PSP.
+  asm("mov ah, 0x51\n"
+      "int 0x21");
+
+  // Free the leaked descriptors.
+  // TBD??? This probably breaks DPMI TSRs. Can we do anything about it?
+  sel = startsel;
+  i = 0;
+  count = DESCR_COUNT;
+  while (count--)
+  {
+    if (unused[i++] && !DpmiGetLdtDescr(sel, descr))
+      DpmiFreeLdtDescr(sel);
+    sel += 8;
+  }
+
+  if (e)
+  {
+    *error = -1;
+    return 0;
+  }
+
+  *error = regs.eax & 0xFFFF;
+  return (regs.flags & 1) ^ 1; // carry
+}
+
+static
+unsigned DosGetExitCode(void)
+{
+  asm("mov ah, 0x4d\n"
+      "int 0x21\n"
+      "and eax, 0xFFFF");
+}
+#endif // _DPMI
+
 extern char* __strtoklast;
 
 static int helper(char exe[FILENAME_MAX], char** cmd)
@@ -281,9 +422,11 @@ int system(char* cmd)
   char *ev, *comspec, *params = NULL;
   unsigned clen, plen;
   int res = -1;
+#ifndef _DPMI
   struct fcb fcb1 = { 0, "        ", "   " }; // Don't know FCBs, don't care
   struct fcb fcb2 = { 0, "        ", "   " };
   struct execparams eparams;
+#endif
   unsigned error;
   char exe[FILENAME_MAX];
   char* cmdparams;
@@ -311,7 +454,6 @@ int system(char* cmd)
   // If the command ends in .COM or .EXE, we'll execute this command/executable directly
   // (as opposed to using "COMMAND.COM /C command") in order to be able to get its exit code
   // and not the exit code of the command processor (which is typically 0 in DOS).
-
   cmdparams = cmd;
   if (helper(exe, &cmdparams))
   {
@@ -369,6 +511,7 @@ int system(char* cmd)
   if (comspec == exe && *exe == '.' && exe[1] == '/')
     exe[1] = '\\';
 
+#ifndef _DPMI
   eparams.EnvSeg = 0; // create and use a copy of the current environment
 #ifdef __SMALLER_C_16__
   eparams.ParamsOfs = params;
@@ -386,14 +529,22 @@ int system(char* cmd)
   eparams.Fcb2Ofs = (unsigned)&fcb2 & 0xF;
   eparams.Fcb2Seg = (unsigned)&fcb2 >> 4;
 #endif
+#endif
 
   // Flush everything
   fflush(NULL);
 
+#ifndef _DPMI
   if (DosExec(comspec, &eparams, &error))
   {
     res = DosGetExitCode();
   }
+#else
+  if (DosExec(comspec, params, &error))
+  {
+    res = DosGetExitCode();
+  }
+#endif
   else
   {
   }

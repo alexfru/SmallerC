@@ -1,10 +1,11 @@
 /*
-  Copyright (c) 2014, Alexey Frunze
+  Copyright (c) 2014-2015, Alexey Frunze
   2-clause BSD license.
 */
 #include <unistd.h>
 
 #ifdef _DOS
+
 #ifdef __HUGE__
 static
 int DosSeek(int handle, unsigned offset, int whence, unsigned* offsetOrError)
@@ -27,7 +28,30 @@ int DosSeek(int handle, unsigned offset, int whence, unsigned* offsetOrError)
       "mov [si], bx\n"
       "mov [si + 2], dx");
 }
+#endif // __HUGE__
 
+#ifdef _DPMI
+static
+int DosSeek(int handle, unsigned offset, int whence, unsigned* offsetOrError)
+{
+  asm("mov ah, 0x42\n"
+      "mov bx, [ebp + 8]\n"
+      "mov dx, [ebp + 12]\n"
+      "mov cx, [ebp + 12 + 2]\n"
+      "mov al, [ebp + 16]\n"
+      "int 0x21");
+  asm("mov bx, ax\n"
+      "cmc\n"
+      "sbb ax, ax\n"
+      "and dx, ax\n"
+      "and eax, 1");
+  asm("mov esi, [ebp + 20]\n"
+      "mov [esi], bx\n"
+      "mov [esi + 2], dx");
+}
+#endif // _DPMI
+
+#ifdef __SMALLER_C_32__
 off_t lseek(int fd, off_t offset, int whence)
 {
   unsigned offsetOrError;
@@ -35,7 +59,7 @@ off_t lseek(int fd, off_t offset, int whence)
     return offsetOrError;
   return -1;
 }
-#endif // __HUGE__
+#endif
 
 #endif // _DOS
 
