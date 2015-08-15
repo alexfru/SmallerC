@@ -23,6 +23,10 @@ extern void* __dpmi_env;
 // Pointer to the DPMI stub info within dpstub.exe
 extern void* __dpmi_stubInfo;
 
+// Pointers to the start and stop of the heap
+extern void* __dpmi_heap_start;
+extern void* __dpmi_heap_stop;
+
 typedef struct
 {
   unsigned long  edi;
@@ -45,8 +49,6 @@ typedef struct
 } __dpmi_int_regs;
 
 void __dpmi_terminate(int);
-void* __dpmi_alloc(unsigned, unsigned*);
-int __dpmi_free(unsigned);
 int __dpmi_int(int, __dpmi_int_regs*);
 
 #endif

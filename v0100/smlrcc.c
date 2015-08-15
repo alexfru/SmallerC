@@ -1389,12 +1389,23 @@ int main(int argc, char* argv[])
              !strcmp(argv[i], "-entry") ||
              !strcmp(argv[i], "-origin") ||
              !strcmp(argv[i], "-stack") ||
-             !strcmp(argv[i], "-stub"))
+             !strcmp(argv[i], "-minheap") ||
+             !strcmp(argv[i], "-maxheap"))
     {
       if (i + 1 < argc)
       {
-        if (!strcmp(argv[i], "-stub"))
-          GotStub = 1;
+        AddOption(&LinkerOptions, &LinkerOptionsLen, argv[i]);
+        argv[i++] = NULL;
+        AddOption(&LinkerOptions, &LinkerOptionsLen, argv[i]);
+        argv[i] = NULL;
+        continue;
+      }
+    }
+    else if (!strcmp(argv[i], "-stub"))
+    {
+      if (i + 1 < argc)
+      {
+        GotStub = 1;
         AddOption(&LinkerOptions, &LinkerOptionsLen, argv[i]);
         argv[i++] = NULL;
         AddOption(&LinkerOptions, &LinkerOptionsLen, argv[i]);

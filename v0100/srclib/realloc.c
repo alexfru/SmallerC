@@ -61,27 +61,10 @@ void* realloc(void* ptr, unsigned size)
 
 #ifdef _DPMI
 #include "idpmi.h"
-// TBD!!! proper DPMI memory manager
-void* realloc(void* ptr, unsigned size)
-{
-  void* p;
-  unsigned sz;
-  if (!size)
-    return 0;
-  if (!ptr)
-    return malloc(size);
-  if (!(p = malloc(size)))
-    return 0;
-  sz = *((unsigned*)ptr - 1);
-  memcpy(p, ptr, (size < sz) ? size : sz);
-  free(ptr);
-  return p;
-}
 #endif // _DPMI
 
 #endif // _DOS
 
-#ifndef _DPMI
 #ifndef __HUGE__
 #ifndef _WINDOWS
 
@@ -136,7 +119,6 @@ void* realloc(void* ptr, unsigned size)
 
 #endif // !_WINDOWS
 #endif // !__HUGE__
-#endif // !_DPMI
 
 
 #ifdef _WINDOWS

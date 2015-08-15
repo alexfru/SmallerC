@@ -6,6 +6,11 @@
     gencg1.exe >testcg1.c
     smlrcc -dosh testcg1.c -o testcg1.exe
     testcg1.exe
+   OR
+    smlrcc -dosp gencg1.c -o gencg1.exe
+    gencg1.exe >testcg1.c
+    smlrcc -dosp testcg1.c -o testcg1.exe
+    testcg1.exe
 
   How to compile for and use under Windows:
     smlrcc -win gencg1.c -o gencg1.exe

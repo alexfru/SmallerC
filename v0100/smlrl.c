@@ -500,6 +500,9 @@ uint32 Origin = 0xFFFFFFFF; // 0xFFFFFFFF means unspecified
 
 uint32 StackSize = 0xFFFFFFFF; // 0xFFFFFFFF means unspecified
 
+uint32 MinHeap = 0xFFFFFFFF; // 0xFFFFFFFF means unspecified
+uint32 MaxHeap = 0xFFFFFFFF; // 0xFFFFFFFF means unspecified
+
 tDynArr OpenFiles;
 
 uint32 ObjFileCnt;
@@ -2044,6 +2047,7 @@ void RwAout(void)
     FILE* fin = Fopen(StubName, "rb");
     uint32 sz;
     uint32 header = 0, i = 0;
+    memset(&h, 0, sizeof h); // shut gcc up
     while ((sz = fread(buf, 1, sizeof buf, fin)) != 0)
     {
       Fwrite(buf, sz, fout);
@@ -2068,12 +2072,26 @@ void RwAout(void)
     }
     if (!header)
       error("Invalid stub\n");
+
     // Add extra info for the stub to use
     stubInfo[0] = 0x21245044; // magic number ("DP$!")
-    if (StackSize == 0xFFFFFFFF)
+
+    if (StackSize == 0xFFFFFFFF || StackSize == 0)
       StackSize = 65536; // default stack size if unspecified
     StackSize = (StackSize + 0xFFF) & 0xFFFFF000;
     stubInfo[1] = StackSize;
+
+    if (MinHeap == 0xFFFFFFFF || MinHeap == 0)
+      MinHeap = 0x80000; // default minimum heap size if unspecified
+    MinHeap = (MinHeap + 0xFFF) & 0xFFFFF000;
+    if (MaxHeap == 0xFFFFFFFF)
+      MaxHeap = 0x1000000; // default maximum heap size if unspecified
+    MaxHeap = (MaxHeap + 0xFFF) & 0xFFFFF000;
+    if (MaxHeap < MinHeap)
+      MaxHeap = MinHeap;
+    stubInfo[2] = MinHeap;
+    stubInfo[3] = MaxHeap;
+
     Fwrite(stubInfo, sizeof stubInfo, fout);
     hdrsz += sizeof stubInfo;
   }
@@ -2792,6 +2810,24 @@ int main(int argc, char* argv[])
         {
           ++i;
           StackSize = strtoul(argv[i], NULL, 0);
+          continue;
+        }
+      }
+      else if (!strcmp(argv[i], "-minheap"))
+      {
+        if (i + 1 < argc)
+        {
+          ++i;
+          MinHeap = strtoul(argv[i], NULL, 0);
+          continue;
+        }
+      }
+      else if (!strcmp(argv[i], "-maxheap"))
+      {
+        if (i + 1 < argc)
+        {
+          ++i;
+          MaxHeap = strtoul(argv[i], NULL, 0);
           continue;
         }
       }

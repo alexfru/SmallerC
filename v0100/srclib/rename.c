@@ -55,9 +55,15 @@ int DosRename(char* old, char* new, unsigned* error)
 {
   __dpmi_int_regs regs;
   unsigned lold = strlen(old) + 1;
-  char* pnew = (char*)__dpmi_iobuf + lold;
+  unsigned lnew = strlen(new) + 1;
+  char* pnew = __dpmi_iobuf;
+  if (lold > __DPMI_IOFBUFSZ || lnew > __DPMI_IOFBUFSZ - lold)
+  {
+    *error = -1;
+    return 0;
+  }
   memcpy(__dpmi_iobuf, old, lold);
-  strcpy(pnew, new);
+  memcpy(pnew += lold, new, lnew);
   memset(&regs, 0, sizeof regs);
   regs.eax = 0x5600;
   regs.edx = (unsigned)__dpmi_iobuf & 0xF;

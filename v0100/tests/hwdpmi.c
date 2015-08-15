@@ -41,7 +41,8 @@ unsigned esp(void)
   return &a;
 }
 
-void _start(unsigned long exitAddr, void* psp, void* env, char* argv0, void* stubInfo, void* fbuf)
+void _start(unsigned long exitAddr, void* psp, void* env, char* argv0,
+            void* stubInfo, void* fbuf, void* heapStart, void* heapStop)
 {
   char* args = (char*)psp + 0x80;
   int argsLen = *args++;
@@ -73,6 +74,9 @@ void _start(unsigned long exitAddr, void* psp, void* env, char* argv0, void* stu
   for (i = 0; i < 48*1024; i++) *((char*)fbuf + i) = 0;
   prints("48KB I/O buffer for DOS at: ");
     printh(fbuf); printeol();
+
+  prints("Heap at: ");
+    printh(heapStart); prints(" size: "); printh((unsigned)heapStop - (unsigned)heapStart); printeol();
 
   asm("mov ax, 0x4c00\n"
       "int 0x21");

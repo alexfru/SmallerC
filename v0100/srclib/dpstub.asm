@@ -17,8 +17,6 @@
 
 bits 16
 
-; TBD!!! clean up label names
-
 FBUFSZ equ (48*1024) ; Don't change this! Must be a multiple of 8. Shared with 32-bit code.
 
 section .text
@@ -188,21 +186,31 @@ got_dpmi32:
         int     0x31
         jc      err_set_descr
 
-        ; allocate memory for the program (text, data, bss, stack)
-        mov     ecx, [aout_header_text]
-        add     ecx, [aout_header_data]
-        add     ecx, [aout_header_bss]
-        add     ecx, [stub_info_stack]
-        add     ecx, 4096 ; for page alignment
-        mov     ebx, ecx
-        shr     ebx, 16
-        mov     ax, 0x501
-        int     0x31
+        ; allocate memory for the program (text, data, bss, stack, heap)
+        mov     eax, [aout_header_text]
+        or      eax, eax
+        jz      err_invalid_exe
+        add     eax, [aout_header_data]
+        jc      err_invalid_exe
+        add     eax, [aout_header_bss]
+        jc      err_invalid_exe
+        mov     ebx, [stub_info_stack]
+        cmp     ebx, 65536
+        jc      err_invalid_exe
+        add     eax, ebx
+        jc      err_invalid_exe
+        add     eax, [stub_info_minheap]
+        jc      err_invalid_exe
+        add     eax, 4096 ; for page alignment
+        jc      err_invalid_exe
+        mov     ebx, eax
+        sub     ebx, [stub_info_minheap]
+        add     ebx, [stub_info_maxheap]
+        jc      err_invalid_exe
+        call    alloc_max
         jc      err_nodpmimem
-
-        and     ecx, 0xffff
-        shl     ebx, 16
-        or      ecx, ebx
+        sub     dword [mem_size], 4096
+        mov     ecx, [image_base]
         add     ecx, 4095 ; page-align
         and     ecx, -4096
         mov     [image_base], ecx
@@ -214,6 +222,7 @@ got_dpmi32:
         ;     data section (if any)
         ;     bss section (if any)
         ;     stack
+        ;     heap
         ;     ...
         ;   4GB-1
 
@@ -256,6 +265,13 @@ got_dpmi32:
         mov     ss, cx
         lea     esp, [ebx + eax]
         and     esp, -4 ; align esp on machine word boundary
+
+        mov     edx, ebx
+        add     edx, [mem_size]
+        push    edx ; pass heap stop
+
+        add     eax, ebx
+        push    eax ; pass heap start
 
         movzx   edx, word [ds_seg]
         shl     edx, 4
@@ -391,6 +407,90 @@ dpmi_load7:
         call    exec
 
 dpmi_load_end:
+        ret
+
+probe_alloc:
+        ; ecx = size to try to allocate and immediately free
+        ; ebx = size cap
+        pushad
+        cmp     ebx, ecx
+        jc      probe_alloc_end
+        mov     ebx, ecx
+        shr     ebx, 16
+        mov     ax, 0x501
+        int     0x31
+        jc      probe_alloc_end
+        mov     ax, 0x502
+        int     0x31
+        clc
+probe_alloc_end:
+        ; carry = 1 IFF failed
+        popad
+        ret
+
+alloc:
+        ; ecx = size to allocate
+        pushad
+        mov     [mem_size], ecx
+        mov     ebx, ecx
+        shr     ebx, 16
+        mov     ax, 0x501
+        int     0x31
+        mov     [image_base], cx
+        mov     [image_base + 2], bx
+        mov     [mem_handle], di
+        mov     [mem_handle + 2], si
+        ; carry = 1 IFF failed
+        popad
+        ret
+
+alloc_max:
+        ; eax = in: Min
+        ; ebx = in: Max
+        ; ecx = temp: try size for probe_alloc and alloc
+        ; esi = temp: size
+        ; edx = temp: addend
+
+        ; If Max isn't larger than Min, go for Min
+        mov     esi, eax
+        cmp     ebx, eax
+        jbe     alloc_found_size
+
+        ; Give it a shot, try Max first
+        mov     ecx, ebx
+        call    alloc
+        jnc     alloc_max_end
+
+        ; Still here? Try to find the new max below Max
+
+        xor     esi, esi ; size = 0
+        bsr     ecx, ebx
+        mov     edx, 1
+        shl     edx, cl ; addend = 1u << bsr(Max)
+
+alloc_max_try:
+        ; Probe size + addend with a cap of Max
+        lea     ecx, [esi + edx]
+        call    probe_alloc
+        cmc
+        sbb     ecx, ecx
+        and     ecx, edx
+        add     esi, ecx ; size += addend if probe succeeded
+        shr     edx, 1 ; addend /= 2
+        jnz     alloc_max_try
+
+        cmp     esi, eax
+        jae     alloc_found_size ; jump if size >= Min
+
+        ; Still here? There's probably not enough memory, but try Min at last
+        mov     esi, eax
+
+alloc_found_size:
+        mov     ecx, esi
+        call    alloc
+
+alloc_max_end:
+        ; carry = 1 IFF failed
         ret
 
 exec:
@@ -561,6 +661,10 @@ exit:
         mov     ss, cx
         movzx   esp, word [exit_sp]
         push    ax ; save status
+        mov     di, [mem_handle]
+        mov     si, [mem_handle + 2]
+        mov     ax, 0x502
+        int     0x31
         mov     bx, [data32_sel]
         mov     ax, 1
         int     0x31
@@ -732,7 +836,9 @@ exe_header_len equ $ - exe_header
 stub_info: ; shared with 32-bit code
 stub_info_magic    resd 1
 stub_info_stack    resd 1
-                   resd 14
+stub_info_minheap  resd 1
+stub_info_maxheap  resd 1
+                   resd 12
 stub_info_len equ $ - stub_info
 
 aout_header:
@@ -752,6 +858,8 @@ code32_sel  resw 1
 data32_sel  resw 1
 
 image_base  resd 1
+mem_size    resd 1
+mem_handle  resd 1
 
 regs:
 regs_edi    resd 1

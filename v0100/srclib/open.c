@@ -58,7 +58,13 @@ static
 int DosExtOpen(char* name, int mode, int attr, int action, unsigned* handleOrError)
 {
   __dpmi_int_regs regs;
-  strcpy(__dpmi_iobuf, name);
+  unsigned nlen = strlen(name) + 1;
+  if (nlen > __DPMI_IOFBUFSZ)
+  {
+    *handleOrError = -1;
+    return 0;
+  }
+  memcpy(__dpmi_iobuf, name, nlen);
   memset(&regs, 0, sizeof regs);
   regs.eax = 0x6c00;
   regs.ebx = mode;

@@ -178,17 +178,25 @@ int DosExec(char* comspec, char* params, unsigned* error)
 {
   unsigned short* penvsel = (unsigned short*)((char*)__dpmi_psp + 0x2c);
   unsigned short envsel = *penvsel;
-  unsigned plen = strlen(params);
+  unsigned clen = strlen(comspec) + 1;
+  unsigned plen = strlen(params) + 1;
   struct fcb fcbinit = { 0, "        ", "   " }; // Don't know FCBs, don't care
 
   struct fcb* pfcb1 = (struct fcb*)__dpmi_iobuf;
   struct fcb* pfcb2 = pfcb1 + 1;
   struct execparams* peparams = (struct execparams*)(pfcb2 + 1);
   char* pparams = (char*)(peparams + 1);
-  char* pcomspec = pparams + plen;
+  char* pcomspec = pparams;
 
   __dpmi_int_regs regs;
   int e;
+
+  if (plen > (__DPMI_IOFBUFSZ - 2*sizeof(struct fcb) - sizeof(struct execparams)) ||
+      clen > (__DPMI_IOFBUFSZ - 2*sizeof(struct fcb) - sizeof(struct execparams)) - plen)
+  {
+    *error = -1;
+    return 0;
+  }
 
   *pfcb2 = *pfcb1 = fcbinit;
   peparams->EnvSeg = 0;
@@ -198,8 +206,8 @@ int DosExec(char* comspec, char* params, unsigned* error)
   peparams->Fcb1Seg = (unsigned)pfcb1 >> 4;
   peparams->Fcb2Ofs = (unsigned)pfcb2 & 0xF;
   peparams->Fcb2Seg = (unsigned)pfcb2 >> 4;
-  strcpy(pparams, params);
-  strcpy(pcomspec, comspec);
+  memcpy(pparams, params, plen);
+  memcpy(pcomspec += plen, comspec, clen);
 
   memset(&regs, 0, sizeof regs);
   regs.eax = 0x4b00;

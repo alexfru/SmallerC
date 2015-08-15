@@ -28,22 +28,6 @@ void* malloc(unsigned size)
 
 #ifdef _DPMI
 #include "idpmi.h"
-// TBD!!! proper DPMI memory manager
-void* malloc(unsigned size)
-{
-  void* p;
-  unsigned id;
-  if (!size || size + 2*sizeof(unsigned) < size)
-    return 0;
-  size += 2*sizeof(unsigned);
-  if ((p = __dpmi_alloc(size, &id)) != 0)
-  {
-    *(unsigned*)p = id;
-    *((unsigned*)p + 1) = size;
-    p = (unsigned*)p + 2;
-  }
-  return p;
-}
 #endif // _DPMI
 
 #endif // _DOS
@@ -100,7 +84,6 @@ void* __sbrk(int increment)
 #endif // _LINUX
 
 
-#ifndef _DPMI
 #ifndef __HUGE__
 #ifndef _WINDOWS
 
@@ -114,8 +97,13 @@ unsigned __heap_stop;
 static
 int init(void)
 {
+#ifndef _DPMI
   unsigned start = (unsigned)&_stop_alldata__;
   unsigned stop = (unsigned)&_start_stack__;
+#else
+  unsigned start = (unsigned)__dpmi_heap_start;
+  unsigned stop = (unsigned)__dpmi_heap_stop;
+#endif
   unsigned heapsz;
 
   //
@@ -154,15 +142,18 @@ int init(void)
   // The above is given for 16-bit versions of malloc()/realloc()/free in the tiny and small
   // memory models in DOS.
   //
-  // In 32-bit (s)brk-based version in Linux, the layout is the same, but the header/footer
+  // In 32-bit DPMI and (s)brk-based version in Linux, the layout is the same, but the header/footer
   // size is doubled. The alignment is doubled to 16 bytes as well.
   //
 
   start = ((start + HEADER_FOOTER_SZ - 1) & -HEADER_FOOTER_SZ) | HEADER_FOOTER_SZ; // start or next odd multiple of 4; if we add 4 to it, it will be a multiple of 8
   stop = ((stop - HEADER_FOOTER_SZ) & -HEADER_FOOTER_SZ) | HEADER_FOOTER_SZ; // stop or previous odd multiple of 4
 
-  if (start < (unsigned)&_stop_alldata__ ||
+  if (
+#ifndef _DPMI
+      start < (unsigned)&_stop_alldata__ ||
       stop > (unsigned)&_start_stack__ ||
+#endif
       start > stop ||
       stop - start < 2*HEADER_FOOTER_SZ)
     return -1;
@@ -304,7 +295,6 @@ void* malloc(unsigned size)
 
 #endif // !_WINDOWS
 #endif // !__HUGE__
-#endif // !_DPMI
 
 #ifdef _WINDOWS
 

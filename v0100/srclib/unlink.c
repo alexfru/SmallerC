@@ -49,7 +49,13 @@ static
 int DosDelete(char* name, unsigned* error)
 {
   __dpmi_int_regs regs;
-  strcpy(__dpmi_iobuf, name);
+  unsigned nlen = strlen(name) + 1;
+  if (nlen > __DPMI_IOFBUFSZ)
+  {
+    *error = -1;
+    return 0;
+  }
+  memcpy(__dpmi_iobuf, name, nlen);
   memset(&regs, 0, sizeof regs);
   regs.eax = 0x4100;
   regs.edx = (unsigned)__dpmi_iobuf & 0xF;

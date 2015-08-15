@@ -1,8 +1,9 @@
 /*
-  How to compile for DOS (all mode(l)s: tiny/.COM, small/.EXE, huge/.EXE):
+  How to compile for DOS (all mode(l)s: tiny/.COM, small/.EXE, huge/.EXE, 32-bit DPMI/.EXE):
     smlrcc -dost c99.c -o c99dt.com
     smlrcc -doss c99.c -o c99ds.exe
     smlrcc -dosh c99.c -o c99dh.exe
+    smlrcc -dosp c99.c -o c99dp.exe
 
   How to compile for Windows:
     smlrcc -win c99.c -o c99w.exe

@@ -1,7 +1,8 @@
 /*
-  How to compile for DOS (huge and small memory models):
+  How to compile for DOS (huge, small and DPMI memory models):
     smlrcc -dosh exc.c -o exc.exe
     smlrcc -doss exc.c -o exc.exe
+    smlrcc -dosp exc.c -o exc.exe
 
   How to compile for Windows:
     smlrcc -win exc.c -o exc.exe

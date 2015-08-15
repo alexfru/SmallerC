@@ -1,6 +1,8 @@
 /*
   How to compile for DOS:
     smlrcc -dosh libtest.c -o libtest.exe
+   OR
+    smlrcc -dosp libtest.c -o libtest.exe
 
   How to compile for Windows:
     smlrcc -win libtest.c -o libtest.exe

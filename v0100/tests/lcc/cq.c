@@ -1,6 +1,8 @@
 /*
   How to compile for DOS:
-    smlrcc -dosh cq.c -o cqd.exe
+    smlrcc -dosh cq.c -o cqdh.exe
+   OR
+    smlrcc -dosp cq.c -o cqdp.exe
 
   How to compile for Windows:
     smlrcc -win cq.c -o cqw.exe

@@ -414,7 +414,8 @@ extern unsigned short __getCS(void);
 #endif
 
 #ifdef _DPMI
-void _start(unsigned long exitAddr, void* psp, void* env, char* argv0, void* stubInfo, void* fbuf)
+void _start(unsigned long exitAddr, void* psp, void* env, char* argv0,
+            void* stubInfo, void* fbuf, void* heapStart, void* heapStop)
 {
   int argc;
   char** argv;
@@ -424,6 +425,8 @@ void _start(unsigned long exitAddr, void* psp, void* env, char* argv0, void* stu
   __dpmi_env = env;
   __dpmi_stubInfo = stubInfo;
   __dpmi_iobuf = fbuf;
+  __dpmi_heap_start = heapStart;
+  __dpmi_heap_stop = heapStop;
 
   // Set argc and argv
   setargs(&argc, &argv, psp, argv0);

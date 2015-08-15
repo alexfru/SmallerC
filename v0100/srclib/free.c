@@ -21,20 +21,10 @@ void free(void* ptr)
 
 #ifdef _DPMI
 #include "idpmi.h"
-// TBD!!! proper DPMI memory manager
-void free(void* ptr)
-{
-  if (ptr)
-  {
-    unsigned id = *((unsigned*)ptr - 2);
-    __dpmi_free(id);
-  }
-}
 #endif // _DPMI
 
 #endif // _DOS
 
-#ifndef _DPMI
 #ifndef __HUGE__
 #ifndef _WINDOWS
 
@@ -76,7 +66,6 @@ void free(void* ptr)
 
 #endif // !_WINDOWS
 #endif // !__HUGE__
-#endif // !_DPMI
 
 #ifdef _WINDOWS
 
