@@ -28,6 +28,9 @@ https://hackaday.io/project/5569-smaller-c
 
 Links:
 NASM: http://nasm.us/
+YASM: http://yasm.tortall.net/
+CWSDPMI: http://homer.rice.edu/~sandmann/cwsdpmi/
+HX DOS Extender: https://web.archive.org/web/20141003032346/http://www.japheth.de/
 RetroBSD: http://retrobsd.org/
 VASM: http://sun.hasenbraten.de/vasm/
 Trillek: http://trillek.org/
