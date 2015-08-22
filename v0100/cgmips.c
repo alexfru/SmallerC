@@ -34,7 +34,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /*****************************************************************************/
 
 // Works around bugs in RetroBSD's as instruction reordering
-#define REORDER_WORKAROUND
+//#define REORDER_WORKAROUND
 
 STATIC
 void GenInit(void)
