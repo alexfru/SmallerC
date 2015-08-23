@@ -655,8 +655,9 @@ int CurFxnNameLabel = 0;
 int ParseLevel = 0; // Parse level/scope (file:0, fxn:1+)
 int ParamLevel = 0; // 1+ if parsing params, 0 otherwise
 
-int SyntaxStack[SYNTAX_STACK_MAX][2];
-int SyntaxStackCnt = 8; // number of explicitly initialized elements in SyntaxStack[][2]
+unsigned char SyntaxStack0[SYNTAX_STACK_MAX];
+int SyntaxStack1[SYNTAX_STACK_MAX];
+int SyntaxStackCnt = 8; // number of explicitly initialized elements in SyntaxStack0[]
 
 // all code
 
@@ -2454,7 +2455,7 @@ int exprUnary(int tok, int* gotUnary, int commaSeparator, int argOfSizeOf)
 
         *--p = "(<"[argOfSizeOf]; // differentiate casts (something#) from not casts <something#>
 
-        SyntaxStack[synPtr][1] = AddIdent(p);
+        SyntaxStack1[synPtr] = AddIdent(p);
         tok = GetToken();
         if (argOfSizeOf)
         {
@@ -2470,7 +2471,7 @@ int exprUnary(int tok, int* gotUnary, int commaSeparator, int argOfSizeOf)
             //error("exprUnary(): primary expression expected after '(type)'\n");
             errorUnexpectedToken(tok);
         }
-        push2(tokIdent, SyntaxStack[synPtr][1]);
+        push2(tokIdent, SyntaxStack1[synPtr]);
       }
       else
       {
@@ -2681,16 +2682,16 @@ void decayArray(int* ExprTypeSynPtr, int arithmetic)
 {
   // Dacay arrays to pointers to their first elements in
   // binary + and - operators
-  if (*ExprTypeSynPtr >= 0 && SyntaxStack[*ExprTypeSynPtr][0] == '[')
+  if (*ExprTypeSynPtr >= 0 && SyntaxStack0[*ExprTypeSynPtr] == '[')
   {
-    while (SyntaxStack[*ExprTypeSynPtr][0] != ']')
+    while (SyntaxStack0[*ExprTypeSynPtr] != ']')
       ++*ExprTypeSynPtr;
     ++*ExprTypeSynPtr;
     *ExprTypeSynPtr = -*ExprTypeSynPtr;
   }
   // Also, to simplify code, return all other pointers as
   // negative expression stack syntax indices/pointers
-  else if (*ExprTypeSynPtr >= 0 && SyntaxStack[*ExprTypeSynPtr][0] == '*')
+  else if (*ExprTypeSynPtr >= 0 && SyntaxStack0[*ExprTypeSynPtr] == '*')
   {
     ++*ExprTypeSynPtr;
     *ExprTypeSynPtr = -*ExprTypeSynPtr;
@@ -2702,17 +2703,17 @@ void decayArray(int* ExprTypeSynPtr, int arithmetic)
   {
     if (*ExprTypeSynPtr < 0)
     {
-      if (SyntaxStack[-*ExprTypeSynPtr][0] == tokVoid)
+      if (SyntaxStack0[-*ExprTypeSynPtr] == tokVoid)
         //error("decayArray(): cannot do pointer arithmetic on a pointer to 'void'\n");
         errorUnexpectedVoid();
-      if (SyntaxStack[-*ExprTypeSynPtr][0] == '(' ||
+      if (SyntaxStack0[-*ExprTypeSynPtr] == '(' ||
           !GetDeclSize(-*ExprTypeSynPtr, 0))
         //error("decayArray(): cannot do pointer arithmetic on a pointer to a function\n");
         errorOpType();
     }
     else
     {
-      if (SyntaxStack[*ExprTypeSynPtr][0] == '(')
+      if (SyntaxStack0[*ExprTypeSynPtr] == '(')
         //error("decayArray(): cannot do arithmetic on a function\n");
         errorOpType();
     }
@@ -2722,7 +2723,7 @@ void decayArray(int* ExprTypeSynPtr, int arithmetic)
 STATIC
 void nonVoidTypeCheck(int ExprTypeSynPtr)
 {
-  if (ExprTypeSynPtr >= 0 && SyntaxStack[ExprTypeSynPtr][0] == tokVoid)
+  if (ExprTypeSynPtr >= 0 && SyntaxStack0[ExprTypeSynPtr] == tokVoid)
     //error("nonVoidTypeCheck(): unexpected operand type 'void' for operator '%s'\n", GetTokenName(tok));
     errorUnexpectedVoid();
 }
@@ -2732,7 +2733,7 @@ void scalarTypeCheck(int ExprTypeSynPtr)
 {
   nonVoidTypeCheck(ExprTypeSynPtr);
 
-  if (ExprTypeSynPtr >= 0 && SyntaxStack[ExprTypeSynPtr][0] == tokStructPtr)
+  if (ExprTypeSynPtr >= 0 && SyntaxStack0[ExprTypeSynPtr] == tokStructPtr)
     errorOpType();
 }
 
@@ -2740,15 +2741,15 @@ STATIC
 void numericTypeCheck(int ExprTypeSynPtr)
 {
   if (ExprTypeSynPtr >= 0 &&
-      (SyntaxStack[ExprTypeSynPtr][0] == tokChar ||
-       SyntaxStack[ExprTypeSynPtr][0] == tokSChar ||
-       SyntaxStack[ExprTypeSynPtr][0] == tokUChar ||
+      (SyntaxStack0[ExprTypeSynPtr] == tokChar ||
+       SyntaxStack0[ExprTypeSynPtr] == tokSChar ||
+       SyntaxStack0[ExprTypeSynPtr] == tokUChar ||
 #ifdef CAN_COMPILE_32BIT
-       SyntaxStack[ExprTypeSynPtr][0] == tokShort ||
-       SyntaxStack[ExprTypeSynPtr][0] == tokUShort ||
+       SyntaxStack0[ExprTypeSynPtr] == tokShort ||
+       SyntaxStack0[ExprTypeSynPtr] == tokUShort ||
 #endif
-       SyntaxStack[ExprTypeSynPtr][0] == tokInt ||
-       SyntaxStack[ExprTypeSynPtr][0] == tokUnsigned))
+       SyntaxStack0[ExprTypeSynPtr] == tokInt ||
+       SyntaxStack0[ExprTypeSynPtr] == tokUnsigned))
     return;
   //error("numericTypeCheck(): unexpected operand type for operator '%s', numeric type expected\n", GetTokenName(tok));
   errorOpType();
@@ -2762,17 +2763,17 @@ void compatCheck(int* ExprTypeSynPtr, int TheOtherExprTypeSynPtr, int ConstExpr[
   int lptr, rptr, lnum, rnum;
 
   // convert functions to pointers to functions
-  if (exprTypeSynPtr >= 0 && SyntaxStack[exprTypeSynPtr][0] == '(')
+  if (exprTypeSynPtr >= 0 && SyntaxStack0[exprTypeSynPtr] == '(')
     *ExprTypeSynPtr = exprTypeSynPtr = -exprTypeSynPtr;
-  if (TheOtherExprTypeSynPtr >= 0 && SyntaxStack[TheOtherExprTypeSynPtr][0] == '(')
+  if (TheOtherExprTypeSynPtr >= 0 && SyntaxStack0[TheOtherExprTypeSynPtr] == '(')
     TheOtherExprTypeSynPtr = -TheOtherExprTypeSynPtr;
 
   lptr = exprTypeSynPtr < 0;
   rptr = TheOtherExprTypeSynPtr < 0;
-  lnum = !lptr && (SyntaxStack[exprTypeSynPtr][0] == tokInt ||
-                   SyntaxStack[exprTypeSynPtr][0] == tokUnsigned);
-  rnum = !rptr && (SyntaxStack[TheOtherExprTypeSynPtr][0] == tokInt ||
-                   SyntaxStack[TheOtherExprTypeSynPtr][0] == tokUnsigned);
+  lnum = !lptr && (SyntaxStack0[exprTypeSynPtr] == tokInt ||
+                   SyntaxStack0[exprTypeSynPtr] == tokUnsigned);
+  rnum = !rptr && (SyntaxStack0[TheOtherExprTypeSynPtr] == tokInt ||
+                   SyntaxStack0[TheOtherExprTypeSynPtr] == tokUnsigned);
 
   // both operands have arithmetic type
   // (arithmetic operands have been already promoted):
@@ -2780,8 +2781,8 @@ void compatCheck(int* ExprTypeSynPtr, int TheOtherExprTypeSynPtr, int ConstExpr[
     return;
 
   // both operands have void type:
-  if (!lptr && SyntaxStack[exprTypeSynPtr][0] == tokVoid &&
-      !rptr && SyntaxStack[TheOtherExprTypeSynPtr][0] == tokVoid)
+  if (!lptr && SyntaxStack0[exprTypeSynPtr] == tokVoid &&
+      !rptr && SyntaxStack0[TheOtherExprTypeSynPtr] == tokVoid)
     return;
 
   // TBD??? check for exact 0?
@@ -2790,13 +2791,13 @@ void compatCheck(int* ExprTypeSynPtr, int TheOtherExprTypeSynPtr, int ConstExpr[
   // the type of the expression is that of the pointer:
   if (lptr &&
       ((rnum && ConstExpr[1]) ||
-       (rptr && SyntaxStack[-TheOtherExprTypeSynPtr][0] == tokVoid &&
+       (rptr && SyntaxStack0[-TheOtherExprTypeSynPtr] == tokVoid &&
         stack[ridx][0] == tokUnaryPlus && // "(type*)constant" appears as "constant +(unary)"
         (stack[ridx - 1][0] == tokNumInt || stack[ridx - 1][0] == tokNumUint))))
     return;
   if (rptr &&
       ((lnum && ConstExpr[0]) ||
-       (lptr && SyntaxStack[-exprTypeSynPtr][0] == tokVoid &&
+       (lptr && SyntaxStack0[-exprTypeSynPtr] == tokVoid &&
         stack[lidx][0] == tokUnaryPlus && // "(type*)constant" appears as "constant +(unary)"
         (stack[lidx - 1][0] == tokNumInt || stack[lidx - 1][0] == tokNumUint))))
   {
@@ -2811,9 +2812,9 @@ void compatCheck(int* ExprTypeSynPtr, int TheOtherExprTypeSynPtr, int ConstExpr[
   // one operand is a pointer and the other is a pointer to void
   // (except (void*)0, which is different from other pointers to void),
   // the type of the expression is pointer to void:
-  if (SyntaxStack[-exprTypeSynPtr][0] == tokVoid)
+  if (SyntaxStack0[-exprTypeSynPtr] == tokVoid)
     return;
-  if (SyntaxStack[-TheOtherExprTypeSynPtr][0] == tokVoid)
+  if (SyntaxStack0[-TheOtherExprTypeSynPtr] == tokVoid)
   {
     *ExprTypeSynPtr = TheOtherExprTypeSynPtr;
     return;
@@ -2829,12 +2830,12 @@ void compatCheck(int* ExprTypeSynPtr, int TheOtherExprTypeSynPtr, int ConstExpr[
 
   for (;;)
   {
-    int tok = SyntaxStack[exprTypeSynPtr][0];
-    if (tok != SyntaxStack[TheOtherExprTypeSynPtr][0])
+    int tok = SyntaxStack0[exprTypeSynPtr];
+    if (tok != SyntaxStack0[TheOtherExprTypeSynPtr])
       errorOpType();
 
     if (tok != tokIdent &&
-        SyntaxStack[exprTypeSynPtr][1] != SyntaxStack[TheOtherExprTypeSynPtr][1])
+        SyntaxStack1[exprTypeSynPtr] != SyntaxStack1[TheOtherExprTypeSynPtr])
       errorOpType();
 
     c += (tok == '(') - (tok == ')') + (tok == '[') - (tok == ']');
@@ -2865,7 +2866,7 @@ void shiftCountCheck(int *psr, int idx, int ExprTypeSynPtr)
   int sr = *psr;
   // can't shift by a negative count and by a count exceeding
   // the number of bits in int
-  if ((SyntaxStack[ExprTypeSynPtr][0] != tokUnsigned && sr < 0) ||
+  if ((SyntaxStack0[ExprTypeSynPtr] != tokUnsigned && sr < 0) ||
       (unsigned)sr >= CHAR_BIT * sizeof(int) ||
       (unsigned)sr >= 8u * SizeOfWord)
   {
@@ -2944,19 +2945,19 @@ void promoteType(int* ExprTypeSynPtr, int* TheOtherExprTypeSynPtr)
 {
   // chars must be promoted to ints in expressions as the very first thing
   if (*ExprTypeSynPtr >= 0 &&
-      (SyntaxStack[*ExprTypeSynPtr][0] == tokChar ||
+      (SyntaxStack0[*ExprTypeSynPtr] == tokChar ||
 #ifdef CAN_COMPILE_32BIT
-       SyntaxStack[*ExprTypeSynPtr][0] == tokShort ||
-       SyntaxStack[*ExprTypeSynPtr][0] == tokUShort ||
+       SyntaxStack0[*ExprTypeSynPtr] == tokShort ||
+       SyntaxStack0[*ExprTypeSynPtr] == tokUShort ||
 #endif
-       SyntaxStack[*ExprTypeSynPtr][0] == tokSChar ||
-       SyntaxStack[*ExprTypeSynPtr][0] == tokUChar))
+       SyntaxStack0[*ExprTypeSynPtr] == tokSChar ||
+       SyntaxStack0[*ExprTypeSynPtr] == tokUChar))
     *ExprTypeSynPtr = SymIntSynPtr;
 
   // ints must be converted to unsigned ints if they are used in binary
   // operators whose other operand is unsigned int (except <<,>>,<<=,>>=)
-  if (*ExprTypeSynPtr >= 0 && SyntaxStack[*ExprTypeSynPtr][0] == tokInt &&
-      *TheOtherExprTypeSynPtr >= 0 && SyntaxStack[*TheOtherExprTypeSynPtr][0] == tokUnsigned)
+  if (*ExprTypeSynPtr >= 0 && SyntaxStack0[*ExprTypeSynPtr] == tokInt &&
+      *TheOtherExprTypeSynPtr >= 0 && SyntaxStack0[*TheOtherExprTypeSynPtr] == tokUnsigned)
     *ExprTypeSynPtr = SymUintSynPtr;
 }
 
@@ -2973,25 +2974,25 @@ int GetFxnInfo(int ExprTypeSynPtr, int* MinParams, int* MaxParams, int* ReturnEx
     ExprTypeSynPtr = -ExprTypeSynPtr;
   }
 
-  while (SyntaxStack[ExprTypeSynPtr][0] == tokIdent || SyntaxStack[ExprTypeSynPtr][0] == tokLocalOfs)
+  while (SyntaxStack0[ExprTypeSynPtr] == tokIdent || SyntaxStack0[ExprTypeSynPtr] == tokLocalOfs)
     ExprTypeSynPtr++;
 
-  if (!(SyntaxStack[ExprTypeSynPtr][0] == '(' ||
-        (!ptr && SyntaxStack[ExprTypeSynPtr][0] == '*' && SyntaxStack[ExprTypeSynPtr + 1][0] == '(')))
+  if (!(SyntaxStack0[ExprTypeSynPtr] == '(' ||
+        (!ptr && SyntaxStack0[ExprTypeSynPtr] == '*' && SyntaxStack0[ExprTypeSynPtr + 1] == '(')))
     return 0;
 
   // DONE: return syntax pointer to the function's return type
 
   // Count params
 
-  while (SyntaxStack[ExprTypeSynPtr][0] != '(')
+  while (SyntaxStack0[ExprTypeSynPtr] != '(')
     ExprTypeSynPtr++;
   ExprTypeSynPtr++;
 
   if (FirstParamSynPtr)
     *FirstParamSynPtr = ExprTypeSynPtr;
 
-  if (SyntaxStack[ExprTypeSynPtr][0] == ')')
+  if (SyntaxStack0[ExprTypeSynPtr] == ')')
   {
     // "fxn()": unspecified parameters, so, there can be any number of them
     *MaxParams = 32767; // INT_MAX;
@@ -2999,7 +3000,7 @@ int GetFxnInfo(int ExprTypeSynPtr, int* MinParams, int* MaxParams, int* ReturnEx
     return 1;
   }
 
-  if (SyntaxStack[ExprTypeSynPtr + 1][0] == tokVoid)
+  if (SyntaxStack0[ExprTypeSynPtr + 1] == tokVoid)
   {
     // "fxn(void)": 0 parameters
     *ReturnExprTypeSynPtr = ExprTypeSynPtr + 3;
@@ -3008,11 +3009,11 @@ int GetFxnInfo(int ExprTypeSynPtr, int* MinParams, int* MaxParams, int* ReturnEx
 
   for (;;)
   {
-    int tok = SyntaxStack[ExprTypeSynPtr][0];
+    int tok = SyntaxStack0[ExprTypeSynPtr];
 
     if (tok == tokIdent)
     {
-      if (SyntaxStack[ExprTypeSynPtr + 1][0] != tokEllipsis)
+      if (SyntaxStack0[ExprTypeSynPtr + 1] != tokEllipsis)
       {
         ++*MinParams;
         ++*MaxParams;
@@ -3028,7 +3029,7 @@ int GetFxnInfo(int ExprTypeSynPtr, int* MinParams, int* MaxParams, int* ReturnEx
       int c = 1;
       while (c && ExprTypeSynPtr < SyntaxStackCnt)
       {
-        tok = SyntaxStack[++ExprTypeSynPtr][0];
+        tok = SyntaxStack0[++ExprTypeSynPtr];
         c += (tok == '(') - (tok == ')');
       }
     }
@@ -3053,7 +3054,7 @@ void simplifyConstExpr(int val, int isConst, int* ExprTypeSynPtr, int top, int b
   if (!isConst || stack[top][0] == tokNumInt || stack[top][0] == tokNumUint)
     return;
 
-  if (SyntaxStack[*ExprTypeSynPtr][0] == tokUnsigned)
+  if (SyntaxStack0[*ExprTypeSynPtr] == tokUnsigned)
     stack[top][0] = tokNumUint;
   else
     stack[top][0] = tokNumInt;
@@ -3133,7 +3134,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       {
         if (CurFxnNameLabel >= 0)
           CurFxnNameLabel = -CurFxnNameLabel;
-        stack[*idx + 1][1] = SyntaxStack[SymFuncPtr][1];
+        stack[*idx + 1][1] = SyntaxStack1[SymFuncPtr];
         synPtr = SymFuncPtr;
       }
       else
@@ -3141,9 +3142,9 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       {
         synPtr = FindSymbol(ident);
         // "Rename" static vars in function scope
-        if (synPtr >= 0 && synPtr + 1 < SyntaxStackCnt && SyntaxStack[synPtr + 1][0] == tokIdent)
+        if (synPtr >= 0 && synPtr + 1 < SyntaxStackCnt && SyntaxStack0[synPtr + 1] == tokIdent)
         {
-          s = stack[*idx + 1][1] = SyntaxStack[++synPtr][1];
+          s = stack[*idx + 1][1] = SyntaxStack1[++synPtr];
           ident = IdentTable + s;
         }
       }
@@ -3166,11 +3167,11 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
 
 #ifndef NO_TYPEDEF_ENUM
       if (synPtr + 1 < SyntaxStackCnt &&
-          SyntaxStack[synPtr + 1][0] == tokNumInt)
+          SyntaxStack0[synPtr + 1] == tokNumInt)
       {
         // this is an enum constant
         stack[*idx + 1][0] = tokNumInt;
-        s = stack[*idx + 1][1] = SyntaxStack[synPtr + 1][1];
+        s = stack[*idx + 1][1] = SyntaxStack1[synPtr + 1];
         *ExprTypeSynPtr = SymIntSynPtr;
         *ConstExpr = 1;
         break;
@@ -3178,26 +3179,26 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
 #endif
 
       // DONE: this declaration is actually a type cast
-      if (!strncmp(IdentTable + SyntaxStack[synPtr][1], "(something", sizeof "(something)" - 1 - 1))
+      if (!strncmp(IdentTable + SyntaxStack1[synPtr], "(something", sizeof "(something)" - 1 - 1))
       {
         int castSize;
 
-        if (SyntaxStack[++synPtr][0] == tokLocalOfs) // TBD!!! is this really needed???
+        if (SyntaxStack0[++synPtr] == tokLocalOfs) // TBD!!! is this really needed???
           synPtr++;
 
         s = exprval(idx, ExprTypeSynPtr, ConstExpr);
 
         // can't cast void or structure/union to anything (except void)
         if (*ExprTypeSynPtr >= 0 &&
-            (SyntaxStack[*ExprTypeSynPtr][0] == tokVoid ||
-             SyntaxStack[*ExprTypeSynPtr][0] == tokStructPtr) &&
-            SyntaxStack[synPtr][0] != tokVoid)
+            (SyntaxStack0[*ExprTypeSynPtr] == tokVoid ||
+             SyntaxStack0[*ExprTypeSynPtr] == tokStructPtr) &&
+            SyntaxStack0[synPtr] != tokVoid)
           errorOpType();
 
         // can't cast to function, array or structure/union
-        if (SyntaxStack[synPtr][0] == '(' ||
-            SyntaxStack[synPtr][0] == '[' ||
-            SyntaxStack[synPtr][0] == tokStructPtr)
+        if (SyntaxStack0[synPtr] == '(' ||
+            SyntaxStack0[synPtr] == '[' ||
+            SyntaxStack0[synPtr] == tokStructPtr)
           errorOpType();
 
         // will try to propagate constants through casts
@@ -3259,7 +3260,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
           break;
         }
 
-        switch (SyntaxStack[synPtr][0])
+        switch (SyntaxStack0[synPtr])
         {
         case tokChar:
         case tokSChar:
@@ -3288,7 +3289,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
         // replace local variables/arrays with their local addresses
         // (global variables/arrays' addresses are their names)
         stack[*idx + 1][0] = tokLocalOfs;
-        stack[*idx + 1][1] = SyntaxStack[synPtr + 1][1];
+        stack[*idx + 1][1] = SyntaxStack1[synPtr + 1];
       }
       if (type == SymLocalVar || type == SymGlobalVar)
       {
@@ -3297,7 +3298,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       }
 
       // return the identifier's type
-      while (SyntaxStack[synPtr][0] == tokIdent || SyntaxStack[synPtr][0] == tokLocalOfs)
+      while (SyntaxStack0[synPtr] == tokIdent || SyntaxStack0[synPtr] == tokLocalOfs)
         synPtr++;
       *ExprTypeSynPtr = synPtr;
     }
@@ -3330,14 +3331,14 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
   case tokUnaryAnd:
     exprval(idx, ExprTypeSynPtr, ConstExpr);
 
-    if (*ExprTypeSynPtr >= 0 && SyntaxStack[*ExprTypeSynPtr][0] == '[')
+    if (*ExprTypeSynPtr >= 0 && SyntaxStack0[*ExprTypeSynPtr] == '[')
     {
       // convert an array into a pointer to the array,
       // remove the reference
       *ExprTypeSynPtr = -*ExprTypeSynPtr;
       del(oldIdxRight + 1 - (oldSpRight - sp), 1);
     }
-    else if (*ExprTypeSynPtr >= 0 && SyntaxStack[*ExprTypeSynPtr][0] == '(')
+    else if (*ExprTypeSynPtr >= 0 && SyntaxStack0[*ExprTypeSynPtr] == '(')
     {
       // convert a function into a pointer to the function,
       // remove the reference
@@ -3365,7 +3366,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
   case tokUnaryStar:
     exprval(idx, ExprTypeSynPtr, ConstExpr);
 
-    if (*ExprTypeSynPtr < 0 || SyntaxStack[*ExprTypeSynPtr][0] == '*')
+    if (*ExprTypeSynPtr < 0 || SyntaxStack0[*ExprTypeSynPtr] == '*')
     {
       // type is a pointer to something,
       // transform it into that something
@@ -3374,27 +3375,27 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       else
         ++*ExprTypeSynPtr;
       nonVoidTypeCheck(*ExprTypeSynPtr);
-      if (SyntaxStack[*ExprTypeSynPtr][0] == tokStructPtr && !GetDeclSize(*ExprTypeSynPtr, 0))
+      if (SyntaxStack0[*ExprTypeSynPtr] == tokStructPtr && !GetDeclSize(*ExprTypeSynPtr, 0))
         // incomplete structure/union type
         errorOpType();
       // remove the dereference if that something is an array or a function
-      if (SyntaxStack[*ExprTypeSynPtr][0] == '[' ||
-          SyntaxStack[*ExprTypeSynPtr][0] == '(')
+      if (SyntaxStack0[*ExprTypeSynPtr] == '[' ||
+          SyntaxStack0[*ExprTypeSynPtr] == '(')
         del(oldIdxRight + 1 - (oldSpRight - sp), 1);
       // else add dereference size in bytes
       else
         stack[oldIdxRight + 1 - (oldSpRight - sp)][1] = GetDeclSize(*ExprTypeSynPtr, 1);
     }
-    else if (SyntaxStack[*ExprTypeSynPtr][0] == '[')
+    else if (SyntaxStack0[*ExprTypeSynPtr] == '[')
     {
       // type is an array,
       // transform it into the array's first element
       // (a subarray, if type is a multidimensional array)
-      while (SyntaxStack[*ExprTypeSynPtr][0] != ']')
+      while (SyntaxStack0[*ExprTypeSynPtr] != ']')
         ++*ExprTypeSynPtr;
       ++*ExprTypeSynPtr;
       // remove the dereference if that element is an array
-      if (SyntaxStack[*ExprTypeSynPtr][0] == '[')
+      if (SyntaxStack0[*ExprTypeSynPtr] == '[')
         del(oldIdxRight + 1 - (oldSpRight - sp), 1);
       // else add dereference size in bytes
       else
@@ -3617,14 +3618,14 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
         //error("exprval(): lvalue expected before '='\n");
         errorNotLvalue();
 
-      structs = (RightExprTypeSynPtr >= 0 && SyntaxStack[RightExprTypeSynPtr][0] == tokStructPtr) +
-              (*ExprTypeSynPtr >= 0 && SyntaxStack[*ExprTypeSynPtr][0] == tokStructPtr) * 2;
+      structs = (RightExprTypeSynPtr >= 0 && SyntaxStack0[RightExprTypeSynPtr] == tokStructPtr) +
+              (*ExprTypeSynPtr >= 0 && SyntaxStack0[*ExprTypeSynPtr] == tokStructPtr) * 2;
       if (structs)
       {
         int sz;
 
         if (structs != 3 ||
-            SyntaxStack[RightExprTypeSynPtr][1] != SyntaxStack[*ExprTypeSynPtr][1])
+            SyntaxStack1[RightExprTypeSynPtr] != SyntaxStack1[*ExprTypeSynPtr])
           errorOpType();
 
         // TBD??? (a = b) should be an rvalue and so &(a = b) and (&(a = b))->c shouldn't be
@@ -3715,7 +3716,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
 
       *ConstExpr = constExpr[0] && constExpr[1];
 
-      Unsigned = SyntaxStack[*ExprTypeSynPtr][0] == tokUnsigned || SyntaxStack[RightExprTypeSynPtr][0] == tokUnsigned;
+      Unsigned = SyntaxStack0[*ExprTypeSynPtr] == tokUnsigned || SyntaxStack0[RightExprTypeSynPtr] == tokUnsigned;
 
       switch (tok)
       {
@@ -3741,7 +3742,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       case tokRShift:
         if (constExpr[1])
         {
-          if (SyntaxStack[RightExprTypeSynPtr][0] != tokUnsigned)
+          if (SyntaxStack0[RightExprTypeSynPtr] != tokUnsigned)
             sr = truncInt(sr);
           else
             sr = (int)truncUint(sr);
@@ -3756,7 +3757,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
           }
           else
           {
-            if (SyntaxStack[*ExprTypeSynPtr][0] == tokUnsigned)
+            if (SyntaxStack0[*ExprTypeSynPtr] == tokUnsigned)
             {
               // right shift for unsigned ints
               sl = (int)(truncUint(sl) >> sr);
@@ -3772,7 +3773,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
           }
         }
 
-        if (SyntaxStack[*ExprTypeSynPtr][0] == tokUnsigned && tok == tokRShift)
+        if (SyntaxStack0[*ExprTypeSynPtr] == tokUnsigned && tok == tokRShift)
           stack[oldIdxRight + 1 - (oldSpRight - sp)][0] = tokURShift;
 
         // ignore RightExprTypeSynPtr for the purpose of promotion/conversion of the result of <</>>
@@ -3822,7 +3823,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       *ConstExpr = constExpr[0] && constExpr[1];
 
       Unsigned = !ptrmask &&
-        (SyntaxStack[*ExprTypeSynPtr][0] == tokUnsigned || SyntaxStack[RightExprTypeSynPtr][0] == tokUnsigned);
+        (SyntaxStack0[*ExprTypeSynPtr] == tokUnsigned || SyntaxStack0[RightExprTypeSynPtr] == tokUnsigned);
 
       if (*ConstExpr)
       {
@@ -4002,7 +4003,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       // and pass its location as the first (implicit) argument.
       if (ParseLevel &&
           *ExprTypeSynPtr >= 0 &&
-          SyntaxStack[*ExprTypeSynPtr][0] == tokStructPtr)
+          SyntaxStack0[*ExprTypeSynPtr] == tokStructPtr)
       {
         unsigned sz = GetDeclSize(*ExprTypeSynPtr, 0);
         // Make sure the return structure type is complete
@@ -4041,7 +4042,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
         nonVoidTypeCheck(tmpSynPtr);
 
         // If the argument is a structure, push it by calling a dedicated function
-        gotStructs = tmpSynPtr >= 0 && SyntaxStack[tmpSynPtr][0] == tokStructPtr;
+        gotStructs = tmpSynPtr >= 0 && SyntaxStack0[tmpSynPtr] == tokStructPtr;
         if (gotStructs)
         {
           unsigned sz = GetDeclSize(tmpSynPtr, 0);
@@ -4114,12 +4115,12 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
           int needPtr;
           if (!gotPtr)
           {
-            t = SyntaxStack[tmpSynPtr][0];
+            t = SyntaxStack0[tmpSynPtr];
             gotPtr = (t == '*') | (t == '[') | (t == '('); // arrays and functions decay to pointers
           }
 #endif
           // Find the type of the formal parameter in the function declaration
-          while ((t = SyntaxStack[firstParamSynPtr][0]) != tokIdent)
+          while ((t = SyntaxStack0[firstParamSynPtr]) != tokIdent)
           {
             if (t == '(')
             {
@@ -4127,7 +4128,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
               int c = 1;
               while (c)
               {
-                t = SyntaxStack[++firstParamSynPtr][0];
+                t = SyntaxStack0[++firstParamSynPtr];
                 c += (t == '(') - (t == ')');
               }
             }
@@ -4135,17 +4136,17 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
           }
           firstParamSynPtr++;
 #ifndef NO_STRUCT_BY_VAL
-          gotStructs += (SyntaxStack[firstParamSynPtr][0] == tokStructPtr) * 2;
+          gotStructs += (SyntaxStack0[firstParamSynPtr] == tokStructPtr) * 2;
           if (gotStructs)
           {
             // Structures must be of the same type
             if (gotStructs != 3 ||
-                SyntaxStack[tmpSynPtr][1] != SyntaxStack[firstParamSynPtr][1])
+                SyntaxStack1[tmpSynPtr] != SyntaxStack1[firstParamSynPtr])
               errorOpType();
           }
 #endif
 #ifndef NO_EXTRA_WARNS
-          needPtr = SyntaxStack[firstParamSynPtr][0] == '*';
+          needPtr = SyntaxStack0[firstParamSynPtr] == '*';
           if (needPtr != gotPtr &&
               // Make an exception for integer constants equal to 0, treat them as NULL pointers
               !(
@@ -4210,7 +4211,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       exprval(idx, ExprTypeSynPtr, &constExpr[0]);
       *ConstExpr = constExpr[0] && constExpr[1];
       *ExprTypeSynPtr = RightExprTypeSynPtr;
-      retStruct = RightExprTypeSynPtr >= 0 && SyntaxStack[RightExprTypeSynPtr][0] == tokStructPtr;
+      retStruct = RightExprTypeSynPtr >= 0 && SyntaxStack0[RightExprTypeSynPtr] == tokStructPtr;
 
       if (*ConstExpr)
       {
@@ -4281,7 +4282,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       ptrmask = (RightExprTypeSynPtr < 0) + (*ExprTypeSynPtr < 0) * 2;
 
       Unsigned = !ptrmask &&
-        (SyntaxStack[*ExprTypeSynPtr][0] == tokUnsigned || SyntaxStack[RightExprTypeSynPtr][0] == tokUnsigned);
+        (SyntaxStack0[*ExprTypeSynPtr] == tokUnsigned || SyntaxStack0[RightExprTypeSynPtr] == tokUnsigned);
 
       if (tok != tokAssignAdd && tok != tokAssignSub)
       {
@@ -4301,7 +4302,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       {
         if (constExpr[1])
         {
-          if (SyntaxStack[RightExprTypeSynPtr][0] != tokUnsigned)
+          if (SyntaxStack0[RightExprTypeSynPtr] != tokUnsigned)
             sr = truncInt(sr);
           else
             sr = (int)truncUint(sr);
@@ -4342,7 +4343,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
         case tokAssignDiv: t = tokAssignUDiv; break;
         case tokAssignMod: t = tokAssignUMod; break;
         case tokAssignRSh:
-          if (SyntaxStack[*ExprTypeSynPtr][0] == tokUnsigned)
+          if (SyntaxStack0[*ExprTypeSynPtr] == tokUnsigned)
             t = tokAssignURSh;
           break;
         }
@@ -4388,12 +4389,12 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
 
       // TBD??? move struct/union-related checks into compatChecks()
 
-      structs = (RightExprTypeSynPtr >= 0 && SyntaxStack[RightExprTypeSynPtr][0] == tokStructPtr) +
-              (*ExprTypeSynPtr >= 0 && SyntaxStack[*ExprTypeSynPtr][0] == tokStructPtr) * 2;
+      structs = (RightExprTypeSynPtr >= 0 && SyntaxStack0[RightExprTypeSynPtr] == tokStructPtr) +
+              (*ExprTypeSynPtr >= 0 && SyntaxStack0[*ExprTypeSynPtr] == tokStructPtr) * 2;
       if (structs)
       {
         if (structs != 3 ||
-            SyntaxStack[RightExprTypeSynPtr][1] != SyntaxStack[*ExprTypeSynPtr][1])
+            SyntaxStack1[RightExprTypeSynPtr] != SyntaxStack1[*ExprTypeSynPtr])
           errorOpType();
 
         // transform "cond ? a : b" into "*(cond ? &a : &b)"
@@ -4451,13 +4452,13 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       decayArray(ExprTypeSynPtr, 0);
 
       if (*ExprTypeSynPtr >= 0 ||
-          SyntaxStack[-*ExprTypeSynPtr][0] != tokStructPtr)
+          SyntaxStack0[-*ExprTypeSynPtr] != tokStructPtr)
         error("Pointer to or structure or union expected\n");
 
-      i = SyntaxStack[-*ExprTypeSynPtr][1];
+      i = SyntaxStack1[-*ExprTypeSynPtr];
       if (i + 2 > SyntaxStackCnt ||
-          (SyntaxStack[i][0] != tokStruct && SyntaxStack[i][0] != tokUnion) ||
-          SyntaxStack[i + 1][0] != tokTag)
+          (SyntaxStack0[i] != tokStruct && SyntaxStack0[i] != tokUnion) ||
+          SyntaxStack0[i + 1] != tokTag)
         errorInternal(20);
 
       if (!GetDeclSize(i, 0))
@@ -4467,14 +4468,14 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       i += 5; // step inside the {} body of the struct/union
       while (c)
       {
-        int t = SyntaxStack[i][0];
+        int t = SyntaxStack0[i];
         c += (t == '(') - (t == ')') + (t == '{') - (t == '}');
         if (c == 1 &&
-            t == tokMemberIdent && SyntaxStack[i][1] == member &&
-            SyntaxStack[i + 1][0] == tokLocalOfs)
+            t == tokMemberIdent && SyntaxStack1[i] == member &&
+            SyntaxStack0[i + 1] == tokLocalOfs)
         {
           j = i;
-          ofs = SyntaxStack[i + 1][1];
+          ofs = SyntaxStack1[i + 1];
         }
         i++;
       }
@@ -4648,7 +4649,7 @@ int ParseExpr(int tok, int* GotUnary, int* ExprTypeSynPtr, int* ConstExpr, int* 
       {
         GenStartCommentLine();
 
-        switch (SyntaxStack[*ExprTypeSynPtr][0])
+        switch (SyntaxStack0[*ExprTypeSynPtr])
         {
         case tokChar:
         case tokSChar:
@@ -5049,8 +5050,8 @@ void PushSyntax2(int t, int v)
 {
   if (SyntaxStackCnt >= SYNTAX_STACK_MAX)
     error("Symbol table exhausted\n");
-  SyntaxStack[SyntaxStackCnt][0] = t;
-  SyntaxStack[SyntaxStackCnt++][1] = v;
+  SyntaxStack0[SyntaxStackCnt] = t;
+  SyntaxStack1[SyntaxStackCnt++] = v;
 }
 
 STATIC
@@ -5064,11 +5065,14 @@ void InsertSyntax2(int pos, int t, int v)
 {
   if (SyntaxStackCnt >= SYNTAX_STACK_MAX)
     error("Symbol table exhausted\n");
-  memmove(SyntaxStack[pos + 1],
-          SyntaxStack[pos],
-          sizeof(SyntaxStack[0]) * (SyntaxStackCnt - pos));
-  SyntaxStack[pos][0] = t;
-  SyntaxStack[pos][1] = v;
+  memmove(&SyntaxStack0[pos + 1],
+          &SyntaxStack0[pos],
+          sizeof(SyntaxStack0[0]) * (SyntaxStackCnt - pos));
+  memmove(&SyntaxStack1[pos + 1],
+          &SyntaxStack1[pos],
+          sizeof(SyntaxStack1[0]) * (SyntaxStackCnt - pos));
+  SyntaxStack0[pos] = t;
+  SyntaxStack1[pos] = v;
   SyntaxStackCnt++;
 }
 
@@ -5081,9 +5085,12 @@ void InsertSyntax(int pos, int t)
 STATIC
 void DeleteSyntax(int pos, int cnt)
 {
-  memmove(SyntaxStack[pos],
-          SyntaxStack[pos + cnt],
-          sizeof(SyntaxStack[0]) * (SyntaxStackCnt - (pos + cnt)));
+  memmove(&SyntaxStack0[pos],
+          &SyntaxStack0[pos + cnt],
+          sizeof(SyntaxStack0[0]) * (SyntaxStackCnt - (pos + cnt)));
+  memmove(&SyntaxStack1[pos],
+          &SyntaxStack1[pos + cnt],
+          sizeof(SyntaxStack1[0]) * (SyntaxStackCnt - (pos + cnt)));
   SyntaxStackCnt -= cnt;
 }
 
@@ -5100,9 +5107,9 @@ int FindSymbol(char* s)
 
   for (i = SyntaxStackCnt - 1; i >= 0; i--)
   {
-    int t = SyntaxStack[i][0];
+    int t = SyntaxStack0[i];
     if (t == tokIdent &&
-        !strcmp(IdentTable + SyntaxStack[i][1], s))
+        !strcmp(IdentTable + SyntaxStack1[i], s))
     {
       return i;
     }
@@ -5113,7 +5120,7 @@ int FindSymbol(char* s)
       int c = -1;
       while (c)
       {
-        t = SyntaxStack[--i][0];
+        t = SyntaxStack0[--i];
         c += (t == '(') - (t == ')');
       }
     }
@@ -5127,13 +5134,13 @@ int SymType(int SynPtr)
 {
   int local = 0;
 
-  if (SyntaxStack[SynPtr][0] == tokIdent)
+  if (SyntaxStack0[SynPtr] == tokIdent)
     SynPtr++;
 
-  if ((local = SyntaxStack[SynPtr][0] == tokLocalOfs) != 0)
+  if ((local = SyntaxStack0[SynPtr] == tokLocalOfs) != 0)
     SynPtr++;
 
-  switch (SyntaxStack[SynPtr][0])
+  switch (SyntaxStack0[SynPtr])
   {
   case '(':
     return SymFxn;
@@ -5159,9 +5166,9 @@ int FindTaggedDecl(char* s, int start, int* CurScope)
 
   for (i = start; i >= 0; i--)
   {
-    int t = SyntaxStack[i][0];
+    int t = SyntaxStack0[i];
     if (t == tokTag &&
-        !strcmp(IdentTable + SyntaxStack[i][1], s))
+        !strcmp(IdentTable + SyntaxStack1[i], s))
     {
       return i - 1;
     }
@@ -5171,7 +5178,7 @@ int FindTaggedDecl(char* s, int start, int* CurScope)
       int c = -1;
       while (c)
       {
-        t = SyntaxStack[--i][0];
+        t = SyntaxStack0[--i];
         c += (t == '(') - (t == ')');
       }
     }
@@ -5196,9 +5203,9 @@ int FindTypedef(char* s, int* CurScope, int forUse)
 
   for (i = SyntaxStackCnt - 1; i >= 0; i--)
   {
-    int t = SyntaxStack[i][0];
+    int t = SyntaxStack0[i];
     if ((t == tokTypedef || t == tokIdent) &&
-        !strcmp(IdentTable + SyntaxStack[i][1], s))
+        !strcmp(IdentTable + SyntaxStack1[i], s))
     {
       // if the closest declaration isn't from typedef,
       // (i.e. if it's a variable/function declaration),
@@ -5215,7 +5222,7 @@ int FindTypedef(char* s, int* CurScope, int forUse)
       int c = -1;
       while (c)
       {
-        t = SyntaxStack[--i][0];
+        t = SyntaxStack0[--i];
         c += (t == '(') - (t == ')');
       }
     }
@@ -5242,7 +5249,7 @@ int GetDeclSize(int SyntaxPtr, int SizeForDeref)
 
   for (i = SyntaxPtr; i < SyntaxStackCnt; i++)
   {
-    int tok = SyntaxStack[i][0];
+    int tok = SyntaxStack0[i];
     switch (tok)
     {
     case tokIdent: // skip leading identifiers, if any
@@ -5283,13 +5290,13 @@ int GetDeclSize(int SyntaxPtr, int SizeForDeref)
         errorVarSize();
       return (int)size;
     case '[':
-      if (SyntaxStack[i + 1][0] != tokNumInt && SyntaxStack[i + 1][0] != tokNumUint)
+      if (SyntaxStack0[i + 1] != tokNumInt && SyntaxStack0[i + 1] != tokNumUint)
         errorInternal(11);
-      if (SyntaxStack[i + 1][1] &&
-          size * SyntaxStack[i + 1][1] / SyntaxStack[i + 1][1] != size)
+      if (SyntaxStack1[i + 1] &&
+          size * SyntaxStack1[i + 1] / SyntaxStack1[i + 1] != size)
         //error("Variable too big\n");
         errorVarSize();
-      size *= SyntaxStack[i + 1][1];
+      size *= SyntaxStack1[i + 1];
       if (size != truncUint(size))
         //error("Variable too big\n");
         errorVarSize();
@@ -5298,13 +5305,13 @@ int GetDeclSize(int SyntaxPtr, int SizeForDeref)
       break;
     case tokStructPtr:
       // follow the "type pointer"
-      i = SyntaxStack[i][1] - 1;
+      i = SyntaxStack1[i] - 1;
       break;
     case tokStruct:
     case tokUnion:
-      if (i + 2 < SyntaxStackCnt && SyntaxStack[i + 2][0] == tokSizeof && !SizeForDeref)
+      if (i + 2 < SyntaxStackCnt && SyntaxStack0[i + 2] == tokSizeof && !SizeForDeref)
       {
-        unsigned s = SyntaxStack[i + 2][1];
+        unsigned s = SyntaxStack1[i + 2];
         if (s && size * s / s != size)
           errorVarSize();
         size *= s;
@@ -5334,7 +5341,7 @@ int GetDeclAlignment(int SyntaxPtr)
 
   for (i = SyntaxPtr; i < SyntaxStackCnt; i++)
   {
-    int tok = SyntaxStack[i][0];
+    int tok = SyntaxStack0[i];
     switch (tok)
     {
     case tokIdent: // skip leading identifiers, if any
@@ -5355,19 +5362,19 @@ int GetDeclAlignment(int SyntaxPtr)
     case '(':
       return SizeOfWord;
     case '[':
-      if (SyntaxStack[i + 1][0] != tokNumInt && SyntaxStack[i + 1][0] != tokNumUint)
+      if (SyntaxStack0[i + 1] != tokNumInt && SyntaxStack0[i + 1] != tokNumUint)
         errorInternal(15);
       i += 2;
       break;
     case tokStructPtr:
       // follow the "type pointer"
-      i = SyntaxStack[i][1] - 1;
+      i = SyntaxStack1[i] - 1;
       break;
     case tokStruct:
     case tokUnion:
-      if (i + 3 < SyntaxStackCnt && SyntaxStack[i + 2][0] == tokSizeof)
+      if (i + 3 < SyntaxStackCnt && SyntaxStack0[i + 2] == tokSizeof)
       {
-        return SyntaxStack[i + 3][1];
+        return SyntaxStack1[i + 3];
       }
       return 1;
     case tokVoid:
@@ -5393,8 +5400,8 @@ void DumpDecl(int SyntaxPtr, int IsParam)
 
   for (i = SyntaxPtr; i < SyntaxStackCnt; i++)
   {
-    int tok = SyntaxStack[i][0];
-    int v = SyntaxStack[i][1];
+    int tok = SyntaxStack0[i];
+    int v = SyntaxStack1[i];
     switch (tok)
     {
     case tokLocalOfs:
@@ -5422,7 +5429,7 @@ void DumpDecl(int SyntaxPtr, int IsParam)
 
       if (IsParam && !strcmp(IdentTable + v, "<something>") && (i + 1 < SyntaxStackCnt))
       {
-        if (SyntaxStack[i + 1][0] == tokEllipsis)
+        if (SyntaxStack0[i + 1] == tokEllipsis)
           continue;
       }
 
@@ -5451,11 +5458,11 @@ void DumpDecl(int SyntaxPtr, int IsParam)
         int j = ++i, c = 1;
         while (c)
         {
-          int t = SyntaxStack[j++][0];
+          int t = SyntaxStack0[j++];
           c += (t == '(') - (t == ')');
         }
 
-        noparams = (i + 1 == j) || (SyntaxStack[i + 1][0] == tokVoid);
+        noparams = (i + 1 == j) || (SyntaxStack0[i + 1] == tokVoid);
 
         printf2("(");
 
@@ -5531,8 +5538,8 @@ void DumpDecl(int SyntaxPtr, int IsParam)
 STATIC
 void DumpSynDecls(void)
 {
-  int used = SyntaxStackCnt * sizeof SyntaxStack[0];
-  int total = SYNTAX_STACK_MAX * sizeof SyntaxStack[0];
+  int used = SyntaxStackCnt * (sizeof SyntaxStack0[0] + sizeof SyntaxStack1[0]);
+  int total = SYNTAX_STACK_MAX * (sizeof SyntaxStack0[0] + sizeof SyntaxStack1[0]);
   puts2("");
   GenStartCommentLine(); printf2("Syntax/declaration table/stack:\n");
   GenStartCommentLine(); printf2("Bytes used: %d/%d\n\n", used, total);
@@ -5579,7 +5586,7 @@ int ParseArrayDimension(int AllowEmptyDimension)
     exprVal = truncInt(exprVal);
 
     promoteType(&synPtr, &synPtr);
-    if ((SyntaxStack[synPtr][0] == tokInt && exprVal < 1) || (SyntaxStack[synPtr][0] == tokUnsigned && exprValU < 1))
+    if ((SyntaxStack0[synPtr] == tokInt && exprVal < 1) || (SyntaxStack0[synPtr] == tokUnsigned && exprValU < 1))
       error("Array dimension less than 1\n");
 
     exprVal = (int)exprValU;
@@ -5697,7 +5704,7 @@ lcont:
         // Within the same scope we can't declare more than one union, structure or enum
         // with the same tag.
         // There's one common tag namespace for structures, unions and enumerations.
-        if (curScope && SyntaxStack[declPtr][0] != structType)
+        if (curScope && SyntaxStack0[declPtr] != structType)
           errorTagRedef(tagIdent);
       }
       else if (ParamLevel)
@@ -5730,7 +5737,7 @@ lcont:
         // Cannot redefine a tagged structure/union/enum within the same scope
         if (declPtr >= 0 &&
             curScope &&
-            ((declPtr + 2 < SyntaxStackCnt && SyntaxStack[declPtr + 2][0] == tokSizeof)
+            ((declPtr + 2 < SyntaxStackCnt && SyntaxStack0[declPtr + 2] == tokSizeof)
 #ifndef NO_TYPEDEF_ENUM
              || structType == tokEnum
 #endif
@@ -5834,7 +5841,7 @@ lcont:
 
         // Update structure/union alignment
         alignment = structInfo[1];
-        SyntaxStack[typePtr + 3][1] = alignment;
+        SyntaxStack1[typePtr + 3] = alignment;
 
         // Update structure/union size and include trailing padding if needed
         sz = structInfo[2] + structInfo[3];
@@ -5842,7 +5849,7 @@ lcont:
         sz = (sz + alignment - 1) & ~(alignment - 1);
         if (sz < tmp || sz != truncUint(sz))
           errorVarSize();
-        SyntaxStack[typePtr + 2][1] = (int)sz;
+        SyntaxStack1[typePtr + 2] = (int)sz;
 
         tok = GetToken();
       }
@@ -5864,7 +5871,7 @@ lcont:
       if (gotTag)
       {
         if (declPtr >= 0 &&
-            SyntaxStack[declPtr][0] == structType)
+            SyntaxStack0[declPtr] == structType)
         {
           base[0] = tokStructPtr;
           base[1] = declPtr;
@@ -5888,17 +5895,17 @@ lcont:
     // preceding references to this tag within this scope,
     // IOW references to an incomplete type, complete the
     // type in the references
-    if (gotTag && SyntaxStack[SyntaxStackCnt - 1][0] == '}')
+    if (gotTag && SyntaxStack0[SyntaxStackCnt - 1] == '}')
     {
       int i;
       for (i = SyntaxStackCnt - 1; i >= 0; i--)
-        if (SyntaxStack[i][0] == tokStructPtr)
+        if (SyntaxStack0[i] == tokStructPtr)
         {
-          int j = SyntaxStack[i][1];
-          if (SyntaxStack[j + 1][1] == tagIdent)
-            SyntaxStack[i][1] = typePtr;
+          int j = SyntaxStack1[i];
+          if (SyntaxStack1[j + 1] == tagIdent)
+            SyntaxStack1[i] = typePtr;
         }
-        else if (SyntaxStack[i][0] == '#')
+        else if (SyntaxStack0[i] == '#')
         {
           // reached the beginning of the current scope
           break;
@@ -6018,7 +6025,7 @@ int ParseDerived(int tok)
 
   if (params | (tok == '('))
   {
-    int t = SyntaxStack[SyntaxStackCnt - 1][0];
+    int t = SyntaxStack0[SyntaxStackCnt - 1];
     if ((t == ')') | (t == ']'))
       errorUnexpectedToken('('); // array of functions or function returning function
     if (!params)
@@ -6046,7 +6053,7 @@ int ParseDerived(int tok)
   {
     // DONE!!! allow the first [] without the dimension in function parameters
     int allowEmptyDimension = 1;
-    if (SyntaxStack[SyntaxStackCnt - 1][0] == ')')
+    if (SyntaxStack0[SyntaxStackCnt - 1] == ')')
       errorUnexpectedToken('['); // function returning array
     while (tok == '[')
     {
@@ -6085,8 +6092,8 @@ void PushBase(int base[2])
 
     while (copying)
     {
-      int tok = SyntaxStack[++ptr][0];
-      int t = SyntaxStack[SyntaxStackCnt - 1][0];
+      int tok = SyntaxStack0[++ptr];
+      int t = SyntaxStack0[SyntaxStackCnt - 1];
 
       // Cannot have:
       //   function returning function
@@ -6096,7 +6103,7 @@ void PushBase(int base[2])
           (t == ')' && tok == '['))
         errorDecl();
 
-      PushSyntax2(tok, SyntaxStack[ptr][1]);
+      PushSyntax2(tok, SyntaxStack1[ptr]);
 
       c += (tok == '(') - (tok == ')') + (tok == '[') - (tok == ']');
 
@@ -6123,8 +6130,8 @@ void PushBase(int base[2])
   }
 
   // Cannot have array of void
-  if (SyntaxStack[SyntaxStackCnt - 1][0] == tokVoid &&
-      SyntaxStack[SyntaxStackCnt - 2][0] == ']')
+  if (SyntaxStack0[SyntaxStackCnt - 1] == tokVoid &&
+      SyntaxStack0[SyntaxStackCnt - 2] == ']')
     errorUnexpectedVoid();
 }
 
@@ -6141,7 +6148,7 @@ int InitVar(int synPtr, int tok)
   int p = synPtr, t;
   int undoIdents = IdentTableLen;
 
-  while ((t = SyntaxStack[p][0]), (t == tokIdent) | (t == tokLocalOfs))
+  while ((t = SyntaxStack0[p]), (t == tokIdent) | (t == tokLocalOfs))
     p++;
 
   switch (t)
@@ -6152,7 +6159,7 @@ int InitVar(int synPtr, int tok)
     // in which case braces are optional
     if (tok != '{')
     {
-      t = SyntaxStack[p + 3][0];
+      t = SyntaxStack0[p + 3];
       if ((tok != tokLitStr) | ((t != tokChar) & (t != tokUChar) & (t != tokSChar)))
         errorUnexpectedToken(tok);
     }
@@ -6259,11 +6266,11 @@ STATIC
 int InitArray(int synPtr, int tok)
 {
   int elementTypePtr = synPtr + 3;
-  int elementType = SyntaxStack[elementTypePtr][0];
+  int elementType = SyntaxStack0[elementTypePtr];
   unsigned elementSz = GetDeclSize(elementTypePtr, 0);
   int braces = 0;
   unsigned elementCnt = 0;
-  unsigned elementsRequired = SyntaxStack[synPtr + 1][1];
+  unsigned elementsRequired = SyntaxStack1[synPtr + 1];
   int arrOfChar = (elementType == tokChar) | (elementType == tokUChar) | (elementType == tokSChar);
 
   if (tok == '{')
@@ -6346,7 +6353,7 @@ int InitArray(int synPtr, int tok)
 
   // Store the element count if it's an incomplete array
   if (!elementsRequired)
-    SyntaxStack[synPtr + 1][1] = elementCnt;
+    SyntaxStack1[synPtr + 1] = elementCnt;
 
   return tok;
 }
@@ -6359,9 +6366,9 @@ int InitStruct(int synPtr, int tok)
   int braces = 0;
   int c = 1;
 
-  synPtr = SyntaxStack[synPtr][1];
-  isUnion = SyntaxStack[synPtr++][0] == tokUnion;
-  size = SyntaxStack[++synPtr][1];
+  synPtr = SyntaxStack1[synPtr];
+  isUnion = SyntaxStack0[synPtr++] == tokUnion;
+  size = SyntaxStack1[++synPtr];
   synPtr += 3; // step inside the {} body of the struct/union
 
   if (tok == '{')
@@ -6373,7 +6380,7 @@ int InitStruct(int synPtr, int tok)
   // Find the first member
   while (c)
   {
-    int t = SyntaxStack[synPtr][0];
+    int t = SyntaxStack0[synPtr];
     c += (t == '(') - (t == ')') + (t == '{') - (t == '}');
     if (c == 1 && t == tokMemberIdent)
       break;
@@ -6386,9 +6393,9 @@ int InitStruct(int synPtr, int tok)
     int elementTypePtr, elementType;
     unsigned elementOfs, elementSz;
 
-    elementOfs = SyntaxStack[++synPtr][1];
+    elementOfs = SyntaxStack1[++synPtr];
     elementTypePtr = ++synPtr;
-    elementType = SyntaxStack[elementTypePtr][0];
+    elementType = SyntaxStack0[elementTypePtr];
     elementSz = GetDeclSize(elementTypePtr, 0);
 
     // Alignment
@@ -6413,7 +6420,7 @@ int InitStruct(int synPtr, int tok)
     // Find the next member or the closing brace
     while (c)
     {
-      int t = SyntaxStack[synPtr][0];
+      int t = SyntaxStack0[synPtr];
       c += (t == '(') - (t == ')') + (t == '{') - (t == '}');
       if (c == 1 && t == tokMemberIdent)
         break;
@@ -6506,32 +6513,32 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
       int staticLabel = 0;
 
       // Disallow void variables
-      if (SyntaxStack[SyntaxStackCnt - 1][0] == tokVoid)
+      if (SyntaxStack0[SyntaxStackCnt - 1] == tokVoid)
       {
-        if (SyntaxStack[SyntaxStackCnt - 2][0] == tokIdent &&
+        if (SyntaxStack0[SyntaxStackCnt - 2] == tokIdent &&
             !(cast
 #ifndef NO_TYPEDEF_ENUM
               | typeDef
 #endif
              ))
-          //error("ParseDecl(): Cannot declare a variable ('%s') of type 'void'\n", IdentTable + SyntaxStack[lastSyntaxPtr][1]);
+          //error("ParseDecl(): Cannot declare a variable ('%s') of type 'void'\n", IdentTable + SyntaxStack1[lastSyntaxPtr]);
           errorUnexpectedVoid();
       }
 
-      isFxn = SyntaxStack[lastSyntaxPtr + 1][0] == '(';
+      isFxn = SyntaxStack0[lastSyntaxPtr + 1] == '(';
 
 #ifdef NO_STRUCT_BY_VAL
       if (isFxn &&
-          SyntaxStack[SyntaxStackCnt - 1][0] == tokStructPtr &&
-          SyntaxStack[SyntaxStackCnt - 2][0] == ')')
+          SyntaxStack0[SyntaxStackCnt - 1] == tokStructPtr &&
+          SyntaxStack0[SyntaxStackCnt - 2] == ')')
         // structure returning isn't supported currently
         errorDecl();
 #endif
 
-      isArray = SyntaxStack[lastSyntaxPtr + 1][0] == '[';
-      isIncompleteArr = isArray && SyntaxStack[lastSyntaxPtr + 2][1] == 0;
+      isArray = SyntaxStack0[lastSyntaxPtr + 1] == '[';
+      isIncompleteArr = isArray && SyntaxStack1[lastSyntaxPtr + 2] == 0;
 
-      isStruct = SyntaxStack[lastSyntaxPtr + 1][0] == tokStructPtr;
+      isStruct = SyntaxStack0[lastSyntaxPtr + 1] == tokStructPtr;
 
       if (!(ExprLevel || structInfo) &&
           !(external |
@@ -6539,7 +6546,7 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
             typeDef |
 #endif
             Static) &&
-          !strcmp(IdentTable + SyntaxStack[lastSyntaxPtr][1], "<something>") &&
+          !strcmp(IdentTable + SyntaxStack1[lastSyntaxPtr], "<something>") &&
           tok == ';')
       {
         if (isStruct)
@@ -6548,28 +6555,28 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
           // or a tagged complete structure/union declaration, e.g. "struct sometag { ... };", without an instance variable,
           // or an untagged complete structure/union declaration, e.g. "struct { ... };", without an instance variable
           int declPtr, curScope;
-          int j = SyntaxStack[lastSyntaxPtr + 1][1];
+          int j = SyntaxStack1[lastSyntaxPtr + 1];
 
           if (j + 2 < SyntaxStackCnt &&
-              IdentTable[SyntaxStack[j + 1][1]] == '<' && // without tag
-              SyntaxStack[j + 2][0] == tokSizeof) // but with the {} "body"
+              IdentTable[SyntaxStack1[j + 1]] == '<' && // without tag
+              SyntaxStack0[j + 2] == tokSizeof) // but with the {} "body"
             errorDecl();
 
           // If a structure/union with this tag has been declared in an outer scope,
           // this new declaration should override it
-          declPtr = FindTaggedDecl(IdentTable + SyntaxStack[j + 1][1], lastSyntaxPtr - 1, &curScope);
+          declPtr = FindTaggedDecl(IdentTable + SyntaxStack1[j + 1], lastSyntaxPtr - 1, &curScope);
           if (declPtr >= 0 && !curScope)
           {
             // If that's the case, unbind this declaration from the old declaration
             // and make it a new incomplete declaration
-            PushSyntax(SyntaxStack[j][0]); // tokStruct or tokUnion
-            PushSyntax2(tokTag, SyntaxStack[j + 1][1]);
-            SyntaxStack[lastSyntaxPtr + 1][1] = SyntaxStackCnt - 2;
+            PushSyntax(SyntaxStack0[j]); // tokStruct or tokUnion
+            PushSyntax2(tokTag, SyntaxStack1[j + 1]);
+            SyntaxStack1[lastSyntaxPtr + 1] = SyntaxStackCnt - 2;
           }
           return GetToken();
         }
 #ifndef NO_TYPEDEF_ENUM
-        else if (SyntaxStack[lastSyntaxPtr + 1][0] == tokEnumPtr)
+        else if (SyntaxStack0[lastSyntaxPtr + 1] == tokEnumPtr)
         {
           return GetToken();
         }
@@ -6578,10 +6585,10 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
 
 #ifndef NO_TYPEDEF_ENUM
       // Convert enums into ints
-      if (SyntaxStack[SyntaxStackCnt - 1][0] == tokEnumPtr)
+      if (SyntaxStack0[SyntaxStackCnt - 1] == tokEnumPtr)
       {
-        SyntaxStack[SyntaxStackCnt - 1][0] = tokInt;
-        SyntaxStack[SyntaxStackCnt - 1][1] = 0;
+        SyntaxStack0[SyntaxStackCnt - 1] = tokInt;
+        SyntaxStack1[SyntaxStackCnt - 1] = 0;
       }
 #endif
 
@@ -6650,7 +6657,7 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
         errorDecl();
 
       // TBD!!! de-uglify
-      if (!strcmp(IdentTable + SyntaxStack[lastSyntaxPtr][1], "<something>"))
+      if (!strcmp(IdentTable + SyntaxStack1[lastSyntaxPtr], "<something>"))
       {
         // Disallow nameless variables, prototypes, structure/union members and typedefs.
         if (structInfo ||
@@ -6703,7 +6710,7 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
           if (structInfo[2] < tmp || structInfo[2] != truncUint(structInfo[2]))
             errorVarSize();
           // Change tokIdent to tokMemberIdent and insert a local var offset token
-          SyntaxStack[lastSyntaxPtr][0] = tokMemberIdent;
+          SyntaxStack0[lastSyntaxPtr] = tokMemberIdent;
           InsertSyntax2(lastSyntaxPtr + 1, tokLocalOfs, (int)structInfo[2]);
 
           // Advance member offset for structures, keep it zero for unions
@@ -6756,14 +6763,14 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
       if (typeDef)
       {
         int CurScope;
-        char* s = IdentTable + SyntaxStack[lastSyntaxPtr][1];
+        char* s = IdentTable + SyntaxStack1[lastSyntaxPtr];
 #ifndef NO_ANNOTATIONS
         DumpDecl(lastSyntaxPtr, 0);
 #endif
-        SyntaxStack[lastSyntaxPtr][0] = 0; // hide tokIdent for now
+        SyntaxStack0[lastSyntaxPtr] = 0; // hide tokIdent for now
         if (FindTypedef(s, &CurScope, 0) >= 0 && CurScope)
           errorRedef(s);
-        SyntaxStack[lastSyntaxPtr][0] = tokTypedef; // change tokIdent to tokTypedef
+        SyntaxStack0[lastSyntaxPtr] = tokTypedef; // change tokIdent to tokTypedef
       }
       else
       // fallthrough
@@ -6806,7 +6813,7 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
             if (Static && ParseLevel)
               GenNumLabel(staticLabel);
             else
-              GenLabel(IdentTable + SyntaxStack[lastSyntaxPtr][1], Static);
+              GenLabel(IdentTable + SyntaxStack1[lastSyntaxPtr], Static);
           }
           else
           {
@@ -6842,7 +6849,7 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
         {
           // Now that the size of the local is certainly known,
           // update its offset in the offset token
-          SyntaxStack[lastSyntaxPtr + 1][1] = AllocLocal(sz);
+          SyntaxStack1[lastSyntaxPtr + 1] = AllocLocal(sz);
 
 #ifndef NO_ANNOTATIONS
           DumpDecl(lastSyntaxPtr, 0);
@@ -6861,7 +6868,7 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
           sp = 0;
 
           push2('(', SizeOfWord * 3);
-          push2(tokLocalOfs, SyntaxStack[lastSyntaxPtr + 1][1]);
+          push2(tokLocalOfs, SyntaxStack1[lastSyntaxPtr + 1]);
           push(',');
           push2(tokIdent, AddNumericIdent(initLabel));
           push(',');
@@ -6886,7 +6893,7 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
           }
 
           // ParseExpr() will transform the initializer expression into an assignment expression here
-          tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, '=', SyntaxStack[lastSyntaxPtr][1]);
+          tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, '=', SyntaxStack1[lastSyntaxPtr]);
 
           if (!gotUnary)
             errorUnexpectedToken(tok);
@@ -6926,7 +6933,7 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
         DumpDecl(lastSyntaxPtr, 0);
 #endif
 
-        CurFxnName = IdentTable + SyntaxStack[lastSyntaxPtr][1];
+        CurFxnName = IdentTable + SyntaxStack1[lastSyntaxPtr];
         Main = !strcmp(CurFxnName, "main");
 
         gotoLabCnt = 0;
@@ -6940,7 +6947,7 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
 #ifndef NO_STRUCT_BY_VAL
         // Make sure the return structure type is complete
         if (CurFxnReturnExprTypeSynPtr >= 0 &&
-            SyntaxStack[CurFxnReturnExprTypeSynPtr][0] == tokStructPtr &&
+            SyntaxStack0[CurFxnReturnExprTypeSynPtr] == tokStructPtr &&
             !GetDeclSize(CurFxnReturnExprTypeSynPtr, 0))
           errorDecl();
 #endif
@@ -6952,7 +6959,7 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
 
 #ifndef MIPS
 #ifdef CAN_COMPILE_32BIT
-        if (SyntaxStack[lastSyntaxPtr + 1][1] & 1)
+        if (SyntaxStack1[lastSyntaxPtr + 1] & 1)
           GenIsrProlog();
         else // fallthrough
 #endif
@@ -6965,8 +6972,8 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
 #ifndef NO_FUNC_
         {
           CurFxnNameLabel = LabelCnt++;
-          SyntaxStack[SymFuncPtr][1] = AddNumericIdent(CurFxnNameLabel);
-          SyntaxStack[SymFuncPtr + 2][1] = strlen(CurFxnName) + 1;
+          SyntaxStack1[SymFuncPtr] = AddNumericIdent(CurFxnNameLabel);
+          SyntaxStack1[SymFuncPtr + 2] = strlen(CurFxnName) + 1;
         }
 #endif
 
@@ -6993,7 +7000,7 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
 
 #ifndef MIPS
 #ifdef CAN_COMPILE_32BIT
-        if (SyntaxStack[lastSyntaxPtr + 1][1] & 1)
+        if (SyntaxStack1[lastSyntaxPtr + 1] & 1)
           GenIsrEpilog();
         else // fallthrough
 #endif
@@ -7099,26 +7106,26 @@ void ParseFxnParams(int tok)
 
 #ifndef NO_TYPEDEF_ENUM
       // Convert enums into ints
-      if (SyntaxStack[SyntaxStackCnt - 1][0] == tokEnumPtr)
+      if (SyntaxStack0[SyntaxStackCnt - 1] == tokEnumPtr)
       {
-        SyntaxStack[SyntaxStackCnt - 1][0] = tokInt;
-        SyntaxStack[SyntaxStackCnt - 1][1] = 0;
+        SyntaxStack0[SyntaxStackCnt - 1] = tokInt;
+        SyntaxStack1[SyntaxStackCnt - 1] = 0;
       }
 #endif
 
     /* Decay arrays to pointers */
     lastSyntaxPtr++; /* skip name */
-    if (SyntaxStack[lastSyntaxPtr][0] == '[')
+    if (SyntaxStack0[lastSyntaxPtr] == '[')
     {
       int t;
       DeleteSyntax(lastSyntaxPtr, 1);
-      t = SyntaxStack[lastSyntaxPtr][0];
+      t = SyntaxStack0[lastSyntaxPtr];
       if (t == tokNumInt || t == tokNumUint)
         DeleteSyntax(lastSyntaxPtr, 1);
-      SyntaxStack[lastSyntaxPtr][0] = '*';
+      SyntaxStack0[lastSyntaxPtr] = '*';
     }
     /* "(Un)decay" functions to function pointers */
-    else if (SyntaxStack[lastSyntaxPtr][0] == '(')
+    else if (SyntaxStack0[lastSyntaxPtr] == '(')
     {
       InsertSyntax(lastSyntaxPtr, '*');
     }
@@ -7128,19 +7135,19 @@ void ParseFxnParams(int tok)
 
     if (tok == ')' || tok == ',')
     {
-      int t = SyntaxStack[SyntaxStackCnt - 2][0];
-      if (SyntaxStack[SyntaxStackCnt - 1][0] == tokVoid)
+      int t = SyntaxStack0[SyntaxStackCnt - 2];
+      if (SyntaxStack0[SyntaxStackCnt - 1] == tokVoid)
       {
         // Disallow void variables. TBD!!! de-uglify
         if (t == tokIdent &&
-            !(!strcmp(IdentTable + SyntaxStack[SyntaxStackCnt - 2][1], "<something>") &&
+            !(!strcmp(IdentTable + SyntaxStack1[SyntaxStackCnt - 2], "<something>") &&
               cnt == 1 && tok == ')'))
-          //error("ParseFxnParams(): Cannot declare a variable ('%s') of type 'void'\n", IdentTable + SyntaxStack[lastSyntaxPtr][1]);
+          //error("ParseFxnParams(): Cannot declare a variable ('%s') of type 'void'\n", IdentTable + SyntaxStack1[lastSyntaxPtr]);
           errorUnexpectedVoid();
       }
 
 #ifdef NO_STRUCT_BY_VAL
-      if (SyntaxStack[SyntaxStackCnt - 1][0] == tokStructPtr &&
+      if (SyntaxStack0[SyntaxStackCnt - 1] == tokStructPtr &&
           t != '*' &&
           t != ']')
         // structure passing and returning isn't supported currently
@@ -7167,8 +7174,8 @@ void AddFxnParamSymbols(int SyntaxPtr)
 
   if (SyntaxPtr < 0 ||
       SyntaxPtr > SyntaxStackCnt - 3 ||
-      SyntaxStack[SyntaxPtr][0] != tokIdent ||
-      SyntaxStack[SyntaxPtr + 1][0] != '(')
+      SyntaxStack0[SyntaxPtr] != tokIdent ||
+      SyntaxStack0[SyntaxPtr + 1] != '(')
     //error("Internal error: AddFxnParamSymbols(): Invalid input\n");
     errorInternal(6);
 
@@ -7178,7 +7185,7 @@ void AddFxnParamSymbols(int SyntaxPtr)
 
 #ifndef NO_STRUCT_BY_VAL
   if (CurFxnReturnExprTypeSynPtr >= 0 &&
-      SyntaxStack[CurFxnReturnExprTypeSynPtr][0] == tokStructPtr)
+      SyntaxStack0[CurFxnReturnExprTypeSynPtr] == tokStructPtr)
   {
     // The function returns a struct/union via an implicit param/arg (pointer to struct/union)
     // before its first formal param/arg, add this implicit param/arg
@@ -7188,7 +7195,7 @@ void AddFxnParamSymbols(int SyntaxPtr)
     PushSyntax2(tokIdent, AddIdent("@")); // special implicit param/arg (pretval) pointing to structure receptacle
     PushSyntax2(tokLocalOfs, paramOfs);
     PushSyntax('*');
-    PushSyntax2(tokStructPtr, SyntaxStack[CurFxnReturnExprTypeSynPtr][1]);
+    PushSyntax2(tokStructPtr, SyntaxStack1[CurFxnReturnExprTypeSynPtr]);
     paramOfs += SizeOfWord;
 #ifndef NO_ANNOTATIONS
     DumpDecl(paramPtr, 0);
@@ -7200,7 +7207,7 @@ void AddFxnParamSymbols(int SyntaxPtr)
 
   for (i = SyntaxPtr; i < SyntaxStackCnt; i++)
   {
-    int tok = SyntaxStack[i][0];
+    int tok = SyntaxStack0[i];
 
     if (tok == tokIdent)
     {
@@ -7213,9 +7220,9 @@ void AddFxnParamSymbols(int SyntaxPtr)
         //error("Internal error: AddFxnParamSymbols(): Invalid input\n");
         errorInternal(7);
 
-      if (SyntaxStack[i + 1][0] == tokVoid) // "ident(void)" = no params
+      if (SyntaxStack0[i + 1] == tokVoid) // "ident(void)" = no params
         break;
-      if (SyntaxStack[i + 1][0] == tokEllipsis) // "ident(something,...)" = no more params
+      if (SyntaxStack0[i + 1] == tokEllipsis) // "ident(something,...)" = no more params
         break;
 
       // Make sure the parameter is not an incomplete structure
@@ -7229,7 +7236,7 @@ void AddFxnParamSymbols(int SyntaxPtr)
 #ifndef NO_ANNOTATIONS
       paramPtr = SyntaxStackCnt;
 #endif
-      PushSyntax2(SyntaxStack[i][0], SyntaxStack[i][1]);
+      PushSyntax2(SyntaxStack0[i], SyntaxStack1[i]);
       PushSyntax2(tokLocalOfs, paramOfs);
 
       if (sz + SizeOfWord - 1 < sz)
@@ -7245,7 +7252,7 @@ void AddFxnParamSymbols(int SyntaxPtr)
       i++;
       while (i < SyntaxStackCnt)
       {
-        tok = SyntaxStack[i][0];
+        tok = SyntaxStack0[i];
         if (tok == tokIdent || tok == ')')
         {
 #ifndef NO_ANNOTATIONS
@@ -7261,15 +7268,15 @@ void AddFxnParamSymbols(int SyntaxPtr)
           PushSyntax(tok);
           while (c && i < SyntaxStackCnt)
           {
-            tok = SyntaxStack[i][0];
+            tok = SyntaxStack0[i];
             c += (tok == '(') - (tok == ')');
-            PushSyntax2(SyntaxStack[i][0], SyntaxStack[i][1]);
+            PushSyntax2(SyntaxStack0[i], SyntaxStack1[i]);
             i++;
           }
         }
         else
         {
-          PushSyntax2(SyntaxStack[i][0], SyntaxStack[i][1]);
+          PushSyntax2(SyntaxStack0[i], SyntaxStack1[i]);
           i++;
         }
       }
@@ -7354,7 +7361,7 @@ int ParseStatement(int tok, int BrkCntTarget[2], int casesIdx)
       // TBD??? functions returning void should be able to return void
       //        return values from other functions returning void
       int retVoid = CurFxnReturnExprTypeSynPtr >= 0 &&
-                    SyntaxStack[CurFxnReturnExprTypeSynPtr][0] == tokVoid;
+                    SyntaxStack0[CurFxnReturnExprTypeSynPtr] == tokVoid;
 #ifndef NO_ANNOTATIONS
       GenStartCommentLine(); printf2("return\n");
 #endif
@@ -7385,13 +7392,13 @@ int ParseStatement(int tok, int BrkCntTarget[2], int casesIdx)
       if (gotUnary)
       {
 #ifndef NO_STRUCT_BY_VAL
-        int structs = (synPtr >= 0 && SyntaxStack[synPtr][0] == tokStructPtr) +
-          (CurFxnReturnExprTypeSynPtr >= 0 && SyntaxStack[CurFxnReturnExprTypeSynPtr][0] == tokStructPtr) * 2;
+        int structs = (synPtr >= 0 && SyntaxStack0[synPtr] == tokStructPtr) +
+          (CurFxnReturnExprTypeSynPtr >= 0 && SyntaxStack0[CurFxnReturnExprTypeSynPtr] == tokStructPtr) * 2;
 
         if (structs)
         {
           if (structs != 3 ||
-              SyntaxStack[synPtr][1] != SyntaxStack[CurFxnReturnExprTypeSynPtr][1])
+              SyntaxStack1[synPtr] != SyntaxStack1[CurFxnReturnExprTypeSynPtr])
             errorOpType();
 
           // Transform "return *pstruct" into structure assignment ("*pretval = *pstruct")
@@ -7406,7 +7413,7 @@ int ParseStatement(int tok, int BrkCntTarget[2], int casesIdx)
 
           ins(0, ',');
           ins2(0, tokUnaryStar, SizeOfWord); // dereference to extract the implicit param/arg (pretval) from the stack
-          ins2(0, tokLocalOfs, SyntaxStack[FindSymbol("@") + 1][1]); // special implicit param/arg (pretval) pointing to structure receptacle
+          ins2(0, tokLocalOfs, SyntaxStack1[FindSymbol("@") + 1]); // special implicit param/arg (pretval) pointing to structure receptacle
           ins2(0, '(', SizeOfWord * 3);
           push(',');
           push2(tokNumUint, GetDeclSize(synPtr, 0));
@@ -7866,7 +7873,7 @@ int ParseStatement(int tok, int BrkCntTarget[2], int casesIdx)
         //error("ParseStatement(): ':' expected after 'case expression'\n");
         errorUnexpectedToken(tok);
 
-      if (!gotUnary || !constExpr || (synPtr >= 0 && SyntaxStack[synPtr][0] == tokVoid)) // TBD???
+      if (!gotUnary || !constExpr || (synPtr >= 0 && SyntaxStack0[synPtr] == tokVoid)) // TBD???
         //error("ParseStatement(): constant integer expression expected in 'case expression :'\n");
         errorNotConst();
 
@@ -8028,20 +8035,20 @@ int main(int argc, char** argv)
   // gcc/MinGW inserts a call to __main() here.
   int i;
 
-  // Run-time initializer for SyntaxStack[][] to reduce
-  // executable file size (SyntaxStack[][] will be in .bss)
-  static const int SyntaxStackInit[][2] =
+  // Run-time initializer for SyntaxStack0[] to reduce
+  // executable file size (SyntaxStack0[] will be in .bss)
+  static unsigned char SyntaxStackInit[] =
   {
-    { tokVoid },     // SymVoidSynPtr
-    { tokInt },      // SymIntSynPtr
-    { tokUnsigned }, // SymUintSynPtr
-    { tokIdent },    // SymFuncPtr
-    { '[' },
-    { tokNumUint },
-    { ']' },
-    { tokChar }
+    tokVoid,     // SymVoidSynPtr
+    tokInt,      // SymIntSynPtr
+    tokUnsigned, // SymUintSynPtr
+    tokIdent,    // SymFuncPtr
+    '[',
+    tokNumUint,
+    ']',
+    tokChar
   }; // SyntaxStackCnt must be initialized to the number of elements in SyntaxStackInit[][]
-  memcpy(SyntaxStack, SyntaxStackInit, sizeof SyntaxStackInit);
+  memcpy(SyntaxStack0, SyntaxStackInit, sizeof SyntaxStackInit);
 
 #ifdef __SMALLER_C__
 #ifdef DETERMINE_VA_LIST

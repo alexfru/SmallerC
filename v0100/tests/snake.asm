@@ -1896,7 +1896,7 @@ L82:
 
 
 ; Syntax/declaration table/stack:
-; Bytes used: 1752/21248
+; Bytes used: 1095/13280
 
 
 ; Macro table:
