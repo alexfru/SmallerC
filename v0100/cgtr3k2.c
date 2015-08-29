@@ -1348,7 +1348,7 @@ void GenExpr0(void)
   int callDepth = 0;
   int t = sp - 1;
 
-  if (stack[t][0] == tokIf || stack[t][0] == tokIfNot)
+  if (stack[t][0] == tokIf || stack[t][0] == tokIfNot || stack[t][0] == tokReturn)
     t--;
   GenPrep(&t);
 
@@ -1387,7 +1387,7 @@ void GenExpr0(void)
     case tokGoto: printf2(" ; sh-circ-goto "); break;
     case tokLogAnd: printf2(" ; short-circuit && target\n"); break;
     case tokLogOr: printf2(" ; short-circuit || target\n"); break;
-    case tokIf: case tokIfNot: break;
+    case tokIf: case tokIfNot: case tokReturn: break;
     case tokRevMinus: printf2(" ; -r\n"); break;
     default: printf2(" ; %s\n", GetTokenName(tok)); break;
     }
@@ -1783,6 +1783,7 @@ void GenExpr0(void)
     case tokRevIdent:
     case tokRevLocalOfs:
     case tokComma:
+    case tokReturn:
       break;
 
     case tokIf:

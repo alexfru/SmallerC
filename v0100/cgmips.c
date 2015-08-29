@@ -516,13 +516,16 @@ void GenJumpIfNotZero(int label)
 }
 
 fpos_t GenPrologPos;
+int GenLeaf;
 
 STATIC
 void GenWriteFrameSize(void)
 {
-  unsigned size = -CurFxnMinLocalOfs;
-  int pfx = size ? ' ' : '#';
-  printf2("\t%csubu\t$29, $29, %10u\n", pfx, size); // 10 chars are enough for 32-bit unsigned ints
+  unsigned size = 8/*RA + FP*/ - CurFxnMinLocalOfs;
+  printf2("\tsubu\t$29, $29, %10u\n", size); // 10 chars are enough for 32-bit unsigned ints
+  printf2("\tsw\t$30, %10u($29)\n", size - 8);
+  printf2("\taddu\t$30, $29, %10u\n", size - 8);
+  printf2("\t%csw\t$31, 4($30)\n", GenLeaf ? '#' : ' ');
 }
 
 STATIC
@@ -538,23 +541,6 @@ void GenUpdateFrameSize(void)
 STATIC
 void GenFxnProlog(void)
 {
-  GenPrintInstr3Operands(MipsInstrSubU, 0,
-                         MipsOpRegSp, 0,
-                         MipsOpRegSp, 0,
-                         MipsOpConst, 8);
-
-  GenPrintInstr2Operands(MipsInstrSW, 0,
-                         MipsOpRegRa, 0,
-                         MipsOpIndRegSp, 4);
-
-  GenPrintInstr2Operands(MipsInstrSW, 0,
-                         MipsOpRegFp, 0,
-                         MipsOpIndRegSp, 0);
-
-  GenPrintInstr2Operands(MipsInstrMov, 0,
-                         MipsOpRegFp, 0,
-                         MipsOpRegSp, 0);
-
   if (CurFxnParamCntMax)
   {
     int i, cnt = CurFxnParamCntMax;
@@ -563,8 +549,10 @@ void GenFxnProlog(void)
     for (i = 0; i < cnt; i++)
       GenPrintInstr2Operands(MipsInstrSW, 0,
                              MipsOpRegA0 + i, 0,
-                             MipsOpIndRegFp, 8 + 4 * i);
+                             MipsOpIndRegSp, 4 * i);
   }
+
+  GenLeaf = 1; // will be reset to 0 if a call is generated
 
   fgetpos(OutFile, &GenPrologPos);
   GenWriteFrameSize();
@@ -586,22 +574,19 @@ void GenFxnEpilog(void)
 {
   GenUpdateFrameSize();
 
-  GenPrintInstr2Operands(MipsInstrMov, 0,
-                         MipsOpRegSp, 0,
-                         MipsOpRegFp, 0);
+  if (!GenLeaf)
+    GenPrintInstr2Operands(MipsInstrLW, 0,
+                           MipsOpRegRa, 0,
+                           MipsOpIndRegFp, 4);
 
   GenPrintInstr2Operands(MipsInstrLW, 0,
                          MipsOpRegFp, 0,
-                         MipsOpIndRegSp, 0);
-
-  GenPrintInstr2Operands(MipsInstrLW, 0,
-                         MipsOpRegRa, 0,
-                         MipsOpIndRegSp, 4);
+                         MipsOpIndRegFp, 0);
 
   GenPrintInstr3Operands(MipsInstrAddU, 0,
                          MipsOpRegSp, 0,
                          MipsOpRegSp, 0,
-                         MipsOpConst, 8);
+                         MipsOpConst, 8/*RA + FP*/ - CurFxnMinLocalOfs);
 
   GenPrintInstr1Operand(MipsInstrJ, 0,
                         MipsOpRegRa, 0);
@@ -1053,6 +1038,8 @@ void GenPopReg(void)
 
 #define tokRevIdent    0x100
 #define tokRevLocalOfs 0x101
+#define tokAssign0     0x102
+#define tokNum0        0x103
 
 STATIC
 void GenPrep(int* idx)
@@ -1103,6 +1090,7 @@ void GenPrep(int* idx)
     stack[oldIdxRight + 1][0] = tokNumInt; // reduce the number of cases since tokNumInt and tokNumUint are handled the same way
     // fallthrough
   case tokNumInt:
+  case tokNum0:
   case tokIdent:
   case tokLocalOfs:
     break;
@@ -1142,6 +1130,16 @@ void GenPrep(int* idx)
     break;
 
   case '=':
+    if (oldIdxRight + 1 == sp - 1 &&
+        (stack[oldIdxRight][0] == tokNumInt || stack[oldIdxRight][0] == tokNumUint) &&
+        truncUint(stack[oldIdxRight][1]) == 0)
+    {
+      // Special case for assigning 0 while throwing away the expression result value
+      // TBD??? ,
+      stack[oldIdxRight][0] = tokNum0; // this zero constant will not be loaded into a register
+      stack[oldIdxRight + 1][0] = tokAssign0; // change '=' to tokAssign0
+    }
+    // fallthrough
   case tokAssignAdd:
   case tokAssignSub:
   case tokAssignMul:
@@ -1536,7 +1534,7 @@ void GenExpr0(void)
   int paramOfs = 0;
   int t = sp - 1;
 
-  if (stack[t][0] == tokIf || stack[t][0] == tokIfNot)
+  if (stack[t][0] == tokIf || stack[t][0] == tokIfNot || stack[t][0] == tokReturn)
     t--;
   GenPrep(&t);
 
@@ -1575,7 +1573,7 @@ void GenExpr0(void)
     case tokGoto: printf2(" # sh-circ-goto "); break;
     case tokLogAnd: printf2(" # short-circuit && target\n"); break;
     case tokLogOr: printf2(" # short-circuit || target\n"); break;
-    case tokIf: case tokIfNot: break;
+    case tokIf: case tokIfNot: case tokReturn: break;
     default: printf2(" # %s\n", GetTokenName(tok)); break;
     }
 #endif
@@ -1675,6 +1673,7 @@ void GenExpr0(void)
       break;
 
     case ')':
+      GenLeaf = 0;
       if (maxCallDepth != 1)
       {
         if (v >= 4)
@@ -2021,6 +2020,21 @@ void GenExpr0(void)
       GenExtendRegIfNeeded(GenWreg, v);
       break;
 
+    case tokAssign0: // assignment of 0, while throwing away the expression result value
+      if (stack[i - 1][0] == tokRevLocalOfs)
+      {
+        GenWriteLocal(MipsOpRegZero, v, stack[i - 1][1]);
+      }
+      else if (stack[i - 1][0] == tokRevIdent)
+      {
+        GenWriteIdent(MipsOpRegZero, v, stack[i - 1][1]);
+      }
+      else
+      {
+        GenWriteIndirect(GenWreg, MipsOpRegZero, v);
+      }
+      break;
+
     case '<':         GenCmp(&i, 0x00); break;
     case tokLEQ:      GenCmp(&i, 0x01); break;
     case '>':         GenCmp(&i, 0x02); break;
@@ -2116,6 +2130,8 @@ void GenExpr0(void)
     case tokRevIdent:
     case tokRevLocalOfs:
     case tokComma:
+    case tokReturn:
+    case tokNum0:
       break;
 
     case tokIf:

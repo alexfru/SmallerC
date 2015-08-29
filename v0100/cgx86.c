@@ -1783,7 +1783,7 @@ void GenExpr1(void)
   int s = sp - 1;
   int i;
 
-  if (stack[s][0] == tokIf || stack[s][0] == tokIfNot)
+  if (stack[s][0] == tokIf || stack[s][0] == tokIfNot || stack[s][0] == tokReturn)
     s--;
   GenFuse(&s);
 
@@ -1859,6 +1859,8 @@ void GenExpr1(void)
       break;
     case tokIfNot:
       printf2("IF!");
+      break;
+    case tokReturn:
       break;
     default:
       printf2("%s", GetTokenName(tok));
@@ -2667,6 +2669,7 @@ void GenExpr1(void)
     case '(':
     case tokIf:
     case tokIfNot:
+    case tokReturn:
       break;
 
     case tokVoid:
@@ -2708,7 +2711,7 @@ void GenExpr0(void)
     case tokGoto: printf2("; sh-circ-goto "); break;
     case tokLogAnd: printf2("; short-circuit && target\n"); break;
     case tokLogOr: printf2("; short-circuit || target\n"); break;
-    case tokIf: case tokIfNot: break;
+    case tokIf: case tokIfNot: case tokReturn: break;
     default: printf2("; %s\n", GetTokenName(tok)); break;
     }
 #endif
@@ -3104,6 +3107,7 @@ void GenExpr0(void)
     case tokComma:
     case ',':
     case '(':
+    case tokReturn:
       break;
 
     case tokIf:

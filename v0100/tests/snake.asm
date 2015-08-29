@@ -310,10 +310,6 @@ _delay:
 	sub	sp, -2
 ; for
 L24:
-	jmp	L26
-L25:
-	jmp	L24
-L26:
 ; {
 ; RPN'ized expression: "( ticks 1 + *u BiosGetTicks ) "
 ; Expanded expression: " (@-6)  BiosGetTicks ()2 "
@@ -350,7 +346,7 @@ L28:
 ; if
 ; RPN'ized expression: "ticks 1 + *u 0 + *u tcnt >= ticks 1 + *u 1 + *u || "
 ; Expanded expression: "(@-6) *(2) (@-2) *(2) >=u [sh||->32] (@-4) *(2) _Bool ||[32] "
-; Fused expression:    ">=u *(@-6) *(@-2) [sh||->32] *(2) (@-4) _Bool ||[32] "
+; Fused expression:    ">=u *(@-6) *(@-2) [sh||->32] *(2) (@-4) _Bool ||[32]  "
 	mov	ax, [bp-6]
 	cmp	ax, [bp-2]
 	setae	al
@@ -370,7 +366,7 @@ L32:
 	jmp	L27
 L30:
 ; }
-	jmp	L25
+	jmp	L24
 L27:
 L22:
 	leave
@@ -415,7 +411,7 @@ _lineh:
 ; RPN'ized expression: "w --p "
 ; Expanded expression: "(@8) --p(2) "
 L35:
-; Fused expression:    "--p(2) *(@8) "
+; Fused expression:    "--p(2) *(@8)  "
 	mov	ax, [bp+8]
 	dec	word [bp+8]
 ; JumpIfZero
@@ -482,7 +478,7 @@ _linev:
 ; RPN'ized expression: "h --p "
 ; Expanded expression: "(@8) --p(2) "
 L39:
-; Fused expression:    "--p(2) *(@8) "
+; Fused expression:    "--p(2) *(@8)  "
 	mov	ax, [bp+8]
 	dec	word [bp+8]
 ; JumpIfZero
@@ -535,7 +531,7 @@ _box:
 ; if
 ; RPN'ized expression: "solid "
 ; Expanded expression: "(@16) *(2) "
-; Fused expression:    "*(2) (@16) "
+; Fused expression:    "*(2) (@16)  "
 	mov	ax, [bp+16]
 ; JumpIfZero
 	test	ax, ax
@@ -545,7 +541,7 @@ _box:
 ; RPN'ized expression: "h --p "
 ; Expanded expression: "(@10) --p(2) "
 L45:
-; Fused expression:    "--p(2) *(@10) "
+; Fused expression:    "--p(2) *(@10)  "
 	mov	ax, [bp+10]
 	dec	word [bp+10]
 ; JumpIfZero
@@ -651,7 +647,7 @@ _text:
 ; RPN'ized expression: "s *u "
 ; Expanded expression: "(@8) *(2) *(-1) "
 L49:
-; Fused expression:    "*(2) (@8) *(-1) ax "
+; Fused expression:    "*(2) (@8) *(-1) ax  "
 	mov	ax, [bp+8]
 	mov	bx, ax
 	mov	al, [bx]
@@ -729,15 +725,8 @@ L53:
 	mov	ax, [bp-8]
 	cmp	ax, 0
 	jl	L56
-	jmp	L55
-L54:
 ; RPN'ized expression: "i -- "
 ; Expanded expression: "(@-8) --(2) "
-; Fused expression:    "--(2) *(@-8) "
-	dec	word [bp-8]
-	mov	ax, [bp-8]
-	jmp	L53
-L55:
 ; {
 ; RPN'ized expression: "s i + *u 48 n 10 % + = "
 ; Expanded expression: "(@-6) (@-8) *(2) + 48 (@8) *(2) 10 %u + =(-1) "
@@ -765,7 +754,11 @@ L55:
 	div	cx
 	mov	[bp+8], ax
 ; }
-	jmp	L54
+L54:
+; Fused expression:    "--(2) *(@-8) "
+	dec	word [bp-8]
+	mov	ax, [bp-8]
+	jmp	L53
 L56:
 ; RPN'ized expression: "s 5 + *u 0 = "
 ; Expanded expression: "(@-1) 0 =(-1) "
@@ -882,7 +875,7 @@ section .text
 ; RPN'ized expression: "( BiosKeyAvailable ) "
 ; Expanded expression: " BiosKeyAvailable ()0 "
 L64:
-; Fused expression:    "( BiosKeyAvailable )0 "
+; Fused expression:    "( BiosKeyAvailable )0  "
 	call	_BiosKeyAvailable
 ; JumpIfZero
 	test	ax, ax
@@ -924,10 +917,10 @@ L65:
 ; RPN'ized expression: "0 "
 ; Expanded expression: "0 "
 ; Expression value: 0
-; Fused expression:    "0 "
+; Fused expression:    "0  "
 	mov	ax, 0
 	jmp	L61
-; Fused expression:    "0 "
+; Fused expression:    "0  "
 	mov	ax, 0
 L61:
 	leave
@@ -942,10 +935,6 @@ _newtarget:
 	 sub	sp,          4
 ; for
 L68:
-	jmp	L70
-L69:
-	jmp	L68
-L70:
 ; {
 ; loc         bit : (@-2): unsigned
 ; RPN'ized expression: "bit 0 = "
@@ -1006,20 +995,13 @@ L72:
 	mov	ax, [bp-4]
 	cmp	ax, [_length]
 	jae	L75
-	jmp	L74
-L73:
 ; RPN'ized expression: "i ++ "
 ; Expanded expression: "(@-4) ++(2) "
-; Fused expression:    "++(2) *(@-4) "
-	inc	word [bp-4]
-	mov	ax, [bp-4]
-	jmp	L72
-L74:
 ; {
 ; if
 ; RPN'ized expression: "target 0 + *u snake i + *u 0 + *u == target 1 + *u snake i + *u 1 + *u == && "
 ; Expanded expression: "target 0 + *(2) snake (@-4) *(2) 4 * + 0 + *(2) == [sh&&->78] target 2 + *(2) snake (@-4) *(2) 4 * + 2 + *(2) == &&[78] "
-; Fused expression:    "+ target 0 push-ax * *(@-4) 4 + snake ax + ax 0 == **sp *ax [sh&&->78] + target 2 push-ax * *(@-4) 4 + snake ax + ax 2 == **sp *ax &&[78] "
+; Fused expression:    "+ target 0 push-ax * *(@-4) 4 + snake ax + ax 0 == **sp *ax [sh&&->78] + target 2 push-ax * *(@-4) 4 + snake ax + ax 2 == **sp *ax &&[78]  "
 	mov	ax, _target
 	push	ax
 	mov	ax, [bp-4]
@@ -1068,7 +1050,11 @@ L78:
 ; }
 L76:
 ; }
-	jmp	L73
+L73:
+; Fused expression:    "++(2) *(@-4) "
+	inc	word [bp-4]
+	mov	ax, [bp-4]
+	jmp	L72
 L75:
 ; if
 ; RPN'ized expression: "bit 0 == "
@@ -1081,7 +1067,7 @@ L75:
 	jmp	L71
 L79:
 ; }
-	jmp	L69
+	jmp	L68
 L71:
 
 section .rodata
@@ -1184,15 +1170,8 @@ L85:
 	mov	ax, [_length]
 	cmp	ax, 6
 	jae	L88
-	jmp	L87
-L86:
 ; RPN'ized expression: "length ++ "
 ; Expanded expression: "length ++(2) "
-; Fused expression:    "++(2) *length "
-	inc	word [_length]
-	mov	ax, [_length]
-	jmp	L85
-L87:
 ; {
 ; RPN'ized expression: "snake length + *u 0 + *u 40 2 / = "
 ; Expanded expression: "snake length *(2) 4 * + 0 + 20 =(2) "
@@ -1249,7 +1228,11 @@ section .text
 	call	_text
 	sub	sp, -8
 ; }
-	jmp	L86
+L86:
+; Fused expression:    "++(2) *length "
+	inc	word [_length]
+	mov	ax, [_length]
+	jmp	L85
 L88:
 ; RPN'ized expression: "direction 18432 = "
 ; Expanded expression: "direction 18432 =(2) "
@@ -1262,10 +1245,6 @@ L88:
 	call	_newtarget
 ; for
 L90:
-	jmp	L92
-L91:
-	jmp	L90
-L92:
 ; {
 ; RPN'ized expression: "key 0 = "
 ; Expanded expression: "(@-4) 0 =(2) "
@@ -1275,7 +1254,7 @@ L92:
 ; if
 ; RPN'ized expression: "( BiosKeyAvailable ) "
 ; Expanded expression: " BiosKeyAvailable ()0 "
-; Fused expression:    "( BiosKeyAvailable )0 "
+; Fused expression:    "( BiosKeyAvailable )0  "
 	call	_BiosKeyAvailable
 ; JumpIfZero
 	test	ax, ax
@@ -1295,7 +1274,7 @@ L94:
 ; switch
 ; RPN'ized expression: "key "
 ; Expanded expression: "(@-4) *(2) "
-; Fused expression:    "*(2) (@-4) "
+; Fused expression:    "*(2) (@-4)  "
 	mov	ax, [bp-4]
 	jmp	L97
 ; {
@@ -1445,15 +1424,8 @@ L112:
 	mov	ax, [bp-2]
 	cmp	ax, 0
 	jbe	L115
-	jmp	L114
-L113:
 ; RPN'ized expression: "i -- "
 ; Expanded expression: "(@-2) --(2) "
-; Fused expression:    "--(2) *(@-2) "
-	dec	word [bp-2]
-	mov	ax, [bp-2]
-	jmp	L112
-L114:
 ; {
 ; RPN'ized expression: "snake i + *u 0 + *u snake i 1 - + *u 0 + *u = "
 ; Expanded expression: "snake (@-2) *(2) 4 * + 0 + snake (@-2) *(2) 1 - 4 * + 0 + *(2) =(2) "
@@ -1496,12 +1468,16 @@ L114:
 	pop	bx
 	mov	[bx], ax
 ; }
-	jmp	L113
+L113:
+; Fused expression:    "--(2) *(@-2) "
+	dec	word [bp-2]
+	mov	ax, [bp-2]
+	jmp	L112
 L115:
 ; switch
 ; RPN'ized expression: "direction "
 ; Expanded expression: "direction *(2) "
-; Fused expression:    "*(2) direction "
+; Fused expression:    "*(2) direction  "
 	mov	ax, [_direction]
 	jmp	L117
 ; {
@@ -1599,7 +1575,7 @@ section .text
 ; if
 ; RPN'ized expression: "snake 0 + *u 0 + *u 1 < snake 0 + *u 0 + *u 40 1 - >= || snake 0 + *u 1 + *u 1 < || snake 0 + *u 1 + *u 25 1 - >= || "
 ; Expanded expression: "snake 0 + *(2) 1 <u [sh||->127] snake 0 + *(2) 39 >=u ||[127] _Bool [sh||->126] snake 2 + *(2) 1 <u ||[126] _Bool [sh||->125] snake 2 + *(2) 24 >=u ||[125] "
-; Fused expression:    "+ snake 0 <u *ax 1 [sh||->127] + snake 0 >=u *ax 39 ||[127] _Bool [sh||->126] + snake 2 <u *ax 1 ||[126] _Bool [sh||->125] + snake 2 >=u *ax 24 ||[125] "
+; Fused expression:    "+ snake 0 <u *ax 1 [sh||->127] + snake 0 >=u *ax 39 ||[127] _Bool [sh||->126] + snake 2 <u *ax 1 ||[126] _Bool [sh||->125] + snake 2 >=u *ax 24 ||[125]  "
 	mov	ax, _snake
 	mov	bx, ax
 	mov	ax, [bx]
@@ -1670,20 +1646,13 @@ L128:
 	mov	ax, [bp-2]
 	cmp	ax, [_length]
 	jae	L131
-	jmp	L130
-L129:
 ; RPN'ized expression: "i ++ "
 ; Expanded expression: "(@-2) ++(2) "
-; Fused expression:    "++(2) *(@-2) "
-	inc	word [bp-2]
-	mov	ax, [bp-2]
-	jmp	L128
-L130:
 ; {
 ; if
 ; RPN'ized expression: "snake 0 + *u 0 + *u snake i + *u 0 + *u == snake 0 + *u 1 + *u snake i + *u 1 + *u == && "
 ; Expanded expression: "snake 0 + *(2) snake (@-2) *(2) 4 * + 0 + *(2) == [sh&&->134] snake 2 + *(2) snake (@-2) *(2) 4 * + 2 + *(2) == &&[134] "
-; Fused expression:    "+ snake 0 push-ax * *(@-2) 4 + snake ax + ax 0 == **sp *ax [sh&&->134] + snake 2 push-ax * *(@-2) 4 + snake ax + ax 2 == **sp *ax &&[134] "
+; Fused expression:    "+ snake 0 push-ax * *(@-2) 4 + snake ax + ax 0 == **sp *ax [sh&&->134] + snake 2 push-ax * *(@-2) 4 + snake ax + ax 2 == **sp *ax &&[134]  "
 	mov	ax, _snake
 	push	ax
 	mov	ax, [bp-2]
@@ -1732,12 +1701,16 @@ L134:
 ; }
 L132:
 ; }
-	jmp	L129
+L129:
+; Fused expression:    "++(2) *(@-2) "
+	inc	word [bp-2]
+	mov	ax, [bp-2]
+	jmp	L128
 L131:
 ; if
 ; RPN'ized expression: "bit "
 ; Expanded expression: "(@-6) *(2) "
-; Fused expression:    "*(2) (@-6) "
+; Fused expression:    "*(2) (@-6)  "
 	mov	ax, [bp-6]
 ; JumpIfZero
 	test	ax, ax
@@ -1749,7 +1722,7 @@ L135:
 ; if
 ; RPN'ized expression: "snake 0 + *u 0 + *u target 0 + *u == snake 0 + *u 1 + *u target 1 + *u == && "
 ; Expanded expression: "snake 0 + *(2) target 0 + *(2) == [sh&&->139] snake 2 + *(2) target 2 + *(2) == &&[139] "
-; Fused expression:    "+ snake 0 push-ax + target 0 == **sp *ax [sh&&->139] + snake 2 push-ax + target 2 == **sp *ax &&[139] "
+; Fused expression:    "+ snake 0 push-ax + target 0 == **sp *ax [sh&&->139] + snake 2 push-ax + target 2 == **sp *ax &&[139]  "
 	mov	ax, _snake
 	push	ax
 	mov	ax, _target
@@ -1846,7 +1819,7 @@ L139:
 ; }
 L137:
 ; }
-	jmp	L91
+	jmp	L90
 L93:
 
 section .rodata
@@ -1874,7 +1847,7 @@ section .text
 ; RPN'ized expression: "( BiosKeyAvailable ) "
 ; Expanded expression: " BiosKeyAvailable ()0 "
 L141:
-; Fused expression:    "( BiosKeyAvailable )0 "
+; Fused expression:    "( BiosKeyAvailable )0  "
 	call	_BiosKeyAvailable
 ; JumpIfZero
 	test	ax, ax
@@ -1988,7 +1961,7 @@ L82:
 ; Ident seed
 ; Ident play
 ; Ident newtarget
-; Bytes used: 320/4784
+; Bytes used: 320/4816
 
 ; Next label number: 143
 ; Compilation succeeded.

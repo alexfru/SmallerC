@@ -188,7 +188,7 @@ int fsetpos(FILE*, fpos_t*);
 #endif
 
 #ifndef MAX_IDENT_TABLE_LEN
-#define MAX_IDENT_TABLE_LEN  (4096+656+32) // must be greater than MAX_IDENT_LEN
+#define MAX_IDENT_TABLE_LEN  (4096+656+64) // must be greater than MAX_IDENT_LEN
 #endif
 
 #ifndef SYNTAX_STACK_MAX
@@ -338,7 +338,7 @@ int fsetpos(FILE*, fpos_t*);
 #define SymFuncPtr    3
 
 #ifndef STACK_SIZE
-#define STACK_SIZE 128
+#define STACK_SIZE 129
 #endif
 
 #define SymFxn       1
@@ -651,6 +651,7 @@ char* CurFxnName = NULL;
 #ifndef NO_FUNC_
 int CurFxnNameLabel = 0;
 #endif
+int Main; // if inside main()
 
 int ParseLevel = 0; // Parse level/scope (file:0, fxn:1+)
 int ParamLevel = 0; // 1+ if parsing params, 0 otherwise
@@ -6927,7 +6928,6 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
         int undoSymbolsPtr = SyntaxStackCnt;
         int undoIdents = IdentTableLen;
         int i;
-        int Main;
 
 #ifndef NO_ANNOTATIONS
         DumpDecl(lastSyntaxPtr, 0);
@@ -6993,6 +6993,7 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
         {
           sp = 0;
           push(tokNumInt);
+          push(tokReturn); // value produced by generated code is used
           GenExpr();
         }
 
@@ -7452,15 +7453,20 @@ int ParseStatement(int tok, int BrkCntTarget[2], int casesIdx)
             }
           }
         }
+        push(tokReturn); // value produced by generated code is used
         GenExpr();
       }
-      GenJumpUncond(CurFxnEpilogLabel);
       tok = GetToken();
+      // If this return is the last statement in the function, the epilogue immediately
+      // follows and there's no need to jump to it.
+      if (!(tok == '}' && ParseLevel == 1 && !Main))
+        GenJumpUncond(CurFxnEpilogLabel);
     }
     else if (tok == tokWhile)
     {
       int labelBefore = LabelCnt++;
       int labelAfter = LabelCnt++;
+      int forever = 0;
 #ifndef NO_ANNOTATIONS
       GenStartCommentLine(); printf2("while\n");
 #endif
@@ -7485,25 +7491,35 @@ int ParseStatement(int tok, int BrkCntTarget[2], int casesIdx)
 
       GenNumLabel(labelBefore);
 
-      switch (stack[sp - 1][0])
+      if (constExpr)
       {
-      case '<':
-      case '>':
-      case tokEQ:
-      case tokNEQ:
-      case tokLEQ:
-      case tokGEQ:
-      case tokULess:
-      case tokUGreater:
-      case tokULEQ:
-      case tokUGEQ:
-        push2(tokIfNot, labelAfter);
-        GenExpr();
-        break;
-      default:
-        GenExpr();
-        GenJumpIfZero(labelAfter);
-        break;
+        // Special cases for while(0) and while(1)
+        if (!(forever = truncInt(exprVal)))
+          GenJumpUncond(labelAfter);
+      }
+      else
+      {
+        switch (stack[sp - 1][0])
+        {
+        case '<':
+        case '>':
+        case tokEQ:
+        case tokNEQ:
+        case tokLEQ:
+        case tokGEQ:
+        case tokULess:
+        case tokUGreater:
+        case tokULEQ:
+        case tokUGEQ:
+          push2(tokIfNot, labelAfter);
+          GenExpr();
+          break;
+        default:
+          push(tokReturn); // value produced by generated code is used
+          GenExpr();
+          GenJumpIfZero(labelAfter);
+          break;
+        }
       }
 
       tok = GetToken();
@@ -7511,7 +7527,9 @@ int ParseStatement(int tok, int BrkCntTarget[2], int casesIdx)
       brkCntTarget[1] = labelBefore; // continue target
       tok = ParseStatement(tok, brkCntTarget, casesIdx);
 
-      GenJumpUncond(labelBefore);
+      // Special case for while(0)
+      if (!(constExpr && !forever))
+        GenJumpUncond(labelBefore);
       GenNumLabel(labelAfter);
     }
     else if (tok == tokDo)
@@ -7560,25 +7578,35 @@ int ParseStatement(int tok, int BrkCntTarget[2], int casesIdx)
 
       GenNumLabel(labelWhile);
 
-      switch (stack[sp - 1][0])
+      if (constExpr)
       {
-      case '<':
-      case '>':
-      case tokEQ:
-      case tokNEQ:
-      case tokLEQ:
-      case tokGEQ:
-      case tokULess:
-      case tokUGreater:
-      case tokULEQ:
-      case tokUGEQ:
-        push2(tokIf, labelBefore);
-        GenExpr();
-        break;
-      default:
-        GenExpr();
-        GenJumpIfNotZero(labelBefore);
-        break;
+        // Special cases for while(0) and while(1)
+        if (truncInt(exprVal))
+          GenJumpUncond(labelBefore);
+      }
+      else
+      {
+        switch (stack[sp - 1][0])
+        {
+        case '<':
+        case '>':
+        case tokEQ:
+        case tokNEQ:
+        case tokLEQ:
+        case tokGEQ:
+        case tokULess:
+        case tokUGreater:
+        case tokULEQ:
+        case tokUGEQ:
+          push2(tokIf, labelBefore);
+          GenExpr();
+          break;
+        default:
+          push(tokReturn); // value produced by generated code is used
+          GenExpr();
+          GenJumpIfNotZero(labelBefore);
+          break;
+        }
       }
 
       GenNumLabel(labelAfter);
@@ -7611,25 +7639,35 @@ int ParseStatement(int tok, int BrkCntTarget[2], int casesIdx)
       //error("ParseStatement(): unexpected 'void' expression in 'if ( expression )'\n");
       scalarTypeCheck(synPtr);
 
-      switch (stack[sp - 1][0])
+      if (constExpr)
       {
-      case '<':
-      case '>':
-      case tokEQ:
-      case tokNEQ:
-      case tokLEQ:
-      case tokGEQ:
-      case tokULess:
-      case tokUGreater:
-      case tokULEQ:
-      case tokUGEQ:
-        push2(tokIfNot, labelAfterIf);
-        GenExpr();
-        break;
-      default:
-        GenExpr();
-        GenJumpIfZero(labelAfterIf);
-        break;
+        // Special cases for if(0) and if(1)
+        if (!truncInt(exprVal))
+          GenJumpUncond(labelAfterIf);
+      }
+      else
+      {
+        switch (stack[sp - 1][0])
+        {
+        case '<':
+        case '>':
+        case tokEQ:
+        case tokNEQ:
+        case tokLEQ:
+        case tokGEQ:
+        case tokULess:
+        case tokUGreater:
+        case tokULEQ:
+        case tokUGEQ:
+          push2(tokIfNot, labelAfterIf);
+          GenExpr();
+          break;
+        default:
+          push(tokReturn); // value produced by generated code is used
+          GenExpr();
+          GenJumpIfZero(labelAfterIf);
+          break;
+        }
       }
 
       tok = GetToken();
@@ -7658,6 +7696,9 @@ int ParseStatement(int tok, int BrkCntTarget[2], int casesIdx)
       int labelExpr3 = LabelCnt++;
       int labelBody = LabelCnt++;
       int labelAfter = LabelCnt++;
+      int cond = -1;
+      static int expr3Stack[STACK_SIZE / 2][2];
+      static int expr3Sp;
 #ifndef NO_FOR_DECL
       int decl = 0;
       int undoSymbolsPtr = 0, undoLocalOfs = 0, undoIdents = 0;
@@ -7709,46 +7750,97 @@ int ParseStatement(int tok, int BrkCntTarget[2], int casesIdx)
         //error("ParseStatement(): unexpected 'void' expression in 'for ( ; expression ; )'\n");
         scalarTypeCheck(synPtr);
 
-        switch (stack[sp - 1][0])
+        if (constExpr)
         {
-        case '<':
-        case '>':
-        case tokEQ:
-        case tokNEQ:
-        case tokLEQ:
-        case tokGEQ:
-        case tokULess:
-        case tokUGreater:
-        case tokULEQ:
-        case tokUGEQ:
-          push2(tokIfNot, labelAfter);
-          GenExpr();
-          break;
-        default:
-          GenExpr();
-          GenJumpIfZero(labelAfter);
-          break;
+          // Special cases for for(...; 0; ...) and for(...; 1; ...)
+          cond = truncInt(exprVal) != 0;
+        }
+        else
+        {
+          switch (stack[sp - 1][0])
+          {
+          case '<':
+          case '>':
+          case tokEQ:
+          case tokNEQ:
+          case tokLEQ:
+          case tokGEQ:
+          case tokULess:
+          case tokUGreater:
+          case tokULEQ:
+          case tokUGEQ:
+            push2(tokIfNot, labelAfter);
+            GenExpr();
+            break;
+          default:
+            push(tokReturn); // value produced by generated code is used
+            GenExpr();
+            GenJumpIfZero(labelAfter);
+            break;
+          }
         }
       }
-      GenJumpUncond(labelBody);
+      else
+      {
+        // Special case for for(...; ; ...)
+        cond = 1;
+      }
+      if (!cond)
+        // Special case for for(...; 0; ...)
+        GenJumpUncond(labelAfter);
 
-      GenNumLabel(labelExpr3);
       tok = GetToken();
       if ((tok = ParseExpr(tok, &gotUnary, &synPtr, &constExpr, &exprVal, 0, 0)) != ')')
         //error("ParseStatement(): ')' expected after 'for ( expression ; expression ; expression'\n");
         errorUnexpectedToken(tok);
-      if (gotUnary)
-      {
-        GenExpr();
-      }
-      GenJumpUncond(labelBefore);
 
-      GenNumLabel(labelBody);
-      tok = GetToken();
-      brkCntTarget[0] = labelAfter; // break target
-      brkCntTarget[1] = labelExpr3; // continue target
-      tok = ParseStatement(tok, brkCntTarget, casesIdx);
-      GenJumpUncond(labelExpr3);
+      // Try to reorder expr3 with body to reduce the number of jumps, favor small expr3's
+      if (gotUnary && sp <= 16 && (unsigned)sp <= sizeof expr3Stack / sizeof expr3Stack[0] - expr3Sp)
+      {
+        int cnt = sp;
+        // Stash the stack containing expr3
+        memcpy(expr3Stack + expr3Sp, stack, cnt * sizeof stack[0]);
+        expr3Sp += cnt;
+
+        // Body
+        tok = GetToken();
+        brkCntTarget[0] = labelAfter; // break target
+        brkCntTarget[1] = labelExpr3; // continue target
+        tok = ParseStatement(tok, brkCntTarget, casesIdx);
+
+        // Unstash expr3 and generate code for it
+        expr3Sp -= cnt;
+        memcpy(stack, expr3Stack + expr3Sp, cnt * sizeof stack[0]);
+        sp = cnt;
+        GenNumLabel(labelExpr3);
+        GenExpr();
+
+        // Special case for for(...; 0; ...)
+        if (cond)
+          GenJumpUncond(labelBefore);
+      }
+      else
+      {
+        if (gotUnary)
+        {
+          GenJumpUncond(labelBody);
+          // expr3
+          GenNumLabel(labelExpr3);
+          GenExpr();
+          GenJumpUncond(labelBefore);
+          GenNumLabel(labelBody);
+        }
+
+        // Body
+        tok = GetToken();
+        brkCntTarget[0] = labelAfter; // break target
+        brkCntTarget[1] = gotUnary ? labelExpr3 : (cond ? labelBefore : labelAfter); // continue target
+        tok = ParseStatement(tok, brkCntTarget, casesIdx);
+
+        // Special case for for(...; 0; ...)
+        if (brkCntTarget[1] != labelAfter)
+          GenJumpUncond(brkCntTarget[1]);
+      }
 
       GenNumLabel(labelAfter);
 
@@ -7818,6 +7910,7 @@ int ParseStatement(int tok, int BrkCntTarget[2], int casesIdx)
       //error("ParseStatement(): unexpected 'void' expression in 'switch ( expression )'\n");
       scalarTypeCheck(synPtr);
 
+      push(tokReturn); // value produced by generated code is used
       GenExpr();
 
       tok = GetToken();
