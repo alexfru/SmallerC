@@ -541,7 +541,7 @@ void GenUpdateFrameSize(void)
 STATIC
 void GenFxnProlog(void)
 {
-  if (CurFxnParamCntMax)
+  if (CurFxnParamCntMin && CurFxnParamCntMax)
   {
     int i, cnt = CurFxnParamCntMax;
     if (cnt > 4)
