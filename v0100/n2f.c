@@ -18,11 +18,18 @@
   Command line format for n2f (er, "nasm"):
     n2f <-f format> input.asm [-o output<.asm|.bin|.o>]
   Supported formats:
-    asm  performs assembly conversion only
-    bin  performs conversion and assembles with FASM (default, if format isn't
+    asm  performs assembly conversion only:
+         - orders sections like this: .text, .rodata, .data, .bss, others
+    bin  performs conversion:
+         - removes section and global/public directives
+         - orders sections like this: .text, .rodata, .data, .bss, others
+         and assembles with FASM into a flat binary (default, if format isn't
          specified)
-    elf  same as bin, except inserts "format elf" at the beginning of the
-         converted file (smlrcc invokes nasm with "-f elf")
+    elf  performs conversion:
+         - inserts "format elf" at the beginning of the converted file
+         - orders sections like this: .text, .rodata, .data, .bss, others
+         and assembles with FASM into an ELF object file (smlrcc invokes nasm
+         with "-f elf")
 
   Limitations:
   - FASM doesn't support 16-bit relocations in the ELF object format, so this
@@ -43,8 +50,6 @@
     memory model in real mode)
 
   How conversion works:
-  - "format elf" is inserted at the beginning of the converted assembly file
-    when invoked with the "-f elf" option (Smaller C works with ELF files)
   - fragmets of the same section are combined under the same section header
     (FASM puts fragments into separate sections, so without combining you end
     up with multiple .text (or .data or .bss or .rodata) sections in the ELF
@@ -54,7 +59,7 @@
   - 'section .rodata' -> 'section ".rodata"'
   - 'section .data' -> 'section ".data" writable'
   - 'section .bss' -> 'section ".bss" writable'
-  - 'section .something_else' -> 'section ".something_else"'
+  - 'section something_else' -> 'section "something_else"'
   - 'bits 32/16' -> 'use32/use16'
   - 'alignb number' -> 'align number'
   - 'global symbol' -> 'public symbol'
@@ -88,6 +93,7 @@ char* OutName;
 char* OutputFormat;
 FILE *fin, *fout;
 int DontAssemble;
+int FlatBinary;
 
 void error(char* format, ...)
 {
@@ -169,10 +175,34 @@ void endFrag(long end)
 int fragCmp(const void* p1_, const void* p2_)
 {
   const tFrag *p1 = (const tFrag*)p1_, *p2 = (const tFrag*)p2_;
-  if (p1->sec < p2->sec)
-    return -1;
-  if (p1->sec > p2->sec)
-    return +1;
+  unsigned sec1 = p1->sec, sec2 = p2->sec;
+  if (sec1 != sec2)
+  {
+    char *name1 = secName[sec1], *name2 = secName[sec2];
+    // .text goes first
+    if (!strcmp(name1, ".text"))
+      return -1;
+    if (!strcmp(name2, ".text"))
+      return +1;
+    // .rodata goes next
+    if (!strcmp(name1, ".rodata"))
+      return -1;
+    if (!strcmp(name2, ".rodata"))
+      return +1;
+    // .data goes next
+    if (!strcmp(name1, ".data"))
+      return -1;
+    if (!strcmp(name2, ".data"))
+      return +1;
+    // .bss goes next
+    if (!strcmp(name1, ".bss"))
+      return -1;
+    if (!strcmp(name2, ".bss"))
+      return +1;
+    // all others go last, ordered alphabetically
+    // TBD??? move these between .text and .rodata???
+    return strcmp(name1, name2);
+  }
   if (p1->start < p2->start)
     return -1;
   if (p1->start > p2->start)
@@ -302,6 +332,7 @@ void n2f1(FILE* fin, long start, long end, FILE* fout)
     }
     else
     {
+      int skip = 0;
       // emit leading tabs and/or spaces if there were any
       while (spc)
         if (spc >= 8)
@@ -313,7 +344,13 @@ void n2f1(FILE* fin, long start, long end, FILE* fout)
       if (!strcmp(ident, "alignb"))
         fputs("align", fout);
       else if (!strcmp(ident, "global"))
-        fputs("public", fout);
+      {
+        // unlike NASM, FASM doesn't like global/public symbols in flat binaries
+        if (FlatBinary)
+          fputc('\n', fout), skip = 1; // in case there were leading tabs/spaces, finish off the line
+        else
+          fputs("public", fout);
+      }
       else if (!strcmp(ident, "resb"))
         fputs("rb", fout);
       else if (!strcmp(ident, "resw"))
@@ -327,8 +364,11 @@ void n2f1(FILE* fin, long start, long end, FILE* fout)
       else
         fputs(ident, fout); // pass unknown things through
 
-      // copy the rest of the line as-is
-      copyLine(fin, fout);
+      // copy the rest of the line as-is, unless it needs to be skipped
+      if (skip)
+        skipLine(fin);
+      else
+        copyLine(fin, fout);
     }
 
     line++;
@@ -362,7 +402,7 @@ void n2f(FILE* fin, FILE* fout)
         attrs = " executable";
       else if (!strcmp(secName[sec], ".data") || !strcmp(secName[sec], ".bss"))
         attrs = " writable";
-      fprintf(fout, "section \"%s\"%s\n", secName[sec], attrs);
+      fprintf(fout, "%ssection \"%s\"%s\n", FlatBinary ? ";" : "", secName[sec], attrs);
     }
 
     n2f1(fin, frag[i].start, frag[i].end, fout);
@@ -495,6 +535,8 @@ int main(int argc, char** argv)
 
   if (!OutName && DontAssemble)
     error("Output name required\n");
+
+  FlatBinary = !strcmp(OutputFormat, "bin");
 
   convert();
 
