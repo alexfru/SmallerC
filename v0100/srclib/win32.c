@@ -130,46 +130,46 @@ tPeImageImportDescriptor _dll_imports[] =
 void ExitProcess(unsigned ExitCode)
 {
   asm("push dword [ebp+8]\n"
-      "call [_iat + 4*0]");
+      "call dword [_iat + 4*0]");
 }
 
 char* GetCommandLineA(void)
 {
-  asm("call [_iat + 4*1]");
+  asm("call dword [_iat + 4*1]");
 }
 
 unsigned GetStdHandle(unsigned nStdHandle)
 {
   asm("push dword [ebp+8]\n"
-      "call [_iat + 4*2]");
+      "call dword [_iat + 4*2]");
 }
 
 unsigned GetFileType(unsigned Handle)
 {
   asm("push dword [ebp+8]\n"
-      "call [_iat + 4*3]");
+      "call dword [_iat + 4*3]");
 }
 
 int CloseHandle(unsigned Handle)
 {
   asm("push dword [ebp+8]\n"
-      "call [_iat + 4*4]");
+      "call dword [_iat + 4*4]");
 }
 
 unsigned GetLastError(void)
 {
-  asm("call [_iat + 4*5]");
+  asm("call dword [_iat + 4*5]");
 }
 
 void SetLastError(unsigned Error)
 {
   asm("push dword [ebp+8]\n"
-      "call [_iat + 4*6]");
+      "call dword [_iat + 4*6]");
 }
 
 unsigned GetProcessHeap(void)
 {
-  asm("call [_iat + 4*7]");
+  asm("call dword [_iat + 4*7]");
 }
 
 void* HeapAlloc(unsigned hHeap,
@@ -179,7 +179,7 @@ void* HeapAlloc(unsigned hHeap,
   asm("push dword [ebp+16]\n"
       "push dword [ebp+12]\n"
       "push dword [ebp+8]\n"
-      "call [_iat + 4*8]");
+      "call dword [_iat + 4*8]");
 }
 
 int HeapFree(unsigned hHeap,
@@ -189,7 +189,7 @@ int HeapFree(unsigned hHeap,
   asm("push dword [ebp+16]\n"
       "push dword [ebp+12]\n"
       "push dword [ebp+8]\n"
-      "call [_iat + 4*9]");
+      "call dword [_iat + 4*9]");
 }
 
 void* HeapReAlloc(unsigned hHeap,
@@ -201,7 +201,7 @@ void* HeapReAlloc(unsigned hHeap,
       "push dword [ebp+16]\n"
       "push dword [ebp+12]\n"
       "push dword [ebp+8]\n"
-      "call [_iat + 4*10]");
+      "call dword [_iat + 4*10]");
 }
 
 unsigned CreateFileA(char* FileName,
@@ -219,20 +219,20 @@ unsigned CreateFileA(char* FileName,
       "push dword [ebp+16]\n"
       "push dword [ebp+12]\n"
       "push dword [ebp+8]\n"
-      "call [_iat + 4*11]");
+      "call dword [_iat + 4*11]");
 }
 
 int DeleteFileA(char*)
 {
   asm("push dword [ebp+8]\n"
-      "call [_iat + 4*12]");
+      "call dword [_iat + 4*12]");
 }
 
 int MoveFileA(char* lpExistingFileName, char* lpNewFileName)
 {
   asm("push dword [ebp+12]\n"
       "push dword [ebp+8]\n"
-      "call [_iat + 4*13]");
+      "call dword [_iat + 4*13]");
 }
 
 int ReadFile(unsigned Handle,
@@ -246,7 +246,7 @@ int ReadFile(unsigned Handle,
       "push dword [ebp+16]\n"
       "push dword [ebp+12]\n"
       "push dword [ebp+8]\n"
-      "call [_iat + 4*14]");
+      "call dword [_iat + 4*14]");
 }
 
 int WriteFile(unsigned Handle,
@@ -260,7 +260,7 @@ int WriteFile(unsigned Handle,
       "push dword [ebp+16]\n"
       "push dword [ebp+12]\n"
       "push dword [ebp+8]\n"
-      "call [_iat + 4*15]");
+      "call dword [_iat + 4*15]");
 }
 
 unsigned SetFilePointer(unsigned hFile,
@@ -272,13 +272,13 @@ unsigned SetFilePointer(unsigned hFile,
       "push dword [ebp+16]\n"
       "push dword [ebp+12]\n"
       "push dword [ebp+8]\n"
-      "call [_iat + 4*16]");
+      "call dword [_iat + 4*16]");
 }
 
 unsigned GetFileAttributesA(char* lpFileName)
 {
   asm("push dword [ebp+8]\n"
-      "call [_iat + 4*17]");
+      "call dword [_iat + 4*17]");
 }
 
 unsigned GetEnvironmentVariableA(char* lpName,
@@ -288,18 +288,18 @@ unsigned GetEnvironmentVariableA(char* lpName,
   asm("push dword [ebp+16]\n"
       "push dword [ebp+12]\n"
       "push dword [ebp+8]\n"
-      "call [_iat + 4*18]");
+      "call dword [_iat + 4*18]");
 }
 
 unsigned GetTickCount(void)
 {
-  asm("call [_iat + 4*19]");
+  asm("call dword [_iat + 4*19]");
 }
 
 void GetSystemTime(struct _SYSTEMTIME* pSystemTime)
 {
   asm("push dword [ebp+8]\n"
-      "call [_iat + 4*20]");
+      "call dword [_iat + 4*20]");
 }
 
 int SystemTimeToTzSpecificLocalTime(struct _TIME_ZONE_INFORMATION* lpTimeZoneInformation,
@@ -309,7 +309,7 @@ int SystemTimeToTzSpecificLocalTime(struct _TIME_ZONE_INFORMATION* lpTimeZoneInf
   asm("push dword [ebp+16]\n"
       "push dword [ebp+12]\n"
       "push dword [ebp+8]\n"
-      "call [_iat + 4*21]");
+      "call dword [_iat + 4*21]");
 }
 
 int TzSpecificLocalTimeToSystemTime(struct _TIME_ZONE_INFORMATION* lpTimeZoneInformation,
@@ -319,7 +319,7 @@ int TzSpecificLocalTimeToSystemTime(struct _TIME_ZONE_INFORMATION* lpTimeZoneInf
   asm("push dword [ebp+16]\n"
       "push dword [ebp+12]\n"
       "push dword [ebp+8]\n"
-      "call [_iat + 4*22]");
+      "call dword [_iat + 4*22]");
 }
 
 int CreateProcessA(char* lpApplicationName,
@@ -343,27 +343,27 @@ int CreateProcessA(char* lpApplicationName,
       "push dword [ebp+16]\n"
       "push dword [ebp+12]\n"
       "push dword [ebp+8]\n"
-      "call [_iat + 4*23]");
+      "call dword [_iat + 4*23]");
 }
 
 int GetExitCodeProcess(unsigned hProcess, unsigned* lpExitCode)
 {
   asm("push dword [ebp+12]\n"
       "push dword [ebp+8]\n"
-      "call [_iat + 4*24]");
+      "call dword [_iat + 4*24]");
 }
 
 unsigned WaitForSingleObject(unsigned hHandle, unsigned dwMilliseconds)
 {
   asm("push dword [ebp+12]\n"
       "push dword [ebp+8]\n"
-      "call [_iat + 4*25]");
+      "call dword [_iat + 4*25]");
 }
 
 TOP_LEVEL_EXCEPTION_FILTER* SetUnhandledExceptionFilter(TOP_LEVEL_EXCEPTION_FILTER* lpTopLevelExceptionFilter)
 {
   asm("push dword [ebp+8]\n"
-      "call [_iat + 4*26]");
+      "call dword [_iat + 4*26]");
 }
 
 #endif // _WINDOWS
