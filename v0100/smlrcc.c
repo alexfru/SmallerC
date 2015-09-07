@@ -1357,9 +1357,9 @@ int main(int argc, char* argv[])
   if (PreprocessWithGcc)
   {
 #ifdef HOST_LINUX
-    AddOptions(&PrepOptions, &PrepOptionsLen, "gcc -E -nostdinc");
+    AddOptions(&PrepOptions, &PrepOptionsLen, "gcc -E -undef -nostdinc");
 #else
-    AddOptions(&PrepOptions, &PrepOptionsLen, "gcc.exe -E -nostdinc");
+    AddOptions(&PrepOptions, &PrepOptionsLen, "gcc.exe -E -undef -nostdinc");
 #endif
   }
 
