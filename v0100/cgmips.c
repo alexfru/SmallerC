@@ -546,6 +546,11 @@ void GenFxnProlog(void)
     int i, cnt = CurFxnParamCntMax;
     if (cnt > 4)
       cnt = 4;
+    // TBD!!! for structure passing use the cumulative parameter size
+    // instead of the number of parameters. Currently this bug is masked
+    // by the subroutine that pushes structures on the stack (it copies
+    // all words except the first to the stack). But passing structures
+    // in registers from assembly code won't always work.
     for (i = 0; i < cnt; i++)
       GenPrintInstr2Operands(MipsInstrSW, 0,
                              MipsOpRegA0 + i, 0,
