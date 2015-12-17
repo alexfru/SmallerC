@@ -38,6 +38,8 @@ Trillek: http://trillek.org/
 Normative and other useful documents on C:
 C99 + TC1 + TC2 + TC3, WG14 N1256:
   http://www.open-std.org/jtc1/sc22/wg14/www/docs/n1256.pdf
+Dave Prosser's C preprocessing algorithm annotated by Diomidis D. Spinellis:
+  http://www.spinellis.gr/blog/20060626/index.html
 Rationale for C99:
   http://www.open-std.org/jtc1/sc22/wg14/www/docs/C99RationaleV5.10.pdf
 The New C Standard: An Economic and Cultural Commentary:
