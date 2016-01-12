@@ -2,6 +2,7 @@
 
 c0w.asm
 c0.c
+x87.c
 
 win32.c
 

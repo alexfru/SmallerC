@@ -1869,7 +1869,7 @@ L82:
 
 
 ; Syntax/declaration table/stack:
-; Bytes used: 1095/13280
+; Bytes used: 1095/15360
 
 
 ; Macro table:
@@ -1914,10 +1914,21 @@ L82:
 ; Macro MIN_LENGTH = `6`
 ; Macro MAX_LENGTH = `(VWIDTH * VHEIGHT)`
 ; Macro RAND_MAX = `0x7FFF`
-; Bytes used: 729/4096
+; Bytes used: 729/5120
 
 
 ; Identifier table:
+; Ident __floatsisf
+; Ident __floatunsisf
+; Ident __fixsfsi
+; Ident __fixunssfsi
+; Ident __addsf3
+; Ident __subsf3
+; Ident __negsf2
+; Ident __mulsf3
+; Ident __divsf3
+; Ident __lesf2
+; Ident __gesf2
 ; Ident main
 ; Ident <something>
 ; Ident start
@@ -1961,7 +1972,7 @@ L82:
 ; Ident seed
 ; Ident play
 ; Ident newtarget
-; Bytes used: 320/4816
+; Bytes used: 441/5632
 
 ; Next label number: 143
 ; Compilation succeeded.

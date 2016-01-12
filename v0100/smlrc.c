@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2012-2015, Alexey Frunze
+Copyright (c) 2012-2016, Alexey Frunze
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -53,6 +53,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define NO_EXTRA_WARNS
 #define NO_FOR_DECL
 #define NO_STRUCT_BY_VAL
+#define NO_FP
 #endif
 
 // Passing and returning structures by value is currenly supported
@@ -131,6 +132,7 @@ int strncmp(char*, char*, size_t);
 void* memmove(void*, void*, size_t);
 void* memcpy(void*, void*, size_t);
 void* memset(void*, int, size_t);
+int memcmp(void*, void*, size_t);
 
 int isspace(int);
 int isdigit(int);
@@ -169,6 +171,12 @@ int fsetpos(FILE*, fpos_t*);
 
 #endif // #ifndef __SMALLER_C__
 
+// Floating point requires 32 bits
+#ifndef CAN_COMPILE_32BIT
+#ifndef NO_FP
+#define NO_FP
+#endif
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -184,15 +192,15 @@ int fsetpos(FILE*, fpos_t*);
 #define MAX_CHAR_QUEUE_LEN   (MAX_STRING_LEN + 1)
 
 #ifndef MAX_MACRO_TABLE_LEN
-#define MAX_MACRO_TABLE_LEN  4096
+#define MAX_MACRO_TABLE_LEN  (4096+1024)
 #endif
 
 #ifndef MAX_IDENT_TABLE_LEN
-#define MAX_IDENT_TABLE_LEN  (4096+656+64) // must be greater than MAX_IDENT_LEN
+#define MAX_IDENT_TABLE_LEN  (4096+1024+512) // must be greater than MAX_IDENT_LEN
 #endif
 
 #ifndef SYNTAX_STACK_MAX
-#define SYNTAX_STACK_MAX (2048+512+64+32)
+#define SYNTAX_STACK_MAX (2048+1024)
 #endif
 
 #ifndef MAX_FILE_NAME_LEN
@@ -326,6 +334,7 @@ int fsetpos(FILE*, fpos_t*);
 #define tokMemberIdent 0x92
 #define tokEnumPtr    0x93
 #define tokIntr       0x94
+#define tokNumFloat   0x95
 
 //#define FormatFlat      0
 #define FormatSegmented 1
@@ -335,7 +344,8 @@ int fsetpos(FILE*, fpos_t*);
 #define SymVoidSynPtr 0
 #define SymIntSynPtr  1
 #define SymUintSynPtr 2
-#define SymFuncPtr    3
+#define SymFloatSynPtr 3
+#define SymFuncPtr    4
 
 #ifndef STACK_SIZE
 #define STACK_SIZE 129
@@ -492,6 +502,10 @@ STATIC
 void errorNotConst(void);
 STATIC
 void errorLongExpr(void);
+#ifndef NO_FP
+STATIC
+void warnFloat2Int(void);
+#endif
 
 STATIC
 int FindSymbol(char* s);
@@ -982,7 +996,7 @@ unsigned char tktk[] =
   tokUGreater, tokUGEQ, tokAssignURSh, tokAssignUDiv, tokAssignUMod,
   // Helper (pseudo-)tokens:
   tokNumInt, tokLitStr, tokLocalOfs, tokNumUint, tokIdent, tokShortCirc,
-  tokSChar, tokShort, tokLong, tokUChar, tokUShort, tokULong,
+  tokSChar, tokShort, tokLong, tokUChar, tokUShort, tokULong, tokNumFloat,
 };
 
 char* tks[] =
@@ -1004,7 +1018,7 @@ char* tks[] =
   ">u", ">=u", ">>=u", "/=u", "%=u",
   // Helper (pseudo-)tokens:
   "<NumInt>",  "<LitStr>", "<LocalOfs>", "<NumUint>", "<Ident>", "<ShortCirc>",
-  "signed char", "short", "long", "unsigned char", "unsigned short", "unsigned long",
+  "signed char", "short", "long", "unsigned char", "unsigned short", "unsigned long", "float"
 };
 
 STATIC
@@ -1461,91 +1475,230 @@ int popPrep(void)
 }
 #endif
 
+#ifndef NO_FP
+#include "fp.c"
+
+#define FXNI2F    0
+#define FXNU2F    1
+#define FXNF2I    2
+#define FXNF2U    3
+#define FXNFADD   4
+#define FXNFSUB   5
+#define FXNFNEG   6
+#define FXNFMUL   7
+#define FXNFDIV   8
+#define FXNFCMPL  9
+#define FXNFCMPG 10
+// Names of external functions for floating point arithmetic
+char* FpFxnName[] =
+{
+  /*FXNI2F  */ "__floatsisf",
+  /*FXNU2F  */ "__floatunsisf",
+  /*FXNF2I  */ "__fixsfsi",
+  /*FXNF2U  */ "__fixunssfsi",
+  /*FXNFADD */ "__addsf3",
+  /*FXNFSUB */ "__subsf3",
+  /*FXNFNEG */ "__negsf2",
+  /*FXNFMUL */ "__mulsf3",
+  /*FXNFDIV */ "__divsf3",
+  /*FXNFCMPL*/ "__lesf2",
+  /*FXNFCMPG*/ "__gesf2"
+};
+#endif
+
 STATIC
 int GetNumber(void)
 {
   char* p = CharQueue;
   int ch = *p;
+  int leadingZero = (ch == '0');
   unsigned n = 0;
   int type = 0;
   int uSuffix = 0;
 #ifdef CAN_COMPILE_32BIT
   int lSuffix = 0;
 #endif
+#ifndef NO_FP
+  int mcnt = 0, eexp = 0;
+#endif
   char* eTooBig = "Constant too big\n";
 
-  if (ch == '0')
+  // First, detect and handle hex constants. Octals can't be detected immediately
+  // because floating-point constants also may begin with the digit 0.
+
+  if (leadingZero && (p[1] == 'x' || p[1] == 'X'))
   {
-    // this is either an octal or a hex constant
-    type = 'o';
+    // this is a hex constant
+    int cnt = 0;
+    type = 'h';
     ShiftCharN(1);
-    if ((ch = *p) == 'x' || ch == 'X')
+    ShiftCharN(1);
+    while ((ch = *p) != '\0' && (isdigit(ch & 0xFFu) || strchr("abcdefABCDEF", ch)))
     {
-      // this is a hex constant
-      int cnt = 0;
-      ShiftCharN(1);
-      while ((ch = *p) != '\0' && (isdigit(ch & 0xFFu) || strchr("abcdefABCDEF", ch)))
-      {
-        if (ch >= 'a') ch -= 'a' - 10;
-        else if (ch >= 'A') ch -= 'A' - 10;
-        else ch -= '0';
-        if (PrepDontSkipTokens && (n * 16 / 16 != n || n * 16 + ch < n * 16))
-          error(eTooBig);
-        n = n * 16 + ch;
-        ShiftCharN(1);
-        cnt++;
-      }
-      if (!cnt)
-        error("Invalid hexadecimal constant\n");
-      type = 'h';
-    }
-    // this is an octal constant
-    else while ((ch = *p) >= '0' && ch <= '7')
-    {
-      ch -= '0';
-      if (PrepDontSkipTokens && (n * 8 / 8 != n || n * 8 + ch < n * 8))
+      if (ch >= 'a') ch -= 'a' - 10;
+      else if (ch >= 'A') ch -= 'A' - 10;
+      else ch -= '0';
+      if (PrepDontSkipTokens && (n * 16 / 16 != n || n * 16 + ch < n * 16))
         error(eTooBig);
-      n = n * 8 + ch;
+      n = n * 16 + ch;
       ShiftCharN(1);
+      cnt++;
     }
+    if (!cnt)
+      error("Invalid hexadecimal constant\n");
   }
-  // this is a decimal constant
+#ifndef NO_FP
   else
   {
+    // this is a decimal (possibly floating-point) or an octal constant, parse as decimal
+    int mexp = 0, dot = 0;
+    int ecnt = 0;
     type = 'd';
-    while ((ch = *p) >= '0' && ch <= '9')
+    // skip leading zeroes, if any
+    while (*p == '0')
+      ShiftCharN(1);
+    // get digits of integral part, if any
+    while (isdigit((ch = *p) & 0xFFu))
+    {
+      if (mcnt < MAX_CONST_DIGITS)
+        ConstDigits[mcnt++] = ch - '0';
+      else
+        mexp++; // TBD??? overflow
+      ShiftCharN(1);
+    }
+    // get dot and digits of fractional part, if any
+    if (*p == '.')
+    {
+      dot = 1;
+      ShiftCharN(1);
+      // if the integral part is 0, skip leading zeroes in the fractional part, if any
+      if (!mcnt)
+        while (*p == '0')
+          ShiftCharN(1), mexp--; // TBD??? overflow
+      while (isdigit((ch = *p) & 0xFFu))
+      {
+        if (mcnt < MAX_CONST_DIGITS)
+          ConstDigits[mcnt++] = ch - '0';
+        mexp--; // TBD??? overflow
+        ShiftCharN(1);
+      }
+    }
+    // get exponent part, if any
+    if (*p == 'e' || *p == 'E')
+    {
+      int esign = '+';
+      ShiftCharN(1);
+      if (*p == '+' || *p == '-')
+        esign = *p, ShiftCharN(1);
+      while (isdigit((ch = *p) & 0xFFu))
+      {
+        ch -= '0';
+        if (n * 10 / 10 != n ||
+            n * 10 + ch < n * 10 ||
+            n * 10 + ch > UINT_MAX / 2)
+        {
+          if (PrepDontSkipTokens)
+            error(eTooBig);
+          n = 0;
+        }
+        n = n * 10 + ch;
+        ShiftCharN(1);
+        ecnt++;
+      }
+      if (!ecnt)
+        error("Invalid float constant\n");
+      eexp = n;
+      if (esign == '-')
+        eexp = -eexp;
+    }
+    if (dot || ecnt)
+    {
+      // this is a float constant (has either a dot or an exponent)
+      // get float suffix, if any
+      type = 'f';
+      if (*p == 'f' || *p == 'F')
+        ShiftCharN(1);
+      // also drop trailing zeroes, if any
+      while (mcnt)
+      {
+        if (ConstDigits[mcnt - 1])
+          break;
+        mexp++; // TBD??? overflow
+        mcnt--;
+      }
+      if (!mcnt)
+        ConstDigits[mcnt++] = 0, mexp = 0;
+      if ((mexp >= 0 && eexp > INT_MAX - mexp) ||
+          (mexp < 0 && eexp <= INT_MIN - (mexp + 1)))
+      {
+        if (PrepDontSkipTokens)
+          error(eTooBig);
+      }
+      else
+        eexp += mexp;
+    }
+    else
+    {
+      // handle decimal and octal integers
+      int base = leadingZero ? 8 : 10;
+      int i;
+      type = leadingZero ? 'o' : 'd';
+      for (i = 0; i < mcnt; i++)
+      {
+        ch = ConstDigits[i];
+        if (ch >= base)
+          error("Invalid octal constant\n");
+        if (PrepDontSkipTokens && (n * base / base != n || n * base + ch < n * base))
+          error(eTooBig);
+        n = n * base + ch;
+      }
+    }
+  }
+#else
+  else
+  {
+    // handle decimal and octal integers
+    int base = leadingZero ? 8 : 10;
+    type = leadingZero ? 'o' : 'd';
+    while ((ch = *p) >= '0' && ch < base + '0')
     {
       ch -= '0';
-      if (PrepDontSkipTokens && (n * 10 / 10 != n || n * 10 + ch < n * 10))
+      if (PrepDontSkipTokens && (n * base / base != n || n * base + ch < n * base))
         error(eTooBig);
-      n = n * 10 + ch;
+      n = n * base + ch;
       ShiftCharN(1);
     }
   }
+#endif
 
-  // possible combinations of suffixes:
+  // possible combinations of integer suffixes:
   //   none
   //   U
   //   UL
   //   L
   //   LU
-  if ((ch = *p) == 'u' || ch == 'U')
+#ifndef NO_FP
+  if (type != 'f')
+#endif
   {
-    uSuffix = 1;
-    ShiftCharN(1);
-  }
-#ifdef CAN_COMPILE_32BIT
-  if ((ch = *p) == 'l' || ch == 'L')
-  {
-    lSuffix = 1;
-    ShiftCharN(1);
-    if (!uSuffix && ((ch = *p) == 'u' || ch == 'U'))
+    if ((ch = *p) == 'u' || ch == 'U')
     {
       uSuffix = 1;
       ShiftCharN(1);
     }
-  }
+#ifdef CAN_COMPILE_32BIT
+    if ((ch = *p) == 'l' || ch == 'L')
+    {
+      lSuffix = 1;
+      ShiftCharN(1);
+      if (!uSuffix && ((ch = *p) == 'u' || ch == 'U'))
+      {
+        uSuffix = 1;
+        ShiftCharN(1);
+      }
+    }
 #endif
+  }
 
   if (!PrepDontSkipTokens)
   {
@@ -1553,6 +1706,14 @@ int GetNumber(void)
     TokenValueInt = 0;
     return tokNumInt;
   }
+
+#ifndef NO_FP
+  if (type == 'f')
+  {
+    TokenValueInt = d2f(ConstDigits, mcnt, eexp);
+    return tokNumFloat;
+  }
+#endif
 
   // Ensure the constant fits into 16(32) bits
   if (
@@ -1642,6 +1803,9 @@ int GetTokenInner(void)
     ShiftCharN(1); return ch;
   case '.':
     if (p[1] == '.' && p[2] == '.') { ShiftCharN(3); return tokEllipsis; }
+#ifndef NO_FP
+    if (isdigit(p[1] & 0xFFu)) { return GetNumber(); }
+#endif
     ShiftCharN(1); return ch;
   case '*':
     if (p[1] == '=') { ShiftCharN(2); return tokAssignMul; }
@@ -1651,7 +1815,6 @@ int GetTokenInner(void)
     ShiftCharN(1); return ch;
   case '/':
     if (p[1] == '=') { ShiftCharN(2); return tokAssignDiv; }
-    // if (p[1] == '/' || p[1] == '*') { SkipSpace(1); continue; } // already taken care of
     ShiftCharN(1); return ch;
   }
 
@@ -2175,6 +2338,33 @@ void del(int pos, int cnt)
   sp -= cnt;
 }
 
+#ifndef NO_FP
+STATIC
+void rev(int pos, int cnt)
+{
+  // reverse cnt items at pos on the stack
+  int (*p1)[2] = stack + pos, (*p2)[2] = p1 + cnt - 1;
+  while (p1 < p2)
+  {
+    int t0 = **p1;
+    int t1 = (*p1)[1];
+    **p1 = **p2;
+    (*p1++)[1] = (*p2)[1];
+    **p2 = t0;
+    (*p2--)[1] = t1;
+  }
+}
+
+STATIC
+void swap(int pos, int cntlo, int cnthi)
+{
+  // swap cntlo items at pos with cnthi items at pos + cntlo
+  rev(pos, cntlo);
+  rev(pos + cntlo, cnthi);
+  rev(pos, cntlo + cnthi);
+}
+#endif
+
 STATIC
 void pushop2(int v, int v2)
 {
@@ -2367,7 +2557,11 @@ int exprUnary(int tok, int* gotUnary, int commaSeparator, int argOfSizeOf)
   {
     int inspos = sp;
 
-    if (tok == tokNumInt || tok == tokNumUint)
+    if (tok == tokNumInt ||
+#ifndef NO_FP
+        tok == tokNumFloat ||
+#endif
+        tok == tokNumUint)
     {
       push2(tok, TokenValueInt);
       *gotUnary = 1;
@@ -2679,46 +2873,92 @@ int expr(int tok, int* gotUnary, int commaSeparator)
 }
 
 STATIC
+int isAnyPtr(int ExprTypeSynPtr)
+{
+  if (ExprTypeSynPtr < 0)
+    return 1;
+  switch (SyntaxStack0[ExprTypeSynPtr])
+  {
+  case '*':
+  case '[':
+  case '(':
+    return 1;
+  }
+  return 0;
+}
+
+STATIC
+int derefAnyPtr(int ExprTypeSynPtr)
+{
+  if (ExprTypeSynPtr < 0)
+    return -ExprTypeSynPtr;
+  switch (SyntaxStack0[ExprTypeSynPtr])
+  {
+  case '*':
+    return ExprTypeSynPtr + 1;
+  case '[':
+    return ExprTypeSynPtr + 3;
+  case '(':
+    return ExprTypeSynPtr;
+  }
+  errorInternal(666); // TBD!!! code
+  return -1;
+}
+
+STATIC
 void decayArray(int* ExprTypeSynPtr, int arithmetic)
 {
-  // Dacay arrays to pointers to their first elements in
-  // binary + and - operators
+  // Dacay arrays to pointers to their first elements
   if (*ExprTypeSynPtr >= 0 && SyntaxStack0[*ExprTypeSynPtr] == '[')
   {
-    while (SyntaxStack0[*ExprTypeSynPtr] != ']')
-      ++*ExprTypeSynPtr;
-    ++*ExprTypeSynPtr;
-    *ExprTypeSynPtr = -*ExprTypeSynPtr;
-  }
-  // Also, to simplify code, return all other pointers as
-  // negative expression stack syntax indices/pointers
-  else if (*ExprTypeSynPtr >= 0 && SyntaxStack0[*ExprTypeSynPtr] == '*')
-  {
-    ++*ExprTypeSynPtr;
+    (*ExprTypeSynPtr) += 3;
+    // we cannot insert another '*' into the type to make it a pointer
+    // to the first element, so make the index into the type negative
     *ExprTypeSynPtr = -*ExprTypeSynPtr;
   }
 
   // DONE: disallow arithmetic on pointers to void
   // DONE: disallow function pointers
-  if (arithmetic)
+  if (arithmetic && isAnyPtr(*ExprTypeSynPtr))
   {
-    if (*ExprTypeSynPtr < 0)
+    int pointee = derefAnyPtr(*ExprTypeSynPtr);
+    switch (SyntaxStack0[pointee])
     {
-      if (SyntaxStack0[-*ExprTypeSynPtr] == tokVoid)
-        //error("decayArray(): cannot do pointer arithmetic on a pointer to 'void'\n");
-        errorUnexpectedVoid();
-      if (SyntaxStack0[-*ExprTypeSynPtr] == '(' ||
-          !GetDeclSize(-*ExprTypeSynPtr, 0))
+    case tokVoid:
+      //error("decayArray(): cannot do pointer arithmetic on a pointer to 'void'\n");
+      errorUnexpectedVoid();
+    default:
+      //error("decayArray(): cannot do pointer arithmetic on a pointer to an incomplete type\n");
+      if (!GetDeclSize(pointee, 0))
+      // "fallthrough"
+    case '(':
         //error("decayArray(): cannot do pointer arithmetic on a pointer to a function\n");
         errorOpType();
     }
-    else
-    {
-      if (SyntaxStack0[*ExprTypeSynPtr] == '(')
-        //error("decayArray(): cannot do arithmetic on a function\n");
-        errorOpType();
-    }
   }
+}
+
+STATIC
+void lvalueCheck(int ExprTypeSynPtr, int pos)
+{
+  if (ExprTypeSynPtr >= 0 &&
+      (SyntaxStack0[ExprTypeSynPtr] == '[' || SyntaxStack0[ExprTypeSynPtr] == '('))
+  {
+    // we can have arrays formed by dereference, e.g.
+    //   char (*pac)[1]; // *pac is array of 1 char
+    //                   // ++*pac or (*pac)-- are not allowed
+    // and likewise functions, e.g.
+    //   int (*pf)(int); // *pf is a function taking int and returning int
+    //                   // *pf = 0; is not allowed
+    // and that dereference shouldn't be confused for lvalue,
+    // hence explicitly checking for array and function types
+    //error("exprval(): lvalue expected\n");
+    errorNotLvalue();
+  }
+  // lvalue is a dereferenced address, check for a dereference
+  if (stack[pos][0] != tokUnaryStar)
+    //error("exprval(): lvalue expected\n");
+    errorNotLvalue();
 }
 
 STATIC
@@ -2741,19 +2981,58 @@ void scalarTypeCheck(int ExprTypeSynPtr)
 STATIC
 void numericTypeCheck(int ExprTypeSynPtr)
 {
-  if (ExprTypeSynPtr >= 0 &&
-      (SyntaxStack0[ExprTypeSynPtr] == tokChar ||
-       SyntaxStack0[ExprTypeSynPtr] == tokSChar ||
-       SyntaxStack0[ExprTypeSynPtr] == tokUChar ||
+  if (ExprTypeSynPtr >= 0)
+    switch (SyntaxStack0[ExprTypeSynPtr])
+    {
+    case tokChar:
+    case tokSChar:
+    case tokUChar:
 #ifdef CAN_COMPILE_32BIT
-       SyntaxStack0[ExprTypeSynPtr] == tokShort ||
-       SyntaxStack0[ExprTypeSynPtr] == tokUShort ||
+    case tokShort:
+    case tokUShort:
 #endif
-       SyntaxStack0[ExprTypeSynPtr] == tokInt ||
-       SyntaxStack0[ExprTypeSynPtr] == tokUnsigned))
-    return;
+    case tokInt:
+    case tokUnsigned:
+#ifndef NO_FP
+    case tokFloat:
+#endif
+      return;
+    }
   //error("numericTypeCheck(): unexpected operand type for operator '%s', numeric type expected\n", GetTokenName(tok));
   errorOpType();
+}
+
+#ifndef NO_FP
+STATIC
+void nonFloatTypeCheck(int ExprTypeSynPtr)
+{
+  if (ExprTypeSynPtr >= 0 && SyntaxStack0[ExprTypeSynPtr] == tokFloat)
+    errorOpType();
+}
+#endif
+
+STATIC
+void anyIntTypeCheck(int ExprTypeSynPtr)
+{
+  // Check for any integer type
+  numericTypeCheck(ExprTypeSynPtr);
+#ifndef NO_FP
+  nonFloatTypeCheck(ExprTypeSynPtr);
+#endif
+}
+
+#ifndef NO_FP
+STATIC
+int isFloat(int ExprTypeSynPtr)
+{
+  return ExprTypeSynPtr >= 0 && SyntaxStack0[ExprTypeSynPtr] == tokFloat;
+}
+#endif
+
+STATIC
+int isUint(int ExprTypeSynPtr)
+{
+  return ExprTypeSynPtr >= 0 && SyntaxStack0[ExprTypeSynPtr] == tokUnsigned;
 }
 
 STATIC
@@ -2763,17 +3042,42 @@ void compatCheck(int* ExprTypeSynPtr, int TheOtherExprTypeSynPtr, int ConstExpr[
   int c = 0;
   int lptr, rptr, lnum, rnum;
 
-  // convert functions to pointers to functions
-  if (exprTypeSynPtr >= 0 && SyntaxStack0[exprTypeSynPtr] == '(')
-    *ExprTypeSynPtr = exprTypeSynPtr = -exprTypeSynPtr;
-  if (TheOtherExprTypeSynPtr >= 0 && SyntaxStack0[TheOtherExprTypeSynPtr] == '(')
-    TheOtherExprTypeSynPtr = -TheOtherExprTypeSynPtr;
-
+  // (un)decay/convert functions to pointers to functions
+  // and to simplify matters convert all '*' pointers to negative type indices
+  if (exprTypeSynPtr >= 0)
+  {
+    switch (SyntaxStack0[exprTypeSynPtr])
+    {
+    case '*':
+      exprTypeSynPtr++;
+      // fallthrough
+    case '(':
+      exprTypeSynPtr = -exprTypeSynPtr;
+    }
+    *ExprTypeSynPtr = exprTypeSynPtr;
+  }
+  if (TheOtherExprTypeSynPtr >= 0)
+  {
+    switch (SyntaxStack0[TheOtherExprTypeSynPtr])
+    {
+    case '*':
+      TheOtherExprTypeSynPtr++;
+      // fallthrough
+    case '(':
+      TheOtherExprTypeSynPtr = -TheOtherExprTypeSynPtr;
+    }
+  }
   lptr = exprTypeSynPtr < 0;
   rptr = TheOtherExprTypeSynPtr < 0;
   lnum = !lptr && (SyntaxStack0[exprTypeSynPtr] == tokInt ||
+#ifndef NO_FP
+                   SyntaxStack0[exprTypeSynPtr] == tokFloat ||
+#endif
                    SyntaxStack0[exprTypeSynPtr] == tokUnsigned);
   rnum = !rptr && (SyntaxStack0[TheOtherExprTypeSynPtr] == tokInt ||
+#ifndef NO_FP
+                   SyntaxStack0[TheOtherExprTypeSynPtr] == tokFloat ||
+#endif
                    SyntaxStack0[TheOtherExprTypeSynPtr] == tokUnsigned);
 
   // both operands have arithmetic type
@@ -2786,21 +3090,20 @@ void compatCheck(int* ExprTypeSynPtr, int TheOtherExprTypeSynPtr, int ConstExpr[
       !rptr && SyntaxStack0[TheOtherExprTypeSynPtr] == tokVoid)
     return;
 
-  // TBD??? check for exact 0?
   // one operand is a pointer and the other is NULL constant
   // ((void*)0 is also a valid null pointer constant),
   // the type of the expression is that of the pointer:
   if (lptr &&
-      ((rnum && ConstExpr[1]) ||
+      ((rnum && ConstExpr[1] && truncInt(stack[ridx][1]) == 0) ||
        (rptr && SyntaxStack0[-TheOtherExprTypeSynPtr] == tokVoid &&
-        stack[ridx][0] == tokUnaryPlus && // "(type*)constant" appears as "constant +(unary)"
-        (stack[ridx - 1][0] == tokNumInt || stack[ridx - 1][0] == tokNumUint))))
+        (stack[ridx][0] == tokNumInt || stack[ridx][0] == tokNumUint) &&
+        truncInt(stack[ridx][1]) == 0)))
     return;
   if (rptr &&
-      ((lnum && ConstExpr[0]) ||
+      ((lnum && ConstExpr[0] && truncInt(stack[lidx][1]) == 0) ||
        (lptr && SyntaxStack0[-exprTypeSynPtr] == tokVoid &&
-        stack[lidx][0] == tokUnaryPlus && // "(type*)constant" appears as "constant +(unary)"
-        (stack[lidx - 1][0] == tokNumInt || stack[lidx - 1][0] == tokNumUint))))
+        (stack[lidx][0] == tokNumInt || stack[lidx][0] == tokNumUint) &&
+        truncInt(stack[lidx][1]) == 0)))
   {
     *ExprTypeSynPtr = TheOtherExprTypeSynPtr;
     return;
@@ -2811,7 +3114,7 @@ void compatCheck(int* ExprTypeSynPtr, int TheOtherExprTypeSynPtr, int ConstExpr[
     errorOpType();
 
   // one operand is a pointer and the other is a pointer to void
-  // (except (void*)0, which is different from other pointers to void),
+  // (except (void*)0 (AKA NULL), which is different from other pointers to void),
   // the type of the expression is pointer to void:
   if (SyntaxStack0[-exprTypeSynPtr] == tokVoid)
     return;
@@ -2851,6 +3154,9 @@ void compatCheck(int* ExprTypeSynPtr, int TheOtherExprTypeSynPtr, int ConstExpr[
       case tokShort: case tokUShort:
 #endif
       case tokInt: case tokUnsigned:
+#ifndef NO_FP
+      case tokFloat:
+#endif
       case tokStructPtr:
         return;
       }
@@ -2944,50 +3250,60 @@ int divCheckAndCalc(int tok, int* psl, int sr, int Unsigned, int ConstExpr[2])
 STATIC
 void promoteType(int* ExprTypeSynPtr, int* TheOtherExprTypeSynPtr)
 {
-  // chars must be promoted to ints in expressions as the very first thing
-  if (*ExprTypeSynPtr >= 0 &&
-      (SyntaxStack0[*ExprTypeSynPtr] == tokChar ||
+  // Integer promotion to signed int or unsigned int from smaller types
+  // (all kinds of char and short). Promotion to unsigned int occurs
+  // only if the other operand (of a binary operator) is already an
+  // unsigned int. Effectively, this promotion to unsigned int performs
+  // usual arithmetic conversion for integers.
+  if (*ExprTypeSynPtr >= 0)
+  {
+    // chars must be promoted to ints in expressions as the very first thing
+    switch (SyntaxStack0[*ExprTypeSynPtr])
+    {
+    case tokChar:
 #ifdef CAN_COMPILE_32BIT
-       SyntaxStack0[*ExprTypeSynPtr] == tokShort ||
-       SyntaxStack0[*ExprTypeSynPtr] == tokUShort ||
+    case tokShort:
+    case tokUShort:
 #endif
-       SyntaxStack0[*ExprTypeSynPtr] == tokSChar ||
-       SyntaxStack0[*ExprTypeSynPtr] == tokUChar))
-    *ExprTypeSynPtr = SymIntSynPtr;
-
-  // ints must be converted to unsigned ints if they are used in binary
-  // operators whose other operand is unsigned int (except <<,>>,<<=,>>=)
-  if (*ExprTypeSynPtr >= 0 && SyntaxStack0[*ExprTypeSynPtr] == tokInt &&
-      *TheOtherExprTypeSynPtr >= 0 && SyntaxStack0[*TheOtherExprTypeSynPtr] == tokUnsigned)
-    *ExprTypeSynPtr = SymUintSynPtr;
+    case tokSChar:
+    case tokUChar:
+      *ExprTypeSynPtr = SymIntSynPtr;
+    }
+    if (*TheOtherExprTypeSynPtr >= 0)
+    {
+      // ints must be converted to unsigned ints if they are used in binary
+      // operators whose other operand is unsigned int (except <<,>>,<<=,>>=)
+      if (SyntaxStack0[*ExprTypeSynPtr] == tokInt &&
+          SyntaxStack0[*TheOtherExprTypeSynPtr] == tokUnsigned)
+        *ExprTypeSynPtr = SymUintSynPtr;
+    }
+  }
 }
 
 STATIC
 int GetFxnInfo(int ExprTypeSynPtr, int* MinParams, int* MaxParams, int* ReturnExprTypeSynPtr, int* FirstParamSynPtr)
 {
-  int ptr = 0;
-
   *MaxParams = *MinParams = 0;
 
   if (ExprTypeSynPtr < 0)
   {
-    ptr = 1;
     ExprTypeSynPtr = -ExprTypeSynPtr;
   }
+  else
+  {
+    while (SyntaxStack0[ExprTypeSynPtr] == tokIdent || SyntaxStack0[ExprTypeSynPtr] == tokLocalOfs)
+      ExprTypeSynPtr++;
+    if (SyntaxStack0[ExprTypeSynPtr] == '*')
+      ExprTypeSynPtr++;
+  }
 
-  while (SyntaxStack0[ExprTypeSynPtr] == tokIdent || SyntaxStack0[ExprTypeSynPtr] == tokLocalOfs)
-    ExprTypeSynPtr++;
-
-  if (!(SyntaxStack0[ExprTypeSynPtr] == '(' ||
-        (!ptr && SyntaxStack0[ExprTypeSynPtr] == '*' && SyntaxStack0[ExprTypeSynPtr + 1] == '(')))
+  if (SyntaxStack0[ExprTypeSynPtr] != '(')
     return 0;
 
   // DONE: return syntax pointer to the function's return type
 
   // Count params
 
-  while (SyntaxStack0[ExprTypeSynPtr] != '(')
-    ExprTypeSynPtr++;
   ExprTypeSynPtr++;
 
   if (FirstParamSynPtr)
@@ -3052,9 +3368,13 @@ int GetFxnInfo(int ExprTypeSynPtr, int* MinParams, int* MaxParams, int* ReturnEx
 STATIC
 void simplifyConstExpr(int val, int isConst, int* ExprTypeSynPtr, int top, int bottom)
 {
+  // If non-const, nothing to do.
+  // If const and already a number behind the scenes, nothing to do
+  // (val must not differ from the number!).
   if (!isConst || stack[top][0] == tokNumInt || stack[top][0] == tokNumUint)
     return;
 
+  // Const, but not a number yet. Reduce to a number equal val.
   if (SyntaxStack0[*ExprTypeSynPtr] == tokUnsigned)
     stack[top][0] = tokNumUint;
   else
@@ -3123,6 +3443,15 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
     *ExprTypeSynPtr = SymUintSynPtr;
     *ConstExpr = 1;
     break;
+#ifndef NO_FP
+  case tokNumFloat:
+    // recode tokNumFloat to tokNumInt to minimize changes in the CGs
+    stack[*idx + 1][0] = tokNumInt;
+    // return the constant's type: float
+    *ExprTypeSynPtr = SymFloatSynPtr;
+    *ConstExpr = 1;
+    break;
+#endif
 
   // Identifiers
   case tokIdent:
@@ -3182,6 +3511,10 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       // DONE: this declaration is actually a type cast
       if (!strncmp(IdentTable + SyntaxStack1[synPtr], "(something", sizeof "(something)" - 1 - 1))
       {
+#ifndef NO_FP
+        int fmask;
+        int ptrmask;
+#endif
         int castSize;
 
         if (SyntaxStack0[++synPtr] == tokLocalOfs) // TBD!!! is this really needed???
@@ -3202,6 +3535,13 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
             SyntaxStack0[synPtr] == tokStructPtr)
           errorOpType();
 
+#ifndef NO_FP
+        ptrmask = isAnyPtr(synPtr) * 2 + isAnyPtr(*ExprTypeSynPtr);
+        fmask = isFloat(synPtr) * 2 + isFloat(*ExprTypeSynPtr);
+        if (ptrmask && fmask) // pointers and floats don't mix
+          errorOpType();
+#endif
+
         // will try to propagate constants through casts
         if (!*ConstExpr &&
             (stack[oldIdxRight - (oldSpRight - sp)][0] == tokNumInt ||
@@ -3211,7 +3551,29 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
           *ConstExpr = 1;
         }
 
-        castSize = GetDeclSize(synPtr, 1);
+        castSize = GetDeclSize(synPtr, 1); // 0 for cast to void
+
+#ifndef NO_FP
+        if (castSize && fmask == 1)
+        {
+          // cast from float to any int
+          int u = isUint(synPtr);
+          if (*ConstExpr)
+          {
+            s = u ? f2u(s) : f2i(s, castSize);
+          }
+          else
+          {
+            // insert a call to convert float to [unsigned] int
+            int above = oldIdxRight + 1 - (oldSpRight - sp);
+            int below = *idx + 1;
+            ins2(above, ')', SizeOfWord);
+            ins2(above, tokIdent, FindIdent(FpFxnName[u ? FXNF2U : FXNF2I]));
+            ins(above, ',');
+            ins2(below, '(', SizeOfWord);
+          }
+        }
+#endif
 
         // insertion of tokUChar, tokSChar and tokUnaryPlus transforms
         // lvalues (values formed by dereferences) into rvalues
@@ -3233,6 +3595,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
 #ifdef CAN_COMPILE_32BIT
           if (castSize && castSize != SizeOfWord)
           {
+            // cast not to void and not to word-sized type (int/unsigned/pointer/float)
             if (castSize == 2)
             {
               // cast to unsigned short
@@ -3250,16 +3613,44 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
           else // fallthrough
 #endif
           {
-            // cast to int/unsigned/pointer
+            // cast to void or word-sized type (int/unsigned/pointer/float)
+#ifndef NO_FP
+            if (fmask == 2)
+            {
+              // cast from any int to float
+              int u = isUint(*ExprTypeSynPtr);
+              if (*ConstExpr)
+              {
+                s = u ? u2f(s) : i2f(s);
+              }
+              else
+              {
+                // insert a call to convert [unsigned] int to float
+                int above = oldIdxRight + 1 - (oldSpRight - sp);
+                int below = *idx + 1;
+                ins2(above, ')', SizeOfWord);
+                ins2(above, tokIdent, FindIdent(FpFxnName[u ? FXNU2F : FXNI2F]));
+                ins(above, ',');
+                ins2(below, '(', SizeOfWord);
+              }
+            }
+#endif
             if (stack[oldIdxRight - (oldSpRight - sp)][0] == tokUnaryStar)
               // hide the dereference
               stack[oldIdxRight + 1 - (oldSpRight - sp)][0] = tokUnaryPlus;
-            else
-              // nothing to hide, remove the cast
-              del(oldIdxRight + 1 - (oldSpRight - sp), 1);
           }
           break;
         }
+
+        if (*ConstExpr)
+          stack[oldIdxRight - (oldSpRight - sp)][1] = s;
+
+        *ExprTypeSynPtr = synPtr;
+        simplifyConstExpr(s, *ConstExpr, ExprTypeSynPtr, oldIdxRight + 1 - (oldSpRight - sp), *idx + 1);
+
+        if (!*ConstExpr && stack[oldIdxRight + 1 - (oldSpRight - sp)][0] == tokIdent)
+          // nothing to hide, remove the cast
+          del(oldIdxRight + 1 - (oldSpRight - sp), 1);
 
         switch (SyntaxStack0[synPtr])
         {
@@ -3272,16 +3663,20 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
 #endif
         case tokInt:
         case tokUnsigned:
+#ifndef NO_FP
+        case tokFloat:
+#endif
           break;
         default:
+          // only numeric types can be const
           *ConstExpr = 0;
           break;
         }
 
-        *ExprTypeSynPtr = synPtr;
-        simplifyConstExpr(s, *ConstExpr, ExprTypeSynPtr, oldIdxRight + 1 - (oldSpRight - sp), *idx + 1);
         break;
       }
+
+      // Finally, not __func__, not enum, not cast.
 
       type = SymType(synPtr);
 
@@ -3308,12 +3703,8 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
 
   // sizeof operator
   case tokSizeof:
-    s = exprval(idx, ExprTypeSynPtr, ConstExpr);
-
-    if (*ExprTypeSynPtr >= 0)
-      s = GetDeclSize(*ExprTypeSynPtr, 0);
-    else
-      s = SizeOfWord;
+    exprval(idx, ExprTypeSynPtr, ConstExpr);
+    s = GetDeclSize(*ExprTypeSynPtr, 0);
     if (s == 0)
       error("sizeof of incomplete type\n");
 
@@ -3332,33 +3723,29 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
   case tokUnaryAnd:
     exprval(idx, ExprTypeSynPtr, ConstExpr);
 
-    if (*ExprTypeSynPtr >= 0 && SyntaxStack0[*ExprTypeSynPtr] == '[')
+    if (*ExprTypeSynPtr >= 0 &&
+        (SyntaxStack0[*ExprTypeSynPtr] == '[' || SyntaxStack0[*ExprTypeSynPtr] == '('))
     {
       // convert an array into a pointer to the array,
-      // remove the reference
-      *ExprTypeSynPtr = -*ExprTypeSynPtr;
-      del(oldIdxRight + 1 - (oldSpRight - sp), 1);
-    }
-    else if (*ExprTypeSynPtr >= 0 && SyntaxStack0[*ExprTypeSynPtr] == '(')
-    {
       // convert a function into a pointer to the function,
       // remove the reference
-      *ExprTypeSynPtr = -*ExprTypeSynPtr;
       del(oldIdxRight + 1 - (oldSpRight - sp), 1);
     }
     else if (*ExprTypeSynPtr >= 0 &&
-             oldIdxRight - (oldSpRight - sp) >= 0 &&
              stack[oldIdxRight - (oldSpRight - sp)][0] == tokUnaryStar)
     {
       // it's an lvalue (with implicit or explicit dereference),
-      // convert it into its address,
-      // collapse/remove the reference and the dereference
-      *ExprTypeSynPtr = -*ExprTypeSynPtr;
+      // convert it into its address by
+      // collapsing/removing the reference and the dereference
       del(oldIdxRight - (oldSpRight - sp), 2);
     }
     else
       //error("exprval(): lvalue expected after '&'\n");
       errorNotLvalue();
+
+    // we cannot insert another '*' into the type to make it a pointer
+    // to an array/function/etc, so make the index into the type negative
+    *ExprTypeSynPtr = -*ExprTypeSynPtr;
 
     *ConstExpr = 0;
     break;
@@ -3383,7 +3770,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       if (SyntaxStack0[*ExprTypeSynPtr] == '[' ||
           SyntaxStack0[*ExprTypeSynPtr] == '(')
         del(oldIdxRight + 1 - (oldSpRight - sp), 1);
-      // else add dereference size in bytes
+      // else attach dereference size in bytes
       else
         stack[oldIdxRight + 1 - (oldSpRight - sp)][1] = GetDeclSize(*ExprTypeSynPtr, 1);
     }
@@ -3392,13 +3779,11 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       // type is an array,
       // transform it into the array's first element
       // (a subarray, if type is a multidimensional array)
-      while (SyntaxStack0[*ExprTypeSynPtr] != ']')
-        ++*ExprTypeSynPtr;
-      ++*ExprTypeSynPtr;
+      (*ExprTypeSynPtr) += 3;
       // remove the dereference if that element is an array
       if (SyntaxStack0[*ExprTypeSynPtr] == '[')
         del(oldIdxRight + 1 - (oldSpRight - sp), 1);
-      // else add dereference size in bytes
+      // else attach dereference size in bytes
       else
         stack[oldIdxRight + 1 - (oldSpRight - sp)][1] = GetDeclSize(*ExprTypeSynPtr, 1);
     }
@@ -3416,6 +3801,9 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
   // WRONG: DONE: replace postfix ++/-- with (+=1)-1/(-=1)+1
     {
       int ptrmask;
+#ifndef NO_FP
+      int fmask;
+#endif
       int oldIdxLeft, oldSpLeft;
       int sl, sr;
       int incSize;
@@ -3424,24 +3812,27 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       oldSpLeft = sp;
       sl = exprval(idx, ExprTypeSynPtr, &constExpr[0]);
 
-      if (tok == '+')
-        s = (int)((unsigned)sl + sr);
-      else
-        s = (int)((unsigned)sl - sr);
-
-      scalarTypeCheck(RightExprTypeSynPtr);
-      scalarTypeCheck(*ExprTypeSynPtr);
-
       // Decay arrays to pointers to their first elements
+      // and ensure that the pointers are suitable for pointer arithmetic
+      // (not pointers to functions, sizes of pointees are known and non-zero)
       decayArray(&RightExprTypeSynPtr, 1);
       decayArray(ExprTypeSynPtr, 1);
 
-      ptrmask = (RightExprTypeSynPtr < 0) + (*ExprTypeSynPtr < 0) * 2;
+      // Bar void and struct/union
+      scalarTypeCheck(RightExprTypeSynPtr);
+      scalarTypeCheck(*ExprTypeSynPtr);
+
+      ptrmask = isAnyPtr(RightExprTypeSynPtr) + isAnyPtr(*ExprTypeSynPtr) * 2;
+#ifndef NO_FP
+      fmask = isFloat(RightExprTypeSynPtr) + isFloat(*ExprTypeSynPtr) * 2;
+      if (ptrmask && fmask) // pointers and floats don't mix
+        errorOpType();
+#endif
 
       // DONE: index/subscript scaling
       if (ptrmask == 1 && tok == '+') // pointer in right-hand expression
       {
-        incSize = GetDeclSize(-RightExprTypeSynPtr, 0);
+        incSize = GetDeclSize(derefAnyPtr(RightExprTypeSynPtr), 0);
 
         if (constExpr[0]) // integer constant in left-hand expression
         {
@@ -3475,7 +3866,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       }
       else if (ptrmask == 2) // pointer in left-hand expression
       {
-        incSize = GetDeclSize(-*ExprTypeSynPtr, 0);
+        incSize = GetDeclSize(derefAnyPtr(*ExprTypeSynPtr), 0);
         if (constExpr[1]) // integer constant in right-hand expression
         {
           s = (int)((unsigned)sr * incSize);
@@ -3507,9 +3898,9 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       }
       else if (ptrmask == 3 && tok == '-') // pointers in both expressions
       {
-        incSize = GetDeclSize(-*ExprTypeSynPtr, 0);
+        incSize = GetDeclSize(derefAnyPtr(*ExprTypeSynPtr), 0);
         // TBD!!! "ptr1-ptr2": better pointer type compatibility test needed, like compatCheck()?
-        if (incSize != GetDeclSize(-RightExprTypeSynPtr, 0))
+        if (incSize != GetDeclSize(derefAnyPtr(RightExprTypeSynPtr), 0))
           //error("exprval(): incompatible pointers\n");
           errorOpType();
         if (incSize != 1)
@@ -3527,6 +3918,88 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       promoteType(ExprTypeSynPtr, &RightExprTypeSynPtr);
 
       *ConstExpr = constExpr[0] && constExpr[1];
+
+#ifndef NO_FP
+      if (fmask)
+      {
+        if (fmask == 2)
+        {
+          int u = isUint(RightExprTypeSynPtr);
+          if (constExpr[1])
+          {
+            // convert int constant to float
+            sr = u ? u2f(sr) : i2f(sr);
+            stack[oldIdxRight - (oldSpRight - sp)][1] = sr;
+          }
+          else
+          {
+            // insert a call to convert int to float
+            int above = oldIdxRight + 1 - (oldSpRight - sp);
+            int below = oldIdxLeft + 1 - (oldSpLeft - sp);
+            ins2(above, ')', SizeOfWord);
+            ins2(above, tokIdent, FindIdent(FpFxnName[u ? FXNU2F : FXNI2F]));
+            ins(above, ',');
+            ins2(below, '(', SizeOfWord);
+            oldSpLeft += 4;
+          }
+        }
+        if (fmask == 1)
+        {
+          int u = isUint(*ExprTypeSynPtr);
+          if (constExpr[0])
+          {
+            // convert int constant to float
+            sl = u ? u2f(sl) : i2f(sl);
+            stack[oldIdxLeft - (oldSpLeft - sp)][1] = sl;
+          }
+          else
+          {
+            // insert a call to convert int to float
+            int above = oldIdxLeft + 1 - (oldSpLeft - sp);
+            int below = *idx + 1;
+            ins2(above, ')', SizeOfWord);
+            ins2(above, tokIdent, FindIdent(FpFxnName[u ? FXNU2F : FXNI2F]));
+            ins(above, ',');
+            ins2(below, '(', SizeOfWord);
+          }
+        }
+        if (*ConstExpr)
+        {
+          if (tok == '+')
+            s = fadd(sl, sr);
+          else
+            s = fsub(sl, sr);
+        }
+        else
+        {
+          // insert a call to add/subtract floats
+          int above = oldIdxRight + 1 - (oldSpRight - sp);
+          int mid = oldIdxLeft + 1 - (oldSpLeft - sp);
+          int below = *idx + 1;
+          if (tok == '-')
+          {
+            // minuend must be the first argument, swap
+            swap(below, mid - below, above - mid);
+            mid = above - mid + below;
+          }
+          stack[above][0] = ')'; // replace '+'/'-' with function call
+          stack[above][1] = SizeOfWord * 2;
+          ins2(above, tokIdent, FindIdent(FpFxnName[(tok == '+') ? FXNFADD : FXNFSUB]));
+          ins(above, ',');
+          ins(mid, ',');
+          ins2(below, '(', SizeOfWord * 2);
+        }
+        *ExprTypeSynPtr = SymFloatSynPtr;
+      }
+      else
+#endif
+      {
+        if (tok == '+')
+          s = (int)((unsigned)sl + sr);
+        else
+          s = (int)((unsigned)sl - sr);
+      }
+
       simplifyConstExpr(s, *ConstExpr, ExprTypeSynPtr, oldIdxRight + 1 - (oldSpRight - sp), *idx + 1);
     }
     break;
@@ -3544,25 +4017,30 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
 
       exprval(idx, ExprTypeSynPtr, ConstExpr);
 
+      lvalueCheck(*ExprTypeSynPtr, oldIdxRight - (oldSpRight - sp));
+
+      // if it's a pointer, ensure that it's suitable for pointer arithmetic
+      // (not pointer to function, pointee size is known and non-zero)
+      decayArray(ExprTypeSynPtr, 1); // no actual decay here, just a type check
+
+      // Bar void and struct/union
       scalarTypeCheck(*ExprTypeSynPtr);
 
-      decayArray(ExprTypeSynPtr, 1);
-
-      // lvalue check for ++, --
-      if (!(oldIdxRight - (oldSpRight - sp) >= 0 &&
-            stack[oldIdxRight - (oldSpRight - sp)][0] == tokUnaryStar))
-        //error("exprval(): lvalue expected for '++' or '--'\n");
-        errorNotLvalue();
+#ifndef NO_FP
+      // TBD!!! support floats with these operators
+      if (isFloat(*ExprTypeSynPtr))
+        error("Increment/decrement not supported with floats\n");
+#endif
 
       // "remove" the lvalue dereference as we don't need
-      // to read the value and forget its location. We need to
-      // keep the lvalue location.
+      // to read the value while forgetting its location.
+      // We need to keep the lvalue location.
       // Remember the operand size.
       opSize = stack[oldIdxRight - (oldSpRight - sp)][1];
       del(oldIdxRight - (oldSpRight - sp), 1);
 
-      if (*ExprTypeSynPtr < 0)
-        incSize = GetDeclSize(-*ExprTypeSynPtr, 0);
+      if (isAnyPtr(*ExprTypeSynPtr))
+        incSize = GetDeclSize(derefAnyPtr(*ExprTypeSynPtr), 0);
 
       if (incSize == 1)
       {
@@ -3572,23 +4050,11 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       else
       {
         // replace ++/-- with "postfix" +=/-= incSize when incSize != 1
-        if (inc)
-        {
-          if (post)
-            stack[oldIdxRight + 1 - (oldSpRight - sp)][0] = tokPostAdd;
-          else
-            stack[oldIdxRight + 1 - (oldSpRight - sp)][0] = tokAssignAdd;
-        }
-        else
-        {
-          if (post)
-            stack[oldIdxRight + 1 - (oldSpRight - sp)][0] = tokPostSub;
-          else
-            stack[oldIdxRight + 1 - (oldSpRight - sp)][0] = tokAssignSub;
-        }
+        stack[oldIdxRight + 1 - (oldSpRight - sp)][0] =
+          inc ? (post ? tokPostAdd : tokAssignAdd) :
+                (post ? tokPostSub : tokAssignSub);
         // store the operand size in the operator
         stack[oldIdxRight + 1 - (oldSpRight - sp)][1] = opSize;
-
         ins2(oldIdxRight + 1 - (oldSpRight - sp), tokNumInt, incSize);
       }
 
@@ -3602,25 +4068,30 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       int oldIdxLeft, oldSpLeft;
       int opSize;
       int structs;
-
-      exprval(idx, &RightExprTypeSynPtr, ConstExpr);
+#ifndef NO_FP
+      int ptrmask;
+      int fmask;
+      int sr =
+#endif
+        exprval(idx, &RightExprTypeSynPtr, &constExpr[1]);
       oldIdxLeft = *idx;
       oldSpLeft = sp;
-      exprval(idx, ExprTypeSynPtr, ConstExpr);
+      exprval(idx, ExprTypeSynPtr, &constExpr[0]);
+
+      lvalueCheck(*ExprTypeSynPtr, oldIdxLeft - (oldSpLeft - sp));
 
       nonVoidTypeCheck(RightExprTypeSynPtr);
       nonVoidTypeCheck(*ExprTypeSynPtr);
 
-      decayArray(&RightExprTypeSynPtr, 0);
-      decayArray(ExprTypeSynPtr, 0);
+      structs = (*ExprTypeSynPtr >= 0 && SyntaxStack0[*ExprTypeSynPtr] == tokStructPtr) * 2 +
+                (RightExprTypeSynPtr >= 0 && SyntaxStack0[RightExprTypeSynPtr] == tokStructPtr);
+#ifndef NO_FP
+      ptrmask = isAnyPtr(*ExprTypeSynPtr) * 2 + isAnyPtr(RightExprTypeSynPtr);
+      fmask = isFloat(*ExprTypeSynPtr) * 2 + isFloat(RightExprTypeSynPtr);
+      if (fmask && (structs | ptrmask)) // floats don't mix with pointers or structs/unions
+        errorOpType();
+#endif
 
-      if (!(oldIdxLeft - (oldSpLeft - sp) >= 0 &&
-            stack[oldIdxLeft - (oldSpLeft - sp)][0] == tokUnaryStar))
-        //error("exprval(): lvalue expected before '='\n");
-        errorNotLvalue();
-
-      structs = (RightExprTypeSynPtr >= 0 && SyntaxStack0[RightExprTypeSynPtr] == tokStructPtr) +
-              (*ExprTypeSynPtr >= 0 && SyntaxStack0[*ExprTypeSynPtr] == tokStructPtr) * 2;
       if (structs)
       {
         int sz;
@@ -3659,9 +4130,37 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       }
       else
       {
+#ifndef NO_FP
+        if (fmask == 1 || fmask == 2)
+        {
+          int u = isUint((fmask == 1) ? *ExprTypeSynPtr : RightExprTypeSynPtr);
+          if (constExpr[1])
+          {
+            // convert between float and [unsigned] int
+            if (fmask == 1)
+              sr = u ? f2u(sr) : f2i(sr, GetDeclSize(*ExprTypeSynPtr, 1));
+            else
+              sr = u ? u2f(sr) : i2f(sr);
+            stack[oldIdxRight - (oldSpRight - sp)][1] = sr;
+          }
+          else
+          {
+            // insert a call to convert between float and [unsigned] int
+            int above = oldIdxRight + 1 - (oldSpRight - sp);
+            int below = oldIdxLeft + 1 - (oldSpLeft - sp);
+            ins2(above, ')', SizeOfWord);
+            ins2(above, tokIdent, FindIdent(FpFxnName[(fmask == 1) ? (u ? FXNF2U : FXNF2I) :
+                                                                     (u ? FXNU2F : FXNI2F)]));
+            ins(above, ',');
+            ins2(below, '(', SizeOfWord);
+            oldSpLeft += 4;
+          }
+        }
+#endif
         // "remove" the lvalue dereference as we don't need
-        // to read the value and forget its location. We need to
-        // keep the lvalue location.
+        // to read the value while forgetting its location.
+        // We need to keep the lvalue location.
+        // Remember the operand size.
         opSize = stack[oldIdxLeft - (oldSpLeft - sp)][1];
         // store the operand size in the operator
         stack[oldIdxRight + 1 - (oldSpRight - sp)][1] = opSize;
@@ -3679,15 +4178,45 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
   case tokUnaryPlus:
   case tokUnaryMinus:
     s = exprval(idx, ExprTypeSynPtr, ConstExpr);
-    scalarTypeCheck(*ExprTypeSynPtr);
     numericTypeCheck(*ExprTypeSynPtr);
+    promoteType(ExprTypeSynPtr, ExprTypeSynPtr);
     switch (tok)
     {
-    case '~':           s = ~s; break;
-    case tokUnaryPlus:  s = +s; break;
-    case tokUnaryMinus: s = (int)~(s - 1u); break;
+    case '~':
+#ifndef NO_FP
+      nonFloatTypeCheck(*ExprTypeSynPtr);
+#endif
+      s = ~s;
+      break;
+    case tokUnaryPlus:
+      break;
+    case tokUnaryMinus:
+#ifndef NO_FP
+      if (isFloat(*ExprTypeSynPtr))
+      {
+        if (*ConstExpr)
+        {
+          s = fneg(s);
+        }
+        else
+        {
+          // insert a call to float negate
+          int above = oldIdxRight + 1 - (oldSpRight - sp);
+          int below = *idx + 1;
+          stack[above][0] = ')'; // replace tokUnaryMinus with function call
+          stack[above][1] = SizeOfWord;
+          ins2(above, tokIdent, FindIdent(FpFxnName[FXNFNEG]));
+          ins(above, ',');
+          ins2(below, '(', SizeOfWord);
+        }
+      }
+      else
+#endif
+      {
+        s = (int)~(s - 1u);
+      }
+      break;
     }
-    promoteType(ExprTypeSynPtr, ExprTypeSynPtr);
     simplifyConstExpr(s, *ConstExpr, ExprTypeSynPtr, oldIdxRight + 1 - (oldSpRight - sp), *idx + 1);
     break;
 
@@ -3701,98 +4230,184 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
   case '^':
   case '|':
     {
-      // int oldIdxLeft, oldSpLeft;
+#ifndef NO_FP
+      int fmask;
+      int oldIdxLeft, oldSpLeft;
+#endif
       int sr, sl;
       int Unsigned;
       sr = exprval(idx, &RightExprTypeSynPtr, &constExpr[1]);
-      // oldIdxLeft = *idx;
-      // oldSpLeft = sp;
+#ifndef NO_FP
+      oldIdxLeft = *idx;
+      oldSpLeft = sp;
+#endif
       sl = exprval(idx, ExprTypeSynPtr, &constExpr[0]);
-
-      scalarTypeCheck(RightExprTypeSynPtr);
-      scalarTypeCheck(*ExprTypeSynPtr);
 
       numericTypeCheck(RightExprTypeSynPtr);
       numericTypeCheck(*ExprTypeSynPtr);
+#ifndef NO_FP
+      if (tok != '*' && tok != '/')
+      {
+        nonFloatTypeCheck(RightExprTypeSynPtr);
+        nonFloatTypeCheck(*ExprTypeSynPtr);
+      }
+#endif
 
       *ConstExpr = constExpr[0] && constExpr[1];
 
       Unsigned = SyntaxStack0[*ExprTypeSynPtr] == tokUnsigned || SyntaxStack0[RightExprTypeSynPtr] == tokUnsigned;
 
-      switch (tok)
+#ifndef NO_FP
+      fmask = isFloat(RightExprTypeSynPtr) + isFloat(*ExprTypeSynPtr) * 2;
+
+      if (fmask)
       {
-      // DONE: check for division overflows
-      case '/':
-      case '%':
-        *ConstExpr &= divCheckAndCalc(tok, &sl, sr, Unsigned, constExpr);
-
-        if (Unsigned)
+        if (fmask == 2)
         {
-          if (tok == '/')
-            stack[oldIdxRight + 1 - (oldSpRight - sp)][0] = tokUDiv;
+          int u = isUint(RightExprTypeSynPtr);
+          if (constExpr[1])
+          {
+            // convert int constant to float
+            sr = u ? u2f(sr) : i2f(sr);
+            stack[oldIdxRight - (oldSpRight - sp)][1] = sr;
+          }
           else
-            stack[oldIdxRight + 1 - (oldSpRight - sp)][0] = tokUMod;
+          {
+            // insert a call to convert int to float
+            int above = oldIdxRight + 1 - (oldSpRight - sp);
+            int below = oldIdxLeft + 1 - (oldSpLeft - sp);
+            ins2(above, ')', SizeOfWord);
+            ins2(above, tokIdent, FindIdent(FpFxnName[u ? FXNU2F : FXNI2F]));
+            ins(above, ',');
+            ins2(below, '(', SizeOfWord);
+            oldSpLeft += 4;
+          }
         }
-        break;
-
-      case '*':
-        sl = (int)((unsigned)sl * sr);
-        break;
-
-      case tokLShift:
-      case tokRShift:
-        if (constExpr[1])
+        if (fmask == 1)
         {
-          if (SyntaxStack0[RightExprTypeSynPtr] != tokUnsigned)
-            sr = truncInt(sr);
+          int u = isUint(*ExprTypeSynPtr);
+          if (constExpr[0])
+          {
+            // convert int constant to float
+            sl = u ? u2f(sl) : i2f(sl);
+            stack[oldIdxLeft - (oldSpLeft - sp)][1] = sl;
+          }
           else
-            sr = (int)truncUint(sr);
-          shiftCountCheck(&sr, oldIdxRight - (oldSpRight - sp), RightExprTypeSynPtr);
+          {
+            // insert a call to convert int to float
+            int above = oldIdxLeft + 1 - (oldSpLeft - sp);
+            int below = *idx + 1;
+            ins2(above, ')', SizeOfWord);
+            ins2(above, tokIdent, FindIdent(FpFxnName[u ? FXNU2F : FXNI2F]));
+            ins(above, ',');
+            ins2(below, '(', SizeOfWord);
+          }
         }
         if (*ConstExpr)
         {
-          if (tok == tokLShift)
-          {
-            // left shift is the same for signed and unsigned ints
-            sl = (int)((unsigned)sl << sr);
-          }
+          if (tok == '*')
+            s = fmul(sl, sr);
           else
+            s = fdiv(sl, sr);
+        }
+        else
+        {
+          // insert a call to multiply/divide floats
+          int above = oldIdxRight + 1 - (oldSpRight - sp);
+          int mid = oldIdxLeft + 1 - (oldSpLeft - sp);
+          int below = *idx + 1;
+          if (tok == '/')
           {
-            if (SyntaxStack0[*ExprTypeSynPtr] == tokUnsigned)
+            // dividend must be the first argument, swap
+            swap(below, mid - below, above - mid);
+            mid = above - mid + below;
+          }
+          stack[above][0] = ')'; // replace '*'/'/' with function call
+          stack[above][1] = SizeOfWord * 2;
+          ins2(above, tokIdent, FindIdent(FpFxnName[(tok == '*') ? FXNFMUL : FXNFDIV]));
+          ins(above, ',');
+          ins(mid, ',');
+          ins2(below, '(', SizeOfWord * 2);
+        }
+        *ExprTypeSynPtr = SymFloatSynPtr;
+      }
+      else
+#endif
+      {
+        switch (tok)
+        {
+        // DONE: check for division overflows
+        case '/':
+        case '%':
+          *ConstExpr &= divCheckAndCalc(tok, &sl, sr, Unsigned, constExpr);
+
+          if (Unsigned)
+          {
+            if (tok == '/')
+              stack[oldIdxRight + 1 - (oldSpRight - sp)][0] = tokUDiv;
+            else
+              stack[oldIdxRight + 1 - (oldSpRight - sp)][0] = tokUMod;
+          }
+          break;
+
+        case '*':
+          sl = (int)((unsigned)sl * sr);
+          break;
+
+        case tokLShift:
+        case tokRShift:
+          if (constExpr[1])
+          {
+            if (SyntaxStack0[RightExprTypeSynPtr] != tokUnsigned)
+              sr = truncInt(sr);
+            else
+              sr = (int)truncUint(sr);
+            shiftCountCheck(&sr, oldIdxRight - (oldSpRight - sp), RightExprTypeSynPtr);
+          }
+          if (*ConstExpr)
+          {
+            if (tok == tokLShift)
             {
-              // right shift for unsigned ints
-              sl = (int)(truncUint(sl) >> sr);
+              // left shift is the same for signed and unsigned ints
+              sl = (int)((unsigned)sl << sr);
             }
-            else if (sr)
+            else
             {
-              // right shift for signed ints is arithmetic, sign-bit-preserving
-              // don't depend on the compiler's implementation, do it "manually"
-              sl = truncInt(sl);
-              sl = (int)((truncUint(sl) >> sr) |
-                         ((sl < 0) * (~0u << (8 * SizeOfWord - sr))));
+              if (SyntaxStack0[*ExprTypeSynPtr] == tokUnsigned)
+              {
+                // right shift for unsigned ints
+                sl = (int)(truncUint(sl) >> sr);
+              }
+              else if (sr)
+              {
+                // right shift for signed ints is arithmetic, sign-bit-preserving
+                // don't depend on the compiler's implementation, do it "manually"
+                sl = truncInt(sl);
+                sl = (int)((truncUint(sl) >> sr) |
+                           ((sl < 0) * (~0u << (8 * SizeOfWord - sr))));
+              }
             }
           }
+
+          if (SyntaxStack0[*ExprTypeSynPtr] == tokUnsigned && tok == tokRShift)
+            stack[oldIdxRight + 1 - (oldSpRight - sp)][0] = tokURShift;
+
+          // ignore RightExprTypeSynPtr for the purpose of promotion/conversion of the result of <</>>
+          RightExprTypeSynPtr = SymIntSynPtr;
+          break;
+
+        case '&': sl &= sr; break;
+        case '^': sl ^= sr; break;
+        case '|': sl |= sr; break;
         }
-
-        if (SyntaxStack0[*ExprTypeSynPtr] == tokUnsigned && tok == tokRShift)
-          stack[oldIdxRight + 1 - (oldSpRight - sp)][0] = tokURShift;
-
-        // ignore RightExprTypeSynPtr for the purpose of promotion/conversion of the result of <</>>
-        RightExprTypeSynPtr = SymIntSynPtr;
-        break;
-
-      case '&': sl &= sr; break;
-      case '^': sl ^= sr; break;
-      case '|': sl |= sr; break;
+        s = sl;
       }
-
-      s = sl;
       promoteType(ExprTypeSynPtr, &RightExprTypeSynPtr);
       simplifyConstExpr(s, *ConstExpr, ExprTypeSynPtr, oldIdxRight + 1 - (oldSpRight - sp), *idx + 1);
     }
     break;
 
-  // Relational binary operators
+  // Relational and equality binary operators
   // DONE: add (sub)tokens for unsigned >, >=, <, <= for pointers
   case '<':
   case '>':
@@ -3802,75 +4417,179 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
   case tokNEQ:
     {
       int ptrmask;
+#ifndef NO_FP
+      int fmask;
+      int oldIdxLeft, oldSpLeft;
+#endif
       int sr, sl;
-      int Unsigned;
       sr = exprval(idx, &RightExprTypeSynPtr, &constExpr[1]);
+#ifndef NO_FP
+      oldIdxLeft = *idx;
+      oldSpLeft = sp;
+#endif
       sl = exprval(idx, ExprTypeSynPtr, &constExpr[0]);
 
+      // Bar void and struct/union
       scalarTypeCheck(RightExprTypeSynPtr);
       scalarTypeCheck(*ExprTypeSynPtr);
 
-      decayArray(&RightExprTypeSynPtr, 0);
-      decayArray(ExprTypeSynPtr, 0);
-
-      ptrmask = (RightExprTypeSynPtr < 0) + (*ExprTypeSynPtr < 0) * 2;
-
-      // Disallow >, <, >=, <= between a pointer and a number
-      if (ptrmask >= 1 && ptrmask <= 2 &&
-          tok != tokEQ && tok != tokNEQ)
-        //error("exprval(): Invalid/unsupported combination of compared operands\n");
+      ptrmask = isAnyPtr(RightExprTypeSynPtr) + isAnyPtr(*ExprTypeSynPtr) * 2;
+#ifndef NO_FP
+      fmask = isFloat(RightExprTypeSynPtr) + isFloat(*ExprTypeSynPtr) * 2;
+      if (ptrmask && fmask) // pointers and floats don't mix
         errorOpType();
+#endif
+
+      // TBD??? stricter type checks???
+      if (tok != tokEQ && tok != tokNEQ)
+      {
+        // Disallow >, <, >=, <= between a pointer and a number
+        if (ptrmask == 1 || ptrmask == 2)
+          //error("exprval(): Invalid/unsupported combination of compared operands\n");
+          errorOpType();
+        // Disallow >, <, >=, <= with pointers to functions
+        if (((ptrmask & 1) && SyntaxStack0[derefAnyPtr(RightExprTypeSynPtr)] == '(') ||
+            ((ptrmask & 2) && SyntaxStack0[derefAnyPtr(*ExprTypeSynPtr)] == '('))
+          errorOpType();
+      }
+      else
+      {
+        // Disallow == and != between a pointer and a number other than constant 0 (AKA NULL)
+        if ((ptrmask == 1 && !(constExpr[0] && !truncInt(sl))) ||
+            (ptrmask == 2 && !(constExpr[1] && !truncInt(sr))))
+          errorOpType();
+      }
 
       *ConstExpr = constExpr[0] && constExpr[1];
 
-      Unsigned = !ptrmask &&
-        (SyntaxStack0[*ExprTypeSynPtr] == tokUnsigned || SyntaxStack0[RightExprTypeSynPtr] == tokUnsigned);
-
-      if (*ConstExpr)
+#ifndef NO_FP
+      if (fmask)
       {
-        if (!Unsigned)
+        if (fmask == 2)
         {
-          sl = truncInt(sl);
-          sr = truncInt(sr);
+          int u = isUint(RightExprTypeSynPtr);
+          if (constExpr[1])
+          {
+            // convert int constant to float
+            sr = u ? u2f(sr) : i2f(sr);
+            stack[oldIdxRight - (oldSpRight - sp)][1] = sr;
+          }
+          else
+          {
+            // insert a call to convert int to float
+            int above = oldIdxRight + 1 - (oldSpRight - sp);
+            int below = oldIdxLeft + 1 - (oldSpLeft - sp);
+            ins2(above, ')', SizeOfWord);
+            ins2(above, tokIdent, FindIdent(FpFxnName[u ? FXNU2F : FXNI2F]));
+            ins(above, ',');
+            ins2(below, '(', SizeOfWord);
+            oldSpLeft += 4;
+          }
+        }
+        if (fmask == 1)
+        {
+          int u = isUint(*ExprTypeSynPtr);
+          if (constExpr[0])
+          {
+            // convert int constant to float
+            sl = u ? u2f(sl) : i2f(sl);
+            stack[oldIdxLeft - (oldSpLeft - sp)][1] = sl;
+          }
+          else
+          {
+            // insert a call to convert int to float
+            int above = oldIdxLeft + 1 - (oldSpLeft - sp);
+            int below = *idx + 1;
+            ins2(above, ')', SizeOfWord);
+            ins2(above, tokIdent, FindIdent(FpFxnName[u ? FXNU2F : FXNI2F]));
+            ins(above, ',');
+            ins2(below, '(', SizeOfWord);
+          }
+        }
+        if (*ConstExpr)
+        {
+          sl = fcmp(sl, sr, (tok == tokGEQ || tok == '>') ? -1 : +1);
           switch (tok)
           {
-          case '<':    sl = sl <  sr; break;
-          case '>':    sl = sl >  sr; break;
-          case tokLEQ: sl = sl <= sr; break;
-          case tokGEQ: sl = sl >= sr; break;
-          case tokEQ:  sl = sl == sr; break;
-          case tokNEQ: sl = sl != sr; break;
+          case '<':    sl = sl <  0; break;
+          case '>':    sl = sl >  0; break;
+          case tokLEQ: sl = sl <= 0; break;
+          case tokGEQ: sl = sl >= 0; break;
+          case tokEQ:  sl = sl == 0; break;
+          case tokNEQ: sl = sl != 0; break;
           }
         }
         else
         {
-          sl = (int)truncUint(sl);
-          sr = (int)truncUint(sr);
-          switch (tok)
-          {
-          case '<':    sl = (unsigned)sl <  (unsigned)sr; break;
-          case '>':    sl = (unsigned)sl >  (unsigned)sr; break;
-          case tokLEQ: sl = (unsigned)sl <= (unsigned)sr; break;
-          case tokGEQ: sl = (unsigned)sl >= (unsigned)sr; break;
-          case tokEQ:  sl = sl == sr; break;
-          case tokNEQ: sl = sl != sr; break;
-          }
+          // insert a call to compare floats
+          int above = oldIdxRight + 1 - (oldSpRight - sp);
+          int mid = oldIdxLeft + 1 - (oldSpLeft - sp);
+          int below = *idx + 1;
+          // left operand must be the first argument, swap
+          swap(below, mid - below, above - mid);
+          mid = above - mid + below;
+          // we'll compare the returned value against 0:
+          // -1 if left  < right
+          //  0 if left == right
+          // +1 if left  > right
+          ins2(above, tokNumInt, 0);
+          ins2(above, ')', SizeOfWord * 2);
+          ins2(above, tokIdent, FindIdent(FpFxnName[(tok == tokGEQ || tok == '>') ? FXNFCMPG : FXNFCMPL]));
+          ins(above, ',');
+          ins(mid, ',');
+          ins2(below, '(', SizeOfWord * 2);
         }
       }
-
-      if (ptrmask || Unsigned)
+      else
+#endif
       {
-        // Pointer comparison should be unsigned
-        int t = tok;
-        switch (tok)
+        int Unsigned = isUint(*ExprTypeSynPtr) || isUint(RightExprTypeSynPtr);
+
+        if (*ConstExpr)
         {
-        case '<': t = tokULess; break;
-        case '>': t = tokUGreater; break;
-        case tokLEQ: t = tokULEQ; break;
-        case tokGEQ: t = tokUGEQ; break;
+          if (!Unsigned)
+          {
+            sl = truncInt(sl);
+            sr = truncInt(sr);
+            switch (tok)
+            {
+            case '<':    sl = sl <  sr; break;
+            case '>':    sl = sl >  sr; break;
+            case tokLEQ: sl = sl <= sr; break;
+            case tokGEQ: sl = sl >= sr; break;
+            case tokEQ:  sl = sl == sr; break;
+            case tokNEQ: sl = sl != sr; break;
+            }
+          }
+          else
+          {
+            sl = (int)truncUint(sl);
+            sr = (int)truncUint(sr);
+            switch (tok)
+            {
+            case '<':    sl = (unsigned)sl <  (unsigned)sr; break;
+            case '>':    sl = (unsigned)sl >  (unsigned)sr; break;
+            case tokLEQ: sl = (unsigned)sl <= (unsigned)sr; break;
+            case tokGEQ: sl = (unsigned)sl >= (unsigned)sr; break;
+            case tokEQ:  sl = sl == sr; break;
+            case tokNEQ: sl = sl != sr; break;
+            }
+          }
         }
-        if (t != tok)
+
+        if (ptrmask || Unsigned)
+        {
+          // Pointer comparison should be unsigned
+          int t = tok;
+          switch (tok)
+          {
+          case '<': t = tokULess; break;
+          case '>': t = tokUGreater; break;
+          case tokLEQ: t = tokULEQ; break;
+          case tokGEQ: t = tokUGEQ; break;
+          }
           stack[oldIdxRight + 1 - (oldSpRight - sp)][0] = t;
+        }
       }
 
       s = sl;
@@ -3882,9 +4601,36 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
   // implicit pseudo-conversion to _Bool of operands of && and ||
   case tok_Bool:
     s = exprval(idx, ExprTypeSynPtr, ConstExpr);
-    s = truncInt(s) != 0;
+    // Bar void and struct/union
     scalarTypeCheck(*ExprTypeSynPtr);
-    decayArray(ExprTypeSynPtr, 0);
+#ifndef NO_FP
+    if (isFloat(*ExprTypeSynPtr))
+    {
+      if (*ConstExpr)
+      {
+        s = fcmp(s, i2f(0), -1) != 0;
+      }
+      else
+      {
+        // insert a call to compare the float with 0.0
+        int above = oldIdxRight + 1 - (oldSpRight - sp);
+        int below = *idx + 1;
+        // the returned value will be one of -1,0,+1, we need its least significant bit
+        stack[above][0] = '&';
+        ins2(above, tokNumInt, 1);
+        ins2(above, ')', SizeOfWord * 2);
+        ins2(above, tokIdent, FindIdent(FpFxnName[FXNFCMPL]));
+        ins(above, ',');
+        ins(below, ',');
+        ins2(below, tokNumInt, i2f(0));
+        ins2(below, '(', SizeOfWord * 2);
+      }
+    }
+    else
+#endif
+    {
+      s = truncInt(s) != 0;
+    }
     *ExprTypeSynPtr = SymIntSynPtr;
     simplifyConstExpr(s, *ConstExpr, ExprTypeSynPtr, oldIdxRight + 1 - (oldSpRight - sp), *idx + 1);
     break;
@@ -3984,8 +4730,8 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       int tmpSynPtr, c;
       int minParams, maxParams;
       int firstParamSynPtr;
-#ifndef NO_STRUCT_BY_VAL
       int oldIdx, oldSp;
+#ifndef NO_STRUCT_BY_VAL
       unsigned structSize = 0;
       int retStruct = 0;
       int retOfs = 0;
@@ -4022,28 +4768,100 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       c = 0;
       while (stack[*idx][0] != '(')
       {
+#ifndef NO_FP
+        int fmask;
+#endif
+        int ptrmask;
 #ifndef NO_STRUCT_BY_VAL
         int gotStructs;
 #endif
+
         // add a comma after the first (last to be pushed) argument,
         // so all arguments can be pushed whenever a comma is encountered
         if (!c)
           ins(*idx + 1, ',');
 
-#ifndef NO_STRUCT_BY_VAL
         oldIdx = *idx;
         oldSp = sp;
-#endif
+        (void)oldIdx;
+        (void)oldSp;
+
         exprval(idx, &tmpSynPtr, ConstExpr);
         //error("exprval(): function arguments cannot be of type 'void'\n");
 
-#ifdef NO_STRUCT_BY_VAL
-        scalarTypeCheck(tmpSynPtr);
-#else
-        nonVoidTypeCheck(tmpSynPtr);
+        if (c >= maxParams)
+          error("Too many function arguments\n");
 
+        // Find the type of the formal parameter in the function declaration
+        if (c < minParams)
+        {
+          int t;
+          while ((t = SyntaxStack0[firstParamSynPtr]) != tokIdent)
+          {
+            if (t == '(')
+            {
+              // skip parameters in parameters
+              int c = 1;
+              while (c)
+              {
+                t = SyntaxStack0[++firstParamSynPtr];
+                c += (t == '(') - (t == ')');
+              }
+            }
+            firstParamSynPtr++;
+          }
+          firstParamSynPtr++;
+        }
+        else
+        {
+          firstParamSynPtr = SymVoidSynPtr;
+        }
+
+        ptrmask = isAnyPtr(firstParamSynPtr) * 2 + isAnyPtr(tmpSynPtr);
+        (void)ptrmask;
+#ifndef NO_FP
+        fmask = isFloat(firstParamSynPtr) * 2 + isFloat(tmpSynPtr);
+#endif
+#ifndef NO_STRUCT_BY_VAL
+        gotStructs = (SyntaxStack0[firstParamSynPtr] == tokStructPtr) * 2 +
+                     (tmpSynPtr >= 0 && SyntaxStack0[tmpSynPtr] == tokStructPtr);
+#endif
+
+#ifndef NO_STRUCT_BY_VAL
+        // Bar void
+        nonVoidTypeCheck(tmpSynPtr);
+#else
+        // Bar void and struct/union
+        scalarTypeCheck(tmpSynPtr);
+#endif
+        // if there's a formal parameter for this argument, check the types
+        if (c < minParams)
+        {
+#ifndef NO_FP
+          // floats don't mix with pointers
+          if (fmask && ptrmask)
+            errorOpType();
+#endif
+#ifndef NO_STRUCT_BY_VAL
+          // Structures must be of the same type
+          if (gotStructs &&
+              (gotStructs != 3 || SyntaxStack1[tmpSynPtr] != SyntaxStack1[firstParamSynPtr]))
+            errorOpType();
+#endif
+#ifndef NO_EXTRA_WARNS
+          // Issue a warning if the argument has to be a pointer but isn't and vice versa.
+          // TBD??? Compare pointer types deeply as in compatCheck()???
+          // TBD??? Issue a similar warning for return values and initializers???
+          if (ptrmask == 1 ||
+              (ptrmask == 2 &&
+              // Make an exception for integer constants equal to 0, treat them as NULL pointers
+              !(*ConstExpr && !truncInt(stack[*idx + 1][1]))))
+            warning("Expected %spointer in argument %d\n", (ptrmask == 2) ? "" : "non-", c + 1);
+#endif
+        }
+
+#ifndef NO_STRUCT_BY_VAL
         // If the argument is a structure, push it by calling a dedicated function
-        gotStructs = tmpSynPtr >= 0 && SyntaxStack0[tmpSynPtr] == tokStructPtr;
         if (gotStructs)
         {
           unsigned sz = GetDeclSize(tmpSynPtr, 0);
@@ -4088,78 +4906,36 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
         }
 #endif
 
-        if (++c > maxParams)
-          error("Too many function arguments\n");
-
-#ifndef NO_STRUCT_BY_VAL
-#ifndef CHECK_FXN_ARGS
-#define CHECK_FXN_ARGS
-#endif
-#endif
-
-#ifndef NO_EXTRA_WARNS
-#ifndef CHECK_FXN_ARGS
-#define CHECK_FXN_ARGS
-#endif
-#endif
-
-#ifdef CHECK_FXN_ARGS
-        // Issue a warning if the argument has to be a pointer but isn't and vice versa.
-        // DONE: struct type compat checks
-        // TBD??? Compare pointer types deeply as in compatCheck()???
-        // TBD??? Issue a similar warning for return values and initializers???
-        if (c <= minParams)
+#ifndef NO_FP
+        // if there's a formal parameter for this argument, we may need to convert from/to float
+        if (c < minParams && (fmask == 1 || fmask == 2))
         {
-          int t;
-#ifndef NO_EXTRA_WARNS
-          int gotPtr = tmpSynPtr < 0;
-          int needPtr;
-          if (!gotPtr)
+          int u = isUint((fmask == 1) ? firstParamSynPtr : tmpSynPtr);
+          if (*ConstExpr)
           {
-            t = SyntaxStack0[tmpSynPtr];
-            gotPtr = (t == '*') | (t == '[') | (t == '('); // arrays and functions decay to pointers
+            int val = stack[*idx + 1][1];
+            // convert between float and [unsigned] int
+            if (fmask == 1)
+              val = u ? f2u(val) : f2i(val, GetDeclSize(firstParamSynPtr, 1));
+            else
+              val = u ? u2f(val) : i2f(val);
+            stack[*idx + 1][1] = val;
           }
-#endif
-          // Find the type of the formal parameter in the function declaration
-          while ((t = SyntaxStack0[firstParamSynPtr]) != tokIdent)
+          else
           {
-            if (t == '(')
-            {
-              // skip parameters in parameters
-              int c = 1;
-              while (c)
-              {
-                t = SyntaxStack0[++firstParamSynPtr];
-                c += (t == '(') - (t == ')');
-              }
-            }
-            firstParamSynPtr++;
+            // insert a call to convert between float and [unsigned] int
+            int above = oldIdx + 1 - (oldSp - sp);
+            int below = *idx + 1;
+            ins2(above, ')', SizeOfWord);
+            ins2(above, tokIdent, FindIdent(FpFxnName[(fmask == 1) ? (u ? FXNF2U : FXNF2I) :
+                                                                     (u ? FXNU2F : FXNI2F)]));
+            ins(above, ',');
+            ins2(below, '(', SizeOfWord);
           }
-          firstParamSynPtr++;
-#ifndef NO_STRUCT_BY_VAL
-          gotStructs += (SyntaxStack0[firstParamSynPtr] == tokStructPtr) * 2;
-          if (gotStructs)
-          {
-            // Structures must be of the same type
-            if (gotStructs != 3 ||
-                SyntaxStack1[tmpSynPtr] != SyntaxStack1[firstParamSynPtr])
-              errorOpType();
-          }
-#endif
-#ifndef NO_EXTRA_WARNS
-          needPtr = SyntaxStack0[firstParamSynPtr] == '*';
-          if (needPtr != gotPtr &&
-              // Make an exception for integer constants equal to 0, treat them as NULL pointers
-              !(
-                 needPtr &&
-                 *ConstExpr &&
-                 !stack[*idx + 1][1]
-               )
-             )
-            warning("Expected %spointer in argument %d\n", needPtr ? "" : "non-", c);
-#endif
         }
-#endif // CHECK_FXN_ARGS
+#endif
+
+        c++;
 
         if (stack[*idx][0] == ',')
           --*idx;
@@ -4261,29 +5037,45 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       oldSpLeft = sp;
       exprval(idx, ExprTypeSynPtr, &constExpr[0]);
 
+      lvalueCheck(*ExprTypeSynPtr, oldIdxLeft - (oldSpLeft - sp));
+
+      // if it's a pointer, ensure that it's suitable for pointer arithmetic
+      // (not pointer to function, pointee size is known and non-zero)
+      decayArray(ExprTypeSynPtr, 1); // no actual decay here, just a type check
+
+      // Bar void and struct/union
       scalarTypeCheck(RightExprTypeSynPtr);
       scalarTypeCheck(*ExprTypeSynPtr);
 
-      decayArray(&RightExprTypeSynPtr, 1);
-      decayArray(ExprTypeSynPtr, 1);
-
-      if (!(oldIdxLeft - (oldSpLeft - sp) >= 0 &&
-            stack[oldIdxLeft - (oldSpLeft - sp)][0] == tokUnaryStar))
-        //error("exprval(): lvalue expected before %s\n", GetTokenName(tok));
-        errorNotLvalue();
+#ifndef NO_FP
+      // TBD!!! tokAssignMul, tokAssignDiv, tokAssignAdd, tokAssignSub with floats
+      if (isFloat(RightExprTypeSynPtr) || isFloat(*ExprTypeSynPtr))
+      {
+        switch (tok)
+        {
+        case tokAssignMul:
+        case tokAssignDiv:
+        case tokAssignAdd:
+        case tokAssignSub:
+          error("Compound assignment not supported with floats\n");
+        default:
+          errorOpType();
+        }
+      }
+#endif
 
       // "remove" the lvalue dereference as we don't need
-      // to read the value and forget its location. We need to
-      // keep the lvalue location.
+      // to read the value while forgetting its location.
+      // We need to keep the lvalue location.
+      // Remember the operand size.
       opSize = stack[oldIdxLeft - (oldSpLeft - sp)][1];
       // store the operand size in the operator
       stack[oldIdxRight + 1 - (oldSpRight - sp)][1] = opSize;
       del(oldIdxLeft - (oldSpLeft - sp), 1);
 
-      ptrmask = (RightExprTypeSynPtr < 0) + (*ExprTypeSynPtr < 0) * 2;
+      ptrmask = isAnyPtr(*ExprTypeSynPtr) * 2 + isAnyPtr(RightExprTypeSynPtr);
 
-      Unsigned = !ptrmask &&
-        (SyntaxStack0[*ExprTypeSynPtr] == tokUnsigned || SyntaxStack0[RightExprTypeSynPtr] == tokUnsigned);
+      Unsigned = isUint(*ExprTypeSynPtr) * 2 + isUint(RightExprTypeSynPtr);
 
       if (tok != tokAssignAdd && tok != tokAssignSub)
       {
@@ -4303,10 +5095,10 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       {
         if (constExpr[1])
         {
-          if (SyntaxStack0[RightExprTypeSynPtr] != tokUnsigned)
-            sr = truncInt(sr);
-          else
+          if (Unsigned & 1)
             sr = (int)truncUint(sr);
+          else
+            sr = truncInt(sr);
           shiftCountCheck(&sr, oldIdxRight - (oldSpRight - sp), RightExprTypeSynPtr);
         }
       }
@@ -4324,7 +5116,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       // TBD??? replace +=/-= with prefix ++/-- if incSize == 1
       if (ptrmask == 2) // left-hand expression
       {
-        incSize = GetDeclSize(-*ExprTypeSynPtr, 0);
+        incSize = GetDeclSize(derefAnyPtr(*ExprTypeSynPtr), 0);
         if (constExpr[1])
         {
           int t = (int)(stack[oldIdxRight - (oldSpRight - sp)][1] * (unsigned)incSize);
@@ -4344,7 +5136,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
         case tokAssignDiv: t = tokAssignUDiv; break;
         case tokAssignMod: t = tokAssignUMod; break;
         case tokAssignRSh:
-          if (SyntaxStack0[*ExprTypeSynPtr] == tokUnsigned)
+          if (Unsigned & 2)
             t = tokAssignURSh;
           break;
         }
@@ -4363,35 +5155,86 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       int condTypeSynPtr;
       int sc = (LabelCnt += 2) - 2;
       int structs;
+#ifndef NO_FP
+      int ptrmask;
+      int fmask;
+#endif
 
       // "exprL ? exprMID : exprR" appears on the stack as
       // "exprL exprR exprMID ?"
 
+      // label at the end of ?:
       stack[*idx + 1][0] = tokLogAnd; // piggyback on && for CG (ugly, but simple)
       stack[*idx + 1][1] = sc + 1;
+
       smid = exprval(idx, ExprTypeSynPtr, &constExpr[1]);
 
-      ins2(*idx + 1, tokLogAnd, sc); // piggyback on && for CG (ugly, but simple)
-
-      ins2(*idx + 1, tokGoto, sc + 1); // jump to end of ?:
       oldIdxLeft = *idx;
       oldSpLeft = sp;
       sr = exprval(idx, &RightExprTypeSynPtr, &constExpr[2]);
-
-      ins2(*idx + 1, tokShortCirc, -sc); // jump to mid if left is non-zero
-      sl = exprval(idx, &condTypeSynPtr, &constExpr[0]);
-
-      scalarTypeCheck(condTypeSynPtr);
 
       decayArray(&RightExprTypeSynPtr, 0);
       decayArray(ExprTypeSynPtr, 0);
       promoteType(&RightExprTypeSynPtr, ExprTypeSynPtr);
       promoteType(ExprTypeSynPtr, &RightExprTypeSynPtr);
 
+      structs = (*ExprTypeSynPtr >= 0 && SyntaxStack0[*ExprTypeSynPtr] == tokStructPtr) * 2 +
+                (RightExprTypeSynPtr >= 0 && SyntaxStack0[RightExprTypeSynPtr] == tokStructPtr);
+#ifndef NO_FP
+      ptrmask = isAnyPtr(*ExprTypeSynPtr) * 2 + isAnyPtr(RightExprTypeSynPtr);
+      fmask = isFloat(*ExprTypeSynPtr) * 2 + isFloat(RightExprTypeSynPtr);
+      if (fmask && (structs | ptrmask)) // floats don't mix with pointers or structs/unions
+        errorOpType();
+
+      if (fmask)
+      {
+        if (fmask == 1)
+        {
+          int u = isUint(*ExprTypeSynPtr);
+          if (constExpr[1])
+          {
+            // convert int constant to float
+            smid = u ? u2f(smid) : i2f(smid);
+            stack[oldIdxRight - (oldSpRight - sp)][1] = smid;
+          }
+          else
+          {
+            // insert a call to convert int to float
+            int above = oldIdxRight + 1 - (oldSpRight - sp);
+            int below = oldIdxLeft + 1 - (oldSpLeft - sp);
+            ins2(above, ')', SizeOfWord);
+            ins2(above, tokIdent, FindIdent(FpFxnName[u ? FXNU2F : FXNI2F]));
+            ins(above, ',');
+            ins2(below, '(', SizeOfWord);
+            oldSpLeft += 4;
+          }
+        }
+        if (fmask == 2)
+        {
+          int u = isUint(RightExprTypeSynPtr);
+          if (constExpr[2])
+          {
+            // convert int constant to float
+            sr = u ? u2f(sr) : i2f(sr);
+            stack[oldIdxLeft - (oldSpLeft - sp)][1] = sr;
+          }
+          else
+          {
+            // insert a call to convert int to float
+            int above = oldIdxLeft + 1 - (oldSpLeft - sp);
+            int below = *idx + 1;
+            ins2(above, ')', SizeOfWord);
+            ins2(above, tokIdent, FindIdent(FpFxnName[u ? FXNU2F : FXNI2F]));
+            ins(above, ',');
+            ins2(below, '(', SizeOfWord);
+          }
+        }
+        *ExprTypeSynPtr = SymFloatSynPtr;
+      }
+#endif
+
       // TBD??? move struct/union-related checks into compatChecks()
 
-      structs = (RightExprTypeSynPtr >= 0 && SyntaxStack0[RightExprTypeSynPtr] == tokStructPtr) +
-              (*ExprTypeSynPtr >= 0 && SyntaxStack0[*ExprTypeSynPtr] == tokStructPtr) * 2;
       if (structs)
       {
         if (structs != 3 ||
@@ -4407,6 +5250,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
         del(oldIdxLeft - (oldSpLeft - sp), 1); // delete '*'
         del(oldIdxRight - (oldSpRight - sp), 1); // delete '*'
         ins2(oldIdxRight + 2 - (oldSpRight - sp), tokUnaryStar, 0); // use 0 deref size to drop meaningless dereferences
+        oldSpRight--;
       }
       else
       {
@@ -4417,21 +5261,57 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
                     oldIdxLeft - (oldSpLeft - sp));
       }
 
+      // label at the start of exprMID
+      ins2(oldIdxLeft + 1 - (oldSpLeft - sp), tokLogAnd, sc); // piggyback on && for CG (ugly, but simple)
+      // jump from the end of exprR over exprMID to the end of ?:
+      ins2(oldIdxLeft - (oldSpLeft - sp), tokGoto, sc + 1);
+      // jump to exprMID if exprL is non-zero
+      ins2(*idx + 1, tokShortCirc, -sc);
+
+      oldIdxLeft = *idx;
+      oldSpLeft = sp;
+      sl = exprval(idx, &condTypeSynPtr, &constExpr[0]);
+
+      // Bar void and struct/union
+      scalarTypeCheck(condTypeSynPtr);
+
+#ifndef NO_FP
+      if (isFloat(condTypeSynPtr))
+      {
+        // insert a call to compare the float with 0.0
+        int above = oldIdxLeft + 1 - (oldSpLeft - sp);
+        int below = *idx + 1;
+        // the returned value will be one of -1,0,+1, that is, 0 if 0, +/-1 otherwise,
+        // IOW, suitable for conditional jump on zero/non-zero
+        ins2(above, ')', SizeOfWord * 2);
+        ins2(above, tokIdent, FindIdent(FpFxnName[FXNFCMPL]));
+        ins(above, ',');
+        ins(below, ',');
+        ins2(below, tokNumInt, i2f(0));
+        ins2(below, '(', SizeOfWord * 2);
+      }
+#endif
+
       *ConstExpr = s = 0;
 
       if (constExpr[0])
       {
-        if (truncUint(sl))
+        if (
+#ifndef NO_FP
+            isFloat(condTypeSynPtr) ?
+              fcmp(sl, i2f(0), -1) != 0 :
+#endif
+              (truncUint(sl) != 0))
         {
           if (constExpr[1])
             *ConstExpr = 1, s = smid;
-          // TBD??? else can drop LHS and RHS expressions
+          // TBD??? else can drop exprL and exprR subexpressions
         }
         else
         {
           if (constExpr[2])
             *ConstExpr = 1, s = sr;
-          // TBD??? else can drop LHS and MID expressions
+          // TBD??? else can drop exprL and exprMID subexpressions
         }
       }
       simplifyConstExpr(s, *ConstExpr, ExprTypeSynPtr, oldIdxRight + 1 - (oldSpRight - sp), *idx + 1);
@@ -4441,7 +5321,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
   // Postfix indirect structure/union member selection operator
   case tokArrow:
     {
-      int member, i, j = 0, c = 1, ofs = 0;
+      int member, i = 0, j = 0, c = 1, ofs = 0;
 
       stack[*idx + 1][0] = '+'; // replace -> with +
       member = stack[*idx][1]; // keep the member name, it will be replaced with member offset
@@ -4450,13 +5330,11 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       --*idx;
       exprval(idx, ExprTypeSynPtr, ConstExpr);
 
-      decayArray(ExprTypeSynPtr, 0);
-
-      if (*ExprTypeSynPtr >= 0 ||
-          SyntaxStack0[-*ExprTypeSynPtr] != tokStructPtr)
+      if (!isAnyPtr(*ExprTypeSynPtr) ||
+          SyntaxStack0[i = derefAnyPtr(*ExprTypeSynPtr)] != tokStructPtr)
         error("Pointer to or structure or union expected\n");
 
-      i = SyntaxStack1[-*ExprTypeSynPtr];
+      i = SyntaxStack1[i];
       if (i + 2 > SyntaxStackCnt ||
           (SyntaxStack0[i] != tokStruct && SyntaxStack0[i] != tokUnion) ||
           SyntaxStack0[i + 1] != tokTag)
@@ -4484,6 +5362,8 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
         error("Undefined structure or union member '%s'\n", IdentTable + member);
 
       j += 2;
+      // we cannot insert another '*' into the type to make it a pointer,
+      // so make the index into the type negative
       *ExprTypeSynPtr = -j; // type: pointer to member's type
 
       stack[oldIdxRight - (oldSpRight - sp)][1] = ofs; // member offset within structure/union
@@ -4575,6 +5455,11 @@ int ParseExpr(int tok, int* GotUnary, int* ExprTypeSynPtr, int* ConstExpr, int* 
         case tokNumUint:
           printf2("%uu", truncUint(stack[i][1]));
           break;
+#ifndef NO_FP
+        case tokNumFloat:
+          printf2("%df", truncInt(stack[i][1]));
+          break;
+#endif
         case tokIdent:
           {
             char* p = IdentTable + stack[i][1];
@@ -4662,6 +5547,11 @@ int ParseExpr(int tok, int* GotUnary, int* ExprTypeSynPtr, int* ConstExpr, int* 
         case tokInt:
           printf2("Expression value: %d\n", truncInt(*ConstVal));
           break;
+#ifndef NO_FP
+        case tokFloat:
+          printf2("Expression value: %df\n", truncInt(*ConstVal));
+          break;
+#endif
         default:
         case tokUnsigned:
           printf2("Expression value: %uu\n", truncUint(*ConstVal));
@@ -5011,10 +5901,21 @@ void errorLongExpr(void)
   error("Expression too long\n");
 }
 
+#ifndef NO_FP
+STATIC
+void warnFloat2Int(void)
+{
+  warning("Float constant non-convertible to integer\n");
+}
+#endif
+
 int tsd[] =
 {
   tokVoid, tokChar, tokInt,
   tokSigned, tokUnsigned, tokShort,
+#ifndef NO_FP
+  tokFloat, tokDouble,
+#endif
   tokStruct, tokUnion,
 };
 
@@ -5245,8 +6146,8 @@ int GetDeclSize(int SyntaxPtr, int SizeForDeref)
   unsigned size = 1;
   int arr = 0;
 
-  if (SyntaxPtr < 0)
-    errorInternal(10);
+  if (SyntaxPtr < 0) // pointer?
+    return SizeOfWord;
 
   for (i = SyntaxPtr; i < SyntaxStackCnt; i++)
   {
@@ -5280,6 +6181,9 @@ int GetDeclSize(int SyntaxPtr, int SizeForDeref)
 #endif
     case tokInt:
     case tokUnsigned:
+#ifndef NO_FP
+    case tokFloat:
+#endif
     case '*':
     case '(': // size of fxn = size of ptr for now
       if (size * SizeOfWord / SizeOfWord != size)
@@ -5337,8 +6241,8 @@ int GetDeclAlignment(int SyntaxPtr)
 {
   int i;
 
-  if (SyntaxPtr < 0)
-    errorInternal(14);
+  if (SyntaxPtr < 0) // pointer?
+    return SizeOfWord;
 
   for (i = SyntaxPtr; i < SyntaxStackCnt; i++)
   {
@@ -5359,6 +6263,9 @@ int GetDeclAlignment(int SyntaxPtr)
 #endif
     case tokInt:
     case tokUnsigned:
+#ifndef NO_FP
+    case tokFloat:
+#endif
     case '*':
     case '(':
       return SizeOfWord;
@@ -5519,6 +6426,9 @@ void DumpDecl(int SyntaxPtr, int IsParam)
 #endif
       case tokInt:
       case tokUnsigned:
+#ifndef NO_FP
+      case tokFloat:
+#endif
       case tokEllipsis:
         printf2("%s\n", GetTokenName(tok));
         break;
@@ -5587,6 +6497,7 @@ int ParseArrayDimension(int AllowEmptyDimension)
     exprVal = truncInt(exprVal);
 
     promoteType(&synPtr, &synPtr);
+    anyIntTypeCheck(synPtr);
     if ((SyntaxStack0[synPtr] == tokInt && exprVal < 1) || (SyntaxStack0[synPtr] == tokUnsigned && exprValU < 1))
       error("Array dimension less than 1\n");
 
@@ -5615,6 +6526,12 @@ int ParseBase(int tok, int base[2])
 
   switch (tok)
   {
+#ifndef NO_FP
+  case tokDouble: // double is an alias for float
+    tok = tokFloat;
+    // fallthrough
+  case tokFloat:
+#endif
   case tokVoid:
     *base = tok;
     tok = GetToken();
@@ -5790,6 +6707,7 @@ lcont:
 
             if (!gotUnary)
               errorUnexpectedToken(tok);
+            anyIntTypeCheck(synPtr); // TBD!!! check that the value is in the range of signed int
             if (!constExpr)
               errorNotConst();
           }
@@ -6118,6 +7036,9 @@ void PushBase(int base[2])
         case tokShort: case tokUShort:
 #endif
         case tokInt: case tokUnsigned:
+#ifndef NO_FP
+        case tokFloat:
+#endif
         case tokStructPtr:
           copying = 0;
         }
@@ -6194,6 +7115,10 @@ int InitScalar(int synPtr, int tok)
   int undoIdents = IdentTableLen;
   int ttop;
   int braces = 0;
+#ifndef NO_FP
+  int ptrmask;
+  int fmask;
+#endif
 
   // Initializers for scalars can be optionally enclosed in braces
   if (tok == '{')
@@ -6214,14 +7139,34 @@ int InitScalar(int synPtr, int tok)
     tok = GetToken();
   }
 
+  // Bar void and struct/union
   scalarTypeCheck(synPtr2);
+
+#ifndef NO_FP
+  ptrmask = isAnyPtr(synPtr) * 2 + isAnyPtr(synPtr2);
+  fmask = isFloat(synPtr) * 2 + isFloat(synPtr2);
+  if (ptrmask && fmask) // pointers and floats don't mix
+    errorOpType();
+#endif
 
   ttop = stack[sp - 1][0];
   if (ttop == tokNumInt || ttop == tokNumUint)
   {
+    int val = stack[sp - 1][1];
+#ifndef NO_FP
+    if (fmask == 1 || fmask == 2)
+    {
+      int u = isUint((fmask == 1) ? synPtr : synPtr2);
+      // convert between float and [unsigned] int
+      if (fmask == 1)
+        val = u ? f2u(val) : f2i(val, GetDeclSize(synPtr, 1));
+      else
+        val = u ? u2f(val) : i2f(val);
+    }
+#endif
     // TBD??? truncate values for types smaller than int (e.g. char and short),
-    // so they are always in range?
-    GenIntData(elementSz, stack[0][1]);
+    // so they are always in range for the assembler?
+    GenIntData(elementSz, val);
   }
   else if (elementSz == (unsigned)SizeOfWord)
   {
@@ -6472,6 +7417,8 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
   int Static = tok == tokStatic;
 #ifndef NO_TYPEDEF_ENUM
   int typeDef = tok == tokTypedef;
+#else
+  (void)label;
 #endif
 
   if (external |
@@ -7359,8 +8306,6 @@ int ParseStatement(int tok, int BrkCntTarget[2], int casesIdx)
     else if (tok == tokReturn)
     {
       // DONE: functions returning void vs non-void
-      // TBD??? functions returning void should be able to return void
-      //        return values from other functions returning void
       int retVoid = CurFxnReturnExprTypeSynPtr >= 0 &&
                     SyntaxStack0[CurFxnReturnExprTypeSynPtr] == tokVoid;
 #ifndef NO_ANNOTATIONS
@@ -7385,15 +8330,31 @@ int ParseStatement(int tok, int BrkCntTarget[2], int casesIdx)
         if (gotUnary)
           //error("ParseStatement(): cannot return a value of type 'void'\n");
 #ifdef NO_STRUCT_BY_VAL
+          // Bar void and struct/union
           scalarTypeCheck(synPtr);
 #else
+          // Bar void
           nonVoidTypeCheck(synPtr);
 #endif
       }
       if (gotUnary)
       {
+#ifndef NO_FP
+        int ptrmask;
+        int fmask;
+#endif
 #ifndef NO_STRUCT_BY_VAL
-        int structs = (synPtr >= 0 && SyntaxStack0[synPtr] == tokStructPtr) +
+        int structs;
+#endif
+        decayArray(&synPtr, 0);
+#ifndef NO_FP
+        ptrmask = isAnyPtr(CurFxnReturnExprTypeSynPtr) * 2 + isAnyPtr(synPtr);
+        fmask = isFloat(CurFxnReturnExprTypeSynPtr) * 2 + isFloat(synPtr);
+        if (fmask && ptrmask) // floats don't mix with pointers
+          errorOpType();
+#endif
+#ifndef NO_STRUCT_BY_VAL
+        structs = (synPtr >= 0 && SyntaxStack0[synPtr] == tokStructPtr) +
           (CurFxnReturnExprTypeSynPtr >= 0 && SyntaxStack0[CurFxnReturnExprTypeSynPtr] == tokStructPtr) * 2;
 
         if (structs)
@@ -7427,32 +8388,82 @@ int ParseStatement(int tok, int BrkCntTarget[2], int casesIdx)
         else // fallthrough
 #endif
         {
+          int castSize = GetDeclSize(CurFxnReturnExprTypeSynPtr, 1);
+#ifndef NO_FP
+          if (fmask == 1 || fmask == 2)
+          {
+            int u = isUint((fmask == 1) ? CurFxnReturnExprTypeSynPtr : synPtr);
+            if (constExpr)
+            {
+              // convert between float and [unsigned] int
+              if (fmask == 1)
+                exprVal = u ? f2u(exprVal) : f2i(exprVal, castSize);
+              else
+                exprVal = u ? u2f(exprVal) : i2f(exprVal);
+            }
+            else
+            {
+              // insert a call to convert between float and [unsigned] int
+              ins2(0, '(', SizeOfWord);
+              push(',');
+              push2(tokIdent, FindIdent(FpFxnName[(fmask == 1) ? (u ? FXNF2U : FXNF2I) :
+                                                                 (u ? FXNU2F : FXNI2F)]));
+              push2(')', SizeOfWord);
+            }
+          }
+#endif
+
           // If return value (per function declaration) is a scalar type smaller than machine word,
           // properly zero- or sign-extend the returned value to machine word size.
           // TBD??? Move this cast to the caller?
-          int castSize = GetDeclSize(CurFxnReturnExprTypeSynPtr, 1);
-          if (castSize != SizeOfWord &&
-              (synPtr < 0 || castSize != GetDeclSize(synPtr, 1)))
+          if (castSize != SizeOfWord && castSize != GetDeclSize(synPtr, 1))
           {
-            switch (castSize)
+            if (constExpr)
             {
-            case 1:
-              push(tokUChar);
-              break;
-            case -1:
-              push(tokSChar);
-              break;
+              switch (castSize)
+              {
+              case 1:
+                exprVal &= 0xFFu;
+                break;
+              case -1:
+                if ((exprVal &= 0xFFu) >= 0x80)
+                  exprVal -= 0x100;
+                break;
 #ifdef CAN_COMPILE_32BIT
-            case 2:
-              push(tokUShort);
-              break;
-            case -2:
-              push(tokShort);
-              break;
+              case 2:
+                exprVal &= 0xFFFFu;
+                break;
+              case -2:
+                if ((exprVal &= 0xFFFFu) >= 0x8000)
+                  exprVal -= 0x10000;
+                break;
 #endif
+              }
+            }
+            else
+            {
+              switch (castSize)
+              {
+              case 1:
+                push(tokUChar);
+                break;
+              case -1:
+                push(tokSChar);
+                break;
+#ifdef CAN_COMPILE_32BIT
+              case 2:
+                push(tokUShort);
+                break;
+              case -2:
+                push(tokShort);
+                break;
+#endif
+              }
             }
           }
         }
+        if (constExpr)
+          stack[0][1] = exprVal;
         push(tokReturn); // value produced by generated code is used
         GenExpr();
       }
@@ -7487,12 +8498,17 @@ int ParseStatement(int tok, int BrkCntTarget[2], int casesIdx)
 
       // DONE: void control expressions
       //error("ParseStatement(): unexpected 'void' expression in 'while ( expression )'\n");
+      // Bar void and struct/union
       scalarTypeCheck(synPtr);
 
       GenNumLabel(labelBefore);
 
       if (constExpr)
       {
+#ifndef NO_FP
+        if (isFloat(synPtr))
+          exprVal = fcmp(exprVal, i2f(0), -1);
+#endif
         // Special cases for while(0) and while(1)
         if (!(forever = truncInt(exprVal)))
           GenJumpUncond(labelAfter);
@@ -7515,6 +8531,20 @@ int ParseStatement(int tok, int BrkCntTarget[2], int casesIdx)
           GenExpr();
           break;
         default:
+#ifndef NO_FP
+          if (isFloat(synPtr))
+          {
+            // insert a call to compare the float with 0.0
+            // the returned value will be one of -1,0,+1, that is, 0 if 0, +/-1 otherwise,
+            // IOW, suitable for conditional jump on zero/non-zero
+            ins(0, ',');
+            ins2(0, tokNumInt, i2f(0));
+            ins2(0, '(', SizeOfWord * 2);
+            push(',');
+            push2(tokIdent, FindIdent(FpFxnName[FXNFCMPL]));
+            push2(')', SizeOfWord * 2);
+          }
+#endif
           push(tokReturn); // value produced by generated code is used
           GenExpr();
           GenJumpIfZero(labelAfter);
@@ -7574,12 +8604,17 @@ int ParseStatement(int tok, int BrkCntTarget[2], int casesIdx)
 
       // DONE: void control expressions
       //error("ParseStatement(): unexpected 'void' expression in 'while ( expression )'\n");
+      // Bar void and struct/union
       scalarTypeCheck(synPtr);
 
       GenNumLabel(labelWhile);
 
       if (constExpr)
       {
+#ifndef NO_FP
+        if (isFloat(synPtr))
+          exprVal = fcmp(exprVal, i2f(0), -1);
+#endif
         // Special cases for while(0) and while(1)
         if (truncInt(exprVal))
           GenJumpUncond(labelBefore);
@@ -7602,6 +8637,20 @@ int ParseStatement(int tok, int BrkCntTarget[2], int casesIdx)
           GenExpr();
           break;
         default:
+#ifndef NO_FP
+          if (isFloat(synPtr))
+          {
+            // insert a call to compare the float with 0.0
+            // the returned value will be one of -1,0,+1, that is, 0 if 0, +/-1 otherwise,
+            // IOW, suitable for conditional jump on zero/non-zero
+            ins(0, ',');
+            ins2(0, tokNumInt, i2f(0));
+            ins2(0, '(', SizeOfWord * 2);
+            push(',');
+            push2(tokIdent, FindIdent(FpFxnName[FXNFCMPL]));
+            push2(')', SizeOfWord * 2);
+          }
+#endif
           push(tokReturn); // value produced by generated code is used
           GenExpr();
           GenJumpIfNotZero(labelBefore);
@@ -7637,10 +8686,15 @@ int ParseStatement(int tok, int BrkCntTarget[2], int casesIdx)
 
       // DONE: void control expressions
       //error("ParseStatement(): unexpected 'void' expression in 'if ( expression )'\n");
+      // Bar void and struct/union
       scalarTypeCheck(synPtr);
 
       if (constExpr)
       {
+#ifndef NO_FP
+        if (isFloat(synPtr))
+          exprVal = fcmp(exprVal, i2f(0), -1);
+#endif
         // Special cases for if(0) and if(1)
         if (!truncInt(exprVal))
           GenJumpUncond(labelAfterIf);
@@ -7663,6 +8717,20 @@ int ParseStatement(int tok, int BrkCntTarget[2], int casesIdx)
           GenExpr();
           break;
         default:
+#ifndef NO_FP
+          if (isFloat(synPtr))
+          {
+            // insert a call to compare the float with 0.0
+            // the returned value will be one of -1,0,+1, that is, 0 if 0, +/-1 otherwise,
+            // IOW, suitable for conditional jump on zero/non-zero
+            ins(0, ',');
+            ins2(0, tokNumInt, i2f(0));
+            ins2(0, '(', SizeOfWord * 2);
+            push(',');
+            push2(tokIdent, FindIdent(FpFxnName[FXNFCMPL]));
+            push2(')', SizeOfWord * 2);
+          }
+#endif
           push(tokReturn); // value produced by generated code is used
           GenExpr();
           GenJumpIfZero(labelAfterIf);
@@ -7748,10 +8816,15 @@ int ParseStatement(int tok, int BrkCntTarget[2], int casesIdx)
       {
         // DONE: void control expressions
         //error("ParseStatement(): unexpected 'void' expression in 'for ( ; expression ; )'\n");
+        // Bar void and struct/union
         scalarTypeCheck(synPtr);
 
         if (constExpr)
         {
+#ifndef NO_FP
+          if (isFloat(synPtr))
+            exprVal = fcmp(exprVal, i2f(0), -1);
+#endif
           // Special cases for for(...; 0; ...) and for(...; 1; ...)
           cond = truncInt(exprVal) != 0;
         }
@@ -7773,6 +8846,20 @@ int ParseStatement(int tok, int BrkCntTarget[2], int casesIdx)
             GenExpr();
             break;
           default:
+#ifndef NO_FP
+            if (isFloat(synPtr))
+            {
+              // insert a call to compare the float with 0.0
+              // the returned value will be one of -1,0,+1, that is, 0 if 0, +/-1 otherwise,
+              // IOW, suitable for conditional jump on zero/non-zero
+              ins(0, ',');
+              ins2(0, tokNumInt, i2f(0));
+              ins2(0, '(', SizeOfWord * 2);
+              push(',');
+              push2(tokIdent, FindIdent(FpFxnName[FXNFCMPL]));
+              push2(')', SizeOfWord * 2);
+            }
+#endif
             push(tokReturn); // value produced by generated code is used
             GenExpr();
             GenJumpIfZero(labelAfter);
@@ -7908,7 +8995,7 @@ int ParseStatement(int tok, int BrkCntTarget[2], int casesIdx)
 
       // DONE: void control expressions
       //error("ParseStatement(): unexpected 'void' expression in 'switch ( expression )'\n");
-      scalarTypeCheck(synPtr);
+      anyIntTypeCheck(synPtr);
 
       push(tokReturn); // value produced by generated code is used
       GenExpr();
@@ -7966,7 +9053,11 @@ int ParseStatement(int tok, int BrkCntTarget[2], int casesIdx)
         //error("ParseStatement(): ':' expected after 'case expression'\n");
         errorUnexpectedToken(tok);
 
-      if (!gotUnary || !constExpr || (synPtr >= 0 && SyntaxStack0[synPtr] == tokVoid)) // TBD???
+      if (!gotUnary)
+        errorUnexpectedToken(tok);
+
+      anyIntTypeCheck(synPtr);
+      if (!constExpr)
         //error("ParseStatement(): constant integer expression expected in 'case expression :'\n");
         errorNotConst();
 
@@ -8135,6 +9226,7 @@ int main(int argc, char** argv)
     tokVoid,     // SymVoidSynPtr
     tokInt,      // SymIntSynPtr
     tokUnsigned, // SymUintSynPtr
+    tokFloat,    // SymFloatSynPtr
     tokIdent,    // SymFuncPtr
     '[',
     tokNumUint,
@@ -8147,6 +9239,17 @@ int main(int argc, char** argv)
 #ifdef DETERMINE_VA_LIST
   DetermineVaListType();
 #endif
+#endif
+
+#ifndef NO_FP
+  {
+    static float testFloat = -5915522.0f * 1.5f;
+    static unsigned testUint = 0xCB076543; // expected representation of the above
+    if (memcmp(&testFloat, &testUint, sizeof testFloat))
+      error("IEEE 754 floating point required on host\n");
+  }
+  for (i = 0; (unsigned)i < sizeof FpFxnName / sizeof FpFxnName[0]; i++)
+    AddIdent(FpFxnName[i]);
 #endif
 
   GenInit();

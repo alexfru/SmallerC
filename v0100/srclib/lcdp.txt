@@ -1,6 +1,7 @@
 -dosp -c -Wall -o lcdp.a
 
 c0.c
+x87.c
 
 dpmi.c
 

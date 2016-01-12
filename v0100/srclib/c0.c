@@ -1,9 +1,13 @@
 /*
-  Copyright (c) 2014-2015, Alexey Frunze
+  Copyright (c) 2014-2016, Alexey Frunze
   2-clause BSD license.
 */
 extern int main(int argc, char** argv);
 extern void exit(int);
+
+#ifdef __SMALLER_C_32__
+extern void __x87init(void);
+#endif
 
 #include <time.h>
 #include <stdlib.h>
@@ -409,6 +413,10 @@ extern unsigned short __getCS(void);
   clock();
 #endif
 
+#ifdef __SMALLER_C_32__
+  __x87init();
+#endif
+
   exit(main(argc, argv));
 }
 #endif
@@ -433,6 +441,8 @@ void _start(unsigned long exitAddr, void* psp, void* env, char* argv0,
 
   // Start counting ticks now
   clock();
+
+  __x87init();
 
   exit(main(argc, argv));
 }
@@ -525,6 +535,8 @@ void __start__(void)
   // Start counting ticks now
   clock();
 
+  __x87init();
+
   exit(main(argc, argv));
 }
 
@@ -537,6 +549,8 @@ char** __environ;
 void __start__(int argc, char** argv)
 {
   __environ = argv + argc + 1;
+
+  __x87init();
 
   exit(main(argc, argv));
 }
