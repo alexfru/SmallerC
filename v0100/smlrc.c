@@ -672,7 +672,7 @@ int ParamLevel = 0; // 1+ if parsing params, 0 otherwise
 
 unsigned char SyntaxStack0[SYNTAX_STACK_MAX];
 int SyntaxStack1[SYNTAX_STACK_MAX];
-int SyntaxStackCnt = 8; // number of explicitly initialized elements in SyntaxStack0[]
+int SyntaxStackCnt;
 
 // all code
 
@@ -9234,6 +9234,7 @@ int main(int argc, char** argv)
     tokChar
   }; // SyntaxStackCnt must be initialized to the number of elements in SyntaxStackInit[][]
   memcpy(SyntaxStack0, SyntaxStackInit, sizeof SyntaxStackInit);
+  SyntaxStackCnt = sizeof SyntaxStackInit / sizeof SyntaxStackInit[0];
 
 #ifdef __SMALLER_C__
 #ifdef DETERMINE_VA_LIST
