@@ -20,19 +20,19 @@ int main()
 
    // assignment operators
    a = 12.34;
-   a += 56.78;
+   a = a + 56.78; // a += 56.78;
    printf("%f\n", a);
 
    a = 12.34;
-   a -= 56.78;
+   a = a - 56.78; // a -= 56.78;
    printf("%f\n", a);
 
    a = 12.34;
-   a *= 56.78;
+   a = a * 56.78; // a *= 56.78;
    printf("%f\n", a);
 
    a = 12.34;
-   a /= 56.78;
+   a = a / 56.78; // a /= 56.78;
    printf("%f\n", a);
 
    // prefix operators

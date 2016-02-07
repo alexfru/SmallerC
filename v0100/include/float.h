@@ -7,17 +7,18 @@
 
 #define FLT_RADIX       2
 
-#define FLT_ROUNDS      1
+#define FLT_EVAL_METHOD (-1) // indeterminate (might use greater range/precision)
+#define FLT_ROUNDS      1 // round to nearest
 
 #define FLT_MANT_DIG                 24
 #define FLT_EPSILON     1.19209290e-07f
 #define FLT_DIG                       6
-#define FLT_MIN_EXP                -125
+#define FLT_MIN_EXP              (-125)
 #define FLT_MIN         1.17549435e-38f
-#define FLT_MIN_10_EXP              -37
-#define FLT_MAX_EXP                +128
+#define FLT_MIN_10_EXP            (-37)
+#define FLT_MAX_EXP                 128
 #define FLT_MAX         3.40282347e+38f
-#define FLT_MAX_10_EXP              +38
+#define FLT_MAX_10_EXP               38
 
 #define DECIMAL_DIG     9
 

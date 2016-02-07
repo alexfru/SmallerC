@@ -755,8 +755,8 @@ int s26(struct defs *pd0)                  /*  2.6  Hardware Characteristics    
      printf(s,pd0->ubits,"unsigned");
      printf(s,pd0->fbits,"float");
      printf(s,pd0->dbits,"double");
-//     printf(s2,pd0->fprec,"float");
-//     printf(s2,pd0->dprec,"double");
+     printf(s2,pd0->fprec,"float");
+     printf(s2,pd0->dprec,"double");
    }
           /* Since we are only exploring and perhaps reporting, but not 
              testing any features, we cannot return an error code.  */
