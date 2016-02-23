@@ -25,6 +25,8 @@ float frexpf(float value, int* e)
 }
 */
 
+#ifdef UNUSED
+
 float frexpf(float value, int* e)
 {
   union
@@ -60,6 +62,49 @@ float frexpf(float value, int* e)
   }
   return u.f;
 }
+
+#else
+
+#ifdef __HUGE__
+#define xbp "bp"
+#define xbx "bx"
+#else
+#define xbp "ebp"
+#define xbx "ebx"
+#endif
+
+float frexpf(float value, int* e)
+{
+  asm
+  (
+  "mov    eax, ["xbp"+8]\n"
+  "mov    ebx, ["xbp"+12]\n"
+#ifdef __HUGE__
+  "ror    ebx, 4\n"
+  "mov    ds, bx\n"
+  "shr    ebx, 28\n"
+#endif
+  "mov    dword ["xbx"], 0\n" // preset *e=0 for +/-0.0, +/-INF, NAN
+  "mov    ecx, eax\n"
+  "shl    ecx, 1\n" // shift the sign out
+  "jz     .done\n" // done if +/-0.0
+  "cmp    ecx, 0xFF000000\n"
+  "jnc    .done\n" // done if +/-INF or NAN
+  "fld    dword ["xbp"+8]\n"
+  "fxtract\n"
+  "push   dword 0x3F000000\n" // push 0.5f
+  "fld    dword ["xbp"-4]\n"
+  "pop    eax\n"
+  "fmulp\n"                  // scale significand down from [1,2) to [0.5,1)
+  "fstp   dword ["xbp"+8]\n"
+  "mov    eax, ["xbp"+8]\n"
+  "fistp  dword ["xbx"]\n"
+  "inc    dword ["xbx"]\n" // correct exponent
+  ".done:"
+  );
+}
+
+#endif
 
 double frexp(double value, int* e)
 {

@@ -61,6 +61,7 @@ struct tm* gmtime(time_t*);
 struct tm* localtime(time_t*);
 time_t mktime(struct tm*);
 char* ctime(time_t*);
+double difftime(time_t, time_t);
 #endif
 char* asctime(struct tm*);
 size_t strftime(char*, size_t, char*, struct tm*);

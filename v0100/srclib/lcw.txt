@@ -159,6 +159,7 @@ mktime.c
 asctime.c
 ctime.c
 strftime.c
+difftime.c
 
 frexp.c
 ldexp.c
@@ -172,6 +173,7 @@ sqrt.c
 hypot.c
 exp.c
 exp2.c
+expm1.c
 log.c
 log2.c
 log10.c
@@ -183,6 +185,10 @@ atan.c
 asin.c
 acos.c
 fmod.c
+pow.c
+cosh.c
+sinh.c
+tanh.c
 cvtdf.c
 
 lngfu.c

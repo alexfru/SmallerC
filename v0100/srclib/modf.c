@@ -5,6 +5,8 @@
 
 #ifdef __SMALLER_C_32__
 
+#ifdef UNUSED
+
 float modff(float value, float* iptr)
 {
   union
@@ -62,6 +64,66 @@ float modff(float value, float* iptr)
   }
   return u.f;
 }
+
+#else
+
+#ifdef __HUGE__
+#define xbp "bp"
+#define xsp "sp"
+#define xbx "bx"
+#else
+#define xbp "ebp"
+#define xsp "esp"
+#define xbx "ebx"
+#endif
+
+float modff(float value, float* iptr)
+{
+  asm
+  (
+  "mov    eax, ["xbp"+8]\n"
+  "mov    ebx, ["xbp"+12]\n"
+#ifdef __HUGE__
+  "ror    ebx, 4\n"
+  "mov    ds, bx\n"
+  "shr    ebx, 28\n"
+#endif
+  "mov    ["xbx"], eax\n" // preset *iptr=value for +/-0.0, +/-INF, NAN
+  "mov    ecx, eax\n"
+  "shl    ecx, 1\n" // shift the sign out
+  "jz     .done\n" // done if +/-0.0
+  "cmp    ecx, 0xFF000000\n"
+  "jb     .finite\n"
+  "ja     .done\n" // done if NAN
+  "and    eax, 0x80000000\n" // return +0.0 for +INF, -0.0 for -INF
+  "jmp    .done\n"
+
+  ".finite:\n"
+  "sub    "xsp", 4\n"
+  "fnstcw ["xbp"-2]\n" // save rounding
+  "mov    ax, ["xbp"-2]\n"
+  "mov    ah, 0x0c\n" // rounding towards 0 (AKA truncate)
+  "mov    ["xbp"-4], ax\n"
+  "fld    dword ["xbp"+8]\n"
+  "fld    st0\n"
+  "fldcw  ["xbp"-4]\n"
+  "frndint\n" // trunc(value)
+  "fst    dword ["xbx"]\n" // *iptr = trunc(value)
+  "fldcw  ["xbp"-2]\n" // restore rounding
+  "add    "xsp", 4\n"
+  "fsubp\n" // value - trunc(value)
+  "fstp   dword ["xbp"+8]\n"
+  "mov    eax, ["xbp"+8]\n" // eax = value - trunc(value)
+  // almost done, copy the sign of *iptr into the returned value...
+  "mov    ebx, dword ["xbx"]\n" // ebx = trunc(value)
+  "shl    eax, 1\n"
+  "rcl    ebx, 1\n"
+  "rcr    eax, 1\n"
+  ".done:"
+  );
+}
+
+#endif
 
 double modf(double value, double* iptr)
 {

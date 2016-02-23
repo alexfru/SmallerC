@@ -5,8 +5,6 @@
 
 #ifdef __SMALLER_C_32__
 
-#include <limits.h>
-
 /*
 float ldexpf(float value, int e)
 {
@@ -24,6 +22,10 @@ float ldexpf(float value, int e)
   return value;
 }
 */
+
+#ifdef UNUSED
+
+#include <limits.h>
 
 float ldexpf(float value, int e)
 {
@@ -91,6 +93,29 @@ float ldexpf(float value, int e)
   }
   return u.f;
 }
+
+#else
+
+#ifdef __HUGE__
+#define xbp "bp"
+#else
+#define xbp "ebp"
+#endif
+
+float ldexpf(float value, int e)
+{
+  asm
+  (
+  "fild  dword ["xbp"+12]\n"
+  "fld   dword ["xbp"+8]\n"
+  "fscale\n"
+  "fstp  st1\n"
+  "fstp  dword ["xbp"+8]\n"
+  "mov   eax, ["xbp"+8]"
+  );
+}
+
+#endif
 
 double ldexp(double value, int e)
 {

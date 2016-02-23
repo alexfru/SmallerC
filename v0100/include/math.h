@@ -40,6 +40,10 @@ double exp(double);
 float expf(float);
 double exp2(double);
 float exp2f(float);
+double expm1(double);
+float expm1f(float);
+double pow(double, double);
+float powf(float, float);
 double log(double);
 float logf(float);
 double log2(double);
@@ -62,14 +66,12 @@ double asin(double);
 float asinf(float);
 double fmod(double, double);
 float fmodf(float, float);
-
-/*
-// C89 TBD!!!
-double cosh(double x);
-double sinh(double x);
-double tanh(double x);
-double pow(double x, double y);
-*/
+double cosh(double);
+float coshf(float);
+double sinh(double);
+float sinhf(float);
+double tanh(double);
+float tanhf(float);
 
 /*
 // C99 TBD???
