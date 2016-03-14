@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 typedef unsigned char uint8;
 typedef unsigned short uint16;
@@ -245,31 +246,6 @@ void line(int x1, int y1,
   }
 }
 
-// Combined sine and cosine table.
-// The angle is in increments of 2*PI/1024, IOW, 1024 corresponds to 2*PI.
-// Sine starts at index 0, cosine starts at index 256 (PI/2).
-long sincos[256 + 1024];
-
-void initSincos(void)
-{
-  sincos[256] = 16777216; // 2^24 (e.g. fixed-point 1.0)
-  sincos[257] = 16776900; // 2^24 * cos(2*PI/1024)        
-  asm(
-  "mov edi, _sincos + 258*4\n"
-  "mov ecx, 1022\n"
-  "mov ebx, [edi - 4]\n"
-  "mov eax, ebx\n"
-  "cld\n"
-  ".1:\n"
-  "imul ebx\n"
-  "shrd eax, edx, 23\n"
-  "sub eax, [edi - 8]\n"
-  "stosd\n"
-  "loop .1\n"
-  );
-  memcpy(sincos, sincos + 1024, 256 * sizeof sincos[0]);
-}
-
 int main(void)
 {
   tVbeInfo vbeInfo;
@@ -344,11 +320,11 @@ int main(void)
   line(1, 1, 638, 478, 8+3);
   line(638, 1, 1, 478, 8+5);
 
-  initSincos();
   for (int angle = 0; angle < 1024; angle++)
   {
-    int x = 320 + (sincos[angle + 256] >> (24 - 8));
-    int y = 240 - (sincos[angle] >> (24 - 7));
+    double a = angle * 3.1415927 / 512;
+    int x = 320 + cos(a) * 256;
+    int y = 240 - sin(a) * 128;
     int c = (angle >> 7) + 8;
     pixel(x, y, c);
     pixel(x-1, y, c);

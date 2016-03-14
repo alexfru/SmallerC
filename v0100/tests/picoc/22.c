@@ -5,13 +5,13 @@ int main()
 {
    // variables
    float a = 12.34 + 56.78;
-   printf("%f\n", a);
+   printf("%g\n", a);
 
    // infix operators
-   printf("%f\n", 12.34 + 56.78);
-   printf("%f\n", 12.34 - 56.78);
-   printf("%f\n", 12.34 * 56.78);
-   printf("%f\n", 12.34 / 56.78);
+   printf("%g\n", 12.34 + 56.78);
+   printf("%g\n", 12.34 - 56.78);
+   printf("%g\n", 12.34 * 56.78);
+   printf("%g\n", 12.34 / 56.78);
 
    // comparison operators
    printf("%d %d %d %d %d %d\n", 12.34 < 56.78, 12.34 <= 56.78, 12.34 == 56.78, 12.34 >= 56.78, 12.34 > 56.78, 12.34 != 56.78);
@@ -20,29 +20,29 @@ int main()
 
    // assignment operators
    a = 12.34;
-   a += 56.78;
-   printf("%f\n", a);
+   a = a + 56.78; // a += 56.78;
+   printf("%g\n", a);
 
    a = 12.34;
-   a -= 56.78;
-   printf("%f\n", a);
+   a = a - 56.78; // a -= 56.78;
+   printf("%g\n", a);
 
    a = 12.34;
-   a *= 56.78;
-   printf("%f\n", a);
+   a = a * 56.78; // a *= 56.78;
+   printf("%g\n", a);
 
    a = 12.34;
-   a /= 56.78;
-   printf("%f\n", a);
+   a = a / 56.78; // a /= 56.78;
+   printf("%g\n", a);
 
    // prefix operators
-   printf("%f\n", +12.34);
-   printf("%f\n", -12.34);
+   printf("%g\n", +12.34);
+   printf("%g\n", -12.34);
 
    // type coercion
    a = 2;
-   printf("%f\n", a);
-   printf("%f\n", sin(2));
+   printf("%g\n", a);
+   printf("%g\n", sin(2));
 
    return 0;
 }

@@ -44,3 +44,5 @@ Rationale for C99:
   http://www.open-std.org/jtc1/sc22/wg14/www/docs/C99RationaleV5.10.pdf
 The New C Standard: An Economic and Cultural Commentary:
   http://www.knosof.co.uk/cbook/cbook.html
+The Development of the C Language by Dennis M. Ritchie:
+  https://www.bell-labs.com/usr/dmr/www/chist.html

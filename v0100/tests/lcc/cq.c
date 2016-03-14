@@ -11,9 +11,6 @@
     smlrcc -linux cq.c -o cql
 */
 
-#define float int
-#define double int
-
    struct defs {
      int cbits;          /* No. of bits per char           */
      int ibits;          /*                 int            */
@@ -574,7 +571,6 @@ int s244(struct defs *pd0)
       ware representations in all cases, and that all representations
       thus checked are double precision.              */
 
-/*
    a[0] = .1250E+04;
    a[1] = 1.250E3;
    a[2] = 12.50E02;
@@ -604,7 +600,6 @@ int s244(struct defs *pd0)
      if(pd0->flgd != 0) printf(s244er,2);
      rc = rc+2;
    }
-*/
 
    return rc;
 }
@@ -733,7 +728,6 @@ int s26(struct defs *pd0)                  /*  2.6  Hardware Characteristics    
              1. without loss of significance. We calculate that here, for
              float and double.                       */
 
-/*
    one = 1.;
    delta = 1.;
    temp = 0.;
@@ -750,7 +744,6 @@ int s26(struct defs *pd0)                  /*  2.6  Hardware Characteristics    
      delta = delta/2.;
    }
    pd0->dprec = delta * 4.;
-*/
 
           /* Now, if anyone's interested, we publish the results.       */
 
@@ -760,10 +753,10 @@ int s26(struct defs *pd0)                  /*  2.6  Hardware Characteristics    
      printf(s,pd0->sbits,"short");
      printf(s,pd0->lbits,"long");
      printf(s,pd0->ubits,"unsigned");
-//     printf(s,pd0->fbits,"float");
-//     printf(s,pd0->dbits,"double");
-//     printf(s2,pd0->fprec,"float");
-//     printf(s2,pd0->dprec,"double");
+     printf(s,pd0->fbits,"float");
+     printf(s,pd0->dbits,"double");
+     printf(s2,pd0->fprec,"float");
+     printf(s2,pd0->dprec,"double");
    }
           /* Since we are only exploring and perhaps reporting, but not 
              testing any features, we cannot return an error code.  */
@@ -973,13 +966,13 @@ int s626(struct defs *pd0)          /* 6.2 Float and double                  */
    static char qs626[8] = "s626   ";
    int rc;
    char *ps, *pt;
-//   float eps, f1, f2, f3, f4, f;
+   float eps, f1, f2, f3, f4, f;
    long lint1, lint2, l, ls;
    char c, t[28], t0;
    short s;
    int is, i, j;
    unsigned u, us;
-//   double d, ds;
+   double d, ds;
    ps = qs626;
    pt = pd0->rfs;
    rc = 0;
@@ -988,7 +981,6 @@ int s626(struct defs *pd0)          /* 6.2 Float and double                  */
         /* Conversions of integral values to floating type are
         well-behaved.                                           */
 
-/*
    f1 = 1.;
    lint1 = 1.;
    lint2 = 1.;
@@ -1004,7 +996,7 @@ int s626(struct defs *pd0)          /* 6.2 Float and double                  */
      rc = rc+2;
      if(pd0->flgd != 0) printf(s626er,2);
    }
-*/
+
         /* Pointer-integer combinations are discussed in s74,
         "Additive operators". The unsigned-int combination
         appears below.                                          */
@@ -1014,8 +1006,8 @@ int s626(struct defs *pd0)          /* 6.2 Float and double                  */
    i = 125;     is = 15625;
    u = 125;     us = 15625;
    l = 125;     ls = 15625;
-//   f = 125.;
-//   d = 125.;    ds = 15625.;
+   f = 125.;
+   d = 125.;    ds = 15625.;
 
    for(j=0;j<28;j++) t[j] = 0;
 
@@ -1034,7 +1026,6 @@ int s626(struct defs *pd0)          /* 6.2 Float and double                  */
    if(l*i != ls) t[12] = 1;
    if(l*u != us) t[13] = 1;
    if(l*l != ls) t[14] = 1;
-/*
    if(f*c != ds) t[15] = 1;
    if(f*s != ds) t[16] = 1;
    if(f*i != ds) t[17] = 1;
@@ -1048,7 +1039,6 @@ int s626(struct defs *pd0)          /* 6.2 Float and double                  */
    if(d*l != ds) t[25] = 1;
    if(d*f != ds) t[26] = 1;
    if(d*d != ds) t[27] = 1;
-*/
 
    t0 = 0;
    for(j=0; j<28; j++) t0 = t0+t[j];
@@ -1567,13 +1557,13 @@ initial         (5,2)       |    (5,2)    |  (12,10)
      if(prlc) printf(f,lrc);
    }
    cl = 5; fr = 2;
-   cl += fr;
+   cl = cl + fr;
    if(cl != 7){
      lrc = 55;
      if(prlc) printf(f,lrc);
    }
    cl = 5; dr = 2;
-   cl += dr;
+   cl = cl + dr;
    if(cl != 7){
      lrc = 56;
      if(prlc) printf(f,lrc);
@@ -1609,13 +1599,13 @@ initial         (5,2)       |    (5,2)    |  (12,10)
      if(prlc) printf(f,lrc);
    }
    sl = 5; fr = 2;
-   sl += fr;
+   sl = sl + fr;
    if(sl != 7){
      lrc = 62;
      if(prlc) printf(f,lrc);
    }
    sl = 5; dr = 2;
-   sl += dr;
+   sl = sl + dr;
    if(sl != 7){
      lrc = 63;
      if(prlc) printf(f,lrc);
@@ -1651,13 +1641,13 @@ initial         (5,2)       |    (5,2)    |  (12,10)
      if(prlc) printf(f,lrc);
    }
    il = 5; fr = 2;
-   il += fr;
+   il = il + fr;
    if(il != 7){
      lrc = 69;
      if(prlc) printf(f,lrc);
    }
    il = 5; dr = 2;
-   il += dr;
+   il = il + dr;
    if(il != 7){
      lrc = 70;
      if(prlc) printf(f,lrc);
@@ -1693,13 +1683,13 @@ initial         (5,2)       |    (5,2)    |  (12,10)
      if(prlc) printf(f,lrc);
    }
    ll = 5; fr = 2;
-   ll += fr;
+   ll = ll + fr;
    if(ll != 7){
      lrc = 76;
      if(prlc) printf(f,lrc);
    }
    ll = 5; dr = 2;
-   ll += dr;
+   ll = ll + dr;
    if(ll != 7){
      lrc = 77;
      if(prlc) printf(f,lrc);
@@ -1735,97 +1725,97 @@ initial         (5,2)       |    (5,2)    |  (12,10)
      if(prlc) printf(f,lrc);
    }
    ul = 5; fr = 2;
-   ul += fr;
+   ul = ul + fr;
    if(ul != 7){
      lrc = 83;
      if(prlc) printf(f,lrc);
    }
    ul = 5; dr = 2;
-   ul += dr;
+   ul = ul + dr;
    if(ul != 7){
      lrc = 84;
      if(prlc) printf(f,lrc);
    }
    fl = 5; cr = 2;
-   fl += cr;
+   fl = fl + cr;
    if(fl != 7){
      lrc = 85;
      if(prlc) printf(f,lrc);
    }
    fl = 5; sr = 2;
-   fl += sr;
+   fl = fl + sr;
    if(fl != 7){
      lrc = 86;
      if(prlc) printf(f,lrc);
    }
    fl = 5; ir = 2;
-   fl += ir;
+   fl = fl + ir;
    if(fl != 7){
      lrc = 87;
      if(prlc) printf(f,lrc);
    }
    fl = 5; lr = 2;
-   fl += lr;
+   fl = fl + lr;
    if(fl != 7){
      lrc = 88;
      if(prlc) printf(f,lrc);
    }
    fl = 5; ur = 2;
-   fl += ur;
+   fl = fl + ur;
    if(fl != 7){
      lrc = 89;
      if(prlc) printf(f,lrc);
    }
    fl = 5; fr = 2;
-   fl += fr;
+   fl = fl + fr;
    if(fl != 7){
      lrc = 90;
      if(prlc) printf(f,lrc);
    }
    fl = 5; dr = 2;
-   fl += dr;
+   fl = fl + dr;
    if(fl != 7){
      lrc = 91;
      if(prlc) printf(f,lrc);
    }
    dl = 5; cr = 2;
-   dl += cr;
+   dl = dl + cr;
    if(dl != 7){
      lrc = 92;
      if(prlc) printf(f,lrc);
    }
    dl = 5; sr = 2;
-   dl += sr;
+   dl = dl + sr;
    if(dl != 7){
      lrc = 93;
      if(prlc) printf(f,lrc);
    }
    dl = 5; ir = 2;
-   dl += ir;
+   dl = dl + ir;
    if(dl != 7){
      lrc = 94;
      if(prlc) printf(f,lrc);
    }
    dl = 5; lr = 2;
-   dl += lr;
+   dl = dl + lr;
    if(dl != 7){
      lrc = 95;
      if(prlc) printf(f,lrc);
    }
    dl = 5; ur = 2;
-   dl += ur;
+   dl = dl + ur;
    if(dl != 7){
      lrc = 96;
      if(prlc) printf(f,lrc);
    }
    dl = 5; fr = 2;
-   dl += fr;
+   dl = dl + fr;
    if(dl != 7){
      lrc = 97;
      if(prlc) printf(f,lrc);
    }
    dl = 5; dr = 2;
-   dl += dr;
+   dl = dl + dr;
    if(dl != 7){
      lrc = 98;
      if(prlc) printf(f,lrc);
@@ -1861,13 +1851,13 @@ initial         (5,2)       |    (5,2)    |  (12,10)
      if(prlc) printf(f,lrc);
    }
    cl = 5; fr = 2;
-   cl -= fr;
+   cl = cl - fr;
    if(cl != 3){
      lrc = 104;
      if(prlc) printf(f,lrc);
    }
    cl = 5; dr = 2;
-   cl -= dr;
+   cl = cl - dr;
    if(cl != 3){
      lrc = 105;
      if(prlc) printf(f,lrc);
@@ -1903,13 +1893,13 @@ initial         (5,2)       |    (5,2)    |  (12,10)
      if(prlc) printf(f,lrc);
    }
    sl = 5; fr = 2;
-   sl -= fr;
+   sl = sl - fr;
    if(sl != 3){
      lrc = 111;
      if(prlc) printf(f,lrc);
    }
    sl = 5; dr = 2;
-   sl -= dr;
+   sl = sl - dr;
    if(sl != 3){
      lrc = 112;
      if(prlc) printf(f,lrc);
@@ -1945,13 +1935,13 @@ initial         (5,2)       |    (5,2)    |  (12,10)
      if(prlc) printf(f,lrc);
    }
    il = 5; fr = 2;
-   il -= fr;
+   il = il - fr;
    if(il != 3){
      lrc = 118;
      if(prlc) printf(f,lrc);
    }
    il = 5; dr = 2;
-   il -= dr;
+   il = il - dr;
    if(il != 3){
      lrc = 119;
      if(prlc) printf(f,lrc);
@@ -1987,13 +1977,13 @@ initial         (5,2)       |    (5,2)    |  (12,10)
      if(prlc) printf(f,lrc);
    }
    ll = 5; fr = 2;
-   ll -= fr;
+   ll = ll - fr;
    if(ll != 3){
      lrc = 125;
      if(prlc) printf(f,lrc);
    }
    ll = 5; dr = 2;
-   ll -= dr;
+   ll = ll - dr;
    if(ll != 3){
      lrc = 126;
      if(prlc) printf(f,lrc);
@@ -2029,97 +2019,97 @@ initial         (5,2)       |    (5,2)    |  (12,10)
      if(prlc) printf(f,lrc);
    }
    ul = 5; fr = 2;
-   ul -= fr;
+   ul = ul - fr;
    if(ul != 3){
      lrc = 132;
      if(prlc) printf(f,lrc);
    }
    ul = 5; dr = 2;
-   ul -= dr;
+   ul = ul - dr;
    if(ul != 3){
      lrc = 133;
      if(prlc) printf(f,lrc);
    }
    fl = 5; cr = 2;
-   fl -= cr;
+   fl = fl - cr;
    if(fl != 3){
      lrc = 134;
      if(prlc) printf(f,lrc);
    }
    fl = 5; sr = 2;
-   fl -= sr;
+   fl = fl - sr;
    if(fl != 3){
      lrc = 135;
      if(prlc) printf(f,lrc);
    }
    fl = 5; ir = 2;
-   fl -= ir;
+   fl = fl - ir;
    if(fl != 3){
      lrc = 136;
      if(prlc) printf(f,lrc);
    }
    fl = 5; lr = 2;
-   fl -= lr;
+   fl = fl - lr;
    if(fl != 3){
      lrc = 137;
      if(prlc) printf(f,lrc);
    }
    fl = 5; ur = 2;
-   fl -= ur;
+   fl = fl - ur;
    if(fl != 3){
      lrc = 138;
      if(prlc) printf(f,lrc);
    }
    fl = 5; fr = 2;
-   fl -= fr;
+   fl = fl - fr;
    if(fl != 3){
      lrc = 139;
      if(prlc) printf(f,lrc);
    }
    fl = 5; dr = 2;
-   fl -= dr;
+   fl = fl - dr;
    if(fl != 3){
      lrc = 140;
      if(prlc) printf(f,lrc);
    }
    dl = 5; cr = 2;
-   dl -= cr;
+   dl = dl - cr;
    if(dl != 3){
      lrc = 141;
      if(prlc) printf(f,lrc);
    }
    dl = 5; sr = 2;
-   dl -= sr;
+   dl = dl - sr;
    if(dl != 3){
      lrc = 142;
      if(prlc) printf(f,lrc);
    }
    dl = 5; ir = 2;
-   dl -= ir;
+   dl = dl - ir;
    if(dl != 3){
      lrc = 143;
      if(prlc) printf(f,lrc);
    }
    dl = 5; lr = 2;
-   dl -= lr;
+   dl = dl - lr;
    if(dl != 3){
      lrc = 144;
      if(prlc) printf(f,lrc);
    }
    dl = 5; ur = 2;
-   dl -= ur;
+   dl = dl - ur;
    if(dl != 3){
      lrc = 145;
      if(prlc) printf(f,lrc);
    }
    dl = 5; fr = 2;
-   dl -= fr;
+   dl = dl - fr;
    if(dl != 3){
      lrc = 146;
      if(prlc) printf(f,lrc);
    }
    dl = 5; dr = 2;
-   dl -= dr;
+   dl = dl - dr;
    if(dl != 3){
      lrc = 147;
      if(prlc) printf(f,lrc);
@@ -2155,13 +2145,13 @@ initial         (5,2)       |    (5,2)    |  (12,10)
      if(prlc) printf(f,lrc);
    }
    cl = 5; fr = 2;
-   cl *= fr;
+   cl = cl * fr;
    if(cl != 10){
      lrc = 153;
      if(prlc) printf(f,lrc);
    }
    cl = 5; dr = 2;
-   cl *= dr;
+   cl = cl * dr;
    if(cl != 10){
      lrc = 154;
      if(prlc) printf(f,lrc);
@@ -2197,13 +2187,13 @@ initial         (5,2)       |    (5,2)    |  (12,10)
      if(prlc) printf(f,lrc);
    }
    sl = 5; fr = 2;
-   sl *= fr;
+   sl = sl * fr;
    if(sl != 10){
      lrc = 160;
      if(prlc) printf(f,lrc);
    }
    sl = 5; dr = 2;
-   sl *= dr;
+   sl = sl * dr;
    if(sl != 10){
      lrc = 161;
      if(prlc) printf(f,lrc);
@@ -2239,13 +2229,13 @@ initial         (5,2)       |    (5,2)    |  (12,10)
      if(prlc) printf(f,lrc);
    }
    il = 5; fr = 2;
-   il *= fr;
+   il = il * fr;
    if(il != 10){
      lrc = 167;
      if(prlc) printf(f,lrc);
    }
    il = 5; dr = 2;
-   il *= dr;
+   il = il * dr;
    if(il != 10){
      lrc = 168;
      if(prlc) printf(f,lrc);
@@ -2281,13 +2271,13 @@ initial         (5,2)       |    (5,2)    |  (12,10)
      if(prlc) printf(f,lrc);
    }
    ll = 5; fr = 2;
-   ll *= fr;
+   ll = ll * fr;
    if(ll != 10){
      lrc = 174;
      if(prlc) printf(f,lrc);
    }
    ll = 5; dr = 2;
-   ll *= dr;
+   ll = ll * dr;
    if(ll != 10){
      lrc = 175;
      if(prlc) printf(f,lrc);
@@ -2323,97 +2313,97 @@ initial         (5,2)       |    (5,2)    |  (12,10)
      if(prlc) printf(f,lrc);
    }
    ul = 5; fr = 2;
-   ul *= fr;
+   ul = ul * fr;
    if(ul != 10){
      lrc = 181;
      if(prlc) printf(f,lrc);
    }
    ul = 5; dr = 2;
-   ul *= dr;
+   ul = ul * dr;
    if(ul != 10){
      lrc = 182;
      if(prlc) printf(f,lrc);
    }
    fl = 5; cr = 2;
-   fl *= cr;
+   fl = fl * cr;
    if(fl != 10){
      lrc = 183;
      if(prlc) printf(f,lrc);
    }
    fl = 5; sr = 2;
-   fl *= sr;
+   fl = fl * sr;
    if(fl != 10){
      lrc = 184;
      if(prlc) printf(f,lrc);
    }
    fl = 5; ir = 2;
-   fl *= ir;
+   fl = fl * ir;
    if(fl != 10){
      lrc = 185;
      if(prlc) printf(f,lrc);
    }
    fl = 5; lr = 2;
-   fl *= lr;
+   fl = fl * lr;
    if(fl != 10){
      lrc = 186;
      if(prlc) printf(f,lrc);
    }
    fl = 5; ur = 2;
-   fl *= ur;
+   fl = fl * ur;
    if(fl != 10){
      lrc = 187;
      if(prlc) printf(f,lrc);
    }
    fl = 5; fr = 2;
-   fl *= fr;
+   fl = fl * fr;
    if(fl != 10){
      lrc = 188;
      if(prlc) printf(f,lrc);
    }
    fl = 5; dr = 2;
-   fl *= dr;
+   fl = fl * dr;
    if(fl != 10){
      lrc = 189;
      if(prlc) printf(f,lrc);
    }
    dl = 5; cr = 2;
-   dl *= cr;
+   dl = dl * cr;
    if(dl != 10){
      lrc = 190;
      if(prlc) printf(f,lrc);
    }
    dl = 5; sr = 2;
-   dl *= sr;
+   dl = dl * sr;
    if(dl != 10){
      lrc = 191;
      if(prlc) printf(f,lrc);
    }
    dl = 5; ir = 2;
-   dl *= ir;
+   dl = dl * ir;
    if(dl != 10){
      lrc = 192;
      if(prlc) printf(f,lrc);
    }
    dl = 5; lr = 2;
-   dl *= lr;
+   dl = dl * lr;
    if(dl != 10){
      lrc = 193;
      if(prlc) printf(f,lrc);
    }
    dl = 5; ur = 2;
-   dl *= ur;
+   dl = dl * ur;
    if(dl != 10){
      lrc = 194;
      if(prlc) printf(f,lrc);
    }
    dl = 5; fr = 2;
-   dl *= fr;
+   dl = dl * fr;
    if(dl != 10){
      lrc = 195;
      if(prlc) printf(f,lrc);
    }
    dl = 5; dr = 2;
-   dl *= dr;
+   dl = dl * dr;
    if(dl != 10){
      lrc = 196;
      if(prlc) printf(f,lrc);
@@ -2449,13 +2439,13 @@ initial         (5,2)       |    (5,2)    |  (12,10)
      if(prlc) printf(f,lrc);
    }
    cl = 5; fr = 2;
-   cl /= fr;
+   cl = cl / fr;
    if(cl != 2){
      lrc = 202;
      if(prlc) printf(f,lrc);
    }
    cl = 5; dr = 2;
-   cl /= dr;
+   cl = cl / dr;
    if(cl != 2){
      lrc = 203;
      if(prlc) printf(f,lrc);
@@ -2491,13 +2481,13 @@ initial         (5,2)       |    (5,2)    |  (12,10)
      if(prlc) printf(f,lrc);
    }
    sl = 5; fr = 2;
-   sl /= fr;
+   sl = sl / fr;
    if(sl != 2){
      lrc = 209;
      if(prlc) printf(f,lrc);
    }
    sl = 5; dr = 2;
-   sl /= dr;
+   sl = sl / dr;
    if(sl != 2){
      lrc = 210;
      if(prlc) printf(f,lrc);
@@ -2533,13 +2523,13 @@ initial         (5,2)       |    (5,2)    |  (12,10)
      if(prlc) printf(f,lrc);
    }
    il = 5; fr = 2;
-   il /= fr;
+   il = il / fr;
    if(il != 2){
      lrc = 216;
      if(prlc) printf(f,lrc);
    }
    il = 5; dr = 2;
-   il /= dr;
+   il = il / dr;
    if(il != 2){
      lrc = 217;
      if(prlc) printf(f,lrc);
@@ -2575,13 +2565,13 @@ initial         (5,2)       |    (5,2)    |  (12,10)
      if(prlc) printf(f,lrc);
    }
    ll = 5; fr = 2;
-   ll /= fr;
+   ll = ll / fr;
    if(ll != 2){
      lrc = 223;
      if(prlc) printf(f,lrc);
    }
    ll = 5; dr = 2;
-   ll /= dr;
+   ll = ll / dr;
    if(ll != 2){
      lrc = 224;
      if(prlc) printf(f,lrc);
@@ -2617,103 +2607,101 @@ initial         (5,2)       |    (5,2)    |  (12,10)
      if(prlc) printf(f,lrc);
    }
    ul = 5; fr = 2;
-   ul /= fr;
+   ul = ul / fr;
    if(ul != 2){
      lrc = 230;
      if(prlc) printf(f,lrc);
    }
    ul = 5; dr = 2;
-   ul /= dr;
+   ul = ul / dr;
    if(ul != 2){
      lrc = 231;
      if(prlc) printf(f,lrc);
    }
-/*
    fl = 5; cr = 2;
-   fl /= cr;
+   fl = fl / cr;
    if(fl != 2.5){
      lrc = 232;
      if(prlc) printf(f,lrc);
    }
    fl = 5; sr = 2;
-   fl /= sr;
+   fl = fl / sr;
    if(fl != 2.5){
      lrc = 233;
      if(prlc) printf(f,lrc);
    }
    fl = 5; ir = 2;
-   fl /= ir;
+   fl = fl / ir;
    if(fl != 2.5){
      lrc = 234;
      if(prlc) printf(f,lrc);
    }
    fl = 5; lr = 2;
-   fl /= lr;
+   fl = fl / lr;
    if(fl != 2.5){
      lrc = 235;
      if(prlc) printf(f,lrc);
    }
    fl = 5; ur = 2;
-   fl /= ur;
+   fl = fl / ur;
    if(fl != 2.5){
      lrc = 236;
      if(prlc) printf(f,lrc);
    }
    fl = 5; fr = 2;
-   fl /= fr;
+   fl = fl / fr;
    if(fl != 2.5){
      lrc = 237;
      if(prlc) printf(f,lrc);
    }
    fl = 5; dr = 2;
-   fl /= dr;
+   fl = fl / dr;
    if(fl != 2.5){
      lrc = 238;
      if(prlc) printf(f,lrc);
    }
    dl = 5; cr = 2;
-   dl /= cr;
+   dl = dl / cr;
    if(dl != 2.5){
      lrc = 239;
      if(prlc) printf(f,lrc);
    }
    dl = 5; sr = 2;
-   dl /= sr;
+   dl = dl / sr;
    if(dl != 2.5){
      lrc = 240;
      if(prlc) printf(f,lrc);
    }
    dl = 5; ir = 2;
-   dl /= ir;
+   dl = dl / ir;
    if(dl != 2.5){
      lrc = 241;
      if(prlc) printf(f,lrc);
    }
    dl = 5; lr = 2;
-   dl /= lr;
+   dl = dl / lr;
    if(dl != 2.5){
      lrc = 242;
      if(prlc) printf(f,lrc);
    }
    dl = 5; ur = 2;
-   dl /= ur;
+   dl = dl / ur;
    if(dl != 2.5){
      lrc = 243;
      if(prlc) printf(f,lrc);
    }
    dl = 5; fr = 2;
-   dl /= fr;
+   dl = dl / fr;
    if(dl != 2.5){
      lrc = 244;
      if(prlc) printf(f,lrc);
    }
    dl = 5; dr = 2;
-   dl /= dr;
+   dl = dl / dr;
    if(dl != 2.5){
      lrc = 245;
      if(prlc) printf(f,lrc);
    }
-*/
    cl = 5; cr = 2;
    cl %= cr;
    if(cl != 1){
@@ -3732,9 +3720,9 @@ int s72(struct defs *pd0)          /*  7.2  Unary operators  */
         and that they all produce a correct result for this sample
         of size one.                                            */
 
-   c = 26;  l = 26;  d = 26;//26.;
+   c = 26;  l = 26;  d = 26.;
    s = 26;  u = 26; 
-   i = 26;  f = 26;//26.;
+   i = 26;  f = 26.;
 
    lrc = 0;
 
@@ -3758,7 +3746,6 @@ int s72(struct defs *pd0)          /*  7.2  Unary operators  */
     || (unsigned)i != 26 || (unsigned)l != 26
     || (unsigned)f != 26 || (unsigned)d != 26 ) lrc = lrc+16;
 
-/*
    if( (float)c != 26. || (float)s != 26.
     || (float)i != 26. || (float)l != 26.
     || (float)u != 26. || (float)d != 26. ) lrc = lrc+32;
@@ -3766,7 +3753,6 @@ int s72(struct defs *pd0)          /*  7.2  Unary operators  */
    if( (double)c != 26. || (double)s != 26.
     || (double)i != 26. || (double)l != 26.
     || (double)u != 26. || (double)f != 26. ) lrc = lrc+64;
-*/
 
    if(lrc != 0){
      rc = rc+16;
@@ -4843,8 +4829,8 @@ int s84(struct defs *pd0)          /*  8.4 Meaning of declarators   */
      afp[j] = &fa[j];
    }
 
-   sum = 0;//0.;
-   for(j=0; j<17; j++) sum += *afp[j];
+   sum = 0.;
+   for(j=0; j<17; j++) sum = sum + *afp[j];
    if(sum != 136){
      if(pd0->flgd != 0) printf(s84er,4);
      rc = rc+4;
@@ -5098,7 +5084,7 @@ int s86(struct defs *pd0)          /*  8.6 Initialization  */
      {2,4,6},
      {3,5,7},
    };
-   static float y2[4][3] = {{1,3,5},{2,4,6},{3,5,7}};//{1,3,5,2,4,6,3,5,7};
+   static float y2[4][3] = {1,3,5,2,4,6,3,5,7};
    static float y3[4][3] = {
      {1},{2},{3},{4}
    };
@@ -5230,12 +5216,12 @@ int s88(struct defs *pd0)          /*  8.8 Typedef  */
         pointer to such a structure.
                                                                 */
 
-   z.re = 0;//0.;
-   z.im = 0;//0.;
+   z.re = 0.;
+   z.im = 0.;
    zp = &z;
-   zp->re = 1;//1.;
-   zp->im = 1;//1.;
-   if(z.re+z.im != 2/*2.*/){
+   zp->re = 1.;
+   zp->im = 1.;
+   if(z.re+z.im != 2.){
      if(pd0->flgd != 0) printf(s88er,4);
      rc = rc+4;
    }

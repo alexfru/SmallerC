@@ -13,4 +13,5 @@ int memcmp(void* s1, void* s2, unsigned n)
         return (*--p1 - *--p2);
     } while (--n);
   }
+  return 0;
 }

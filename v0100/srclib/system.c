@@ -7,6 +7,10 @@
 #include <ctype.h>
 #include <string.h>
 
+#ifdef __SMALLER_C_32__
+extern void __x87init(void);
+#endif
+
 #ifdef _DOS
 
 #ifdef __SMALLER_C_16__
@@ -563,6 +567,10 @@ end:
     free(comspec);
   if (params)
     free(params);
+
+#ifdef __SMALLER_C_32__
+  __x87init();
+#endif
 
   return res;
 }

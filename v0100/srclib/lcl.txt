@@ -2,6 +2,7 @@
 
 c0l.asm
 c0.c
+x87.c
 
 assert.c
 
@@ -156,6 +157,37 @@ mktime.c
 asctime.c
 ctime.c
 strftime.c
+difftime.c
+
+frexp.c
+ldexp.c
+modf.c
+fabs.c
+ceil.c
+floor.c
+round.c
+trunc.c
+sqrt.c
+hypot.c
+exp.c
+exp2.c
+expm1.c
+log.c
+log2.c
+log10.c
+sin.c
+cos.c
+tan.c
+atan2.c
+atan.c
+asin.c
+acos.c
+fmod.c
+pow.c
+cosh.c
+sinh.c
+tanh.c
+cvtdf.c
 
 lngfu.c
 lngfs.c
