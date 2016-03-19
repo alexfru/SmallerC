@@ -1424,6 +1424,12 @@ int main(int argc, char* argv[])
       argv[i] = NULL;
       continue;
     }
+    else if (!strcmp(argv[i], "-gui"))
+    {
+      AddOption(&LinkerOptions, &LinkerOptionsLen, argv[i]);
+      argv[i] = NULL;
+      continue;
+    }
     else if (!strcmp(argv[i], "-nobss"))
     {
       AddOption(&CompilerOptions, &CompilerOptionsLen, argv[i]);

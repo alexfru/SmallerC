@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014, Alexey Frunze
+  Copyright (c) 2014-2016, Alexey Frunze
   2-clause BSD license.
 */
 #ifndef __IWIN32_H
@@ -163,5 +163,9 @@ int GetExitCodeProcess(unsigned, unsigned*);
 unsigned WaitForSingleObject(unsigned, unsigned);
 
 TOP_LEVEL_EXCEPTION_FILTER* SetUnhandledExceptionFilter(TOP_LEVEL_EXCEPTION_FILTER*);
+
+void* LoadLibraryExA(char*, unsigned, unsigned);
+int FreeLibrary(void*);
+void (*GetProcAddress(void*, char*))();
 
 #endif

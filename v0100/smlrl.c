@@ -2852,6 +2852,11 @@ int main(int argc, char* argv[])
         OutputFormat = FormatWinPe32;
         continue;
       }
+      else if (!strcmp(argv[i], "-gui"))
+      {
+        PeOptionalHeader.Subsystem = 2; // change the default CUI to GUI
+        continue;
+      }
       else if (!strcmp(argv[i], "-elf"))
       {
         OutputFormat = FormatElf32;

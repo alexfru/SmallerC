@@ -1,10 +1,41 @@
 -win -c -Wall -o lcw.a
 
+dimports.c
+kernel32/kernel32.c
+kernel32/closehan.c
+kernel32/createfi.c
+kernel32/createpr.c
+kernel32/deletefi.c
+kernel32/exitproc.c
+kernel32/freelibr.c
+kernel32/getcomma.c
+kernel32/getenvir.c
+kernel32/getexitc.c
+kernel32/getfilea.c
+kernel32/getfilet.c
+kernel32/getlaste.c
+kernel32/getpheap.c
+kernel32/getproca.c
+kernel32/getstdha.c
+kernel32/getstime.c
+kernel32/gettickc.c
+kernel32/heapallo.c
+kernel32/heapfree.c
+kernel32/heapreal.c
+kernel32/loadlibx.c
+kernel32/movefile.c
+kernel32/readfile.c
+kernel32/setfilep.c
+kernel32/setlaste.c
+kernel32/setunhef.c
+kernel32/st2tzslt.c
+kernel32/tzslt2st.c
+kernel32/wait4sob.c
+kernel32/writefil.c
+
 c0w.asm
 c0.c
 x87.c
-
-win32.c
 
 assert.c
 
