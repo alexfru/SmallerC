@@ -149,6 +149,19 @@ void GenAddrData(int Size, char* Label, int ofs)
   puts2("");
 }
 
+STATIC
+int GenFxnSizeNeeded(void)
+{
+  return 0;
+}
+
+STATIC
+void GenRecordFxnSize(char* startLabelName, int endLabelNo)
+{
+  (void)startLabelName;
+  (void)endLabelNo;
+}
+
 #define Tr32InstrNop    0x00
 
 #define Tr32InstrMov    0x01

@@ -2193,6 +2193,41 @@ void RwAout(void)
   Fclose(fout);
 }
 
+void CheckFxnSizes(void)
+{
+  // In the huge mode(l) individual functions must each fit into a 64KB segment.
+  // A special non-allocated section, ".fxnsz", holds function sizes. Check them.
+  uint32 fIdx, sectIdx;
+  for (fIdx = 0; fIdx < ObjFileCnt; fIdx++)
+  {
+    tElfMeta* pMeta = &pMetas[fIdx];
+    if (!pMeta->Needed)
+      continue;
+
+    for (sectIdx = 0; sectIdx < pMeta->SectionCnt; sectIdx++)
+    {
+      tElfSection* pSect = &pMeta->pSections[sectIdx];
+      uint32 sz = pSect->h.sh_size;
+      if (!(pSect->h.sh_flags & SHF_ALLOC) &&
+          sz &&
+          !strcmp(pMeta->pSectNames + pSect->h.sh_name, ".fxnsz"))
+      {
+        FILE* fin = Fopen(pMeta->ElfName, "rb");
+        uint32 o, fsz;
+        Fseek(fin, pMeta->ObjOffset + pSect->h.sh_offset, SEEK_SET);
+        for (o = 0; o < sz; o += sizeof fsz)
+        {
+          Fread(&fsz, sizeof fsz, fin);
+          if (fsz >= 0xFFF0) // allow for imperfect alignment with segment boundary
+            error("Function larger than 64KB found in '%s'\n", pMeta->ElfName);
+        }
+        Fclose(fin);
+        continue;
+      }
+    }
+  }
+}
+
 void RwDosExe(void)
 {
   int hasData = !(pSectDescrs[SectCnt - 1].Attrs & SHF_EXECINSTR); // non-executable/data sections, if any, are last
@@ -2506,8 +2541,10 @@ void RelocateAndWriteAllSections(void)
   case FormatAout:
     RwAout();
     break;
-  case FormatDosExeSmall:
   case FormatDosExeHuge:
+    CheckFxnSizes();
+    // fallthrough
+  case FormatDosExeSmall:
     RwDosExe();
     break;
   case FormatWinPe32:

@@ -7875,6 +7875,7 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
         int undoSymbolsPtr = SyntaxStackCnt;
         int undoIdents = IdentTableLen;
         int i;
+        int endLabel = 0;
 
 #ifndef NO_ANNOTATIONS
         DumpDecl(lastSyntaxPtr, 0);
@@ -7955,8 +7956,14 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
 #endif
         GenFxnEpilog();
 
+        if (GenFxnSizeNeeded())
+          GenNumLabel(endLabel = LabelCnt++);
+
         puts2(CurHeaderFooter[1]);
         CurHeaderFooter = NULL;
+
+        if (GenFxnSizeNeeded())
+          GenRecordFxnSize(CurFxnName, endLabel);
 
 #ifndef NO_FUNC_
         if (CurFxnNameLabel < 0)

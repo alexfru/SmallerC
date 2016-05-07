@@ -262,6 +262,39 @@ void GenAddrData(int Size, char* Label, int ofs)
     GenAddGlobal(Label, 2);
 }
 
+STATIC
+int GenFxnSizeNeeded(void)
+{
+#ifdef CAN_COMPILE_32BIT
+  return OutputFormat == FormatSegHuge && GenExterns;
+#else
+  return 0;
+#endif
+}
+
+STATIC
+void GenRecordFxnSize(char* startLabelName, int endLabelNo)
+{
+  // In the huge mode(l) individual functions must each fit into a 64KB segment.
+  // A special non-allocated section, ".fxnsz", will hold function sizes and
+  // the linker will check them.
+#ifdef CAN_COMPILE_32BIT
+  // YASM unnecessarily warns when it sees the same section flags again, so
+  // generate them only once.
+  static int firstTime = 1;
+  printf2("section .fxnsz%s\n", firstTime ? " noalloc" : "");
+  firstTime = 0;
+  printf2("\tdd\t");
+  GenPrintNumLabel(endLabelNo);
+  printf2(" - ");
+  GenPrintLabel(startLabelName);
+  puts2("\n");
+#else
+  (void)startLabelName;
+  (void)endLabelNo;
+#endif
+}
+
 #define X86InstrMov    0x00
 #define X86InstrMovSx  0x01
 #define X86InstrMovZx  0x02

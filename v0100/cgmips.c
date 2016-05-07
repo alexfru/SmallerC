@@ -161,6 +161,19 @@ void GenAddrData(int Size, char* Label, int ofs)
   puts2("");
 }
 
+STATIC
+int GenFxnSizeNeeded(void)
+{
+  return 0;
+}
+
+STATIC
+void GenRecordFxnSize(char* startLabelName, int endLabelNo)
+{
+  (void)startLabelName;
+  (void)endLabelNo;
+}
+
 #define MipsInstrNop    0x00
 #define MipsInstrMov    0x01
 #define MipsInstrMfLo   0x02
@@ -1579,6 +1592,8 @@ void GenExpr0(void)
     case tokLogAnd: printf2(" # short-circuit && target\n"); break;
     case tokLogOr: printf2(" # short-circuit || target\n"); break;
     case tokIf: case tokIfNot: case tokReturn: break;
+    case tokNum0: printf2(" # 0\n"); break;
+    case tokAssign0:  printf2(" # =\n"); break;
     default: printf2(" # %s\n", GetTokenName(tok)); break;
     }
 #endif
