@@ -35,6 +35,10 @@ RetroBSD: http://retrobsd.org/
 VASM: http://sun.hasenbraten.de/vasm/
 Trillek: http://trillek.org/
 
+Other projects based on/using Smaller C:
+NewBasic Compiler: http://fysnet.net/nbc.htm
+Sweet32 CPU and toolchain: https://github.com/Basman74/Sweet32-CPU
+
 Normative and other useful documents on C:
 C99 + TC1 + TC2 + TC3, WG14 N1256:
   http://www.open-std.org/jtc1/sc22/wg14/www/docs/n1256.pdf
