@@ -37,7 +37,7 @@ float powf(float x, float y)
     cond = (int)u.u < 0 && yoddint; // note: false for +/-INF
     if (y < 0)
     {
-      if (y != -INFINITY && y != +INFINITY)
+      if (y != -INFINITY)
         errno = ERANGE;
       return cond ? -INFINITY : INFINITY;
     }
