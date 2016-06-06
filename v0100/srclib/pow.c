@@ -6,6 +6,7 @@
 #ifdef __SMALLER_C_32__
 
 #include <math.h>
+#include <errno.h>
 
 float powf(float x, float y)
 {
@@ -35,7 +36,11 @@ float powf(float x, float y)
     u.f = x;
     cond = (int)u.u < 0 && yoddint; // note: false for +/-INF
     if (y < 0)
+    {
+      if (y != -INFINITY && y != +INFINITY)
+        errno = ERANGE;
       return cond ? -INFINITY : INFINITY;
+    }
     else
       return cond ? -0.0f : 0.0f;
   }
@@ -55,7 +60,10 @@ float powf(float x, float y)
   if (x < 0)
   {
     if (!yint)
+    {
+      errno = EDOM;
       return NAN;
+    }
     y = exp2f(y * log2f(-x));
     return yoddint ? -y : y;
   }
