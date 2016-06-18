@@ -1,11 +1,7 @@
-#include <u.h>
-#include <libc.h>
-#include <stdio.h>
+#include "u.h"
+#include "libc.h"
 #include "cpp.h"
 
-extern	int getopt(int, char **, char *);
-extern	char	*optarg;
-extern	int	optind;
 int	verbose;
 int	Mflag;
 int	Cplusplus;
@@ -22,27 +18,27 @@ struct	kwtab {
 	int	val;
 	int	flag;
 } kwtab[] = {
-	"if",		KIF,		ISKW,
-	"ifdef",	KIFDEF,		ISKW,
-	"ifndef",	KIFNDEF,	ISKW,
-	"elif",		KELIF,		ISKW,
-	"else",		KELSE,		ISKW,
-	"endif",	KENDIF,		ISKW,
-	"include",	KINCLUDE,	ISKW,
-	"define",	KDEFINE,	ISKW,
-	"undef",	KUNDEF,		ISKW,
-	"line",		KLINE,		ISKW,
-	"error",	KERROR,		ISKW,
-	"warning",	KWARNING,	ISKW,		// extension to ANSI
-	"pragma",	KPRAGMA,	ISKW,
-	"eval",		KEVAL,		ISKW,
-	"defined",	KDEFINED,	ISDEFINED+ISUNCHANGE,
-	"__LINE__",	KLINENO,	ISMAC+ISUNCHANGE,
-	"__FILE__",	KFILE,		ISMAC+ISUNCHANGE,
-	"__DATE__",	KDATE,		ISMAC+ISUNCHANGE,
-	"__TIME__",	KTIME,		ISMAC+ISUNCHANGE,
-	"__STDC__",	KSTDC,		ISUNCHANGE,
-	NULL
+	{ "if",         KIF,            ISKW },
+	{ "ifdef",      KIFDEF,         ISKW },
+	{ "ifndef",     KIFNDEF,        ISKW },
+	{ "elif",       KELIF,          ISKW },
+	{ "else",       KELSE,          ISKW },
+	{ "endif",      KENDIF,         ISKW },
+	{ "include",    KINCLUDE,       ISKW },
+	{ "define",     KDEFINE,        ISKW },
+	{ "undef",      KUNDEF,         ISKW },
+	{ "line",       KLINE,          ISKW },
+	{ "error",      KERROR,         ISKW },
+	{ "warning",    KWARNING,       ISKW }, /* extension to ANSI */
+	{ "pragma",     KPRAGMA,        ISKW },
+	{ "eval",       KEVAL,          ISKW },
+	{ "defined",    KDEFINED,       ISDEFINED+ISUNCHANGE },
+	{ "__LINE__",   KLINENO,        ISMAC+ISUNCHANGE },
+	{ "__FILE__",   KFILE,          ISMAC+ISUNCHANGE },
+	{ "__DATE__",   KDATE,          ISMAC+ISUNCHANGE },
+	{ "__TIME__",   KTIME,          ISMAC+ISUNCHANGE },
+	{ "__STDC__",   KSTDC,          ISUNCHANGE },
+	{ NULL,         0,              0 }
 };
 
 unsigned long	namebit[077+1];
@@ -54,7 +50,8 @@ setup(int argc, char **argv)
 	struct kwtab *kp;
 	Nlist *np;
 	Token t;
-	int fd, i;
+	FILE *f;
+	int i;
 	char *fp, *dp;
 	Tokenrow tr;
 	char *objtype;
@@ -92,14 +89,14 @@ setup(int argc, char **argv)
 		includelist[1].file = NULL;
 		error(WARNING, "Unknown $objtype");
 	}
-	if (getwd(wd, sizeof(wd))==0)
+	/* if (getwd(wd, sizeof(wd))==0) */ /* TBD??? */
 		wd[0] = '\0';
 	includelist[0].file = "/sys/include";
 	includelist[0].always = 1;
 	firstinclude = NINCLUDE-2;
 	if ((includeenv=getenv("include")) != NULL) {
 		char *cp;
-		includeenv = strdup(includeenv);
+		includeenv = mystrdup(includeenv);
 		for (;firstinclude>0; firstinclude--) {
 			cp = strtok(includeenv, " ");
 			if (cp==NULL)
@@ -109,7 +106,7 @@ setup(int argc, char **argv)
 			includeenv = NULL;
 		}
 	}
-	setsource("", -1, 0);
+	setsource("", NULL, 0);
 	ARGBEGIN {
 		case 'N':
 			for (i=0; i<NINCLUDE; i++)
@@ -129,7 +126,7 @@ setup(int argc, char **argv)
 			break;
 		case 'D':
 		case 'U':
-			setsource("<cmdarg>", -1, ARGF());
+			setsource("<cmdarg>", NULL, ARGF());
 			maketokenrow(3, &tr);
 			gettokens(&tr, 1);
 			doadefine(&tr, ARGC());
@@ -160,7 +157,7 @@ setup(int argc, char **argv)
 	} ARGEND
 	dp = ".";
 	fp = "<stdin>";
-	fd = 0;
+	f = stdin;
 	if (argc > 2)
 		error(FATAL, "Too many file arguments; see cpp(1)");
 	if (argc > 0) {
@@ -170,14 +167,14 @@ setup(int argc, char **argv)
 			dp[len] = '\0';
 		}
 		fp = (char*)newstring((uchar*)argv[0], strlen(argv[0]), 0);
-		if ((fd = open(fp, 0)) < 0)
+		/* Note: using "rb" in order to determine the file size with fsize(). */
+		if ((f = fopen(fp, "rb")) == NULL)
 			error(FATAL, "Can't open input file %s", fp);
 	}
 	if (argc > 1) {
-		int fdo = create(argv[1], 1, 0666);
-		if (fdo<0)
+		FILE *fout = freopen(argv[1], "w", stdout);
+		if (fout==NULL)
 			error(FATAL, "Can't open output file %s", argv[1]);
-		dup(fdo, 1);
 	}
 	if (Mflag)
 		setobjname(fp);
@@ -185,7 +182,7 @@ setup(int argc, char **argv)
 	includelist[NINCLUDE-1].file = dp;
 	if(nodot)
 		includelist[NINCLUDE-1].deleted = 1;
-	setsource(fp, fd, NULL);
+	setsource(fp, f, NULL);
 	if (debuginclude) {
 		for (i=0; i<NINCLUDE; i++)
 			if (includelist[i].file && includelist[i].deleted==0)
@@ -206,7 +203,7 @@ lookup(Token *tp, int install)
 	h %= NLSIZE;
 	np = nlist[h];
 	while (np) {
-		if (*tp->t==*np->name && tp->len==np->len 
+		if (*tp->t==*np->name && tp->len==(unsigned)np->len 
 		 && strncmp((char*)tp->t, (char*)np->name, tp->len)==0)
 			return np;
 		np = np->next;

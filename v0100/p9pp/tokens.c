@@ -1,6 +1,5 @@
-#include <u.h>
-#include <libc.h>
-#include <stdio.h>
+#include "u.h"
+#include "libc.h"
 #include "cpp.h"
 
 static char wbuf[2*OBS];
@@ -152,14 +151,14 @@ makespace(Tokenrow *trp)
 		return;
 	if (tp->wslen) {
 		if (tp->flag&XPWS
-		 && (wstab[tp->type] || trp->tp>trp->bp && wstab[(tp-1)->type])) {
+		 && (wstab[tp->type] || (trp->tp>trp->bp && wstab[(tp-1)->type]))) {
 			tp->wslen = 0;
 			return;
 		}
 		tp->t[-1] = ' ';
 		return;
 	}
-	if (wstab[tp->type] || trp->tp>trp->bp && wstab[(tp-1)->type])
+	if (wstab[tp->type] || (trp->tp>trp->bp && wstab[(tp-1)->type]))
 		return;
 	tt = newstring(tp->t, tp->len, 1);
 	*tt++ = ' ';
@@ -271,7 +270,7 @@ peektokens(Tokenrow *trp, char *str)
 		if (tp->type!=NL) {
 			c = tp->t[tp->len];
 			tp->t[tp->len] = 0;
-			fprintf(stderr, "%s", tp->t, tp->len);
+			fprintf(stderr, "%s", tp->t);
 			tp->t[tp->len] = c;
 		}
 		if (tp->type==NAME) {
@@ -305,8 +304,8 @@ puttokens(Tokenrow *trp)
 		if (Mflag==0) {
 			if (len>OBS/2) {		/* handle giant token */
 				if (wbp > wbuf)
-					write(1, wbuf, wbp-wbuf);
-				write(1, p, len);
+					fwrite(wbuf, 1, wbp-wbuf, stdout);
+				fwrite(p, 1, len, stdout);
 				wbp = wbuf;
 			} else {	
 				memcpy(wbp, p, len);
@@ -314,14 +313,14 @@ puttokens(Tokenrow *trp)
 			}
 		}
 		if (wbp >= &wbuf[OBS]) {
-			write(1, wbuf, OBS);
+			fwrite(wbuf, 1, OBS, stdout);
 			if (wbp > &wbuf[OBS])
 				memcpy(wbuf, wbuf+OBS, wbp - &wbuf[OBS]);
 			wbp -= OBS;
 		}
 	}
 	trp->tp = tp;
-	if (cursource->fd==0)
+	if (cursource->f==stdin)
 		flushout();
 }
 
@@ -329,7 +328,8 @@ void
 flushout(void)
 {
 	if (wbp>wbuf) {
-		write(1, wbuf, wbp-wbuf);
+		fwrite(wbuf, 1, wbp-wbuf, stdout);
+		fflush(stdout);
 		wbp = wbuf;
 	}
 }

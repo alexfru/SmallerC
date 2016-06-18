@@ -1,6 +1,5 @@
-#include <u.h>
-#include <libc.h>
-#include <stdio.h>
+#include "u.h"
+#include "libc.h"
 #include "cpp.h"
 
 /*
@@ -53,184 +52,184 @@ struct	fsm {
 
 /*const*/ struct fsm fsm[] = {
 	/* start state */
-	START,	{ C_XX },	ACT(UNCLASS,S_SELF),
-	START,	{ ' ', '\t', '\v', '\r' },	WS1,
-	START,	{ C_NUM },	NUM1,
-	START,	{ '.' },	NUM3,
-	START,	{ C_ALPH },	ID1,
-	START,	{ 'L' },	ST1,
-	START,	{ '"' },	ST2,
-	START,	{ '\'' },	CC1,
-	START,	{ '/' },	COM1,
-	START,	{ EOFC },	S_EOF,
-	START,	{ '\n' },	S_NL,
-	START,	{ '-' },	MINUS1,
-	START,	{ '+' },	PLUS1,
-	START,	{ '<' },	LT1,
-	START,	{ '>' },	GT1,
-	START,	{ '=' },	ASG1,
-	START,	{ '!' },	NOT1,
-	START,	{ '&' },	AND1,
-	START,	{ '|' },	OR1,
-	START,	{ '#' },	SHARP1,
-	START,	{ '%' },	PCT1,
-	START,	{ '[' },	ACT(SBRA,S_SELF),
-	START,	{ ']' },	ACT(SKET,S_SELF),
-	START,	{ '(' },	ACT(LP,S_SELF),
-	START,	{ ')' },	ACT(RP,S_SELF),
-	START,	{ '*' },	STAR1,
-	START,	{ ',' },	ACT(COMMA,S_SELF),
-	START,	{ '?' },	ACT(QUEST,S_SELF),
-	START,	{ ':' },	ACT(COLON,S_SELF),
-	START,	{ ';' },	ACT(SEMIC,S_SELF),
-	START,	{ '{' },	ACT(CBRA,S_SELF),
-	START,	{ '}' },	ACT(CKET,S_SELF),
-	START,	{ '~' },	ACT(TILDE,S_SELF),
-	START,	{ '^' },	CIRC1,
+	{ START,        { C_XX },       ACT(UNCLASS,S_SELF) },
+	{ START,        { " \t\v\r" },  WS1 },
+	{ START,        { C_NUM },      NUM1 },
+	{ START,        { '.' },        NUM3 },
+	{ START,        { C_ALPH },     ID1 },
+	{ START,        { 'L' },        ST1 },
+	{ START,        { '"' },        ST2 },
+	{ START,        { '\'' },       CC1 },
+	{ START,        { '/' },        COM1 },
+	{ START,        { EOFC },       S_EOF },
+	{ START,        { '\n' },       S_NL },
+	{ START,        { '-' },        MINUS1 },
+	{ START,        { '+' },        PLUS1 },
+	{ START,        { '<' },        LT1 },
+	{ START,        { '>' },        GT1 },
+	{ START,        { '=' },        ASG1 },
+	{ START,        { '!' },        NOT1 },
+	{ START,        { '&' },        AND1 },
+	{ START,        { '|' },        OR1 },
+	{ START,        { '#' },        SHARP1 },
+	{ START,        { '%' },        PCT1 },
+	{ START,        { '[' },        ACT(SBRA,S_SELF) },
+	{ START,        { ']' },        ACT(SKET,S_SELF) },
+	{ START,        { '(' },        ACT(LP,S_SELF) },
+	{ START,        { ')' },        ACT(RP,S_SELF) },
+	{ START,        { '*' },        STAR1 },
+	{ START,        { ',' },        ACT(COMMA,S_SELF) },
+	{ START,        { '?' },        ACT(QUEST,S_SELF) },
+	{ START,        { ':' },        ACT(COLON,S_SELF) },
+	{ START,        { ';' },        ACT(SEMIC,S_SELF) },
+	{ START,        { '{' },        ACT(CBRA,S_SELF) },
+	{ START,        { '}' },        ACT(CKET,S_SELF) },
+	{ START,        { '~' },        ACT(TILDE,S_SELF) },
+	{ START,        { '^' },        CIRC1 },
 
 	/* saw a digit */
-	NUM1,	{ C_XX },	ACT(NUMBER,S_SELFB),
-	NUM1,	{ C_NUM, C_ALPH, '.' },	NUM1,
-	NUM1,	{ 'E', 'e' },	NUM2,
-	NUM1,	{ '_' },	ACT(NUMBER,S_SELFB),
+	{ NUM1,         { C_XX },       ACT(NUMBER,S_SELFB) },
+	{ NUM1,         { C_NUM, C_ALPH, '.' }, NUM1 },
+	{ NUM1,         { "Ee" },       NUM2 },
+	{ NUM1,         { '_' },        ACT(NUMBER,S_SELFB) },
 
 	/* saw possible start of exponent, digits-e */
-	NUM2,	{ C_XX },	ACT(NUMBER,S_SELFB),
-	NUM2,	{ '+', '-' },	NUM1,
-	NUM2,	{ C_NUM, C_ALPH },	NUM1,
-	NUM2,	{ '_' },	ACT(NUMBER,S_SELFB),
+	{ NUM2,         { C_XX },       ACT(NUMBER,S_SELFB) },
+	{ NUM2,         { "+-" },       NUM1 },
+	{ NUM2,         { C_NUM, C_ALPH }, NUM1 },
+	{ NUM2,         { '_' },        ACT(NUMBER,S_SELFB) },
 
 	/* saw a '.', which could be a number or an operator */
-	NUM3,	{ C_XX },	ACT(DOT,S_SELFB),
-	NUM3,	{ '.' },	DOTS1,
-	NUM3,	{ C_NUM },	NUM1,
+	{ NUM3,         { C_XX },       ACT(DOT,S_SELFB) },
+	{ NUM3,         { '.' },        DOTS1 },
+	{ NUM3,         { C_NUM },      NUM1 },
 
-	DOTS1,	{ C_XX },	ACT(UNCLASS, S_SELFB),
-	DOTS1,	{ C_NUM },	NUM1,
-	DOTS1,	{ '.' },	ACT(ELLIPS, S_SELF),
+	{ DOTS1,        { C_XX },       ACT(UNCLASS, S_SELFB) },
+	{ DOTS1,        { C_NUM },      NUM1 },
+	{ DOTS1,        { '.' },        ACT(ELLIPS, S_SELF) },
 
 	/* saw a letter or _ */
-	ID1,	{ C_XX },	ACT(NAME,S_NAME),
-	ID1,	{ C_ALPH, C_NUM },	ID1,
+	{ ID1,          { C_XX },       ACT(NAME,S_NAME) },
+	{ ID1,          { C_ALPH, C_NUM }, ID1 },
 
 	/* saw L (start of wide string?) */
-	ST1,	{ C_XX },	ACT(NAME,S_NAME),
-	ST1,	{ C_ALPH, C_NUM },	ID1,
-	ST1,	{ '"' },	ST2,
-	ST1,	{ '\'' },	CC1,
+	{ ST1,          { C_XX },       ACT(NAME,S_NAME) },
+	{ ST1,          { C_ALPH, C_NUM }, ID1 },
+	{ ST1,          { '"' },        ST2 },
+	{ ST1,          { '\'' },       CC1 },
 
 	/* saw " beginning string */
-	ST2,	{ C_XX },	ST2,
-	ST2,	{ '"' },	ACT(STRING, S_SELF),
-	ST2,	{ '\\' },	ST3,
-	ST2,	{ '\n' },	S_STNL,
-	ST2,	{ EOFC },	S_EOFSTR,
+	{ ST2,          { C_XX },       ST2 },
+	{ ST2,          { '"' },        ACT(STRING, S_SELF) },
+	{ ST2,          { '\\' },       ST3 },
+	{ ST2,          { '\n' },       S_STNL },
+	{ ST2,          { EOFC },       S_EOFSTR },
 
 	/* saw \ in string */
-	ST3,	{ C_XX },	ST2,
-	ST3,	{ '\n' },	S_STNL,
-	ST3,	{ EOFC },	S_EOFSTR,
+	{ ST3,          { C_XX },       ST2 },
+	{ ST3,          { '\n' },       S_STNL },
+	{ ST3,          { EOFC },       S_EOFSTR },
 
 	/* saw ' beginning character const */
-	CC1,	{ C_XX },	CC1,
-	CC1,	{ '\'' },	ACT(CCON, S_SELF),
-	CC1,	{ '\\' },	CC2,
-	CC1,	{ '\n' },	S_STNL,
-	CC1,	{ EOFC },	S_EOFSTR,
+	{ CC1,          { C_XX },       CC1 },
+	{ CC1,          { '\'' },       ACT(CCON, S_SELF) },
+	{ CC1,          { '\\' },       CC2 },
+	{ CC1,          { '\n' },       S_STNL },
+	{ CC1,          { EOFC },       S_EOFSTR },
 
 	/* saw \ in ccon */
-	CC2,	{ C_XX },	CC1,
-	CC2,	{ '\n' },	S_STNL,
-	CC2,	{ EOFC },	S_EOFSTR,
+	{ CC2,          { C_XX },       CC1 },
+	{ CC2,          { '\n' },       S_STNL },
+	{ CC2,          { EOFC },       S_EOFSTR },
 
 	/* saw /, perhaps start of comment */
-	COM1,	{ C_XX },	ACT(SLASH, S_SELFB),
-	COM1,	{ '=' },	ACT(ASSLASH, S_SELF),
-	COM1,	{ '*' },	COM2,
-	COM1,	{ '/' },	COM4,
+	{ COM1,         { C_XX },       ACT(SLASH, S_SELFB) },
+	{ COM1,         { '=' },        ACT(ASSLASH, S_SELF) },
+	{ COM1,         { '*' },        COM2 },
+	{ COM1,         { '/' },        COM4 },
 
-	/* saw "/*", start of comment */
-	COM2,	{ C_XX },	COM2,
-	COM2,	{ '\n' },	S_COMNL,
-	COM2,	{ '*' },	COM3,
-	COM2,	{ EOFC },	S_EOFCOM,
+	/* saw / then *, start of comment */
+	{ COM2,         { C_XX },       COM2 },
+	{ COM2,         { '\n' },       S_COMNL },
+	{ COM2,         { '*' },        COM3 },
+	{ COM2,         { EOFC },       S_EOFCOM },
 
 	/* saw the * possibly ending a comment */
-	COM3,	{ C_XX },	COM2,
-	COM3,	{ '\n' },	S_COMNL,
-	COM3,	{ '*' },	COM3,
-	COM3,	{ '/' },	S_COMMENT,
-	COM3,	{ EOFC },	S_EOFCOM,
+	{ COM3,         { C_XX },       COM2 },
+	{ COM3,         { '\n' },       S_COMNL },
+	{ COM3,         { '*' },        COM3 },
+	{ COM3,         { '/' },        S_COMMENT },
+	{ COM3,         { EOFC },       S_EOFCOM },
 
 	/* // comment */
-	COM4,	{ C_XX },	COM4,
-	COM4,	{ '\n' },	S_NL,
-	COM4,	{ EOFC },	S_EOFCOM,
+	{ COM4,         { C_XX },       COM4 },
+	{ COM4,         { '\n' },       S_NL },
+	{ COM4,         { EOFC },       S_EOFCOM },
 
 	/* saw white space, eat it up */
-	WS1,	{ C_XX },	S_WS,
-	WS1,	{ ' ', '\t', '\v', '\r'},	WS1,
+	{ WS1,          { C_XX },       S_WS },
+	{ WS1,          { " \t\v\r" },  WS1 },
 
 	/* saw -, check --, -=, -> */
-	MINUS1,	{ C_XX },	ACT(MINUS, S_SELFB),
-	MINUS1,	{ '-' },	ACT(MMINUS, S_SELF),
-	MINUS1,	{ '=' },	ACT(ASMINUS,S_SELF),
-	MINUS1,	{ '>' },	ACT(ARROW,S_SELF),
+	{ MINUS1,       { C_XX },       ACT(MINUS, S_SELFB) },
+	{ MINUS1,       { '-' },        ACT(MMINUS, S_SELF) },
+	{ MINUS1,       { '=' },        ACT(ASMINUS,S_SELF) },
+	{ MINUS1,       { '>' },        ACT(ARROW,S_SELF) },
 
 	/* saw +, check ++, += */
-	PLUS1,	{ C_XX },	ACT(PLUS, S_SELFB),
-	PLUS1,	{ '+' },	ACT(PPLUS, S_SELF),
-	PLUS1,	{ '=' },	ACT(ASPLUS, S_SELF),
+	{ PLUS1,        { C_XX },       ACT(PLUS, S_SELFB) },
+	{ PLUS1,        { '+' },        ACT(PPLUS, S_SELF) },
+	{ PLUS1,        { '=' },        ACT(ASPLUS, S_SELF) },
 
 	/* saw <, check <<, <<=, <= */
-	LT1,	{ C_XX },	ACT(LT, S_SELFB),
-	LT1,	{ '<' },	LT2,
-	LT1,	{ '=' },	ACT(LEQ, S_SELF),
-	LT2,	{ C_XX },	ACT(LSH, S_SELFB),
-	LT2,	{ '=' },	ACT(ASLSH, S_SELF),
+	{ LT1,          { C_XX },       ACT(LT, S_SELFB) },
+	{ LT1,          { '<' },        LT2 },
+	{ LT1,          { '=' },        ACT(LEQ, S_SELF) },
+	{ LT2,          { C_XX },       ACT(LSH, S_SELFB) },
+	{ LT2,          { '=' },        ACT(ASLSH, S_SELF) },
 
 	/* saw >, check >>, >>=, >= */
-	GT1,	{ C_XX },	ACT(GT, S_SELFB),
-	GT1,	{ '>' },	GT2,
-	GT1,	{ '=' },	ACT(GEQ, S_SELF),
-	GT2,	{ C_XX },	ACT(RSH, S_SELFB),
-	GT2,	{ '=' },	ACT(ASRSH, S_SELF),
+	{ GT1,          { C_XX },       ACT(GT, S_SELFB) },
+	{ GT1,          { '>' },        GT2 },
+	{ GT1,          { '=' },        ACT(GEQ, S_SELF) },
+	{ GT2,          { C_XX },       ACT(RSH, S_SELFB) },
+	{ GT2,          { '=' },        ACT(ASRSH, S_SELF) },
 
 	/* = */
-	ASG1,	{ C_XX },	ACT(ASGN, S_SELFB),
-	ASG1,	{ '=' },	ACT(EQ, S_SELF),
+	{ ASG1,         { C_XX },       ACT(ASGN, S_SELFB) },
+	{ ASG1,         { '=' },        ACT(EQ, S_SELF) },
 
 	/* ! */
-	NOT1,	{ C_XX },	ACT(NOT, S_SELFB),
-	NOT1,	{ '=' },	ACT(NEQ, S_SELF),
+	{ NOT1,         { C_XX },       ACT(NOT, S_SELFB) },
+	{ NOT1,         { '=' },        ACT(NEQ, S_SELF) },
 
 	/* & */
-	AND1,	{ C_XX },	ACT(AND, S_SELFB),
-	AND1,	{ '&' },	ACT(LAND, S_SELF),
-	AND1,	{ '=' },	ACT(ASAND, S_SELF),
+	{ AND1,         { C_XX },       ACT(AND, S_SELFB) },
+	{ AND1,         { '&' },        ACT(LAND, S_SELF) },
+	{ AND1,         { '=' },        ACT(ASAND, S_SELF) },
 
 	/* | */
-	OR1,	{ C_XX },	ACT(OR, S_SELFB),
-	OR1,	{ '|' },	ACT(LOR, S_SELF),
-	OR1,	{ '=' },	ACT(ASOR, S_SELF),
+	{ OR1,          { C_XX },       ACT(OR, S_SELFB) },
+	{ OR1,          { '|' },        ACT(LOR, S_SELF) },
+	{ OR1,          { '=' },        ACT(ASOR, S_SELF) },
 
 	/* # */
-	SHARP1,	{ C_XX },	ACT(SHARP, S_SELFB),
-	SHARP1,	{ '#' },	ACT(DSHARP, S_SELF),
+	{ SHARP1,       { C_XX },       ACT(SHARP, S_SELFB) },
+	{ SHARP1,       { '#' },        ACT(DSHARP, S_SELF) },
 
 	/* % */
-	PCT1,	{ C_XX },	ACT(PCT, S_SELFB),
-	PCT1,	{ '=' },	ACT(ASPCT, S_SELF),
+	{ PCT1,         { C_XX },       ACT(PCT, S_SELFB) },
+	{ PCT1,         { '=' },        ACT(ASPCT, S_SELF) },
 
 	/* * */
-	STAR1,	{ C_XX },	ACT(STAR, S_SELFB),
-	STAR1,	{ '=' },	ACT(ASSTAR, S_SELF),
+	{ STAR1,        { C_XX },       ACT(STAR, S_SELFB) },
+	{ STAR1,        { '=' },        ACT(ASSTAR, S_SELF) },
 
 	/* ^ */
-	CIRC1,	{ C_XX },	ACT(CIRC, S_SELFB),
-	CIRC1,	{ '=' },	ACT(ASCIRC, S_SELF),
+	{ CIRC1,        { C_XX },       ACT(CIRC, S_SELFB) },
+	{ CIRC1,        { '=' },        ACT(ASCIRC, S_SELF) },
 
-	-1
+	{ -1,           { 0 },          0 }
 };
 
 /* first index is char, second is state */
@@ -256,7 +255,7 @@ expandlex(void)
 				continue;
 			case C_ALPH:
 				for (j=0; j<=256; j++)
-					if ('a'<=j&&j<='z' || 'A'<=j&&j<='Z'
+					if (('a'<=j&&j<='z') || ('A'<=j&&j<='Z')
 					  || UTF2(j) || UTF3(j) || j=='_')
 						bigfsm[j][fp->state] = nstate;
 				continue;
@@ -307,7 +306,6 @@ gettokens(Tokenrow *trp, int reset)
 	int runelen;
 	Source *s = cursource;
 	int nmac = 0;
-	extern char outbuf[];
 
 	tp = trp->lp;
 	ip = s->inp;
@@ -417,7 +415,7 @@ gettokens(Tokenrow *trp, int reset)
 				tp->type = END;
 				tp->len = 0;
 				s->inp = ip;
-				if (tp!=trp->bp && (tp-1)->type!=NL && cursource->fd!=-1)
+				if (tp!=trp->bp && (tp-1)->type!=NL && cursource->f!=NULL)
 					error(WARNING,"No newline at end of file");
 				trp->lp = tp+1;
 				return nmac;
@@ -529,6 +527,32 @@ recheck:
 	return 0;
 }
 
+/*
+ * The callers of fillbuf() make a poor job of detecting the end of file condition
+ * and may call fillbuf() a few times after the end of file has been reached.
+ * This should not be a problem for actual files, but if the input comes from the
+ * console and is terminated with the user pressing Ctrl+Z followed by Enter (on
+ * Windows) or Ctrl+D (on Linux), missing the end will cause another invocation of
+ * fillbuf() to block on the read from the console (and you'll need to repeat
+ * Ctrl+Z,Enter or Ctrl+D a few times to get out). Apparently, Ctrl+Z,Enter/Ctrl+D
+ * does not suppress any further input, and so further reads may work as usual,
+ * blocking and waiting for more input if there's none.
+ * This is a primitive workaround.
+ */
+size_t
+fread2(void *buf, size_t sz, size_t cnt, FILE *f) {
+	size_t res;
+	static int stdin_eof;
+	if (f == stdin && stdin_eof) {
+		res = 0;
+	} else {
+		res = fread(buf, sz, cnt, f);
+		if (f == stdin && feof(f))
+			stdin_eof = 1;
+	}
+	return res;
+}
+
 int
 fillbuf(Source *s)
 {
@@ -547,7 +571,7 @@ fillbuf(Source *s)
 		s->inl = s->inb + l;
 		s->inp = s->inb + p;
 	}
-	if (s->fd<0 || (n=read(s->fd, (char *)s->inl, s->ins/8)) <= 0)
+	if (s->f==NULL || (n=fread2((char *)s->inl, 1, s->ins/8, s->f)) == 0)
 		n = 0;
 	if ((*s->inp&0xff) == EOB) /* sentinel character appears in input */
 		*s->inp = EOFC;
@@ -562,18 +586,18 @@ fillbuf(Source *s)
 
 /*
  * Push down to new source of characters.
- * If fd>0 and str==NULL, then from a file `name';
- * if fd==-1 and str, then from the string.
+ * If f!=NULL and str==NULL, then from a file `name';
+ * if f==NULL and str, then from the string.
  */
 Source *
-setsource(char *name, int fd, char *str)
+setsource(char *name, FILE *f, char *str)
 {
 	Source *s = new(Source);
 	int len;
 
 	s->line = 1;
 	s->lineinc = 0;
-	s->fd = fd;
+	s->f = f;
 	s->filename = name;
 	s->next = cursource;
 	s->ifdepth = 0;
@@ -585,13 +609,10 @@ setsource(char *name, int fd, char *str)
 		s->inp = s->inb;
 		strncpy((char *)s->inp, str, len);
 	} else {
-		Dir *d;
-		int junk;
-		ulong length = 0;
-		d = dirfstat(fd);
-		if (d != nil) {
-			length = d->length;
-			free(d);
+		long junk, length = 0;
+		if (f != NULL && f != stdin) {
+			length = fsize(f);
+			rewind(f);
 		}
 		junk = length;
 		if (junk<INS)
@@ -612,8 +633,8 @@ unsetsource(void)
 {
 	Source *s = cursource;
 
-	if (s->fd>=0) {
-		close(s->fd);
+	if (s->f!=NULL) {
+		fclose(s->f);
 		dofree(s->inb);
 	}
 	cursource = s->next;

@@ -3,12 +3,6 @@
 #define	NARG	128		/* Max number arguments to a macro */
 #define	NINCLUDE 64		/* Max number of include directories (-I) */
 #define	NIF	32		/* depth of nesting of #if */
-#ifndef EOF
-#define	EOF	(-1)
-#endif
-#ifndef NULL
-#define NULL	0
-#endif
 
 enum toktype { END, UNCLASS, NAME, NUMBER, STRING, CCON, NL, WS, DSHARP,
 		EQ, NEQ, LEQ, GEQ, LSH, RSH, LAND, LOR, PPLUS, MMINUS,
@@ -59,7 +53,7 @@ typedef struct source {
 	uchar	*inp;		/* input pointer */
 	uchar	*inl;		/* end of input */
 	int 	ins;		/* input buffer size */
-	int	fd;		/* input source */
+	FILE	*f;		/* input source */
 	int	ifdepth;	/* conditional nesting in include */
 	struct	source *next;	/* stack for #include */
 } Source;
@@ -93,7 +87,7 @@ void	setup(int, char **);
 #define gettokens cpp_gettokens
 int	gettokens(Tokenrow *, int);
 int	comparetokens(Tokenrow *, Tokenrow *);
-Source	*setsource(char *, int, char *);
+Source	*setsource(char *, FILE *, char *);
 void	unsetsource(void);
 void	puttokens(Tokenrow *);
 void	process(Tokenrow *);
@@ -158,3 +152,8 @@ extern	int Cplusplus;
 extern	Nlist *kwdefined;
 extern	Includelist includelist[NINCLUDE];
 extern	char wd[];
+char	*mystrdup(const char *);
+void	exits(const char *);
+void	sysfatal(const char *, ...);
+long	fsize(FILE *);
+void	fatargs(int *, char ***);

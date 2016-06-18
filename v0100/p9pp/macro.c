@@ -1,6 +1,5 @@
-#include <u.h>
-#include <libc.h>
-#include <stdio.h>
+#include "u.h"
+#include "libc.h"
 #include "cpp.h"
 
 /*
@@ -77,7 +76,7 @@ dodefine(Tokenrow *trp)
 	if (np->flag&ISDEFINED) {
 		if (comparetokens(def, np->vp)
 		 || (np->ap==NULL) != (args==NULL)
-		 || np->ap && comparetokens(args, np->ap))
+		 || (np->ap && comparetokens(args, np->ap)))
 			error(ERROR, "Macro redefinition of %t", trp->bp+2);
 	}
 	if (args) {
@@ -144,13 +143,13 @@ expandrow(Tokenrow *trp, char *flag, int inmacro)
 	Nlist *np;
 
 	if (flag)
-		setsource(flag, -1, "");
+		setsource(flag, NULL, "");
 	for (tp = trp->tp; tp<trp->lp; ) {
 		if (tp->type!=NAME
 		 || quicklook(tp->t[0], tp->len>1?tp->t[1]:0)==0
 		 || (np = lookup(tp, 0))==NULL
 		 || (np->flag&(ISDEFINED|ISMAC))==0
-		 || tp->hideset && checkhideset(tp->hideset, np)) {
+		 || (tp->hideset && checkhideset(tp->hideset, np))) {
 			tp++;
 			continue;
 		}
@@ -356,7 +355,7 @@ substargs(Nlist *np, Tokenrow *rtr, Tokenrow **atr)
 			if (rtr->tp < rtr->bp)
 				error(ERROR, "access out of bounds");
 			if ((rtr->tp+1)->type==DSHARP
-			 || rtr->tp!=rtr->bp && (rtr->tp-1)->type==DSHARP)
+			 || (rtr->tp!=rtr->bp && (rtr->tp-1)->type==DSHARP))
 				insertrow(rtr, 1, atr[argno]);
 			else {
 				copytokenrow(&tatr, atr[argno]);
@@ -395,7 +394,7 @@ doconcat(Tokenrow *trp)
 			strncpy((char*)tt, (char*)ltp->t, ltp->len);
 			strncpy((char*)tt+ltp->len, (char*)ntp->t, ntp->len);
 			tt[len] = '\0';
-			setsource("<##>", -1, tt);
+			setsource("<##>", NULL, tt);
 			maketokenrow(3, &ntr);
 			gettokens(&ntr, 1);
 			unsetsource();
@@ -439,7 +438,7 @@ lookuparg(Nlist *mac, Token *tp)
 Tokenrow *
 stringify(Tokenrow *vp)
 {
-	static Token t = { STRING };
+	static Token t = { STRING, 0, 0, 0, 0, NULL };
 	static Tokenrow tr = { &t, &t, &t+1, 1 };
 	Token *tp;
 	uchar s[STRLEN];
@@ -455,7 +454,7 @@ stringify(Tokenrow *vp)
 		}
 		if (tp->wslen /* && (tp->flag&XPWS)==0 */)
 			*sp++ = ' ';
-		for (i=0, cp=tp->t; i<tp->len; i++) {	
+		for (i=0, cp=tp->t; (unsigned)i<tp->len; i++) {	
 			if (instring && (*cp=='"' || *cp=='\\'))
 				*sp++ = '\\';
 			*sp++ = *cp++;
@@ -483,7 +482,7 @@ builtin(Tokenrow *trp, int biname)
 	trp->tp++;
 	/* need to find the real source */
 	s = cursource;
-	while (s && s->fd==-1)
+	while (s && s->f==NULL)
 		s = s->next;
 	if (s==NULL)
 		s = cursource;
@@ -509,7 +508,7 @@ builtin(Tokenrow *trp, int biname)
 
 	case KDATE:
 		strncpy(op, curtime+4, 7);
-		strncpy(op+7, curtime+24, 4); /* Plan 9 asctime disobeys standard */
+		strncpy(op+7, curtime+20, 4);
 		op += 11;
 		break;
 

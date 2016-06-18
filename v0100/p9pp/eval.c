@@ -1,5 +1,5 @@
-#include <u.h>
-#include <libc.h>
+#include "u.h"
+#include "libc.h"
 #include "cpp.h"
 
 #define	NSTAK	1024
@@ -217,7 +217,7 @@ syntax:
 int
 evalop(struct pri pri)
 {
-	struct value v1, v2;
+	struct value v1, v2 = { 0, 0 };
 	long rv1, rv2;
 	int rtype, oper;
 
@@ -278,13 +278,13 @@ evalop(struct pri pri)
 		case GT:
 			rv1 = rv1>rv2; break;
 		case LEQ|UNSMARK:
-			rv1 = (unsigned long)rv1<=rv2; break;
+			rv1 = (unsigned long)rv1<=(unsigned long)rv2; break;
 		case GEQ|UNSMARK:
-			rv1 = (unsigned long)rv1>=rv2; break;
+			rv1 = (unsigned long)rv1>=(unsigned long)rv2; break;
 		case LT|UNSMARK:
-			rv1 = (unsigned long)rv1<rv2; break;
+			rv1 = (unsigned long)rv1<(unsigned long)rv2; break;
 		case GT|UNSMARK:
-			rv1 = (unsigned long)rv1>rv2; break;
+			rv1 = (unsigned long)rv1>(unsigned long)rv2; break;
 		case LSH:
 			rv1 <<= rv2; break;
 		case LSH|UNSMARK:
@@ -478,14 +478,14 @@ tokval(Token *tp)
 			} else {
 				static char cvcon[]
 				  = "a\ab\bf\fn\nr\rt\tv\v''\"\"??\\\\";
-				for (i=0; i<sizeof(cvcon); i+=2) {
+				for (i=0; (size_t)i<sizeof(cvcon); i+=2) {
 					if (*p == cvcon[i]) {
 						n = cvcon[i+1];
 						break;
 					}
 				}
 				p += 1;
-				if (i>=sizeof(cvcon))
+				if ((size_t)i>=sizeof(cvcon))
 					error(WARNING,
 					 "Undefined escape in character constant");
 			}
