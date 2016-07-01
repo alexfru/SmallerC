@@ -5,7 +5,7 @@
     smlrcc -dosh -nobss hw0.c -o hw0dh.exe
 
   How to compile for Windows:
-    smlrcc -win -nobss hw0.c -o hw0w.exe
+    smlrcc -win -norel -nobss hw0.c -o hw0w.exe
 
   How to compile for Linux:
     smlrcc -linux -nobss hw0.c -o hw0l
