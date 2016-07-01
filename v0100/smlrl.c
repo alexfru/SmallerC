@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2015, Alexey Frunze
+Copyright (c) 2014-2016, Alexey Frunze
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -77,6 +77,7 @@ void qsort(void*, size_t, size_t, int (*)(void*, void*));
 void exit(int);
 
 size_t strlen(char*);
+char* strcpy(char*, char*);
 int strcmp(char*, char*);
 int strncmp(char*, char*, size_t);
 void* memmove(void*, void*, size_t);
@@ -98,6 +99,7 @@ int vprintf(char*, void*);
 size_t fread(void*, size_t, size_t, FILE*);
 size_t fwrite(void*, size_t, size_t, FILE*);
 int fseek(FILE*, long, int);
+long ftell(FILE*);
 int remove(char*);
 
 void* malloc(size_t);
@@ -489,6 +491,7 @@ const char* StubName;
 #define FormatAout        8
 int OutputFormat = 0;
 int UseBss = 1;
+int NoRelocations = 0;
 
 int verbose = 0;
 
@@ -1589,7 +1592,7 @@ tPeImageFileHeader PeFileHeader =
   0,                              // PointerToSymbolTable
   0,                              // NumberOfSymbols
   sizeof(tPeImageOptionalHeader), // SizeOfOptionalHeader
-  0x30F                           // Characteristics (no symbol/debug info, fixed/no relocations, executable, 32-bit)
+  0x30F                           // Characteristics (no symbol/debug info, no relocations, executable, 32-bit)
 };
 
 tPeImageOptionalHeader PeOptionalHeader =
@@ -1645,7 +1648,7 @@ tPeImageOptionalHeader PeOptionalHeader =
   }
 };
 
-tPeImageSectionHeader PeSectionHeaders[2] =
+tPeImageSectionHeader PeSectionHeaders[3] =
 {
   {
     { ".text" }, // Name
@@ -1801,6 +1804,11 @@ void Pass(int pass, FILE* fout, uint32 hdrsz)
             if (!strcmp(pMeta->pSectNames + pSect->h.sh_name, ".relot") ||
                 !strcmp(pMeta->pSectNames + pSect->h.sh_name, ".relod"))
               align = 4;
+            break;
+          case FormatWinPe32:
+          case FormatElf32:
+            if (align > 4096)
+              error("Section alignment larger than page size (4KB)\n");
             break;
           }
 
@@ -2483,45 +2491,229 @@ void RwPeElf(void)
 
   Pass(1, fout, hdrsz);
 
-  // In PE, some importing-related addresses must be relative to the image base, so make them relative
-  if (OutputFormat == FormatWinPe32 && peImportsStart)
+  if (OutputFormat == FormatWinPe32)
   {
-    uint32 iofs;
-    for (iofs = peImportsStart; ; iofs += sizeof(tPeImageImportDescriptor))
+    uint32 pos = ftell(fout); // TBD!!! clean up
+    // In PE, some importing-related addresses must be relative to the image base, so make them relative
+    if (peImportsStart)
     {
-      tPeImageImportDescriptor id;
-      uint32 ofs, v;
-
-      Fseek(fout, iofs - imageBase, SEEK_SET);
-      Fread(&id, sizeof id, fout);
-      if (!id.u.OrdinalFirstThunk || !id.Name || !id.FirstThunk)
-        break;
-      id.u.OrdinalFirstThunk -= imageBase;
-      id.Name -= imageBase;
-      id.FirstThunk -= imageBase;
-      Fseek(fout, iofs - imageBase, SEEK_SET);
-      Fwrite(&id, sizeof id, fout);
-
-      for (ofs = id.u.OrdinalFirstThunk; ; ofs += sizeof v)
+      uint32 iofs;
+      for (iofs = peImportsStart; ; iofs += sizeof(tPeImageImportDescriptor))
       {
-        Fseek(fout, ofs, SEEK_SET);
-        Fread(&v, sizeof v, fout);
-        if (!v)
+        tPeImageImportDescriptor id;
+        uint32 ofs, v;
+
+        Fseek(fout, iofs - imageBase, SEEK_SET);
+        Fread(&id, sizeof id, fout);
+        if (!id.u.OrdinalFirstThunk || !id.Name || !id.FirstThunk)
           break;
-        v -= imageBase;
-        Fseek(fout, ofs, SEEK_SET);
-        Fwrite(&v, sizeof v, fout);
+        id.u.OrdinalFirstThunk -= imageBase;
+        id.Name -= imageBase;
+        id.FirstThunk -= imageBase;
+        Fseek(fout, iofs - imageBase, SEEK_SET);
+        Fwrite(&id, sizeof id, fout);
+
+        for (ofs = id.u.OrdinalFirstThunk; ; ofs += sizeof v)
+        {
+          Fseek(fout, ofs, SEEK_SET);
+          Fread(&v, sizeof v, fout);
+          if (!v)
+            break;
+          v -= imageBase;
+          Fseek(fout, ofs, SEEK_SET);
+          Fwrite(&v, sizeof v, fout);
+        }
+
+        for (ofs = id.FirstThunk; ; ofs += sizeof v)
+        {
+          Fseek(fout, ofs, SEEK_SET);
+          Fread(&v, sizeof v, fout);
+          if (!v)
+            break;
+          v -= imageBase;
+          Fseek(fout, ofs, SEEK_SET);
+          Fwrite(&v, sizeof v, fout);
+        }
       }
-
-      for (ofs = id.FirstThunk; ; ofs += sizeof v)
+    }
+    // Write relocation table
+    if (!NoRelocations)
+    {
+      uint32 j, fIdx, sectIdx, relSectIdx, relIdx;
+      uint32 lastPage = 0xFFFFFFFF, page = 0xFFFFFFFF, blockSize = 0;
+      uint32 totalFixupsSize = 0, blockPos = pos;
+      Fseek(fout, pos, SEEK_SET);
+      // Handle individual sections
+      for (j = 0; j < SectCnt; j++)
       {
-        Fseek(fout, ofs, SEEK_SET);
-        Fread(&v, sizeof v, fout);
-        if (!v)
-          break;
-        v -= imageBase;
-        Fseek(fout, ofs, SEEK_SET);
-        Fwrite(&v, sizeof v, fout);
+        for (fIdx = 0; fIdx < ObjFileCnt; fIdx++)
+        {
+          tElfMeta* pMeta = &pMetas[fIdx];
+          if (!pMeta->Needed)
+            continue;
+          for (sectIdx = 0; sectIdx < pMeta->SectionCnt; sectIdx++)
+          {
+            tElfSection* pSect = &pMeta->pSections[sectIdx];
+            tElfSection* pRelSect = NULL;
+            const char* sectName;
+            size_t sectNameLen;
+            if (pSect->h.sh_type != SHT_PROGBITS)
+              continue;
+            if (strcmp(pSectDescrs[j].pName, pMeta->pSectNames + pSect->h.sh_name))
+              continue;
+            // Find relocations for this section, if any
+            for (relSectIdx = 0; relSectIdx < pMeta->SectionCnt; relSectIdx++)
+            {
+              if (pMeta->pSections[relSectIdx].h.sh_type == SHT_REL &&
+                  pMeta->pSections[relSectIdx].h.sh_info == sectIdx)
+              {
+                pRelSect = &pMeta->pSections[relSectIdx];
+                break;
+              }
+            }
+            if (!pRelSect)
+              continue;
+
+            // Don't create relocations for anything in sections ".dll_imports",
+            // "*_hints", "*_iat".
+            sectName = pSectDescrs[j].pName;
+            sectNameLen = strlen(sectName);
+            if (!strcmp(sectName, ".dll_imports") ||
+                (sectNameLen >= sizeof "_hints" &&
+                 !strcmp(sectName + sectNameLen - sizeof "_hints" + 1, "_hints")) ||
+                (sectNameLen >= sizeof "_iat" &&
+                 !strcmp(sectName + sectNameLen - sizeof "_iat" + 1, "_iat")))
+              continue;
+
+            // Write relocation records
+            for (relIdx = 0; relIdx < pRelSect->h.sh_entsize; relIdx++)
+            {
+              Elf32_Rel* pRel = &pRelSect->d.pRel[relIdx];
+              uint32 symIdx = pRel->r_info >> 8;
+              uint32 absSym = symIdx == 0;
+              uint32 relType = pRel->r_info & 0xFFu;
+              uint32 relative = relType == R_386_PC16 || relType == R_386_PC32;
+              uint32 length = (relType == R_386_32 || relType == R_386_PC32) * 2 +
+                              (relType == R_386_16 || relType == R_386_PC16);
+              uint32 addr;
+              uint16 typeOffs;
+
+              if (absSym)
+                error("Unsupported relocation type in PE\n");
+              if (relative)
+                continue;
+              if (length != 2)
+                error("Unsupported relocation size in PE\n");
+
+              addr = pRel->r_offset + pMeta->pSections[pRelSect->h.sh_info].OutOffset -
+                imageBase;
+
+              page = addr >> 12;
+              if (page != lastPage)
+              {
+                // finish off fixups for the last page, if any
+                if (blockSize)
+                {
+                  if (blockSize & 2)
+                  {
+                    // pad to 4 bytes
+                    typeOffs = 0;
+                    Fwrite(&typeOffs, sizeof typeOffs, fout);
+                    blockSize += sizeof(typeOffs);
+                  }
+                  // update block header
+                  blockSize += sizeof lastPage + sizeof blockSize;
+                  totalFixupsSize += blockSize;
+                  // update the filler
+                  Fseek(fout, blockPos, SEEK_SET);
+                  blockPos += blockSize;
+                  lastPage <<= 12;
+                  Fwrite(&lastPage, sizeof lastPage, fout);
+                  Fwrite(&blockSize, sizeof blockSize, fout);
+                  Fseek(fout, blockPos, SEEK_SET);
+                }
+                // fixups for a new (or first) page
+                lastPage = page;
+                blockSize = 0;
+                // filler for page's RVA and block size
+                Fwrite(&lastPage, sizeof lastPage, fout);
+                Fwrite(&blockSize, sizeof blockSize, fout);
+              }
+
+              typeOffs = (addr & 0xFFF) | (3 << 12);
+              Fwrite(&typeOffs, sizeof typeOffs, fout);
+              blockSize += sizeof(typeOffs);
+            }
+          } // endof: for (sectIdx = 0; sectIdx < pMeta->SectionCnt; sectIdx++)
+        } // endof: for (fIdx = 0; fIdx < ObjFileCnt; fIdx++)
+      } // endof: for (j = 0; j < SectCnt; j++)
+      // finish off fixups for the last page, if any
+      if (blockSize)
+      {
+        if (blockSize & 2)
+        {
+          // pad to 4 bytes
+          uint16 typeOffs = 0;
+          Fwrite(&typeOffs, sizeof typeOffs, fout);
+          blockSize += sizeof(typeOffs);
+        }
+        // update block header
+        blockSize += sizeof lastPage + sizeof blockSize;
+        totalFixupsSize += blockSize;
+        // update the filler
+        Fseek(fout, blockPos, SEEK_SET);
+        blockPos += blockSize;
+        lastPage <<= 12;
+        Fwrite(&lastPage, sizeof lastPage, fout);
+        Fwrite(&blockSize, sizeof blockSize, fout);
+        Fseek(fout, blockPos, SEEK_SET);
+      }
+      // if there's nothing to relocate, write a dummy fixup block
+      if (!totalFixupsSize)
+      {
+        static uint32 tmp[3];
+        tmp[1] = sizeof tmp;
+        Fwrite(tmp, sizeof tmp, fout);
+        totalFixupsSize = sizeof tmp;
+        blockPos += totalFixupsSize;
+      }
+      // pad fixup blocks to PeOptionalHeader.FileAlignment (512)
+      FillWithByte(0, (512 - totalFixupsSize) & 511, fout);
+      // update headers
+      {
+        uint32 pos = sizeof DosMzExeStub + sizeof "PE\0";
+        uint32 idx = PeFileHeader.NumberOfSections++;
+
+        PeFileHeader.Characteristics &= ~1; // reset no relocations
+        // TBD??? PeFileHeader.Characteristics |= 0x20; // large address aware
+
+        PeOptionalHeader.DllCharacteristics |= 0x40; // ASLR / dynamic base
+
+        strcpy(PeSectionHeaders[idx].Name, ".reloc");
+        PeSectionHeaders[idx].Characteristics = 0x42000040; // data, readable, discardable
+        PeOptionalHeader.DataDirectory[5].VirtualAddress =
+          PeSectionHeaders[idx].VirtualAddress =
+            PeSectionHeaders[idx - 1].VirtualAddress +
+              PeSectionHeaders[idx - 1].Misc.VirtualSize;
+        PeSectionHeaders[idx].PointerToRawData = blockPos - totalFixupsSize;
+        PeOptionalHeader.DataDirectory[5].Size = totalFixupsSize;
+        PeSectionHeaders[idx].Misc.VirtualSize =
+          PeSectionHeaders[idx].SizeOfRawData =
+            (totalFixupsSize + 0x1FF) & 0xFFFFFE00;
+
+        PeOptionalHeader.SizeOfImage += PeSectionHeaders[idx].Misc.VirtualSize;
+        PeOptionalHeader.SizeOfInitializedData += PeSectionHeaders[idx].Misc.VirtualSize;
+
+        Fseek(fout, pos, SEEK_SET);
+        Fwrite(&PeFileHeader, sizeof PeFileHeader, fout);
+
+        pos += sizeof PeFileHeader;
+        Fseek(fout, pos, SEEK_SET);
+        Fwrite(&PeOptionalHeader, sizeof PeOptionalHeader, fout);
+
+        pos += sizeof PeOptionalHeader + idx * sizeof PeSectionHeaders[0];
+        Fseek(fout, pos, SEEK_SET);
+        Fwrite(&PeSectionHeaders[idx], sizeof PeSectionHeaders[idx], fout);
       }
     }
   }
@@ -2897,6 +3089,11 @@ int main(int argc, char* argv[])
       else if (!strcmp(argv[i], "-elf"))
       {
         OutputFormat = FormatElf32;
+        continue;
+      }
+      else if (!strcmp(argv[i], "-norel"))
+      {
+        NoRelocations = 1;
         continue;
       }
       else if (!strcmp(argv[i], "-flat16"))
