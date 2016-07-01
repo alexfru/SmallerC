@@ -77,7 +77,6 @@ void qsort(void*, size_t, size_t, int (*)(void*, void*));
 void exit(int);
 
 size_t strlen(char*);
-char* strcpy(char*, char*);
 int strcmp(char*, char*);
 int strncmp(char*, char*, size_t);
 void* memmove(void*, void*, size_t);
@@ -1789,6 +1788,8 @@ void Pass(int pass, FILE* fout, uint32 hdrsz)
         // Align the section and check for segment overflow
         {
           uint32 newOfs, align = pSect->h.sh_addralign;
+          if (align & (align - 1))
+            error("Section alignment not a power of 2\n");
           switch (OutputFormat)
           {
           case FormatDosComTiny:
@@ -1804,6 +1805,8 @@ void Pass(int pass, FILE* fout, uint32 hdrsz)
             if (!strcmp(pMeta->pSectNames + pSect->h.sh_name, ".relot") ||
                 !strcmp(pMeta->pSectNames + pSect->h.sh_name, ".relod"))
               align = 4;
+            if (align > 16)
+              error("Section alignment larger than paragraph size (16)\n");
             break;
           case FormatWinPe32:
           case FormatElf32:
@@ -2689,7 +2692,7 @@ void RwPeElf(void)
 
         PeOptionalHeader.DllCharacteristics |= 0x40; // ASLR / dynamic base
 
-        strcpy(PeSectionHeaders[idx].Name, ".reloc");
+        memcpy(PeSectionHeaders[idx].Name, ".reloc", sizeof ".reloc");
         PeSectionHeaders[idx].Characteristics = 0x42000040; // data, readable, discardable
         PeOptionalHeader.DataDirectory[5].VirtualAddress =
           PeSectionHeaders[idx].VirtualAddress =
