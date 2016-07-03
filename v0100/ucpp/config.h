@@ -83,7 +83,7 @@
  * with files bigger than 4 GB), this option makes ucpp fail to operate
  * on those extremely large files.
  */
-//#define UCPP_MMAP
+/* #define UCPP_MMAP */
 
 /*
  * Performance issues:
@@ -230,11 +230,20 @@
 /*
  * For native type evaluation with a 64-bit "long long" type.
  */
+/* TBD!!! figure this out and clean it up */
+#ifdef __SMALLER_C__
+#define NATIVE_SIGNED           long
+#define NATIVE_UNSIGNED         unsigned long
+#define NATIVE_UNSIGNED_BITS    32
+#define NATIVE_SIGNED_MIN       (-0x7fffffffL - 1)
+#define NATIVE_SIGNED_MAX       0x7fffffffL
+#else
 #define NATIVE_SIGNED           long long
 #define NATIVE_UNSIGNED         unsigned long long
 #define NATIVE_UNSIGNED_BITS    64
 #define NATIVE_SIGNED_MIN       (-9223372036854775807LL - 1)
 #define NATIVE_SIGNED_MAX       9223372036854775807LL
+#endif
 
 /*
  * For emulation of a 64-bit type using a native 32-bit "unsigned long"

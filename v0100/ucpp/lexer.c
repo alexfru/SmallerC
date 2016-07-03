@@ -796,7 +796,7 @@ static inline int read_token(struct lexer_state *ls)
 	size_t ltok = 0;
 	int c, outc = 0, ucn_in_id = 0;
 	int shift_state;
-	unsigned long utf8;
+	unsigned long utf8 = 0;
 	long l = ls->line;
 
 	ls->ctok->line = l;

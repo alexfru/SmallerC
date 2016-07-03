@@ -81,13 +81,13 @@ LIBS =
 STAND_ALONE = -DSTAND_ALONE
 
 ifdef STAND_ALONE
-	CSRC = mem.c nhash.c cpp.c lexer.c assert.c macro.c eval.c
+	CSRC = mem.c nhash.c cpp.c lexer.c assert.c macro.c eval.c arith.c
 	FINAL_STEP = $(CC) $(LDFLAGS) -DUCPP_CONFIG $(STAND_ALONE) -o ucpp $(CSRC) $(LIBS)
 endif
 
 # ----- nothing should be changed below this line -----
 
-COBJ = mem.o nhash.o cpp.o lexer.o assert.o macro.o eval.o
+COBJ = mem.o nhash.o cpp.o lexer.o assert.o macro.o eval.o arith.o
 CFLAGS = $(FLAGS)
 
 all: ucpp
@@ -103,8 +103,10 @@ assert.o: tune.h ucppi.h cpp.h nhash.h mem.h
 	@$(CC) $(CFLAGS) -c assert.c
 cpp.o: tune.h ucppi.h cpp.h nhash.h mem.h
 	@$(CC) $(CFLAGS) -c cpp.c
-eval.o: tune.h ucppi.h cpp.h nhash.h mem.h arith.c arith.h
+eval.o: tune.h ucppi.h cpp.h nhash.h mem.h arith.h
 	@$(CC) $(CFLAGS) -c eval.c
+arith.o: tune.h arith.h
+	@$(CC) $(CFLAGS) -c arith.c
 lexer.o: tune.h ucppi.h cpp.h nhash.h mem.h
 	@$(CC) $(CFLAGS) -c lexer.c
 macro.o: tune.h ucppi.h cpp.h nhash.h mem.h

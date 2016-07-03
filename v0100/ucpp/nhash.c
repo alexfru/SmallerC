@@ -134,7 +134,7 @@ static hash_item_header *find_node(HTT *htt, unsigned u,
 {
 	hash_item_header *node = TREE(u);
 	hash_item_header *nodef = NULL;
-	int ls;
+	int ls = 0;
 
 	u &= ~1U;
 	while (node != NULL) {
@@ -229,7 +229,7 @@ static void *internal_put(HTT *htt, void *item, char *name, int reduced)
 	int ls;
 	hash_item_header *father;
 	hash_item_header *node = find_node(htt, u, &father, &ls, reduced);
-	hash_item_header *itemg = item, *pnode;
+	hash_item_header *itemg = item, *pnode = NULL;
 
 	if (node == NULL) {
 		itemg->left = itemg->right = NULL;

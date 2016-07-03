@@ -61,20 +61,9 @@ int *transient_characters = 0;
                        : (x) == 'd' || (x) == 'D' ? 13 \
                        : (x) == 'e' || (x) == 'E' ? 14 : 15)
 
-#define ARITH_TYPENAME             big
-#define ARITH_FUNCTION_HEADER      static inline
+#include "arith.h"
 
-#define ARITH_ERROR(type)          z_error(type)
-static void z_error(int type);
-
-#ifdef ARITHMETIC_CHECKS
-#define ARITH_WARNING(type)        z_warn(type)
-static void z_warn(int type);
-#endif
-
-#include "arith.c"
-
-static void z_error(int type)
+/*static*/ void z_error(int type)
 {
 	switch (type) {
 	case ARITH_EXCEP_SLASH_D:
@@ -98,7 +87,7 @@ static void z_error(int type)
 }
 
 #ifdef ARITHMETIC_CHECKS
-static void z_warn(int type)
+/*static*/ void z_warn(int type)
 {
 	switch (type) {
 	case ARITH_EXCEP_CONV_O:
@@ -368,8 +357,17 @@ unsigned long strtoconst(char *c)
 	return big_u_toulong(q.u.uv);
 }
 
-#define OP_UN(x)	((x) == LNOT || (x) == NOT || (x) == UPLUS \
-			|| (x) == UMINUS)
+static int OP_UN(int x)
+{
+	switch (x) {
+	case LNOT:
+	case NOT:
+	case UPLUS:
+	case UMINUS:
+		return 1;
+	}
+	return 0;
+}
 
 static ppval eval_opun(int op, ppval v)
 {
@@ -394,13 +392,32 @@ static ppval eval_opun(int op, ppval v)
 	return v;
 }
 
-#define OP_BIN(x)      ((x) == STAR || (x) == SLASH || (x) == PCT \
-                       || (x) == PLUS || (x) == MINUS || (x) == LSH \
-                       || (x) == RSH || (x) == LT || (x) == LEQ \
-                       || (x) == GT || (x) == GEQ || (x) == SAME \
-                       || (x) == NEQ || (x) == AND || (x) == CIRC \
-                       || (x) == OR || (x) == LAND || (x) == LOR \
-                       || (x) == COMMA)
+static int OP_BIN(int x)
+{
+	switch (x) {
+	case STAR:
+	case SLASH:
+	case PCT:
+	case PLUS:
+	case MINUS:
+	case LSH:
+	case RSH:
+	case LT:
+	case LEQ:
+	case GT:
+	case GEQ:
+	case SAME:
+	case NEQ:
+	case AND:
+	case CIRC:
+	case OR:
+	case LAND:
+	case LOR:
+	case COMMA:
+		return 1;
+	}
+	return 0;
+}
 
 static ppval eval_opbin(int op, ppval v1, ppval v2)
 {
@@ -505,7 +522,10 @@ static ppval eval_opbin(int op, ppval v1, ppval v2)
 	return r;
 }
 
-#define ttOP(x)		(OP_UN(x) || OP_BIN(x) || (x) == QUEST || (x) == COLON)
+static int ttOP(int x)
+{
+	return OP_UN(x) || OP_BIN(x) || x == QUEST || x == COLON;
+}
 
 static int op_prec(int op)
 {

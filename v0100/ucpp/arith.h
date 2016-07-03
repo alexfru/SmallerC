@@ -90,6 +90,17 @@
 #ifndef ARITH_H__
 #define ARITH_H__
 
+#define ARITH_TYPENAME             big
+#define ARITH_FUNCTION_HEADER      /*static inline*/
+
+#define ARITH_ERROR(type)          z_error(type)
+/*static*/ void z_error(int type);
+
+#ifdef ARITHMETIC_CHECKS
+#define ARITH_WARNING(type)        z_warn(type)
+/*static*/ void z_warn(int type);
+#endif
+
 enum {
 	/* Warnings */
 	ARITH_EXCEP_CONV_O,    /* overflow on conversion */

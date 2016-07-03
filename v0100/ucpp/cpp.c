@@ -984,7 +984,7 @@ static FILE *find_file_next(char *name)
  */
 static int handle_if(struct lexer_state *ls)
 {
-	struct token_fifo tf, tf1, tf2, tf3, *save_tf;
+	struct token_fifo tf = { NULL, 0, 0 }, tf1, tf2, tf3, *save_tf;
 	long l = ls->line;
 	unsigned long z;
 	int ret = 0, ltww = 1;
@@ -1187,6 +1187,33 @@ error1:
 	return -1;
 }
 
+static int left_angle(int t)
+{
+	switch (t) {
+	case LT:
+	case LEQ:
+	case LSH:
+	case ASLSH:
+	case DIG_LBRK:
+	case LBRA:
+		return 1;
+	}
+	return 0;
+}
+
+static int right_angle(int t)
+{
+	switch (t) {
+	case GT:
+	case RSH:
+	case ARROW:
+	case DIG_RBRK:
+	case DIG_RBRA:
+		return 1;
+	}
+	return 0;
+}
+
 /*
  * A #include was found; parse the end of line, replace macros if
  * necessary.
@@ -1197,7 +1224,7 @@ error1:
 static int handle_include(struct lexer_state *ls, unsigned long flags, int nex)
 {
 	int c, string_fname = 0;
-	char *fname;
+	char *fname = NULL;
 	unsigned char *fname2;
 	size_t fname_ptr = 0;
 	long l = ls->line;
@@ -1207,11 +1234,6 @@ static int handle_include(struct lexer_state *ls, unsigned long flags, int nex)
 	size_t nl;
 	int tgd;
 	struct lexer_state alt_ls;
-
-#define left_angle(t)	((t) == LT || (t) == LEQ || (t) == LSH \
-			|| (t) == ASLSH || (t) == DIG_LBRK || (t) == LBRA)
-#define right_angle(t)	((t) == GT || (t) == RSH || (t) == ARROW \
-			|| (t) == DIG_RBRK || (t) == DIG_RBRA)
 
 	while ((c = grap_char(ls)) >= 0 && c != '\n') {
 		if (space_char(c)) {
@@ -1429,9 +1451,6 @@ do_include_next:
 	current_filename = fname;
 	enter_file(ls, flags);
 	return 0;
-
-#undef left_angle
-#undef right_angle
 }
 
 /*
@@ -2542,11 +2561,141 @@ static int parse_opt(int argc, char *argv[], struct lexer_state *ls)
 	return ret;
 }
 
+/* Determines binary file size portably (when stat()/fstat() aren't available) */
+long fsize(FILE* binaryStream)
+{
+  long ofs, ofs2;
+  int result;
+
+  if (fseek(binaryStream, 0, SEEK_SET) != 0 ||
+      fgetc(binaryStream) == EOF)
+    return 0;
+
+  ofs = 1;
+
+  while ((result = fseek(binaryStream, ofs, SEEK_SET)) == 0 &&
+         (result = (fgetc(binaryStream) == EOF)) == 0 &&
+         ofs <= LONG_MAX / 4 + 1)
+    ofs *= 2;
+
+  /* If the last seek failed, back up to the last successfully seekable offset */
+  if (result != 0)
+    ofs /= 2;
+
+  for (ofs2 = ofs / 2; ofs2 != 0; ofs2 /= 2)
+    if (fseek(binaryStream, ofs + ofs2, SEEK_SET) == 0 &&
+        fgetc(binaryStream) != EOF)
+      ofs += ofs2;
+
+  /* Return -1 for files longer than LONG_MAX */
+  if (ofs == LONG_MAX)
+    return -1;
+
+  return ofs + 1;
+}
+
+void errMem(void)
+{
+  fprintf(stderr, "ouch: malloc() or realloc() failed\n");
+  die();
+}
+
+/*
+ * Expands "@filename" in program arguments into arguments contained within file "filename".
+ * This is a workaround for short DOS command lines limited to 126 characters.
+ * Note, the expansion is NOT recursive.
+ * TBD!!! parse the file the same way as the command line.
+ */
+void fatargs(int* pargc, char*** pargv)
+{
+  int i, j = 0;
+  char** pp;
+  int pcnt = *pargc;
+
+  if (pcnt < 2)
+    return;
+
+  for (i = 1; i < pcnt; i++)
+    if ((*pargv)[i][0] == '@')
+      break;
+  if (i >= pcnt)
+    return;
+
+  if ((pp = malloc(++pcnt * sizeof(char*))) == NULL) /* there's supposed to be one more NULL pointer argument */
+  {
+    errMem();
+  }
+
+  pp[j++] = (*pargv)[0]; /* skip program name */
+
+  for (i = 1; i < *pargc; i++)
+    if ((*pargv)[i][0] != '@')
+    {
+      pp[j++] = (*pargv)[i]; /* it's not an name of a file with arguments, treat it as an argument */
+    }
+    else
+    {
+      FILE* f;
+      long fsz;
+      if (!(f = fopen((*pargv)[i] + 1, "rb")))
+      {
+        pp[j++] = (*pargv)[i]; /* there's no file by this name, treat it as an argument */
+        continue;
+      }
+      if ((fsz = fsize(f)) < 0)
+      {
+        fclose(f);
+        errMem();
+      }
+      if (fsz > 0)
+      {
+        size_t sz;
+        char* buf;
+        if ((sz = fsz) == (unsigned long)fsz &&
+            sz + 1 > sz &&
+            (buf = malloc(sz + 1)) != NULL)
+        {
+          static const char* const sep = "\f\n\r\t\v ";
+          char* p;
+          memset(buf, '\0', sz + 1);
+          fseek(f, 0, SEEK_SET);
+          buf[fread(buf, 1, sz, f)] = '\0';
+          p = strtok(buf, sep);
+          pcnt--; /* don't count the file name as an argument, count only what's inside */
+          while (p)
+          {
+            size_t s;
+            if (++pcnt == INT_MAX ||
+                (s = (unsigned)pcnt * sizeof(char*)) / sizeof(char*) != (unsigned)pcnt ||
+                (pp = realloc(pp, s)) == NULL)
+            {
+              fclose(f);
+              errMem();
+            }
+            pp[j++] = p;
+            p = strtok(NULL, sep);
+          }
+        }
+        else
+        {
+          fclose(f);
+          errMem();
+        }
+      }
+      fclose(f);
+    }
+
+  pp[j] = NULL; /* there's supposed to be one more NULL pointer argument */
+  *pargc = j;
+  *pargv = pp;
+}
+
 int main(int argc, char *argv[])
 {
 	struct lexer_state ls;
 	int r, fr = 0;
 
+	fatargs(&argc, &argv);
 	init_cpp();
 	if ((r = parse_opt(argc, argv, &ls)) != 0) {
 		if (r == 2) usage(argv[0]);

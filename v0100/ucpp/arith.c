@@ -30,6 +30,7 @@
  */
 
 #include <limits.h>
+#include "tune.h"
 #include "arith.h"
 
 #define ARITH_OCTAL(x)   ((x) >= '0' && (x) <= '7')

@@ -319,7 +319,7 @@ int handle_define(struct lexer_state *ls)
 {
 	struct macro *m = 0, *n;
 #ifdef LOW_MEM
-	struct token_fifo mv;
+	struct token_fifo mv = { NULL, 0, 0 };
 #endif
 	int ltwws = 1, redef = 0;
 	char *mname = 0;
@@ -618,17 +618,21 @@ define_end:
 			goto define_error;
 		}
 		if (m->narg >= 0) for (i = 0; i < mval.nt; i ++)
-			if ((mval.t[i].type == SHARP
-				|| mval.t[i].type == DIG_SHARP) &&
-				(i == (mval.nt - 1)
-				|| (ttMWS(mval.t[i + 1].type) &&
-				    (i == mval.nt - 2
-				     || mval.t[i + 2].type != MACROARG))
-				|| (!ttMWS(mval.t[i + 1].type)
-				     && mval.t[i + 1].type != MACROARG))) {
-				error(l, "operator '#' not followed "
-					"by a macro argument");
-				goto define_error;
+			if (mval.t[i].type == SHARP
+				|| mval.t[i].type == DIG_SHARP) {
+				int err_cond = (i == (mval.nt - 1));
+				if (!err_cond)
+					err_cond = ttMWS(mval.t[i + 1].type) &&
+					           (i == mval.nt - 2
+					            || mval.t[i + 2].type != MACROARG);
+				if (!err_cond)
+					err_cond = !ttMWS(mval.t[i + 1].type)
+					           && mval.t[i + 1].type != MACROARG;
+				if (err_cond) {
+					error(l, "operator '#' not followed "
+						"by a macro argument");
+					goto define_error;
+				}
 			}
 	}
 #ifdef LOW_MEM
@@ -932,7 +936,7 @@ static inline char *stringify_string(char *x)
 {
 	size_t l;
 	int i, inside_str = 0, inside_cc = 0, must_quote, has_quoted = 0;
-	char *y, *d;
+	char *y, *d = NULL;
 
 	for (i = 0; i < 2; i ++) {
 		if (i) d[0] = '"';
@@ -1028,10 +1032,10 @@ int substitute_macro(struct lexer_state *ls, struct macro *m,
 	struct token_fifo *tfi, int penury, int reject_nested, long l)
 {
 	char *mname = HASH_ITEM_NAME(m);
-	struct token_fifo *atl, etl;
+	struct token_fifo *atl = NULL, etl;
 	struct token t, *ct;
 	int i, save_nest = m->nest;
-	size_t save_art, save_tfi, etl_limit;
+	size_t save_art, save_tfi = 0, etl_limit;
 	int ltwds, ntwds, ltwws;
 	int pragma_op = 0;
 
@@ -1330,15 +1334,18 @@ collect_args:
 #endif
 		t.line = ls->line;
 		next = m->cval.rp;
-		if ((next < m->cval.length && (m->cval.t[z = next] == DSHARP
-			|| m->cval.t[z = next] == DIG_DSHARP))
-			|| ((next + 1) < m->cval.length
-			   && ttWHI(m->cval.t[next])
-			   && (m->cval.t[z = next + 1] == DSHARP
-			    || m->cval.t[z = next + 1] == DIG_DSHARP))) {
-			ntwds = 1;
-			m->cval.rp = z;
-		} else ntwds = 0;
+		{
+			int sub_cond = next < m->cval.length && (m->cval.t[z = next] == DSHARP
+				|| m->cval.t[z = next] == DIG_DSHARP);
+			if (sub_cond
+				|| ((next + 1) < m->cval.length
+				   && ttWHI(m->cval.t[next])
+				   && (m->cval.t[z = next + 1] == DSHARP
+				    || m->cval.t[z = next + 1] == DIG_DSHARP))) {
+				ntwds = 1;
+				m->cval.rp = z;
+			} else ntwds = 0;
+		}
 #else
 		ct = m->val.t + (m->val.art ++);
 		next = m->val.art;
@@ -1540,11 +1547,11 @@ collect_args:
 		ltwds = 0;
 #ifdef LOW_MEM
 		if ((ct->type == SHARP || ct->type == DIG_SHARP)
-			&& next < m->cval.length
-			&& (m->cval.t[next] == MACROARG
+			&& next < m->cval.length)
+			if (m->cval.t[next] == MACROARG
 			|| (ttMWS(m->cval.t[next])
 			&& (next + 1) < m->cval.length
-			&& m->cval.t[next + 1] == MACROARG))) {
+			&& m->cval.t[next + 1] == MACROARG)) {
 
 			unsigned anum;
 #else
@@ -1757,7 +1764,7 @@ int define_macro(struct lexer_state *ls, char *def)
 int undef_macro(struct lexer_state *ls, char *def)
 {
 	char *c = def;
-
+	(void)ls;
 	if (!*c) {
 		error(-1, "void macro name");
 		return 1;
