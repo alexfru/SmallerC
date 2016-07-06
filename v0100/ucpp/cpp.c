@@ -676,18 +676,8 @@ static FILE *find_file(char *name, int localdir)
 			: current_filename;
 
 		for (i = strlen(rfn) - 1; i >= 0; i --)
-#ifdef MSDOS
-			if (rfn[i] == '\\') break;
-#else
-			if (rfn[i] == '/') break;
-#endif
-#if defined MSDOS
-		if (i >= 0 && *name != '\\' && (nl < 2 || name[1] != ':'))
-#elif defined AMIGA
-		if (i >= 0 && *name != '/' && (nl < 2 || name[1] != ':'))
-#else
-		if (i >= 0 && *name != '/')
-#endif
+			if (rfn[i] == '/' || rfn[i] == '\\') break;
+		if (i >= 0 && *name != '/' && *name != '\\' && (nl < 2 || name[1] != ':'))
 		{
 			/*
 			 * current file is somewhere else, and the provided
@@ -698,11 +688,7 @@ static FILE *find_file(char *name, int localdir)
 			 */
 			s = getmem(i + 2 + nl);
 			mmv(s, rfn, i);
-#ifdef MSDOS
-			s[i] = '\\';
-#else
 			s[i] = '/';
-#endif
 			mmv(s + i + 1, name, nl);
 			s[i + 1 + nl] = 0;
 			ff = HTT_get(&found_files, s);
@@ -752,30 +738,8 @@ static FILE *find_file(char *name, int localdir)
 
 		s = getmem(ni + nl + 2);
 		mmv(s, include_path[i], ni);
-#ifdef AMIGA
-	/* contributed by Volker Barthelmann */
-		if (ni == 1 && *s == '.') {
-			*s = 0;
-			ni = 0;
-		}
-		if (ni > 0 && s[ni - 1] != ':' && s[ni - 1] != '/') {
-			s[ni] = '/';
-			mmv(s + ni + 1, name, nl + 1);
-		} else {
-			mmv(s + ni, name, nl + 1);
-		}
-#else
 		s[ni] = '/';
 		mmv(s + ni + 1, name, nl + 1);
-#endif
-#ifdef MSDOS
-		/* on msdos systems, replace all / by \ */
-		{
-			char *c;
-
-			for (c = s; *c; c ++) if (*c == '/') *c = '\\';
-		}
-#endif
 		incdir = i;
 		if ((ff = HTT_get(&found_files, s)) != 0) {
 			/*
@@ -907,14 +871,6 @@ static FILE *find_file_next(char *name)
 		mmv(s, include_path[i], ni);
 		s[ni] = '/';
 		mmv(s + ni + 1, name, nl + 1);
-#ifdef MSDOS
-		/* on msdos systems, replace all / by \ */
-		{
-			char *c;
-
-			for (c = s; *c; c ++) if (*c == '/') *c = '\\';
-		}
-#endif
 		ff = HTT_get(&found_files, s);
 		if (ff) {
 			/* file was found in the cache */
@@ -1422,14 +1378,6 @@ do_include_next:
 		put_char(ls, '\n');
 	push_file_context(ls);
 	reinit_lexer_state(ls, 1);
-#ifdef MSDOS
-	/* on msdos systems, replace all / by \ */
-	{
-		char *d;
-
-		for (d = fname; *d; d ++) if (*d == '/') *d = '\\';
-	}
-#endif
 	f = nex ? find_file_next(fname) : find_file(fname, string_fname);
 	if (!f) {
 		current_filename = 0;
@@ -2459,6 +2407,8 @@ static int parse_opt(int argc, char *argv[], struct lexer_state *ls)
 			with_std_incpath = 0;
 		} else if (!strcmp(argv[i], "-I") || !strcmp(argv[i], "-J")) {
 			i ++;
+		} else if (!strcmp(argv[i], "-D") || !strcmp(argv[i], "-U")) {
+			i ++;
 		} else if (!strcmp(argv[i], "-o")) {
 			if ((++ i) >= argc) {
 				error(-1, "missing filename after -o");
@@ -2518,10 +2468,10 @@ static int parse_opt(int argc, char *argv[], struct lexer_state *ls)
 		ret = ret || define_macro(ls, system_macros_def[i]);
 	for (i = 1; i < argc; i ++)
 		if (argv[i][0] == '-' && argv[i][1] == 'D')
-			ret = ret || define_macro(ls, argv[i] + 2);
+			ret = ret || define_macro(ls, argv[i][2] ? argv[i] + 2 : argv[i + 1]);
 	for (i = 1; i < argc; i ++)
 		if (argv[i][0] == '-' && argv[i][1] == 'U')
-			ret = ret || undef_macro(ls, argv[i] + 2);
+			ret = ret || undef_macro(ls, argv[i][2] ? argv[i] + 2 : argv[i + 1]);
 	if (ls->flags & HANDLE_ASSERTIONS) {
 		if (standard_assertions)
 			for (i = 0; system_assertions_def[i]; i ++)

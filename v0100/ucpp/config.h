@@ -41,15 +41,6 @@
 
 /* ====================================================================== */
 /*
- * Define AMIGA for systems using "drive letters" at the beginning of
- * some paths; define MSDOS on systems with drive letters and using
- * backslashes to seperate directory components.
- */
-/* #define AMIGA */
-/* #define MSDOS */
-
-/* ====================================================================== */
-/*
  * Define this if your compiler does not know the strftime() function;
  * TurboC 2.01 under Msdos does not know strftime().
  */
