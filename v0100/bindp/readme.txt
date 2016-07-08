@@ -1,4 +1,5 @@
 Precompiled Smaller C binaries for DOS with 32-bit DPMI.
+These can be used for cross-compiling for Windows and Linux as well.
 
 System requirements:
 - DOS: MS-DOS 4.01 or better, i80386 CPU & i80387 FPU or better

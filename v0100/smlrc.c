@@ -9342,12 +9342,11 @@ int main(int argc, char** argv)
         continue;
       }
     }
-/*
-    else if (!strcmp(argv[i], "-no-pp"))
+    else if (!strcmp(argv[i], "-nopp"))
     {
       // TBD!!! don't do preprocessing when this option is present
+      continue;
     }
-*/
     // DONE: '-D macro[=expansion]': '#define macro 1' when there's no '=expansion'
     else if (!strcmp(argv[i], "-D"))
     {

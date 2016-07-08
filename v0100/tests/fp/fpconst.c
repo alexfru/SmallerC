@@ -2,16 +2,14 @@
   This is a test for floating point constants.
 
   How to compile for DOS (huge/.EXE, 32-bit DPMI/.EXE):
-    smlrcc -ppg -dosh fpconst.c -o fpconsth.exe
-    smlrcc -ppg -dosp fpconst.c -o fpconstp.exe
+    smlrcc -dosh fpconst.c -o fpconsth.exe
+    smlrcc -dosp fpconst.c -o fpconstp.exe
 
   How to compile for Windows:
-    smlrcc -ppg -win fpconst.c -o fpconstw.exe
+    smlrcc -win fpconst.c -o fpconstw.exe
 
   How to compile for Linux:
-    smlrcc -ppg -linux fpconst.c -o fpconstl
-
-  Note that the -ppg option invokes gcc as a preprocessor to expand the macros.
+    smlrcc -linux fpconst.c -o fpconstl
 */
 
 #include <stdio.h>

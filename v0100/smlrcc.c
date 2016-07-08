@@ -164,7 +164,7 @@ const char* LibName[] =
 int verbose = 0;
 
 int PreprocessWithGcc = 0;
-int UseExternalPreprocessor = 0;
+int UseExternalPreprocessor = 0; // 1 if use gcc/ucpp, 0 if use primitive pp in smlrc
 
 int DontLink = 0;
 
@@ -786,9 +786,9 @@ void Compile(char* name)
     iName[len - 1] = 'i'; // .c -> .i
 
     AddOptions(&cmd, &cmdlen, PrepOptions);
-    AddOption(&cmd, &cmdlen, name);
     AddOption(&cmd, &cmdlen, "-o");
     AddOption(&cmd, &cmdlen, iName);
+    AddOption(&cmd, &cmdlen, name);
 
     AddFile(&TemporaryFiles, &TemporaryFilesLen, iName);
     System(cmd);
@@ -1290,11 +1290,11 @@ endsearch:
 
   if (pinclude)
   {
-    Pass2Prep(PreprocessWithGcc ? "-isystem" : "-SI");
+    Pass2Prep(UseExternalPreprocessor ? (PreprocessWithGcc ? "-isystem" : "-J") : "-SI");
     Pass2Prep(pinclude);
   }
 
-  // TBD??? Issue a warning if the location of the system headers and libraries was niether provided nor found???
+  // TBD??? Issue a warning if the location of the system headers and libraries was neither provided nor found???
 }
 
 void Pass2Prep(char* s)
@@ -1343,15 +1343,27 @@ int main(int argc, char* argv[])
   // Detect that gcc's preprocessor is to be used.
   // Do this early as other options will depend on it.
   // This is ugly.
-  UseExternalPreprocessor = PreprocessWithGcc = getenv("SMLRPPG") != NULL;
+  UseExternalPreprocessor = 1;
+  PreprocessWithGcc = getenv("SMLRPPG") != NULL;
   for (i = 1; i < argc; i++)
   {
     if (!strcmp(argv[i], "-ppg"))
     {
-      UseExternalPreprocessor = PreprocessWithGcc = 1;
+      PreprocessWithGcc = 1;
       memmove(argv + i, argv + i + 1, (argc - i) * sizeof(char*));
       argc--;
-      break;
+    }
+  }
+  // Check if an external preprocessor shouldn't be used.
+  // Do this early as other options will depend on it.
+  // This is ugly.
+  for (i = 1; i < argc; i++)
+  {
+    if (!strcmp(argv[i], "-nopp"))
+    {
+      UseExternalPreprocessor = PreprocessWithGcc = 0;
+      memmove(argv + i, argv + i + 1, (argc - i) * sizeof(char*));
+      argc--;
     }
   }
   if (PreprocessWithGcc)
@@ -1360,6 +1372,16 @@ int main(int argc, char* argv[])
     AddOptions(&PrepOptions, &PrepOptionsLen, "gcc -E -undef -nostdinc");
 #else
     AddOptions(&PrepOptions, &PrepOptionsLen, "gcc.exe -E -undef -nostdinc");
+#endif
+  }
+  else if (UseExternalPreprocessor) // use ucpp
+  {
+    // Don't use ucpp's default path for system headers and undefine
+    // __STDC_VERSION__ since Smaller C is not fully standard.
+#ifdef HOST_LINUX
+    AddOptions(&PrepOptions, &PrepOptionsLen, "smlrpp -U __STDC_VERSION__ -zI");
+#else
+    AddOptions(&PrepOptions, &PrepOptionsLen, "smlrpp.exe -U __STDC_VERSION__ -zI");
 #endif
   }
 
@@ -1608,7 +1630,10 @@ int main(int argc, char* argv[])
 
       if (!err)
       {
-        Pass2Prep((PreprocessWithGcc && !strcmp(popt, "-SI")) ? "-isystem" : popt);
+        if (!strcmp(popt, "-SI"))
+          Pass2Prep(UseExternalPreprocessor ? (PreprocessWithGcc ? "-isystem" : "-J") : "-SI");
+        else
+          Pass2Prep(popt);
         Pass2Prep(pparam);
         continue;
       }
@@ -1743,6 +1768,8 @@ int main(int argc, char* argv[])
     else
       DefineMacro("__SMALLER_C_SCHAR__");
     DefineMacro("__SMALLER_PP__");
+    // Also suppress unnecessary primitive preprocessing in smlrc
+    AddOption(&CompilerOptions, &CompilerOptionsLen, "-nopp");
   }
 
   for (i = 1; i < argc; i++)
