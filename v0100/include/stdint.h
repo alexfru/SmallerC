@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014, Alexey Frunze
+  Copyright (c) 2014-2016, Alexey Frunze
   2-clause BSD license.
 */
 #ifndef __STDINT_H
@@ -86,6 +86,32 @@ typedef unsigned uint32_t, uint_least32_t, uint_fast32_t;
 #define UINT32_MAX       4294967295U
 #define UINT_LEAST32_MAX 4294967295U
 #define UINT_FAST32_MAX  4294967295U
+#endif
+
+#ifdef __SMALLER_PP__
+
+#define INT8_C(val) (val)
+#define UINT8_C(val) (val)
+
+#ifdef __SMALLER_C_16__
+#define INT16_C(val) (val)
+#define UINT16_C(val) (val##U)
+
+#define INTMAX_C(val) (val)
+#define UINTMAX_C(val) (val##U)
+#endif
+
+#ifdef __SMALLER_C_32__
+#define INT16_C(val) (val)
+#define UINT16_C(val) (val)
+
+#define INT32_C(val) (val)
+#define UINT32_C(val) (val##U)
+
+#define INTMAX_C(val) (val)
+#define UINTMAX_C(val) (val##UL)
+#endif
+
 #endif
 
 #endif
