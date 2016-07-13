@@ -1,3 +1,29 @@
+Changes by Alexey Frunze for Smaller C:
+* break the code down into more translation units to reduce
+  pressure on Smaller C's tables keeping track of declarations
+  (arith.c used to be #include'd, it's not anymore)
+* break some of long expressions down into smaller expressions
+  or even separate statements and turn a few function-like
+  macros into simple helper functions
+* redefine for Smaller C the following macros in config.h:
+  NATIVE_SIGNED, NATIVE_UNSIGNED, NATIVE_UNSIGNED_BITS,
+  NATIVE_SIGNED_MIN, NATIVE_SIGNED_MAX
+* clean up most of the warnings showing up with gcc (mostly
+  about potentially uninitialized or unused variables)
+* adjust Makefile (not tested, not used with Smaller C anyway)
+* add a workaround (@-files) for short command lines in DOS
+* drop AMIGA support
+* drop special casing for DOS/Windows paths:
+  * DOS and Windows support both kind of slashes in file APIs,
+    e.g. "c:\foo.txt", "dir/foo.txt" and "c:/dir\foo.txt", so
+    there's no need to convert \ into /
+  * this incorrectly brings "A:" through "z:" DOS/Windows paths
+    as absolute paths to non-DOS/Windows systems, but it should
+    be much less of a problem/inconvenience than having to
+    compile the preprocessor differently for different systems
+* support both "-Dmacro"/"-Umacro" and "-D macro"/"-U macro"
+  similar to "-Ipath"/"-Jpath" and "-I path"/"-J path"
+
 ucpp-1.3.2
 * Fixed Issue 8, Included files missing  a "terminating carriage
   return character" will interrupt preprocessing in sample.c/LEXER
