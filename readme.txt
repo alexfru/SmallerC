@@ -11,12 +11,9 @@ Code generation for the TR3200 CPU and VASM is supported (see Trillek).
 
 The compiler is capable of compiling itself.
 
-The core compiler comes with a linker and a compiler driver (the driver
-invokes the core compiler, the assembler, and the linker and supports
-options similar to those of gcc).
-
-There's no decent preprocessor in Smaller C as of now, but the compiler
-driver can invoke gcc (or gcc.exe) for preprocessing if instructed.
+The core compiler comes with a preprocessor (ucpp), a linker and a compiler
+driver (the driver invokes the preprocessor, the core compiler, the assembler,
+and the linker and supports options similar to those of gcc).
 
 The standard C library is work-in-progress and it's close to completion.
 
