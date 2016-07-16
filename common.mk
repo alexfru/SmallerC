@@ -8,7 +8,7 @@ CFLAGS += -DHOST_LINUX -DPATH_PREFIX='"$(prefix)"'
 
 CC = gcc
 
-bins = smlrc smlrl smlrcc smlrpp
+bins = smlrc smlrl smlrcc smlrpp n2f
 libs = lcdh.a lcds.a lcw.a lcl.a lcdp.a
 stub = dpstub.exe
 
@@ -40,7 +40,7 @@ $(stub):
 
 # TBD!!! clean this up
 smlrpp:
-	$(CC) $(CFLAGS) -o $@ -DSTAND_ALONE -DUCPP_CONFIG $(srcdir)/ucpp/assert.c $(srcdir)/ucpp/arith.c $(srcdir)/ucpp/cpp.c $(srcdir)/ucpp/eval.c $(srcdir)/ucpp/lexer.c $(srcdir)/ucpp/macro.c $(srcdir)/ucpp/mem.c $(srcdir)/ucpp/nhash.c
+	$(CC) $(CFLAGS) -o $@ -DSTAND_ALONE -DUCPP_CONFIG $(srcdir)/ucpp/arith.c $(srcdir)/ucpp/assert.c $(srcdir)/ucpp/cpp.c $(srcdir)/ucpp/eval.c $(srcdir)/ucpp/lexer.c $(srcdir)/ucpp/macro.c $(srcdir)/ucpp/mem.c $(srcdir)/ucpp/nhash.c
 
 all install clean: FORCE
 FORCE:
