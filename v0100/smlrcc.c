@@ -169,6 +169,7 @@ int UseExternalPreprocessor = 0; // 1 if use gcc/ucpp, 0 if use primitive pp in 
 int DontLink = 0;
 
 int CompileToAsm = 0;
+char* AssemblerName;
 
 int LinkStdLib = 0;
 char* StdLibPath;
@@ -1324,9 +1325,9 @@ int main(int argc, char* argv[])
 
   fatargs(&argc, &argv);
 
+  // Set the compiler and linker names early as their options will pile up
 #ifdef HOST_LINUX
   AddOption(&CompilerOptions, &CompilerOptionsLen, "smlrc");
-  AddOptions(&AssemblerOptions, &AssemblerOptionsLen, "nasm -f elf");
   AddOption(&LinkerOptions, &LinkerOptionsLen, "smlrl");
 #else
   // Use explicit extensions (".exe") to let system() know that
@@ -1336,7 +1337,6 @@ int main(int argc, char* argv[])
   // This helps recover the program exit status under DOS and thus
   // stop compilation as soon as one compilation stage fails.
   AddOption(&CompilerOptions, &CompilerOptionsLen, "smlrc.exe");
-  AddOptions(&AssemblerOptions, &AssemblerOptionsLen, "nasm.exe -f elf");
   AddOption(&LinkerOptions, &LinkerOptionsLen, "smlrl.exe");
 #endif
 
@@ -1392,6 +1392,16 @@ int main(int argc, char* argv[])
       verbose = 1;
       argv[i] = NULL;
       continue;
+    }
+    else if (!strcmp(argv[i], "-asm"))
+    {
+      if (i + 1 < argc)
+      {
+        argv[i++] = NULL;
+        AssemblerName = argv[i];
+        argv[i] = NULL;
+        continue;
+      }
     }
     else if (!strcmp(argv[i], "-o"))
     {
@@ -1665,6 +1675,27 @@ int main(int argc, char* argv[])
 
   if (!InputFileCnt)
     error("No inputs\n");
+
+  // If the assembler wasn't specified explicitly get it from the environment
+  // or fall back to the default.
+  // We support only NASM, YASM and n2f (wrapper around FASM, which makes
+  // FASM usable as NASM). And we always assemble to ELF.
+  if (AssemblerName == NULL && (AssemblerName = getenv("SMLRASM")) == NULL)
+  {
+#ifdef HOST_LINUX
+    AssemblerName = "nasm";
+#else
+    // Use explicit extensions (".exe") to let system() know that
+    // these commands are not COMMAND.COM's internal commands and
+    // should be executed directly and not via "COMMAND.COM /C command",
+    // if possible.
+    // This helps recover the program exit status under DOS and thus
+    // stop compilation as soon as one compilation stage fails.
+    AssemblerName = "nasm.exe";
+#endif
+  }
+  AddOption(&AssemblerOptions, &AssemblerOptionsLen, AssemblerName);
+  AddOptions(&AssemblerOptions, &AssemblerOptionsLen, "-f elf");
 
   if (!OutputFormat)
   {
