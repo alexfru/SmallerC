@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2015, Alexey Frunze
+  Copyright (c) 2015-2016, Alexey Frunze
   2-clause BSD license.
 */
 /*
@@ -7,15 +7,14 @@
 
   How to use:
   - get FASM
-  - compile this program and rename it to nasm.exe or nasm (as appropriate for
-    your OS)
-  - make both nasm[.exe] (this program) and fasm available via the PATH
-    environment variable
-  - use smlrcc as usual, it will invoke nasm[.exe] (this program), which will
-    convert the input assembly file to the format compatible with FASM and
+  - compile this program and name it n2f.exe or n2f (as appropriate for your OS)
+  - make n2f[.exe] and fasm[.exe] available via the PATH environment variable
+  - when using smlrcc, either give it the option "-asm n2f[.exe]" or set the
+    SMLRASM environment variable to n2f[.exe] and smlrcc will invoke n2f, which
+    will convert the input assembly file to the format compatible with FASM and
     invoke FASM on the conversion result
 
-  Command line format for n2f (er, "nasm"):
+  Command line format for n2f:
     n2f <-f format> input.asm [-o output<.asm|.bin|.o>]
   Supported formats:
     asm  performs assembly conversion only:
@@ -28,12 +27,12 @@
     elf  performs conversion:
          - inserts "format elf" at the beginning of the converted file
          - orders sections like this: .text, .rodata, .data, .bss, others
-         and assembles with FASM into an ELF object file (smlrcc invokes nasm
-         with "-f elf")
+         and assembles with FASM into an ELF object file (smlrcc invokes the
+         specicfied or default assembler with "-f elf")
 
   Limitations:
   - FASM doesn't support 16-bit relocations in the ELF object format, so this
-    is only good for compiling 32-bit protected mode, namely DOS/DPMI32,
+    is only good for compiling 32-bit protected mode code, namely DOS/DPMI32,
     Windows and Linux
   - Conversion may be slow (prefer compiling small C/asm files)
   - Conversion temporarily produces another assembly file, so you should have
@@ -67,15 +66,15 @@
   - 'extern symbol' -> 'extrn symbol'
 
   How to compile for DOS:
-    smlrcc -dosp n2f.c -o nasm.exe
+    smlrcc -dosp n2f.c -o n2f.exe
    OR
-    smlrcc -dosh n2f.c -o nasm.exe
+    smlrcc -dosh n2f.c -o n2f.exe
 
   How to compile for Windows:
-    smlrcc -win n2f.c -o nasm.exe
+    smlrcc -win n2f.c -o n2f.exe
 
   How to compile for Linux:
-    smlrcc -linux n2f.c -o nasm
+    smlrcc -linux n2f.c -o n2f
 */
 
 #include <stdio.h>
