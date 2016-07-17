@@ -4,6 +4,7 @@ and C99 (minus some C89 and plus some C99 features).
 
 Currently it generates 16-bit and 32-bit 80386+ assembly code for NASM
 that can then be assembled and linked into DOS, Windows and Linux programs.
+(You may use YASM or FASM instead of NASM)
 
 Code generation for MIPS CPUs is also supported (primarily for RetroBSD).
 
@@ -26,6 +27,7 @@ https://hackaday.io/project/5569-smaller-c
 Links:
 NASM: http://nasm.us/
 YASM: http://yasm.tortall.net/
+FASM: http://flatassembler.net/
 CWSDPMI: http://homer.rice.edu/~sandmann/cwsdpmi/
 HX DOS Extender: https://web.archive.org/web/20141003032346/http://www.japheth.de/
 RetroBSD: http://retrobsd.org/
