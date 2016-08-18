@@ -2797,7 +2797,6 @@ STATIC
 int expr(int tok, int* gotUnary, int commaSeparator)
 {
   *gotUnary = 0;
-
   pushop(tokEof);
 
   tok = exprUnary(tok, gotUnary, commaSeparator, 0);
@@ -2806,29 +2805,32 @@ int expr(int tok, int* gotUnary, int commaSeparator)
   {
     if (isop(tok) && !isunary(tok))
     {
-      //int lastTok = tok;
-
       while (precedGEQ(opstacktop(), tok))
       {
         int v, v2;
-        int c = 0;
+        v = popop2(&v2);
         // move ?expr: as a whole to the expression stack as "expr?"
-        do
+        if (v == '?')
         {
-          v = popop2(&v2);
-          if (v != ':')
+          int cnt = v2;
+          while (cnt--)
+          {
+            v = popop2(&v2);
             push2(v, v2);
-          c += (v == ':') - (v == '?');
-        } while (c);
+          }
+          v = '?';
+          v2 = 0;
+        }
+        push2(v, v2);
       }
 
       // here: preced(postacktop()) < preced(tok)
-      pushop(tok);
 
       // treat the ternary/conditional operator ?expr: as a pseudo binary operator
       if (tok == '?')
       {
         int ssp = sp;
+        int cnt;
 
         tok = expr(GetToken(), gotUnary, 0);
         if (!*gotUnary || tok != ':')
@@ -2836,6 +2838,7 @@ int expr(int tok, int* gotUnary, int commaSeparator)
 
         // move ?expr: as a whole to the operator stack
         // this is beautiful and ugly at the same time
+        cnt = sp - ssp;
         while (sp > ssp)
         {
           int v, v2;
@@ -2843,6 +2846,11 @@ int expr(int tok, int* gotUnary, int commaSeparator)
           pushop2(v, v2);
         }
 
+        // remember the length of the expression between ? and :
+        pushop2('?', cnt);
+      }
+      else
+      {
         pushop(tok);
       }
 
@@ -2863,12 +2871,22 @@ int expr(int tok, int* gotUnary, int commaSeparator)
   {
     int v, v2;
     v = popop2(&v2);
-    if (v != ':')
-      push2(v, v2);
+    // move ?expr: as a whole to the expression stack as "expr?"
+    if (v == '?')
+    {
+      int cnt = v2;
+      while (cnt--)
+      {
+        v = popop2(&v2);
+        push2(v, v2);
+      }
+      v = '?';
+      v2 = 0;
+    }
+    push2(v, v2);
   }
 
   popop();
-
   return tok;
 }
 
