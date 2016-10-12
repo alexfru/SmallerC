@@ -9,20 +9,22 @@
 
 float sinhf(float x)
 {
-  if (x >= -80 && x <= 80)
+  int neg;
+  float e;
+  if ((neg = x < 0) != 0)
+    x = -x;
+  if (x <= 80)
   {
-    float e = expm1f(x);
-    return (e + e / (e + 1)) * 0.5f;
+    e = expm1f(x);
+    e = (e + e / (e + 1)) * 0.5f;
   }
   else
   {
     // Special case for fabsf(x) > ~logf(FLT_MAX) to avoid
     // premature overflow of expf(x) to infinity
-    int neg = x < 0;
-    float e = neg ? -x : x;
-    e = exp2f(e * 1.44269504f/*log2(e)*/ - 1);
-    return neg ? -e : e;
+    e = exp2f(x * 1.44269504f/*log2(e)*/ - 1);
   }
+  return neg ? -e : e;
 }
 
 double sinh(double x)
