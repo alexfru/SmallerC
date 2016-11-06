@@ -68,9 +68,20 @@ float modff(float value, float* iptr)
 #else
 
 #ifdef __HUGE__
+#define __HUGE_OR_UNREAL__
+#endif
+#ifdef __UNREAL__
+#define __HUGE_OR_UNREAL__
+#endif
+
+#ifdef __HUGE_OR_UNREAL__
 #define xbp "bp"
 #define xsp "sp"
+#ifdef __HUGE__
 #define xbx "bx"
+#else
+#define xbx "ebx"
+#endif
 #else
 #define xbp "ebp"
 #define xsp "esp"

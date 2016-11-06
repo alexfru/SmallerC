@@ -1,10 +1,11 @@
 /*
   Demonstration of how to obtain section start and stop addresses.
 
-  How to compile for DOS (all mode(l)s: tiny/.COM, small/.EXE, huge/.EXE, 32-bit DPMI/.EXE):
+  How to compile for DOS (all mode(l)s: tiny/.COM, small/.EXE, huge/.EXE, unreal/.EXE, 32-bit DPMI/.EXE):
     smlrcc -dost strtstp.c -o strtstpt.com
     smlrcc -doss strtstp.c -o strtstps.exe
     smlrcc -dosh strtstp.c -o strtstph.exe
+    smlrcc -dosu strtstp.c -o strtstpu.exe
     smlrcc -dosp strtstp.c -o strtstpp.exe
 
   How to compile for Windows:

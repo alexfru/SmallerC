@@ -7,6 +7,11 @@
     smlrcc -dosh testcg1.c -o testcg1.exe
     testcg1.exe
    OR
+    smlrcc -dosu gencg1.c -o gencg1.exe
+    gencg1.exe >testcg1.c
+    smlrcc -dosu testcg1.c -o testcg1.exe
+    testcg1.exe
+   OR
     smlrcc -dosp gencg1.c -o gencg1.exe
     gencg1.exe >testcg1.c
     smlrcc -dosp testcg1.c -o testcg1.exe

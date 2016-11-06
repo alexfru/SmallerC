@@ -6,6 +6,13 @@
 #ifdef __SMALLER_C_32__
 
 #ifdef __HUGE__
+#define __HUGE_OR_UNREAL__
+#endif
+#ifdef __UNREAL__
+#define __HUGE_OR_UNREAL__
+#endif
+
+#ifdef __HUGE_OR_UNREAL__
 #define xbp "bp"
 #define xsp "sp"
 #else

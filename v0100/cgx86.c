@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2012-2015, Alexey Frunze
+Copyright (c) 2012-2016, Alexey Frunze
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /*                                                                           */
 /*                                Smaller C                                  */
 /*                                                                           */
-/*       A simple and small single-pass C compiler ("small C" class).        */
+/*                 A simple and small single-pass C compiler                 */
 /*                                                                           */
 /*                           x86 code generator                              */
 /*                                                                           */
@@ -114,6 +114,11 @@ int GenInitParams(int argc, char** argv, int* idx)
     OutputFormat = FormatSegHuge; SizeOfWord = 4;
     return 1;
   }
+  else if (!strcmp(argv[*idx], "-unreal"))
+  {
+    OutputFormat = FormatSegUnreal; SizeOfWord = 4;
+    return 1;
+  }
   else if (!strcmp(argv[*idx], "-winstack"))
   {
     WindowsStack = 1;
@@ -134,7 +139,7 @@ void GenInitFinalize(void)
   DataHeaderFooter[0] = "section .data";
   RoDataHeaderFooter[0] = "section .rodata";
   BssHeaderFooter[0] = "section .bss";
-  if (SizeOfWord == 2 || OutputFormat == FormatSegHuge)
+  if (SizeOfWord == 2 || OutputFormat == FormatSegHuge || OutputFormat == FormatSegUnreal)
     FileHeader = "bits 16\n";
   else
     FileHeader = "bits 32\n";
@@ -266,7 +271,7 @@ STATIC
 int GenFxnSizeNeeded(void)
 {
 #ifdef CAN_COMPILE_32BIT
-  return OutputFormat == FormatSegHuge && GenExterns;
+  return (OutputFormat == FormatSegHuge || OutputFormat == FormatSegUnreal) && GenExterns;
 #else
   return 0;
 #endif
@@ -377,9 +382,13 @@ void GenPrintInstr(int instr, int val)
 
   switch (instr)
   {
-  case X86InstrLeave: p = (OutputFormat != FormatSegHuge) ? "leave" : "db\t0x66\n\tleave"; break;
+  case X86InstrLeave:
+    p = (OutputFormat != FormatSegHuge && OutputFormat != FormatSegUnreal) ? "leave" : "db\t0x66\n\tleave";
+    break;
 
-  case X86InstrRet: p = (OutputFormat != FormatSegHuge) ? "ret" : "retf"; break;
+  case X86InstrRet:
+    p = (OutputFormat != FormatSegHuge && OutputFormat != FormatSegUnreal) ? "ret" : "retf";
+    break;
 
   case X86InstrJcc:
     switch (val)
@@ -569,8 +578,10 @@ void GenPrintOperand(int op, int val)
 #ifdef CAN_COMPILE_32BIT
   else
   {
-    char* frame = (OutputFormat == FormatSegHuge) ? "bp" : "ebp";
+    char* frame = (OutputFormat == FormatSegHuge || OutputFormat == FormatSegUnreal) ? "bp" : "ebp";
+    char* stk = (OutputFormat == FormatSegHuge || OutputFormat == FormatSegUnreal) ? "sp" : "esp";
     char* base = (OutputFormat == FormatSegHuge) ? "si" : "ebx";
+    char* adrsz = (OutputFormat == FormatSegUnreal) ? "dword " : "";
     switch (op)
     {
     case X86OpRegAByte: printf2("al"); break;
@@ -583,14 +594,14 @@ void GenPrintOperand(int op, int val)
     case X86OpRegAHalfWord: printf2("ax"); break;
     case X86OpRegCHalfWord: printf2("cx"); break;
     case X86OpRegBpWord: printf2("ebp"); break;
-    case X86OpRegSpWord: printf2("esp"); break;
+    case X86OpRegSpWord: printf2(stk); break;
     case X86OpConst: printf2("%d", truncInt(val)); break;
     case X86OpLabel: GenPrintLabel(IdentTable + val); break;
     case X86OpNumLabel: GenPrintNumLabel(val); break;
-    case X86OpIndLabel: printf2("["); GenPrintLabel(IdentTable + val); printf2("]"); break;
-    case X86OpIndLabelExplicitByte: printf2("byte ["); GenPrintLabel(IdentTable + val); printf2("]"); break;
-    case X86OpIndLabelExplicitWord: printf2("dword ["); GenPrintLabel(IdentTable + val); printf2("]"); break;
-    case X86OpIndLabelExplicitHalfWord: printf2("word ["); GenPrintLabel(IdentTable + val); printf2("]"); break;
+    case X86OpIndLabel: printf2("[%s", adrsz); GenPrintLabel(IdentTable + val); printf2("]"); break;
+    case X86OpIndLabelExplicitByte: printf2("byte [%s", adrsz); GenPrintLabel(IdentTable + val); printf2("]"); break;
+    case X86OpIndLabelExplicitWord: printf2("dword [%s", adrsz); GenPrintLabel(IdentTable + val); printf2("]"); break;
+    case X86OpIndLabelExplicitHalfWord: printf2("word [%s", adrsz); GenPrintLabel(IdentTable + val); printf2("]"); break;
     case X86OpIndLocal: printf2("[%s%+d]", frame, truncInt(val)); break;
     case X86OpIndLocalExplicitByte: printf2("byte [%s%+d]", frame, truncInt(val)); break;
     case X86OpIndLocalExplicitWord: printf2("dword [%s%+d]", frame, truncInt(val)); break;
@@ -636,7 +647,7 @@ STATIC
 void GenPrintInstr1Operand(int instr, int instrval, int operand, int operandval)
 {
 #ifdef CAN_COMPILE_32BIT
-  if (OutputFormat == FormatSegHuge && instr == X86InstrPush)
+  if (instr == X86InstrPush && (OutputFormat == FormatSegHuge || OutputFormat == FormatSegUnreal))
   {
     if (operand == X86OpConst)
     {
@@ -645,12 +656,19 @@ void GenPrintInstr1Operand(int instr, int instrval, int operand, int operandval)
     }
     else if (operand == X86OpLabel)
     {
-      int lab = LabelCnt++;
-      printf2("section .relod\n\tdd\t"); GenPrintNumLabel(lab); puts2("");
-      puts2(CodeHeaderFooter[0]);
-      puts2("\tdb\t0x66, 0x68"); // push dword const
-      GenNumLabel(lab);
-      printf2("\tdd\t"); GenPrintLabel(IdentTable + operandval); puts2("");
+      if (OutputFormat == FormatSegHuge)
+      {
+        int lab = LabelCnt++;
+        printf2("section .relod\n\tdd\t"); GenPrintNumLabel(lab); puts2("");
+        puts2(CodeHeaderFooter[0]);
+        puts2("\tdb\t0x66, 0x68"); // push dword const
+        GenNumLabel(lab);
+        printf2("\tdd\t"); GenPrintLabel(IdentTable + operandval); puts2("");
+      }
+      else
+      {
+        printf2("\tpush\tdword "); GenPrintLabel(IdentTable + operandval); puts2("");
+      }
       return;
     }
   }
@@ -669,7 +687,7 @@ void GenPrintInstr2Operands(int instr, int instrval, int operand1, int operand1v
     return;
 
 #ifdef CAN_COMPILE_32BIT
-  if (OutputFormat == FormatSegHuge)
+  if (OutputFormat == FormatSegHuge || OutputFormat == FormatSegUnreal)
   {
     if (instr == X86InstrLea)
     {
@@ -690,7 +708,7 @@ void GenPrintInstr2Operands(int instr, int instrval, int operand1, int operand1v
       }
       errorInternal(106);
     }
-    if (instr == X86InstrMov)
+    if (instr == X86InstrMov && OutputFormat == FormatSegHuge)
     {
       if (operand1 == X86OpRegAWord && operand2 == X86OpLabel)
       {
@@ -830,6 +848,7 @@ void GenWriteFrameSize(void)
 #ifdef CAN_COMPILE_32BIT
   if (SizeOfWord == 4 &&
       OutputFormat != FormatSegHuge &&
+      OutputFormat != FormatSegUnreal &&
       WindowsStack)
   {
     int pfx = (size >= 4096) ? ' ' : ';';
@@ -846,7 +865,7 @@ void GenWriteFrameSize(void)
     puts2("");
   }
 #endif
-  if (SizeOfWord == 2)
+  if (SizeOfWord == 2 || OutputFormat == FormatSegHuge || OutputFormat == FormatSegUnreal)
     printf2("\t%csub\tsp, %10u\n", pfx, size); // 10 chars are enough for 32-bit unsigned ints
 #ifdef CAN_COMPILE_32BIT
   else
@@ -869,9 +888,14 @@ void GenFxnProlog(void)
 {
   GenPrintInstr1Operand(X86InstrPush, 0,
                         X86OpRegBpWord, 0);
-  GenPrintInstr2Operands(X86InstrMov, 0,
-                         X86OpRegBpWord, 0,
-                         X86OpRegSpWord, 0);
+#ifdef CAN_COMPILE_32BIT
+  if (OutputFormat == FormatSegHuge || OutputFormat == FormatSegUnreal)
+    puts2("\tmovzx\tebp, sp");
+  else
+#endif
+    GenPrintInstr2Operands(X86InstrMov, 0,
+                           X86OpRegBpWord, 0,
+                           X86OpRegSpWord, 0);
   fgetpos(OutFile, &GenPrologPos);
   GenWriteFrameSize();
 }
@@ -898,7 +922,7 @@ STATIC
 int GenMaxLocalsSize(void)
 {
 #ifdef CAN_COMPILE_32BIT
-  if (SizeOfWord == 4 && OutputFormat != FormatSegHuge)
+  if (SizeOfWord == 4 && OutputFormat != FormatSegHuge && OutputFormat != FormatSegUnreal)
     return 0x7FFFFFFF;
 #endif
   return 0x7FFF;
@@ -940,8 +964,11 @@ void GenIsrProlog(void)
 
   // The context has been saved
 
-  puts2("\txor\teax, eax\n\tmov\tax, ss"); // mov r32, sreg leaves top 16 bits undefined on pre-Pentium CPUs
-  puts2("\txor\tebx, ebx\n\tmov\tbx, sp"); // top 16 bits of esp can contain garbage as well
+  puts2("\txor\teax, eax");
+  if (OutputFormat == FormatSegUnreal)
+    puts2("\tmov\tds, ax\n\tmov\tes, ax");
+  puts2("\tmov\tax, ss"); // mov r32, sreg leaves top 16 bits undefined on pre-Pentium CPUs
+  puts2("\tmovzx\tebx, sp"); // top 16 bits of esp can contain garbage as well
   puts2("\tshl\teax, 4\n\tadd\teax, ebx");
   puts2("\tpush\teax"); // pointer to the structure with register values
   puts2("\tsub\teax, 4\n\tpush\teax"); // pointer to the pointer to the structure with register values
@@ -949,7 +976,7 @@ void GenIsrProlog(void)
   puts2("\tpush\teax"); // fake return address allowing to use the existing bp-relative addressing of locals and params
 
   puts2("\tpush\tebp\n"
-        "\tmov\tebp, esp");
+        "\tmovzx\tebp, sp");
   fgetpos(OutFile, &GenPrologPos);
   GenWriteFrameSize();
 }
@@ -2661,7 +2688,7 @@ void GenExpr1(void)
       if (stack[i - 1][0] == tokIdent)
       {
 #ifdef CAN_COMPILE_32BIT
-        if (OutputFormat == FormatSegHuge)
+        if (OutputFormat == FormatSegHuge || OutputFormat == FormatSegUnreal)
         {
           int lab = LabelCnt++;
           puts2("\tdb\t0x9A"); // call far seg:ofs
@@ -2678,8 +2705,9 @@ void GenExpr1(void)
       else
       {
 #ifdef CAN_COMPILE_32BIT
-        if (OutputFormat == FormatSegHuge)
+        if (OutputFormat == FormatSegHuge || OutputFormat == FormatSegUnreal)
         {
+          // TBD??? replace this call with "push cs" + "call near16 $+3" and reduce .text and .relot size.
           int lab = (LabelCnt += 3) - 3;
           puts2("\tdb\t0x9A"); // call far seg:ofs (only to generate return address)
           printf2("section .relot\n\tdd\t"); GenPrintNumLabel(lab); puts2("");
@@ -2687,7 +2715,8 @@ void GenExpr1(void)
           GenNumLabel(lab);
           printf2("\tdd\t"); GenPrintNumLabel(lab + 1); puts2("");
           GenNumLabel(lab + 1);
-          printf2("\tadd\tword [esp], "); GenPrintNumLabel(lab + 2); printf2(" - "); GenPrintNumLabel(lab + 1); puts2(""); // adjust return address
+          puts2("\tmov\tsi, sp");
+          printf2("\tadd\tword [ss:si], "); GenPrintNumLabel(lab + 2); printf2(" - "); GenPrintNumLabel(lab + 1); puts2(""); // adjust return address
           puts2("\tshl\teax, 12\n\trol\tax, 4\n\tpush\teax\n\tretf");
           GenNumLabel(lab + 2);
         }
@@ -2784,8 +2813,9 @@ void GenExpr0(void)
 
     case ')':
 #ifdef CAN_COMPILE_32BIT
-      if (OutputFormat == FormatSegHuge)
+      if (OutputFormat == FormatSegHuge || OutputFormat == FormatSegUnreal)
       {
+        // TBD??? replace this call with "push cs" + "call near16 $+3" and reduce .text and .relot size.
         int lab = (LabelCnt += 3) - 3;
         puts2("\tdb\t0x9A"); // call far seg:ofs (only to generate return address)
         printf2("section .relot\n\tdd\t"); GenPrintNumLabel(lab); puts2("");
@@ -2793,7 +2823,8 @@ void GenExpr0(void)
         GenNumLabel(lab);
         printf2("\tdd\t"); GenPrintNumLabel(lab + 1); puts2("");
         GenNumLabel(lab + 1);
-        printf2("\tadd\tword [esp], "); GenPrintNumLabel(lab + 2); printf2(" - "); GenPrintNumLabel(lab + 1); puts2(""); // adjust return address
+        puts2("\tmov\tsi, sp");
+        printf2("\tadd\tword [ss:si], "); GenPrintNumLabel(lab + 2); printf2(" - "); GenPrintNumLabel(lab + 1); puts2(""); // adjust return address
         puts2("\tshl\teax, 12\n\trol\tax, 4\n\tpush\teax\n\tretf");
         GenNumLabel(lab + 2);
       }
@@ -3242,28 +3273,19 @@ void GenFin(void)
             "\tmov\tax, [bp+8]");
     }
 #ifdef CAN_COMPILE_32BIT
-    else if (OutputFormat != FormatSegHuge)
-    {
-      puts2("\tmov\tedi, [ebp+16]\n"
-            "\tmov\tesi, [ebp+12]\n"
-            "\tmov\tecx, [ebp+8]\n"
-            "\tcld\n"
-            "\trep\tmovsb\n"
-            "\tmov\teax, [ebp+16]");
-    }
-    else
+    else if (OutputFormat == FormatSegHuge)
     {
       int lbl = (LabelCnt += 2) - 2;
 
-      puts2("\tmov\tedi, [ebp+16]\n"
+      puts2("\tmov\tedi, [bp+16]\n"
             "\tror\tedi, 4\n"
             "\tmov\tes, di\n"
             "\tshr\tedi, 28\n"
-            "\tmov\tesi, [ebp+12]\n"
+            "\tmov\tesi, [bp+12]\n"
             "\tror\tesi, 4\n"
             "\tmov\tds, si\n"
             "\tshr\tesi, 28");
-      puts2("\tmov\tebx, [ebp+8]\n"
+      puts2("\tmov\tebx, [bp+8]\n"
             "\tcld");
 
       GenNumLabel(lbl); // L1:
@@ -3291,6 +3313,25 @@ void GenFin(void)
       GenNumLabel(lbl + 1); // L2:
 
       puts2("\tmov\tcx, bx\n"
+            "\trep\tmovsb\n"
+            "\tmov\teax, [bp+16]");
+    }
+    else if (OutputFormat == FormatSegUnreal)
+    {
+      puts2("\tmov\tedi, [bp+16]\n"
+            "\tmov\tesi, [bp+12]\n"
+            "\tmov\tecx, [bp+8]\n"
+            "\tcld\n"
+            "\tdb\t0x67\n"
+            "\trep\tmovsb\n"
+            "\tmov\teax, [bp+16]");
+    }
+    else
+    {
+      puts2("\tmov\tedi, [ebp+16]\n"
+            "\tmov\tesi, [ebp+12]\n"
+            "\tmov\tecx, [ebp+8]\n"
+            "\tcld\n"
             "\trep\tmovsb\n"
             "\tmov\teax, [ebp+16]");
     }
@@ -3334,7 +3375,62 @@ void GenFin(void)
             "\tret");      // actually return to return address saved in dx
     }
 #ifdef CAN_COMPILE_32BIT
-    else if (OutputFormat != FormatSegHuge)
+    else if (OutputFormat == FormatSegHuge)
+    {
+      puts2("\tmov\tedx, [bp+4]\n"   // edx = return address (seg:ofs)
+            "\tmov\tesi, [bp+8]\n"   // esi = &struct (phys)
+            "\tror\tesi, 4\n"
+            "\tmov\tds, si\n"
+            "\tshr\tesi, 28\n"       // ds:si = &struct (seg:ofs)
+            "\tmov\tecx, [bp+12]\n"  // ecx = sizeof(struct)
+            "\tmov\tebp, [bp]\n"     // restore ebp
+
+            "\tlea\teax, [ecx + 3]\n" // eax = sizeof(struct) + 3
+            "\tand\teax, -4\n"        // eax = sizeof(struct) rounded up to multiple of 4 bytes
+            "\tsub\tax, 4*4\n"        // remove ebp, return address and 2 args from stack
+            "\tsub\tsp, ax\n"         // allocate stack space for struct
+
+            "\tmov\tax, ss\n"
+            "\tmov\tes, ax\n" // es = ss
+            "\tmov\tdi, sp\n" // es:di = where struct should be copied to (seg:ofs)
+            "\tcld\n"
+            "\trep\tmovsb\n"  // copy; limit to ~64KB since stack size itself is ~64KB max
+
+            "\tpop\teax\n"  // return first 4 bytes of struct in eax
+            "\tpush\teax\n"
+            "\tpush\teax\n" // caller will remove this and first 4 bytes of struct from stack (as 2 args)
+            "\tpush\tedx\n" //   and then it will push eax (first 4 bytes of struct) back
+            "\tretf");      // actually return to return address saved in edx
+    }
+    else if (OutputFormat == FormatSegUnreal)
+    {
+      puts2("\tmov\tedx, [bp+4]\n"   // edx = return address
+            "\tmov\tesi, [bp+8]\n"   // esi = &struct
+            "\tmov\tecx, [bp+12]\n"  // ecx = sizeof(struct)
+            "\tmov\tebp, [bp]\n"     // restore ebp
+
+            "\tlea\teax, [ecx + 3]\n" // eax = sizeof(struct) + 3
+            "\tand\teax, -4\n"        // eax = sizeof(struct) rounded up to multiple of 4 bytes
+            "\tsub\tax, 4*4\n"        // remove ebp, return address and 2 args from stack
+            "\tsub\tsp, ax\n"         // allocate stack space for struct
+
+            "\tmov\tax, ss\n"
+            "\tmovzx\teax, ax\n"
+            "\tshl\teax, 4\n"
+            "\tmovzx\tedi, sp\n"
+            "\tadd\tedi, eax\n"       // edi = where struct should be copied to
+
+            "\tcld\n"
+            "\tdb\t0x67\n"
+            "\trep\tmovsb\n"      // copy
+
+            "\tpop\teax\n"        // return first 4 bytes of struct in eax
+            "\tpush\teax\n"
+            "\tpush\teax\n"       // caller will remove this and first 4 bytes of struct from stack (as 2 args)
+            "\tpush\tedx\n"       //   and then it will push eax (first 4 bytes of struct) back
+            "\tretf");            // actually return to return address saved in edx
+    }
+    else
     {
       // Copying the pushed structure to the stack backwards
       // (from higher to lower addresses) in order to correctly
@@ -3346,10 +3442,10 @@ void GenFin(void)
 
             "\tlea\teax, [ecx + 3]\n" // eax = sizeof(struct) + 3
             "\tand\teax, -4\n"        // eax = sizeof(struct) rounded up to multiple of 4 bytes
-            "\tadd\tesp, 4*4\n"       // remove ebp, return address and 2 args from stack
-            "\tsub\tesp, eax");       // allocate stack space for struct
+            "\tsub\teax, 4*4\n"       // remove ebp, return address and 2 args from stack
+            "\tsub\tesp, eax\n"       // allocate stack space for struct
 
-      puts2("\tlea\tesi, [esi + ecx - 1]\n" // esi = &last byte of struct
+            "\tlea\tesi, [esi + ecx - 1]\n" // esi = &last byte of struct
             "\tlea\tedi, [esp + ecx - 1]\n" // edi = where it should be copied to
             "\tstd\n"
             "\trep\tmovsb\n"      // copy
@@ -3359,33 +3455,6 @@ void GenFin(void)
             "\tpush\t0\n"         // caller will remove this 0 and first 4 bytes of struct from stack (as 2 args)
             "\tpush\tedx\n"       //   and then it will push eax (first 4 bytes of struct) back
             "\tret");             // actually return to return address saved in edx
-    }
-    else
-    {
-      puts2("\tmov\tedx, [ebp+4]\n"  // edx = return address (seg:ofs)
-            "\tmov\tesi, [ebp+8]\n"  // esi = &struct (phys)
-            "\tror\tesi, 4\n"
-            "\tmov\tds, si\n"
-            "\tshr\tesi, 28\n"       // ds:si = &struct (seg:ofs)
-            "\tmov\tecx, [ebp+12]\n" // ecx = sizeof(struct)
-            "\tmov\tebp, [ebp]\n"    // restore ebp
-
-            "\tlea\teax, [ecx + 3]\n" // eax = sizeof(struct) + 3
-            "\tand\teax, -4\n"        // eax = sizeof(struct) rounded up to multiple of 4 bytes
-            "\tadd\tsp, 4*4\n"        // remove ebp, return address and 2 args from stack
-            "\tsub\tsp, ax");         // allocate stack space for struct
-
-      puts2("\tmov\tax, ss\n"
-            "\tmov\tes, ax\n" // es = ss
-            "\tmov\tdi, sp\n" // es:di = where struct should be copied to (seg:ofs)
-            "\tcld\n"
-            "\trep\tmovsb\n"  // copy; limit to ~64KB since stack size itself is ~64KB max
-
-            "\tpop\teax\n"  // return first 4 bytes of struct in eax
-            "\tpush\teax\n"
-            "\tpush\teax\n" // caller will remove this and first 4 bytes of struct from stack (as 2 args)
-            "\tpush\tedx\n" //   and then it will push eax (first 4 bytes of struct) back
-            "\tretf");      // actually return to return address saved in edx
     }
 #endif
 

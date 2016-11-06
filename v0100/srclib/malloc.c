@@ -1,10 +1,17 @@
 /*
-  Copyright (c) 2014-2015, Alexey Frunze
+  Copyright (c) 2014-2016, Alexey Frunze
   2-clause BSD license.
 */
+#ifdef __HUGE__
+#define __HUGE_OR_UNREAL__
+#endif
+#ifdef __UNREAL__
+#define __HUGE_OR_UNREAL__
+#endif
+
 #ifdef _DOS
 
-#ifdef __HUGE__
+#ifdef __HUGE_OR_UNREAL__
 static
 unsigned DosMemAlloc(unsigned paras)
 {
@@ -24,7 +31,7 @@ void* malloc(unsigned size)
 
   return (void*)(DosMemAlloc((size + 15) >> 4) << 4);
 }
-#endif // __HUGE__
+#endif // __HUGE_OR_UNREAL__
 
 #ifdef _DPMI
 #include "idpmi.h"
@@ -84,7 +91,7 @@ void* __sbrk(int increment)
 #endif // _LINUX
 
 
-#ifndef __HUGE__
+#ifndef __HUGE_OR_UNREAL__
 #ifndef _WINDOWS
 
 #include "mm.h"
@@ -294,7 +301,7 @@ void* malloc(unsigned size)
 }
 
 #endif // !_WINDOWS
-#endif // !__HUGE__
+#endif // !__HUGE_OR_UNREAL__
 
 #ifdef _WINDOWS
 

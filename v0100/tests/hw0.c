@@ -1,5 +1,5 @@
 /*
-  How to compile for DOS (all mode(l)s: tiny/.COM, small/.EXE, huge/.EXE):
+  How to compile for DOS (tiny/.COM, small/.EXE, huge/.EXE):
     smlrcc -dost -nobss hw0.c -o hw0dt.com
     smlrcc -doss -nobss hw0.c -o hw0ds.exe
     smlrcc -dosh -nobss hw0.c -o hw0dh.exe
@@ -261,10 +261,6 @@ asm("relo_data_loop:");
   asm("add     esi, 4");
   asm("jmp     relo_data_loop");
 asm("relo_data_done:");
-
-  // make sure there's no garbage in the 16 most significant bits of EBP and ESP
-  asm("xor     ebp, ebp");
-  asm("and     esp, 0xFFFF");
 
   __start__();
 }

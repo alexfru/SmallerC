@@ -1,15 +1,22 @@
 /*
-  Copyright (c) 2014-2015, Alexey Frunze
+  Copyright (c) 2014-2016, Alexey Frunze
   2-clause BSD license.
 */
 #include <string.h>
 #include <stdlib.h>
 
+#ifdef __HUGE__
+#define __HUGE_OR_UNREAL__
+#endif
+#ifdef __UNREAL__
+#define __HUGE_OR_UNREAL__
+#endif
+
 char* __EnvVar;
 
 #ifdef _DOS
 
-#ifdef __HUGE__
+#ifdef __HUGE_OR_UNREAL__
 static
 unsigned char peekb(unsigned seg, unsigned ofs)
 {
@@ -29,7 +36,7 @@ unsigned char peekb(unsigned seg, unsigned ofs)
 }
 #endif
 
-#ifdef __HUGE__
+#ifdef __HUGE_OR_UNREAL__
 static
 unsigned peek(unsigned seg, unsigned ofs)
 {
@@ -48,7 +55,7 @@ unsigned peek(unsigned seg, unsigned ofs)
 }
 #endif
 
-#ifdef __HUGE__
+#ifdef __HUGE_OR_UNREAL__
 static
 unsigned DosGetPspSeg(void)
 {

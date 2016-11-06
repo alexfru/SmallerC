@@ -1,12 +1,19 @@
 /*
-  Copyright (c) 2014-2015, Alexey Frunze
+  Copyright (c) 2014-2016, Alexey Frunze
   2-clause BSD license.
 */
 #include <unistd.h>
 
+#ifdef __HUGE__
+#define __HUGE_OR_UNREAL__
+#endif
+#ifdef __UNREAL__
+#define __HUGE_OR_UNREAL__
+#endif
+
 #ifdef _DOS
 
-#ifdef __HUGE__
+#ifdef __HUGE_OR_UNREAL__
 static
 int __DosSeek(int handle, unsigned short offset[2], int whence)
 {
@@ -27,8 +34,12 @@ int __DosSeek(int handle, unsigned short offset[2], int whence)
       "and eax, 1");
   asm("mov [si], bx\n" // offset[0] will have error code on failure
       "mov [si + 2], dx"); // else offset[] will be replaced with new position
+#ifdef __UNREAL__
+  asm("push word 0\n"
+      "pop ds");
+#endif
 }
-#endif // __HUGE__
+#endif // __HUGE_OR_UNREAL__
 
 #ifdef __SMALLER_C_16__
 static

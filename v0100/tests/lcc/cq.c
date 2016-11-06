@@ -1,7 +1,7 @@
 /*
-  How to compile for DOS:
+  How to compile for DOS (huge/.EXE, unreal/.EXE, 32-bit DPMI/.EXE):
     smlrcc -dosh cq.c -o cqdh.exe
-   OR
+    smlrcc -dosu cq.c -o cqdu.exe
     smlrcc -dosp cq.c -o cqdp.exe
 
   How to compile for Windows:

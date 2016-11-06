@@ -1,7 +1,7 @@
 /*
-  How to compile for DOS:
+  How to compile for DOS (huge/.EXE, unreal/.EXE, 32-bit DPMI/.EXE):
     smlrcc -dosh libtest.c -o libtest.exe
-   OR
+    smlrcc -dosu libtest.c -o libtest.exe
     smlrcc -dosp libtest.c -o libtest.exe
 
   How to compile for Windows:
@@ -296,8 +296,8 @@ void test_str(void) {
 	pr("strncmp");
 	if (strncmp("abcdef", "abcdef", 6)) fail("strncmp-1");
 	if (strncmp("abcdxx", "abcdyy", 4)) fail("strncmp-2");
-	if (strncmp("abcdx0", "abcdy9", 5) != -1) fail("strncmp-3");
-	if (strncmp("abcdy0", "abcdx9", 5) != 1) fail("strncmp-4");
+	if (strncmp("abcdx0", "abcdy9", 5) >= 0) fail("strncmp-3");
+	if (strncmp("abcdy0", "abcdx9", 5) <= 0) fail("strncmp-4");
 	if (strncmp("abcdef", "abcdef", 10)) fail("strncmp-5");
 	if (strncmp("abcdefg", "abcdef", 7) <= 0) fail("strncmp-6");
 	if (strncmp("abcdef", "abcdefg", 7) >= 0) fail("strncmp-7");
@@ -834,4 +834,3 @@ int main(int argc, char **argv) {
 	test_exit();
 	return EXIT_FAILURE;
 }
-

@@ -1,10 +1,17 @@
 /*
-  Copyright (c) 2014-2015, Alexey Frunze
+  Copyright (c) 2014-2016, Alexey Frunze
   2-clause BSD license.
 */
+#ifdef __HUGE__
+#define __HUGE_OR_UNREAL__
+#endif
+#ifdef __UNREAL__
+#define __HUGE_OR_UNREAL__
+#endif
+
 #ifdef _DOS
 
-#ifdef __HUGE__
+#ifdef __HUGE_OR_UNREAL__
 static
 int DosRename(char* old, char* new, unsigned* error)
 {
@@ -22,13 +29,20 @@ int DosRename(char* old, char* new, unsigned* error)
       "cmc\n"
       "sbb ax, ax\n"
       "and eax, 1\n"
-      "mov esi, [bp + 16]\n"
-      "ror esi, 4\n"
+      "mov esi, [bp + 16]");
+#ifdef __HUGE__
+  asm("ror esi, 4\n"
       "mov ds, si\n"
       "shr esi, 28\n"
       "mov [si], ebx");
+#else
+  asm("push dword 0\n"
+      "pop  es\n"
+      "pop  ds\n"
+      "mov  [esi], ebx");
+#endif
 }
-#endif // __HUGE__
+#endif // __HUGE_OR_UNREAL__
 
 #ifdef __SMALLER_C_16__
 static
@@ -114,4 +128,3 @@ int rename(char* old, char* new)
 }
 
 #endif // _LINUX
-

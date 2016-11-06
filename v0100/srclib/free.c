@@ -1,23 +1,34 @@
 /*
-  Copyright (c) 2014-2015, Alexey Frunze
+  Copyright (c) 2014-2016, Alexey Frunze
   2-clause BSD license.
 */
+#ifdef __HUGE__
+#define __HUGE_OR_UNREAL__
+#endif
+#ifdef __UNREAL__
+#define __HUGE_OR_UNREAL__
+#endif
+
 #ifdef _DOS
 
-#ifdef __HUGE__
+#ifdef __HUGE_OR_UNREAL__
 static
 void DosMemFree(unsigned seg)
 {
   asm("mov ah, 0x49\n"
       "mov es, [bp + 8]\n"
       "int 0x21");
+#ifdef __UNREAL__
+  asm("push word 0\n"
+      "pop  es");
+#endif
 }
 
 void free(void* ptr)
 {
   DosMemFree((unsigned)ptr >> 4);
 }
-#endif // __HUGE__
+#endif // __HUGE_OR_UNREAL__
 
 #ifdef _DPMI
 #include "idpmi.h"
@@ -25,7 +36,7 @@ void free(void* ptr)
 
 #endif // _DOS
 
-#ifndef __HUGE__
+#ifndef __HUGE_OR_UNREAL__
 #ifndef _WINDOWS
 
 #include "mm.h"
@@ -65,7 +76,7 @@ void free(void* ptr)
 }
 
 #endif // !_WINDOWS
-#endif // !__HUGE__
+#endif // !__HUGE_OR_UNREAL__
 
 #ifdef _WINDOWS
 

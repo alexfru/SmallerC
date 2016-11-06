@@ -138,14 +138,15 @@ typedef struct
 
 char* OutName;
 
-#define FormatDosComTiny  1
-#define FormatDosExeSmall 2
-#define FormatDosExeHuge  3
-#define FormatAoutDpmi    4
-#define FormatFlat16      5
-#define FormatFlat32      6
-#define FormatWinPe32     7
-#define FormatElf32       8
+#define FormatDosComTiny   1
+#define FormatDosExeSmall  2
+#define FormatDosExeHuge   3
+#define FormatDosExeUnreal 4
+#define FormatAoutDpmi     5
+#define FormatFlat16       6
+#define FormatFlat32       7
+#define FormatWinPe32      8
+#define FormatElf32        9
 int OutputFormat = 0;
 
 const char* LibName[] =
@@ -154,6 +155,7 @@ const char* LibName[] =
   "lcds.a", // FormatDosComTiny
   "lcds.a", // FormatDosExeSmall
   "lcdh.a", // FormatDosExeHuge
+  "lcdu.a", // FormatDosExeUnreal
   "lcdp.a", // FormatAoutDpmi
   NULL,     // FormatFlat16
   NULL,     // FormatFlat32
@@ -1524,6 +1526,24 @@ int main(int argc, char* argv[])
       argv[i] = NULL;
       continue;
     }
+    else if (!strcmp(argv[i], "-unreal"))
+    {
+      OutputFormat = FormatDosExeUnreal;
+      AddOption(&CompilerOptions, &CompilerOptionsLen, argv[i]);
+      AddOption(&LinkerOptions, &LinkerOptionsLen, argv[i]);
+      argv[i] = NULL;
+      continue;
+    }
+    else if (!strcmp(argv[i], "-dosu"))
+    {
+      OutputFormat = FormatDosExeUnreal;
+      AddOption(&CompilerOptions, &CompilerOptionsLen, "-unreal");
+      DefineMacro("_DOS");
+      AddOption(&LinkerOptions, &LinkerOptionsLen, "-unreal");
+      LinkStdLib = 1;
+      argv[i] = NULL;
+      continue;
+    }
     else if (!strcmp(argv[i], "-aout"))
     {
       OutputFormat = FormatAoutDpmi;
@@ -1735,6 +1755,7 @@ int main(int argc, char* argv[])
       break;
     case FormatDosExeSmall:
     case FormatDosExeHuge:
+    case FormatDosExeUnreal:
     case FormatWinPe32:
       OutName = "aout.exe";
       break;
@@ -1777,6 +1798,10 @@ int main(int argc, char* argv[])
     case FormatDosExeHuge:
       DefineMacro("__SMALLER_C_32__");
       DefineMacro("__HUGE__");
+      break;
+    case FormatDosExeUnreal:
+      DefineMacro("__SMALLER_C_32__");
+      DefineMacro("__UNREAL__");
       break;
     case FormatAoutDpmi:
       DefineMacro("__SMALLER_C_32__");

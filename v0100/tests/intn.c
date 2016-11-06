@@ -1,10 +1,11 @@
 /*
   Small test for <stdint.h> and <inttypes.h>.
 
-  How to compile for DOS (all mode(l)s: tiny/.COM, small/.EXE, huge/.EXE, 32-bit DPMI/.EXE):
+  How to compile for DOS (all mode(l)s: tiny/.COM, small/.EXE, huge/.EXE, unreal/.EXE, 32-bit DPMI/.EXE):
     smlrcc -dost intn.c -o intndt.com
     smlrcc -doss intn.c -o intnds.exe
     smlrcc -dosh intn.c -o intndh.exe
+    smlrcc -dosu intn.c -o intndu.exe
     smlrcc -dosp intn.c -o intndp.exe
 
   How to compile for Windows:

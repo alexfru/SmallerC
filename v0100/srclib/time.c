@@ -1,48 +1,72 @@
 /*
-  Copyright (c) 2014-2015, Alexey Frunze
+  Copyright (c) 2014-2016, Alexey Frunze
   2-clause BSD license.
 */
 #include <string.h>
 #include "itime.h"
 
+#ifdef __HUGE__
+#define __HUGE_OR_UNREAL__
+#endif
+#ifdef __UNREAL__
+#define __HUGE_OR_UNREAL__
+#endif
+
 #ifdef _DOS
 
-#ifdef __HUGE__
+#ifdef __HUGE_OR_UNREAL__
 static
 void DosGetDate(unsigned short d[3/*[0]-year,[1]-month,[2]-day*/])
 {
   asm("mov ah, 0x2a\n"
+      "int 0x21\n"
       "mov esi, [bp + 8]\n"
-      "ror esi, 4\n"
+      "xor al, al");
+#ifdef __HUGE__
+  asm("ror esi, 4\n"
       "mov ds, si\n"
       "shr esi, 28\n"
-      "int 0x21");
-  asm("xor al, al\n"
       "mov [si], cx\n"
       "mov [si+2], dh\n"
       "mov [si+3], al\n"
       "mov [si+4], dl\n"
       "mov [si+5], al");
+#else
+  asm("mov [esi], cx\n"
+      "mov [esi+2], dh\n"
+      "mov [esi+3], al\n"
+      "mov [esi+4], dl\n"
+      "mov [esi+5], al");
+#endif
 }
 
 static
 void DosGetTime(unsigned short t[3/*[0]-hour,[1]-minutes,[2]-seconds*/])
 {
   asm("mov ah, 0x2c\n"
+      "int 0x21\n"
       "mov esi, [bp + 8]\n"
-      "ror esi, 4\n"
+      "xor al, al");
+#ifdef __HUGE__
+  asm("ror esi, 4\n"
       "mov ds, si\n"
       "shr esi, 28\n"
-      "int 0x21");
-  asm("xor al, al\n"
       "mov [si], ch\n"
       "mov [si+1], al\n"
       "mov [si+2], cl\n"
       "mov [si+3], al\n"
       "mov [si+4], dh\n"
       "mov [si+5], al");
+#else
+  asm("mov [esi], ch\n"
+      "mov [esi+1], al\n"
+      "mov [esi+2], cl\n"
+      "mov [esi+3], al\n"
+      "mov [esi+4], dh\n"
+      "mov [esi+5], al");
+#endif
 }
-#endif // __HUGE__
+#endif // __HUGE_OR_UNREAL__
 
 #ifdef _DPMI
 static

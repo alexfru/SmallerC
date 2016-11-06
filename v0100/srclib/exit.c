@@ -1,8 +1,15 @@
 /*
-  Copyright (c) 2014-2015, Alexey Frunze
+  Copyright (c) 2014-2016, Alexey Frunze
   2-clause BSD license.
 */
 #include "istdio.h"
+
+#ifdef __HUGE__
+#define __HUGE_OR_UNREAL__
+#endif
+#ifdef __UNREAL__
+#define __HUGE_OR_UNREAL__
+#endif
 
 void (*__pAtExitIterator)(void);
 void (*__pFileCloser)(void);
@@ -11,10 +18,14 @@ void (*__pFileCloser)(void);
 
 #include "idos.h"
 
-#ifdef __HUGE__
+#ifdef __HUGE_OR_UNREAL__
 static
-void DosTerminate(int e)
+void DosTerminate(int e, ...)
 {
+#ifdef __UNREAL__
+  asm("mov eax, [bp + 12]\n"
+      "mov [0xd*4], eax");
+#endif
   asm("mov ah, 0x4c\n"
       "mov al, [bp + 8]\n"
       "int 0x21");
@@ -84,7 +95,12 @@ void __ExitInner(int iterator, int flushclose, int status)
   __DosSetVect(6, __Int06UD);
 #endif
 
+#ifdef __UNREAL__
+  extern unsigned long __pOldInt0xdIsr;
+  DosTerminate(status, __pOldInt0xdIsr);
+#else
   DosTerminate(status);
+#endif
 #endif // _DOS
 
 #ifdef _WINDOWS

@@ -1,11 +1,18 @@
 /*
-  Copyright (c) 2014, Alexey Frunze
+  Copyright (c) 2014-2016, Alexey Frunze
   2-clause BSD license.
 */
 #include <stdlib.h>
 #include "istdio.h"
 #include <ctype.h>
 #include <string.h>
+
+#ifdef __HUGE__
+#define __HUGE_OR_UNREAL__
+#endif
+#ifdef __UNREAL__
+#define __HUGE_OR_UNREAL__
+#endif
 
 #ifdef __SMALLER_C_32__
 extern void __x87init(void);
@@ -36,68 +43,78 @@ struct execparams
   unsigned short Fcb2Seg;
 };
 
-#ifdef __HUGE__
+#ifdef __HUGE_OR_UNREAL__
 static
 int DosExec(char* comspec, struct execparams* p, unsigned* error)
 {
-  asm("section .relot");
-  asm("dd     rel1");
-  asm("section .text");
-  asm("db     0x66, 0xB8"); // mov eax, relocated savearea (far address: seg:ofs)
-  asm("rel1:");
-  asm("dd     savearea");
-  asm("mov    bx, ax");
-  asm("shr    eax, 16");
-  asm("mov    ds, ax");
-  asm("mov    [bx], ebp");
-  asm("mov    [bx+4], esp");
-  asm("mov    [bx+8], ss");
-  asm("jmp    skipdata");
-  asm("savearea:");
-  asm("dw     0,0,0,0,0");
-  asm("skipdata:");
+  asm("section .relot\n"
+      "dd      rel1\n"
+      "section .text\n"
+      "db      0x66, 0xB8\n" // mov eax, relocated savearea (far address: seg:ofs)
+      "rel1:\n"
+      "dd      savearea\n"
+      "mov     bx, ax\n"
+      "shr     eax, 16\n"
+      "mov     ds, ax\n"
+      "mov     [bx], ebp\n"
+      "mov     [bx+4], esp\n"
+      "mov     [bx+8], ss\n"
+      "jmp     skipdata\n"
+      "savearea:\n"
+      "dw      0,0,0,0,0\n"
+      "skipdata:\n"
 
-  asm("mov ax, 0x4b00\n"
-      "mov edx, [bp + 8]\n"
-      "ror edx, 4\n"
-      "mov ds, dx\n"
-      "shr edx, 28");
-  asm("mov ebx, [bp + 12]\n"
-      "ror ebx, 4\n"
-      "mov es, bx\n"
-      "shr ebx, 28\n"
-      "int 0x21");
+      "mov     ax, 0x4b00\n"
+      "mov     edx, [bp + 8]\n"
+      "ror     edx, 4\n"
+      "mov     ds, dx\n"
+      "shr     edx, 28\n"
+      "mov     ebx, [bp + 12]\n"
+      "ror     ebx, 4\n"
+      "mov     es, bx\n"
+      "shr     ebx, 28\n"
+      "int     0x21\n"
 
-  asm("cli"); // ss:sp may have been destroyed by int 0x21, prevent ISRs from using bad stack by disabling interrupts
-  asm("mov    cx, ax"); // save error code in cx
-  asm("rcl    dx, 1"); // save carry flag in dx bit 0
-  asm("section .relot");
-  asm("dd     rel2");
-  asm("section .text");
-  asm("db     0x66, 0xB8"); // mov eax, relocated savearea (far address: seg:ofs)
-  asm("rel2:");
-  asm("dd     savearea");
-  asm("mov    bx, ax");
-  asm("shr    eax, 16");
-  asm("mov    ds, ax");
-  asm("mov    ss, [bx+8]");
-  asm("mov    esp, [bx+4]");
-  asm("sti"); // it's safe to enable interrupts now
-  asm("mov    ebp, [bx]");
-  asm("mov    ax, cx"); // restore error code in ax
-  asm("rcr    dx, 1"); // restore carry flag from dx bit 0
+      "cli\n" // ss:sp may have been destroyed by int 0x21, prevent ISRs from using bad stack by disabling interrupts
+      "mov     cx, ax\n" // save error code in cx
+      "rcl     dx, 1\n" // save carry flag in dx bit 0
+      "section .relot\n"
+      "dd      rel2\n"
+      "section .text\n"
+      "db      0x66, 0xB8\n" // mov eax, relocated savearea (far address: seg:ofs)
+      "rel2:\n"
+      "dd      savearea\n"
+      "mov     bx, ax\n"
+      "shr     eax, 16\n"
+      "mov     ds, ax\n"
+      "mov     ss, [bx+8]\n"
+      "mov     esp, [bx+4]\n"
+      "sti\n" // it's safe to enable interrupts now
+      "mov     ebp, [bx]\n"
+      "mov     ax, cx\n" // restore error code in ax
+      "rcr     dx, 1\n" // restore carry flag from dx bit 0
 
-  asm("movzx ebx, ax\n"
+      "movzx   ebx, ax\n"
       "cmc\n"
-      "sbb ax, ax\n"
-      "and eax, 1\n"
-      "mov esi, [bp + 16]\n"
-      "ror esi, 4\n"
-      "mov ds, si\n"
-      "shr esi, 28\n"
-      "mov [si], ebx");
+      "sbb     ax, ax\n"
+      "and     eax, 1\n"
+      "mov     esi, [bp + 16]\n"
+      "ror     esi, 4\n"
+      "mov     ds, si\n"
+      "shr     esi, 28\n"
+      "mov     [si], ebx");
+#ifdef __UNREAL__
+  asm("push    dword 0\n"
+      "pop     es\n"
+      "pop     ds");
+  // Just in case set up unreal mode again, don't depend on #GP handler to do it.
+  extern void __setup_unreal(void);
+  __setup_unreal();
+#endif
 }
+#endif // __HUGE_OR_UNREAL__
 
+#ifdef __HUGE_OR_UNREAL__
 static
 unsigned DosGetExitCode(void)
 {
@@ -105,38 +122,38 @@ unsigned DosGetExitCode(void)
       "int 0x21\n"
       "and eax, 0xFFFF");
 }
-#endif // __HUGE__
+#endif // __HUGE_OR_UNREAL__
 
 #ifdef __SMALLER_C_16__
 static
 int DosExec(char* comspec, struct execparams* p, unsigned* error)
 {
-  asm("mov [cs:saveebp], ebp");
-  asm("mov [cs:saveesp], esp");
-  asm("mov [cs:savess], ss");
-  asm("jmp skipdata");
-  asm("saveebp dd 0");
-  asm("saveesp dd 0");
-  asm("savess dw 0");
-  asm("skipdata:");
+  asm("mov     [cs:saveebp], ebp\n"
+      "mov     [cs:saveesp], esp\n"
+      "mov     [cs:savess], ss\n"
+      "jmp     skipdata\n"
+      "saveebp dd 0\n"
+      "saveesp dd 0\n"
+      "savess  dw 0\n"
+      "skipdata:\n"
 
-  asm("mov ax, 0x4b00\n"
-      "mov dx, [bp + 4]\n"
-      "mov bx, [bp + 6]\n"
-      "int 0x21");
+      "mov     ax, 0x4b00\n"
+      "mov     dx, [bp + 4]\n"
+      "mov     bx, [bp + 6]\n"
+      "int     0x21\n"
 
-  asm("mov ss, [cs:savess]");
-  asm("mov esp, [cs:saveesp]");
-  asm("mov ebp, [cs:saveebp]");
-  asm("mov ds, [cs:savess]");
-  asm("mov es, [cs:savess]");
+      "mov     ss, [cs:savess]\n"
+      "mov     esp, [cs:saveesp]\n"
+      "mov     ebp, [cs:saveebp]\n"
+      "mov     ds, [cs:savess]\n"
+      "mov     es, [cs:savess]\n"
 
-  asm("mov bx, ax\n"
+      "mov     bx, ax\n"
       "cmc\n"
-      "sbb ax, ax\n"
-      "and ax, 1\n"
-      "mov si, [bp + 8]\n"
-      "mov [si], bx");
+      "sbb     ax, ax\n"
+      "and     ax, 1\n"
+      "mov     si, [bp + 8]\n"
+      "mov     [si], bx");
 }
 
 static
@@ -533,7 +550,7 @@ int system(char* cmd)
   eparams.Fcb2Ofs = &fcb2;
   eparams.Fcb2Seg = __getSS();
 #endif
-#ifdef __HUGE__
+#ifdef __HUGE_OR_UNREAL__
   eparams.ParamsOfs = (unsigned)params & 0xF;
   eparams.ParamsSeg = (unsigned)params >> 4;
   eparams.Fcb1Ofs = (unsigned)&fcb1 & 0xF;

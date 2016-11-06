@@ -2,6 +2,13 @@
   Copyright (c) 2014-2016, Alexey Frunze
   2-clause BSD license.
 */
+#ifdef __HUGE__
+#define __HUGE_OR_UNREAL__
+#endif
+#ifdef __UNREAL__
+#define __HUGE_OR_UNREAL__
+#endif
+
 extern int main(int argc, char** argv);
 extern void exit(int);
 
@@ -113,7 +120,7 @@ int __ArgParser__(char* in, char* out, char** argv)
 
 #include "idos.h"
 
-#ifdef __HUGE__
+#ifdef __HUGE_OR_UNREAL__
 static
 unsigned char peekb(unsigned seg, unsigned ofs)
 {
@@ -133,7 +140,7 @@ unsigned char peekb(unsigned seg, unsigned ofs)
 }
 #endif
 
-#ifdef __HUGE__
+#ifdef __HUGE_OR_UNREAL__
 static
 unsigned peek(unsigned seg, unsigned ofs)
 {
@@ -153,7 +160,7 @@ unsigned peek(unsigned seg, unsigned ofs)
 #endif
 
 /*
-#ifdef __HUGE__
+#ifdef __HUGE_OR_UNREAL__
 static
 void pokeb(unsigned seg, unsigned ofs, unsigned char val)
 {
@@ -173,7 +180,7 @@ void pokeb(unsigned seg, unsigned ofs, unsigned char val)
 }
 #endif
 
-#ifdef __HUGE__
+#ifdef __HUGE_OR_UNREAL__
 static
 void poke(unsigned seg, unsigned ofs, unsigned val)
 {
@@ -194,29 +201,44 @@ void poke(unsigned seg, unsigned ofs, unsigned val)
 #endif
 */
 
-#ifdef __HUGE__
+// TBD??? Don't use int 0x21 functions 0x25 & 0x35 for IVT manipulations???
+#ifdef __HUGE_OR_UNREAL__
 void __DosGetVect(int intno, unsigned short farptr[2])
 {
   asm("mov  ah, 0x35\n"
       "mov  al, [bp + 8]\n"
       "int  0x21\n"
-      "mov  esi, [bp + 12]\n"
-      "ror  esi, 4\n"
+      "mov  esi, [bp + 12]");
+#ifdef __HUGE__
+  asm("ror  esi, 4\n"
       "mov  ds, si\n"
       "shr  esi, 28\n"
       "mov  [si], bx\n"
       "mov  [si + 2], es");
+#else
+  asm("mov  [esi], bx\n"
+      "mov  [esi + 2], es\n"
+      "push word 0\n"
+      "pop  es");
+#endif
 }
 void __DosSetVect(int intno, unsigned short farptr[2])
 {
   asm("mov  ah, 0x25\n"
       "mov  al, [bp + 8]\n"
-      "mov  esi, [bp + 12]\n"
-      "ror  esi, 4\n"
+      "mov  esi, [bp + 12]");
+#ifdef __HUGE__
+  asm("ror  esi, 4\n"
       "mov  ds, si\n"
       "shr  esi, 28\n"
       "lds  dx, [si]\n"
       "int  0x21");
+#else
+  asm("lds  dx, [esi]\n"
+      "int  0x21\n"
+      "push word 0\n"
+      "pop  ds");
+#endif
 }
 #endif
 #ifdef __SMALLER_C_16__
@@ -243,7 +265,7 @@ void __DosSetVect(int intno, unsigned short farptr[2])
 }
 #endif
 
-#ifdef __HUGE__
+#ifdef __HUGE_OR_UNREAL__
 static
 unsigned DosGetPspSeg(void)
 {
@@ -346,7 +368,7 @@ int setargs(int* pargc, char*** pargv, void* psp, char* argv0)
 }
 #endif
 
-#ifdef __HUGE__
+#ifdef __HUGE_OR_UNREAL__
 void __interrupt __ExcIsr(void)
 {
   static char msg[] = "\r\nUnhandled exception!\r\n";
@@ -377,7 +399,7 @@ void __start__(void)
   __DosGetVect(4, __Int04OF);
   __DosGetVect(6, __Int06UD);
 
-#ifdef __HUGE__
+#ifdef __HUGE_OR_UNREAL__
   farptr[0] = (unsigned)&__ExcIsr & 0xF;
   farptr[1] = (unsigned)&__ExcIsr >> 4;
 #endif
@@ -394,7 +416,7 @@ extern unsigned short __getCS(void);
 
   // Register int 0x23/Ctrl+C handler
 
-#ifdef __HUGE__
+#ifdef __HUGE_OR_UNREAL__
   farptr[0] = (unsigned)&__CtrlCIsr & 0xF;
   farptr[1] = (unsigned)&__CtrlCIsr >> 4;
 #endif
@@ -408,7 +430,7 @@ extern unsigned short __getCS(void);
   // Set argc and argv
   setargs(&argc, &argv);
 
-#ifdef __HUGE__
+#ifdef __HUGE_OR_UNREAL__
   // Start counting ticks now
   clock();
 #endif

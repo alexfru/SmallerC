@@ -1,10 +1,11 @@
 /*
   This is a demo of using gcc as a preprocessor for Smaller C.
 
-  How to compile for DOS (all mode(l)s: tiny/.COM, small/.EXE, huge/.EXE, 32-bit DPMI/.EXE):
+  How to compile for DOS (all mode(l)s: tiny/.COM, small/.EXE, huge/.EXE, unreal/.EXE, 32-bit DPMI/.EXE):
     smlrcc -ppg -dost pptst1.c -o pptst1dt.com
     smlrcc -ppg -doss pptst1.c -o pptst1ds.exe
     smlrcc -ppg -dosh pptst1.c -o pptst1dh.exe
+    smlrcc -ppg -dosu pptst1.c -o pptst1du.exe
     smlrcc -ppg -dosp pptst1.c -o pptst1dp.exe
 
   How to compile for Windows:

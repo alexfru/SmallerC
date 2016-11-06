@@ -14,7 +14,7 @@
 
 #define MATH_ERRNO 1
 #define MATH_ERREXCEPT 2
-#define math_errhandling 1 // only set errno, don't raise exceptions
+#define math_errhandling MATH_ERRNO // only set errno, don't raise exceptions
 
 double frexp(double, int*);
 float frexpf(float, int*);

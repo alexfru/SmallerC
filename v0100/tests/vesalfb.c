@@ -1,9 +1,12 @@
 /*
-  How to compile for DOS/DPMI:
-    smlrcc -dosp vesalfb.c -o vesalfb.exe
+  How to compile for DOS (unreal/.EXE, 32-bit DPMI/.EXE):
+    smlrcc -dosu vesalfb.c -o vesalfbu.exe
+    smlrcc -dosp vesalfb.c -o vesalfbp.exe
 */
 #ifndef _DPMI
-#error Must be compiled as a DOS/DPMI program
+#ifndef __UNREAL__
+#error Must be compiled as a DOS/Unreal or DOS/DPMI program
+#endif
 #endif
 
 #include <stdio.h>
@@ -15,6 +18,7 @@ typedef unsigned char uint8;
 typedef unsigned short uint16;
 typedef unsigned long uint32;
 
+#ifdef _DPMI
 typedef struct
 {
   unsigned long  edi;
@@ -42,6 +46,7 @@ typedef struct
 extern void* __dpmi_iobuf;
 
 int __dpmi_int(int, __dpmi_int_regs*);
+#endif
 
 #pragma pack(push, 1)
 
@@ -119,6 +124,7 @@ typedef struct
 
 #pragma pack(pop)
 
+#ifdef _DPMI
 int GetVbeInfo(tVbeInfo* p)
 {
   __dpmi_int_regs regs;
@@ -175,13 +181,229 @@ int DpmiMapPhysical(void** linear, uint32 physical, uint32 size)
   "sbb eax, eax\n"
   );
 }
+#endif
+
+#ifdef __UNREAL__
+int GetVbeInfo(tVbeInfo* p)
+{
+  asm(
+  "mov   ax, 0x4f00\n"
+  "mov   edi, [bp+8]\n"
+  "ror   edi, 4\n"
+  "mov   es, di\n"
+  "shr   edi, 28\n"
+  "int   0x10\n"
+  "movzx eax, ax\n"
+  "push  word 0\n"
+  "pop   es"
+  );
+}
+
+int GetVbeModeInfo(tVbeModeInfo* p, uint16 mode)
+{
+  asm(
+  "mov   ax, 0x4f01\n"
+  "mov   cx, [bp+12]\n"
+  "mov   edi, [bp+8]\n"
+  "ror   edi, 4\n"
+  "mov   es, di\n"
+  "shr   edi, 28\n"
+  "int   0x10\n"
+  "movzx eax, ax\n"
+  "push  word 0\n"
+  "pop   es"
+  );
+}
+
+int SetVbeMode(uint16 mode)
+{
+  asm(
+  "mov   ax, 0x4f02\n"
+  "mov   bx, [bp+8]\n"
+  "int   0x10\n"
+  "movzx eax, ax"
+  );
+}
+
+enum { ONE_MB = 0x100000 };
+
+int InEvenNumberedMegabyte(uint32 addr, uint32 size)
+{
+  uint32 end = addr + size - 1;
+  // Zero size makes no sense.
+  //
+  // size larger than 1MB means the buffer lies in two or more different
+  // megabytes and one of them is odd-numbered.
+  //
+  // size of 1MB or smaller means the buffer lies in at most two different
+  // megabytes, check where the first and last bytes are.
+  return (size > 0) && (size <= ONE_MB) && !((addr | end) & ONE_MB);
+}
+
+int A20Enabled(void)
+{
+  volatile unsigned char* p1 = (volatile unsigned char*)1;
+  volatile unsigned char* p1M1 = (volatile unsigned char*)(ONE_MB + 1);
+  unsigned char x1, x1M1;
+  int enabled = 0;
+
+  asm("cli");
+
+  x1 = *p1;
+  x1M1 = *p1M1;
+  *p1M1 = ~x1;
+
+  if (*p1 == x1)
+  {
+    *p1M1 = x1M1;
+    enabled = 1;
+  }
+  else
+  {
+    *p1 = x1;
+  }
+
+  asm("sti");
+
+  return enabled;
+}
+
+void TryEnableA20_Bios(void)
+{
+  asm("push ebp\n"
+      "push dword 0\n"
+      "mov  ax, 0x2401\n"
+      "int  0x15\n"
+      "pop  es\n"
+      "pop  ds\n"
+      "pop  ebp");
+}
+
+enum
+{
+  PORT_KBD_A = 0x60,
+  PORT_KBD_STATUS = 0x64
+};
+
+unsigned char InPortByte(unsigned short port)
+{
+  asm("mov   dx, [bp+8]\n"
+      "in    al, dx\n"
+      "movzx eax, al");
+}
+void OutPortByte(unsigned short port, unsigned char value)
+{
+  asm("mov dx, [bp+8]\n"
+      "mov al, [bp+12]\n"
+      "out dx, al");
+}
+
+void KbdWaitDone2(void)
+{
+  while ((InPortByte(PORT_KBD_STATUS) & 2) == 2);
+}
+void KbdWaitDone1(void)
+{
+  while (!(InPortByte(PORT_KBD_STATUS) & 1));
+}
+void KbdSendCmd(unsigned char cmd)
+{
+  OutPortByte(PORT_KBD_STATUS, cmd);
+}
+
+void TryEnableA20_AtKbd(void)
+{
+  unsigned char x;
+  asm("cli");
+
+  KbdWaitDone2();
+  KbdSendCmd(0xAD);
+  KbdWaitDone2();
+
+  KbdSendCmd(0xD0);
+  KbdWaitDone1();
+  x = InPortByte(PORT_KBD_A);
+  KbdWaitDone2();
+
+  KbdSendCmd(0xD1);
+  KbdWaitDone2();
+
+  OutPortByte(PORT_KBD_A, x | 2 | 1); // set bit 0 to prevent reset
+  KbdWaitDone2();
+
+  KbdSendCmd(0xAE);
+  KbdWaitDone2();
+
+  asm("sti");
+}
+
+void TryEnableA20_Ps2Fast(void)
+{
+  unsigned char x;
+  asm("cli");
+  x = InPortByte(0x92) & 0xFE; // reset bit 0 to prevent reset
+  if ((x & 2) == 0)
+    OutPortByte(0x92, x | 2);
+  asm("sti");
+}
+
+// This A20 code is likely imperfect (no delays, no retries),
+// but it appears to be working in DOSBox and VirtualBox.
+// See:
+// http://wiki.osdev.org/A20
+// http://www.win.tue.nl/~aeb/linux/kbd/A20.html
+// http://lxr.free-electrons.com/source/arch/x86/boot/a20.c
+int EnableA20(void)
+{
+  if (A20Enabled())
+  {
+    puts("A20 already enabled.");
+    return 1;
+  }
+  // Try himem.sys first? OTOH, if it's loaded, it's probably enabled A20 already.
+  puts("Trying to enable A20 via BIOS...");
+  TryEnableA20_Bios();
+  if (A20Enabled())
+  {
+    puts("A20 enabled via BIOS.");
+    return 1;
+  }
+  puts("Trying to enable A20 via keyboard controller...");
+  TryEnableA20_AtKbd();
+  if (A20Enabled())
+  {
+    puts("A20 enabled via keyboard controller.");
+    return 1;
+  }
+  puts("Trying to enable A20 via fast method...");
+  TryEnableA20_Ps2Fast();
+  if (A20Enabled())
+  {
+    puts("A20 enabled via fast method.");
+    return 1;
+  }
+  puts("Failed to enable A20!");
+  return 0;
+}
+#endif
+
+enum
+{
+  // Only 8bpp modes are supported.
+//  VBE_MODE = 0x100, VBE_WIDTH = 640, VBE_HEIGHT = 400,
+  VBE_MODE = 0x101, VBE_WIDTH = 640, VBE_HEIGHT = 480,
+//  VBE_MODE = 0x103, VBE_WIDTH = 800, VBE_HEIGHT = 600,
+//  VBE_MODE = 0x105, VBE_WIDTH = 1024, VBE_HEIGHT = 768,
+//  VBE_MODE = 0x107, VBE_WIDTH = 1280, VBE_HEIGHT = 1024, // > 1MB in size, will need A20 in unreal mode(l)
+  VBE_AREA = VBE_WIDTH * VBE_HEIGHT
+};
 
 uint8* screen;
 
 void pixel(int x, int y,
            uint8 color)
 {
-  screen[y * 640 + x] = color;
+  screen[y * VBE_WIDTH + x] = color;
 }
 
 void line(int x1, int y1,
@@ -228,8 +450,8 @@ void line(int x1, int y1,
 
   while (cnt--)
   {
-    if (x >= 0 && x < 640 && y >= 0 && y < 480)
-      screen[y * 640 + x] = color;
+    if (x >= 0 && x < VBE_WIDTH && y >= 0 && y < VBE_HEIGHT)
+      screen[y * VBE_WIDTH + x] = color;
 
     k += n;
     if (k < m)
@@ -273,7 +495,7 @@ int main(void)
 
   // Get and check VBE mode info
 
-  if ((err = GetVbeModeInfo(&modeInfo, 0x101)) != 0x4F)
+  if ((err = GetVbeModeInfo(&modeInfo, VBE_MODE)) != 0x4F)
   {
     printf("GetVbeModeInfo() failed (0x%08X)!\n", err);
     return EXIT_FAILURE;
@@ -287,11 +509,20 @@ int main(void)
 
   // Map the linear frame buffer into the virtual address space
 
-  if (DpmiMapPhysical(&screen, modeInfo.PhysBasePtr, 640 * 480))
+#ifdef _DPMI
+  if (DpmiMapPhysical(&screen, modeInfo.PhysBasePtr, VBE_AREA))
   {
     printf("DpmiMapPhysical() failed!\n");
     return EXIT_FAILURE;
   }
+#else
+  if (!InEvenNumberedMegabyte(modeInfo.PhysBasePtr, VBE_AREA) && !EnableA20())
+  {
+    printf("Linear Frame Buffer at 0x%08X (physical) needs A20 enabled!\n", modeInfo.PhysBasePtr);
+    return EXIT_FAILURE;
+  }
+  screen = modeInfo.PhysBasePtr;
+#endif
 
   printf("Linear Frame Buffer at 0x%08X/0x%08X (physical/linear)\n", modeInfo.PhysBasePtr, (unsigned)screen);
 
@@ -300,8 +531,8 @@ int main(void)
 
   // Demo time!
 
-  // Set mode 0x101 (640 x 480 x 8bpp) with LFB
-  if ((err = SetVbeMode(0x101 | (1 << 14)/*use LFB*/)) != 0 && err != 0x4F)
+  // Set mode VBE_MODE (VBE_WIDTH x VBE_HEIGHT x 8bpp) with LFB
+  if ((err = SetVbeMode(VBE_MODE | (1 << 14)/*use LFB*/)) != 0 && err != 0x4F)
   {
     printf("SetVbeMode() failed (0x%08X)!\n", err);
     return EXIT_FAILURE;
@@ -309,22 +540,22 @@ int main(void)
 
   // Draw something
 
-  for (int y = 0; y < 480; y++)
-    for (int x = 0; x < 640; x++)
-      screen[y * 640 + x] = (x ^ y) & 0xF0;
+  for (int y = 0; y < VBE_HEIGHT; y++)
+    for (int x = 0; x < VBE_WIDTH; x++)
+      screen[y * VBE_WIDTH + x] = (x ^ y) & 0xF0;
 
-  line(0, 0, 638, 0, 8+1);
-  line(639, 0, 639, 478, 8+2);
-  line(639, 479, 1, 479, 8+4);
-  line(0, 479, 0, 1, 8+6);
-  line(1, 1, 638, 478, 8+3);
-  line(638, 1, 1, 478, 8+5);
+  line(0, 0, (VBE_WIDTH-2), 0, 8+1);
+  line((VBE_WIDTH-1), 0, (VBE_WIDTH-1), (VBE_HEIGHT-2), 8+2);
+  line((VBE_WIDTH-1), (VBE_HEIGHT-1), 1, (VBE_HEIGHT-1), 8+4);
+  line(0, (VBE_HEIGHT-1), 0, 1, 8+6);
+  line(1, 1, (VBE_WIDTH-2), (VBE_HEIGHT-2), 8+3);
+  line((VBE_WIDTH-2), 1, 1, (VBE_HEIGHT-2), 8+5);
 
   for (int angle = 0; angle < 1024; angle++)
   {
     double a = angle * 3.1415927 / 512;
-    int x = 320 + cos(a) * 256;
-    int y = 240 - sin(a) * 128;
+    int x = (VBE_WIDTH/2) + cos(a) * (VBE_WIDTH/3);
+    int y = (VBE_HEIGHT/2) - sin(a) * (VBE_HEIGHT/3);
     int c = (angle >> 7) + 8;
     pixel(x, y, c);
     pixel(x-1, y, c);
@@ -335,7 +566,7 @@ int main(void)
 
   // All done
 
-  printf("Press Enter to exit.\n");
+  printf("Press Enter to exit.\n"); // This text may not be displayed.
   getchar();
 
   SetVbeMode(0x3);

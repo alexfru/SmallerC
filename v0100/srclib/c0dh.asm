@@ -81,10 +81,6 @@ relo_data_loop:
     jmp     relo_data_loop
 relo_data_done:
 
-    ; make sure there's no garbage in the 16 most significant bits of EBP and ESP
-    xor     ebp, ebp
-    and     esp, 0xFFFF
-
     ; Init .bss
 
     push    ebx

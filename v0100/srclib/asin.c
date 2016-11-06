@@ -9,6 +9,13 @@
 #include <errno.h>
 
 #ifdef __HUGE__
+#define __HUGE_OR_UNREAL__
+#endif
+#ifdef __UNREAL__
+#define __HUGE_OR_UNREAL__
+#endif
+
+#ifdef __HUGE_OR_UNREAL__
 #define xbp "bp"
 #else
 #define xbp "ebp"

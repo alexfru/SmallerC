@@ -1,8 +1,9 @@
 /*
   This is a basic test for <math.h> functions.
 
-  How to compile for DOS (huge/.EXE, 32-bit DPMI/.EXE):
+  How to compile for DOS (huge/.EXE, unreal/.EXE, 32-bit DPMI/.EXE):
     smlrcc -dosh math.c -o mathh.exe
+    smlrcc -dosu math.c -o mathu.exe
     smlrcc -dosp math.c -o mathp.exe
 
   How to compile for Windows:

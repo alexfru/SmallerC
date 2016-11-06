@@ -1,7 +1,8 @@
 /*
-  How to compile for DOS (huge, small and DPMI memory models):
-    smlrcc -dosh exc.c -o exc.exe
+  How to compile for DOS (small/.EXE, huge/.EXE, unreal/.EXE, 32-bit DPMI/.EXE):
     smlrcc -doss exc.c -o exc.exe
+    smlrcc -dosh exc.c -o exc.exe
+    smlrcc -dosu exc.c -o exc.exe
     smlrcc -dosp exc.c -o exc.exe
 
   How to compile for Windows:

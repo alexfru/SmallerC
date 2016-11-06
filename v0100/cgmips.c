@@ -27,7 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /*                                                                           */
 /*                                Smaller C                                  */
 /*                                                                           */
-/*       A simple and small single-pass C compiler ("small C" class).        */
+/*                 A simple and small single-pass C compiler                 */
 /*                                                                           */
 /*                           MIPS code generator                             */
 /*                                                                           */

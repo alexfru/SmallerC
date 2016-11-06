@@ -1,13 +1,20 @@
 /*
-  Copyright (c) 2014-2015, Alexey Frunze
+  Copyright (c) 2014-2016, Alexey Frunze
   2-clause BSD license.
 */
 #include <string.h>
 #include <stdlib.h>
 
+#ifdef __HUGE__
+#define __HUGE_OR_UNREAL__
+#endif
+#ifdef __UNREAL__
+#define __HUGE_OR_UNREAL__
+#endif
+
 #ifdef _DOS
 
-#ifdef __HUGE__
+#ifdef __HUGE_OR_UNREAL__
 static
 int DosMemResize(unsigned seg, unsigned paras)
 {
@@ -18,6 +25,10 @@ int DosMemResize(unsigned seg, unsigned paras)
       "cmc\n"
       "sbb ax, ax\n"
       "and eax, 1");
+#ifdef __UNREAL__
+  asm("push word 0\n"
+      "pop  es");
+#endif
 }
 
 void* realloc(void* ptr, unsigned size)
@@ -57,7 +68,7 @@ void* realloc(void* ptr, unsigned size)
     return 0;
   }
 }
-#endif // __HUGE__
+#endif // __HUGE_OR_UNREAL__
 
 #ifdef _DPMI
 #include "idpmi.h"
@@ -65,7 +76,7 @@ void* realloc(void* ptr, unsigned size)
 
 #endif // _DOS
 
-#ifndef __HUGE__
+#ifndef __HUGE_OR_UNREAL__
 #ifndef _WINDOWS
 
 #include "mm.h"
@@ -118,7 +129,7 @@ void* realloc(void* ptr, unsigned size)
 }
 
 #endif // !_WINDOWS
-#endif // !__HUGE__
+#endif // !__HUGE_OR_UNREAL__
 
 
 #ifdef _WINDOWS

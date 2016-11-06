@@ -7,6 +7,11 @@
     smlrcc -dosh testopa.c -o testopa.exe
     testopa.exe
    OR
+    smlrcc -dosu genopa.c -o genopa.exe
+    genopa.exe >testopa.c
+    smlrcc -dosu testopa.c -o testopa.exe
+    testopa.exe
+   OR
     smlrcc -dosp genopa.c -o genopa.exe
     genopa.exe >testopa.c
     smlrcc -dosp testopa.c -o testopa.exe

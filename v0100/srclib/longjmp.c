@@ -1,12 +1,12 @@
 /*
-  Copyright (c) 2014, Alexey Frunze
+  Copyright (c) 2014-2016, Alexey Frunze
   2-clause BSD license.
 */
 #include <setjmp.h>
 /*
 typedef struct
 {
-  unsigned xip;    // ip/cs:ip/eip
+  unsigned xip;    // ip / cs:ip / eip
   unsigned xflags; // (e)flags
   unsigned xbp;    // (e)bp
   unsigned xsp;    // (e)sp
@@ -78,14 +78,14 @@ int setjmp(jmp_buf jb)
   asm("mov eax, [bp+4]"); // return address
   asm("mov [bx], eax");
   // flags (mainly for IF)
-  asm("pushf");
-  asm("pop word [bx+4]");
-  // bp
-  asm("mov ax, [bp]"); // caller's bp
-  asm("mov [bx+8], ax");
+  asm("pushfd");
+  asm("pop dword [bx+4]");
+  // ebp
+  asm("mov eax, [bp]"); // caller's ebp
+  asm("mov [bx+8], eax");
   // sp
-  asm("lea ax, [bp+2*4]"); // caller's sp
-  asm("mov [bx+12], ax");
+  asm("lea eax, [bp+2*4]"); // caller's sp
+  asm("mov [bx+12], eax");
 
   // return 0
   asm("xor eax, eax");
@@ -106,8 +106,8 @@ void longjmp(jmp_buf jb, int val)
 
   // sp
   asm("mov sp, [bx+12]");
-  // bp
-  asm("mov bp, [bx+8]");
+  // ebp
+  asm("mov ebp, [bx+8]");
   // flags (mainly for IF)
   asm("push word [bx+4]");
   // cs:ip in xip
@@ -118,6 +118,54 @@ void longjmp(jmp_buf jb, int val)
 }
 
 #else // and now __SMALLER_C_32__, not __HUGE__
+
+#ifdef __UNREAL__
+
+int setjmp(jmp_buf jb)
+{
+  asm("mov ebx, [bp+8]"); // jb
+
+  // cs:ip in xip
+  asm("mov eax, [bp+4]"); // return address
+  asm("mov [ebx], eax");
+  // flags (mainly for IF)
+  asm("pushfd");
+  asm("pop dword [ebx+4]");
+  // ebp
+  asm("mov eax, [bp]"); // caller's ebp
+  asm("mov [ebx+8], eax");
+  // sp
+  asm("lea eax, [bp+2*4]"); // caller's sp
+  asm("mov [ebx+12], eax");
+
+  // return 0
+  asm("xor eax, eax");
+}
+
+void longjmp(jmp_buf jb, int val)
+{
+  asm("mov eax, [bp+12]"); // val
+  // if val is 0, make it 1
+  asm("or eax, eax");
+  asm("setz bl");
+  asm("or al, bl");
+
+  asm("mov ebx, [bp+8]"); // jb
+
+  // sp
+  asm("mov sp, [ebx+12]");
+  // ebp
+  asm("mov ebp, [ebx+8]");
+  // flags (mainly for IF)
+  asm("push word [ebx+4]");
+  // cs:ip in xip
+  asm("push dword [ebx]");
+
+  // return val
+  asm("iret");
+}
+
+#else // and now __SMALLER_C_32__, not __HUGE__, not __UNREAL__
 
 int setjmp(jmp_buf jb)
 {
@@ -164,6 +212,8 @@ void longjmp(jmp_buf jb, int val)
   // return val
   asm("iretd");
 }
+
+#endif // __UNREAL__
 
 #endif // __HUGE__
 

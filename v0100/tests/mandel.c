@@ -11,8 +11,9 @@
 
   Adapted from http://rosettacode.org/wiki/Mandelbrot_set#JavaScript
 
-  How to compile for DOS (huge/.EXE, 32-bit DPMI/.EXE):
+  How to compile for DOS (huge/.EXE, unreal/.EXE, 32-bit DPMI/.EXE):
     smlrcc -dosh mandel.c -o mandelh.exe
+    smlrcc -dosu mandel.c -o mandelu.exe
     smlrcc -dosp mandel.c -o mandelp.exe
 
   How to compile for Windows:

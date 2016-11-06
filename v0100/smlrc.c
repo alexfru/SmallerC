@@ -340,6 +340,7 @@ int fsetpos(FILE*, fpos_t*);
 #define FormatSegmented 1
 //#define FormatSegTurbo  2
 #define FormatSegHuge   3
+#define FormatSegUnreal 4
 
 #define SymVoidSynPtr 0
 #define SymIntSynPtr  1
@@ -6925,8 +6926,8 @@ int ParseDerived(int tok)
 #ifdef CAN_COMPILE_32BIT
   if (tok == tokIntr)
   {
-    // __interrupt is supported in the huge mode(l) only
-    if (OutputFormat != FormatSegHuge)
+    // __interrupt is supported in the huge and unreal mode(l)s only
+    if (OutputFormat != FormatSegHuge && OutputFormat != FormatSegUnreal)
       errorDecl();
     isInterrupt = 1;
     tok = GetToken();
@@ -9451,6 +9452,8 @@ int main(int argc, char** argv)
 #ifdef CAN_COMPILE_32BIT
   if (OutputFormat == FormatSegHuge)
     DefineMacro("__HUGE__", "");
+  if (OutputFormat == FormatSegUnreal)
+    DefineMacro("__UNREAL__", "");
 #endif
   if (CharIsSigned)
     DefineMacro("__SMALLER_C_SCHAR__", "");

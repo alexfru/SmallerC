@@ -1,10 +1,13 @@
 /*
-  How to compile for DOS:
-    smlrcc -dosh isr.c -o isr.exe
+  How to compile for DOS (huge/.EXE, unreal/.EXE):
+    smlrcc -dosh isr.c -o isrh.exe
+    smlrcc -dosu isr.c -o isru.exe
 */
 
 #ifndef __HUGE__
-#error This program requires the huge mode(l)
+#ifndef __UNREAL__
+#error This program requires the huge or unreal mode(l)
+#endif
 #endif
 
 #include <stdio.h>

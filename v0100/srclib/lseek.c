@@ -1,12 +1,19 @@
 /*
-  Copyright (c) 2014-2015, Alexey Frunze
+  Copyright (c) 2014-2016, Alexey Frunze
   2-clause BSD license.
 */
 #include <unistd.h>
 
+#ifdef __HUGE__
+#define __HUGE_OR_UNREAL__
+#endif
+#ifdef __UNREAL__
+#define __HUGE_OR_UNREAL__
+#endif
+
 #ifdef _DOS
 
-#ifdef __HUGE__
+#ifdef __HUGE_OR_UNREAL__
 static
 int DosSeek(int handle, unsigned offset, int whence, unsigned* offsetOrError)
 {
@@ -21,14 +28,19 @@ int DosSeek(int handle, unsigned offset, int whence, unsigned* offsetOrError)
       "sbb ax, ax\n"
       "and dx, ax\n"
       "and eax, 1");
-  asm("mov esi, [bp + 20]\n"
-      "ror esi, 4\n"
+  asm("mov esi, [bp + 20]");
+#ifdef __HUGE__
+  asm("ror esi, 4\n"
       "mov ds, si\n"
       "shr esi, 28\n"
       "mov [si], bx\n"
       "mov [si + 2], dx");
+#else
+  asm("mov [esi], bx\n"
+      "mov [esi + 2], dx");
+#endif
 }
-#endif // __HUGE__
+#endif // __HUGE_OR_UNREAL__
 
 #ifdef _DPMI
 static

@@ -1,8 +1,9 @@
 /*
-  How to compile for DOS (all mode(l)s: tiny/.COM, small/.EXE, huge/.EXE, 32-bit DPMI/.EXE):
+  How to compile for DOS (all mode(l)s: tiny/.COM, small/.EXE, huge/.EXE, unreal/.EXE, 32-bit DPMI/.EXE):
     smlrcc -dost hw.c -o hwdt.com
     smlrcc -doss hw.c -o hwds.exe
     smlrcc -dosh hw.c -o hwdh.exe
+    smlrcc -dosu hw.c -o hwdu.exe
     smlrcc -dosp hw.c -o hwdp.exe
 
   How to compile for Windows:

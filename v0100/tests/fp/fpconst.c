@@ -1,8 +1,9 @@
 /*
   This is a test for floating point constants.
 
-  How to compile for DOS (huge/.EXE, 32-bit DPMI/.EXE):
+  How to compile for DOS (huge/.EXE, unreal/.EXE, 32-bit DPMI/.EXE):
     smlrcc -dosh fpconst.c -o fpconsth.exe
+    smlrcc -dosu fpconst.c -o fpconstu.exe
     smlrcc -dosp fpconst.c -o fpconstp.exe
 
   How to compile for Windows:

@@ -66,8 +66,19 @@ float frexpf(float value, int* e)
 #else
 
 #ifdef __HUGE__
+#define __HUGE_OR_UNREAL__
+#endif
+#ifdef __UNREAL__
+#define __HUGE_OR_UNREAL__
+#endif
+
+#ifdef __HUGE_OR_UNREAL__
 #define xbp "bp"
+#ifdef __HUGE__
 #define xbx "bx"
+#else
+#define xbx "ebx"
+#endif
 #else
 #define xbp "ebp"
 #define xbx "ebx"
