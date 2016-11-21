@@ -1617,7 +1617,7 @@ int GetNumber(void)
       // this is a float constant (has either a dot or an exponent)
       // get float suffix, if any
       type = 'f';
-      if (*p == 'f' || *p == 'F')
+      if (*p == 'f' || *p == 'F' || *p == 'l' || *p == 'L')
         ShiftCharN(1);
       // also drop trailing zeroes, if any
       while (mcnt)
@@ -6546,9 +6546,6 @@ int ParseBase(int tok, int base[2])
   switch (tok)
   {
 #ifndef NO_FP
-  case tokDouble: // double is an alias for float
-    tok = tokFloat;
-    // fallthrough
   case tokFloat:
 #endif
   case tokVoid:
@@ -6556,6 +6553,9 @@ int ParseBase(int tok, int base[2])
     tok = GetToken();
     break;
 
+#ifndef NO_FP
+  case tokDouble:
+#endif
   case tokChar:
   case tokInt:
   case tokShort:
@@ -6565,7 +6565,7 @@ int ParseBase(int tok, int base[2])
   case tokSigned:
   case tokUnsigned:
   {
-    int allowedMask = 0x3F; // unsigned:0x20 signed:0x10 long:0x08 int:0x04 short:0x02 char:0x01
+    int allowedMask = 0x7F; // double:0x40 unsigned:0x20 signed:0x10 long:0x08 int:0x04 short:0x02 char:0x01
     int typeMask = 0;
     int tokMask, disallowedMask;
 
@@ -6573,19 +6573,23 @@ lcont:
     switch (tok)
     {
     case tokChar:
-      tokMask = 0x01; disallowedMask = 0x0E; break; // disallows long, int, short
+      tokMask = 0x01; disallowedMask = 0x4E; break; // disallows double, long, int, short
     case tokShort:
-      tokMask = 0x02; disallowedMask = 0x09; break; // disallows long, char
+      tokMask = 0x02; disallowedMask = 0x49; break; // disallows double, long, char
     case tokInt:
-      tokMask = 0x04; disallowedMask = 0x01; break; // disallows char
+      tokMask = 0x04; disallowedMask = 0x41; break; // disallows double, char
 #ifdef CAN_COMPILE_32BIT
     case tokLong:
       tokMask = 0x08; disallowedMask = 0x03; break; // disallows short, char
 #endif
     case tokSigned:
-      tokMask = 0x10; disallowedMask = 0x20; break; // disallows unsigned
+      tokMask = 0x10; disallowedMask = 0x60; break; // disallows double, unsigned
     case tokUnsigned:
-      tokMask = 0x20; disallowedMask = 0x10; break; // disallows signed
+      tokMask = 0x20; disallowedMask = 0x50; break; // disallows double, signed
+#ifndef NO_FP
+    case tokDouble:
+      tokMask = 0x40; disallowedMask = 0x37; break; // disallows all except long
+#endif
     default:
       tokMask = disallowedMask = 0; break;
     }
@@ -6611,6 +6615,11 @@ lcont:
     case 0x08: case 0x18: case 0x0C: case 0x1C: typeMask = tokLong; break;
     case 0x28: case 0x2C: typeMask = tokULong; break;
 #endif
+#ifndef NO_FP
+    case 0x40: case 0x48: typeMask = tokFloat; break; // (long) double is alias for float
+#endif
+    default:
+      errorDecl();
     }
     *base = typeMask;
   }
@@ -6688,8 +6697,10 @@ lcont:
 #ifndef NO_TYPEDEF_ENUM
       if (structType == tokEnum)
       {
-        int val = 0;
+        int lastVal = -1, val = 0;
+        int maxVal = (int)(truncUint(~0u) >> 1); // max positive signed int
         int CurScope;
+        char* erange = "Enumeration constant out of range\n";
 
         tok = GetToken();
         while (tok != '}')
@@ -6726,14 +6737,22 @@ lcont:
 
             if (!gotUnary)
               errorUnexpectedToken(tok);
-            anyIntTypeCheck(synPtr); // TBD!!! check that the value is in the range of signed int
+            anyIntTypeCheck(synPtr);
             if (!constExpr)
               errorNotConst();
+            if (SyntaxStack0[synPtr] == tokUnsigned && truncUint(val) > (unsigned)maxVal)
+              error(erange);
+            lastVal = val = truncInt(val);
+          }
+          else
+          {
+            if (lastVal == maxVal)
+              error(erange);
+            lastVal = val = lastVal + 1;
           }
 
           PushSyntax2(tokIdent, ident);
           PushSyntax2(tokNumInt, val);
-          val = (int)(val + 1u);
 
           if (tok == ',')
             tok = GetToken();

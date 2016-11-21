@@ -11,6 +11,7 @@
 #define NAN       (-(0.f/0.f)) // without '-' we get -NAN on x87
 #define HUGE_VALF INFINITY
 #define HUGE_VAL  INFINITY
+#define HUGE_VALL INFINITY
 
 #define MATH_ERRNO 1
 #define MATH_ERREXCEPT 2

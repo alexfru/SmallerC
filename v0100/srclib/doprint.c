@@ -364,7 +364,7 @@ int __doprint(FILE* f, char* fmt, va_list vl)
       }
     }
 #ifdef __SMALLER_C_32__
-    else if (c == 'l')
+    else if (c == 'l' || c == 'L')
     {
       lmodifier = c;
     }
