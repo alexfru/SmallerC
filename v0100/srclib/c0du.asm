@@ -120,6 +120,8 @@ __start:
     mov     cx, bx
     rep     stosb
 
+    cli
+
     ; Save IRQ5/#GP ISR address and install our IRQ5/#GP ISR
     xor     ax, ax
     mov     ds, ax
@@ -143,6 +145,8 @@ __start:
     xor     ax, ax
     mov     ds, ax
     mov     es, ax
+
+    sti
 
     ; Call __start__(), which will set up argc and argv for main() and call exit(main(argc, argv))
     db      0x9A
