@@ -5,8 +5,8 @@ int main()
    char a;
    short b;
 
-   printf("%d %d\n", sizeof(char), sizeof(a));
-   printf("%d %d\n", sizeof(short), sizeof(b));
+   printf("%d %d\n", (int)sizeof(char), (int)sizeof(a));
+   printf("%d %d\n", (int)sizeof(short), (int)sizeof(b));
 
    return 0;
 }

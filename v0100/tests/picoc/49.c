@@ -2,8 +2,8 @@
 
 struct point
 {
-   int x;
-   int y;
+   double x;
+   double y;
 };
 
 struct point point_array[100];
@@ -12,10 +12,10 @@ int main()
 {
    int my_point = 10;
 
-   point_array[my_point].x = 12;
-   point_array[my_point].y = 56;
+   point_array[my_point].x = 12.34;
+   point_array[my_point].y = 56.78;
 
-   printf("%d, %d\n", point_array[my_point].x, point_array[my_point].y);
+   printf("%g, %g\n", point_array[my_point].x, point_array[my_point].y);
 
    return 0;
 }
