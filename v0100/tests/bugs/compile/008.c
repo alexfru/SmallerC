@@ -1,7 +1,12 @@
-// Function-definition should not be part of declaration.
-// Some compilers allow this, including ours.
-// Should not compile.
-int one = 1, fzero(void) { return 0; }
+typedef int F(int a, int b);
+F add;
+
+// The following function definition (both declaration and
+// compound-statement) should not compile.
+F add
+{
+  return a + b;
+}
 
 int main(void)
 {

@@ -1,8 +1,9 @@
+// Function-definition should not be part of declaration.
+// Some compilers allow this, including ours.
+// Should not compile.
+int one = 1, fzero(void) { return 0; }
+
 int main(void)
 {
-  // We don't validate all redefinitions and
-  // the last definition obscures previous ones.
-  // Should not compile.
-  int a = 0, a = 0;
-  return a;
+  return 0;
 }
