@@ -2509,9 +2509,10 @@ void RwPeElf(void)
 
       start = pSectDescrs[SectCnt].Start & 0xFFFFF000;
       stop = (pSectDescrs[SectCnt].Stop + 0xFFF) & 0xFFFFF000;
-      PeOptionalHeader.BaseOfCode = start;
-      PeSectionHeaders[0].VirtualAddress = PeSectionHeaders[0].PointerToRawData =
-        start - imageBase;
+      PeOptionalHeader.BaseOfCode =
+        PeSectionHeaders[0].VirtualAddress =
+          PeSectionHeaders[0].PointerToRawData =
+            start - imageBase;
       PeSectionHeaders[0].Misc.VirtualSize = PeSectionHeaders[0].SizeOfRawData =
         PeOptionalHeader.SizeOfCode = stop - start;
 
@@ -2519,9 +2520,10 @@ void RwPeElf(void)
       {
         start = pSectDescrs[SectCnt + 1].Start & 0xFFFFF000;
         stop = (pSectDescrs[SectCnt + 1].Stop + 0xFFF) & 0xFFFFF000;
-        PeOptionalHeader.BaseOfData = start;
-        PeSectionHeaders[1].VirtualAddress = PeSectionHeaders[1].PointerToRawData =
-          start - imageBase;
+        PeOptionalHeader.BaseOfData =
+          PeSectionHeaders[1].VirtualAddress =
+            PeSectionHeaders[1].PointerToRawData =
+              start - imageBase;
         PeSectionHeaders[1].Misc.VirtualSize =
           PeOptionalHeader.SizeOfInitializedData = stop - start;
 
