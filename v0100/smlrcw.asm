@@ -1,5 +1,5 @@
 ; /*
-; Copyright (c) 2014-2015, Alexey Frunze
+; Copyright (c) 2014-2017, Alexey Frunze
 ; All rights reserved.
 ;
 ; Redistribution and use in source and binary forms, with or without
@@ -70,8 +70,8 @@ OptionalHeader:
     dd _data_size_                  ; SizeOfInitializedData
     dd 0                            ; SizeOfUninitializedData
     dd Entry - ImageBase            ; AddressOfEntryPoint
-    dd _text_start_                 ; BaseOfCode
-    dd _rodata_start_               ; BaseOfData
+    dd _text_start_ - ImageBase     ; BaseOfCode
+    dd _rodata_start_ - ImageBase   ; BaseOfData
     dd ImageBase                    ; ImageBase
     dd SectionAlignment             ; SectionAlignment
     dd FileAlignment                ; FileAlignment
