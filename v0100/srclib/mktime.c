@@ -1,12 +1,12 @@
 /*
-  Copyright (c) 2014, Alexey Frunze
+  Copyright (c) 2014-2017, Alexey Frunze
   2-clause BSD license.
 */
 #include "itime.h"
 
 #ifdef _DOS
 
-#ifdef __HUGE__
+#ifdef __SMALLER_C_32__
 
 // mktime() must take local time and return UTC/GMT time
 time_t mktime(struct tm* tm)
@@ -15,7 +15,7 @@ time_t mktime(struct tm* tm)
   return __buildtime(tm);
 }
 
-#endif // __HUGE__
+#endif
 
 #endif // _DOS
 
