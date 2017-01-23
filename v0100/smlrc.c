@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2012-2016, Alexey Frunze
+Copyright (c) 2012-2017, Alexey Frunze
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -5170,6 +5170,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
   case '?':
     {
       int oldIdxLeft, oldSpLeft;
+      int oldIdxCond, oldSpCond;
       int sr, sl, smid;
       int condTypeSynPtr;
       int sc = (LabelCnt += 2) - 2;
@@ -5268,8 +5269,8 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
 */
         del(oldIdxLeft - (oldSpLeft - sp), 1); // delete '*'
         del(oldIdxRight - (oldSpRight - sp), 1); // delete '*'
-        ins2(oldIdxRight + 2 - (oldSpRight - sp), tokUnaryStar, 0); // use 0 deref size to drop meaningless dereferences
-        oldSpRight--;
+        oldSpLeft--;
+        // '*' will be inserted at the end
       }
       else
       {
@@ -5287,8 +5288,8 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       // jump to exprMID if exprL is non-zero
       ins2(*idx + 1, tokShortCirc, -sc);
 
-      oldIdxLeft = *idx;
-      oldSpLeft = sp;
+      oldIdxCond = *idx;
+      oldSpCond = sp;
       sl = exprval(idx, &condTypeSynPtr, &constExpr[0]);
 
       // Bar void and struct/union
@@ -5298,7 +5299,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
       if (isFloat(condTypeSynPtr))
       {
         // insert a call to compare the float with 0.0
-        int above = oldIdxLeft + 1 - (oldSpLeft - sp);
+        int above = oldIdxCond + 1 - (oldSpCond - sp);
         int below = *idx + 1;
         // the returned value will be one of -1,0,+1, that is, 0 if 0, +/-1 otherwise,
         // IOW, suitable for conditional jump on zero/non-zero
@@ -5315,6 +5316,8 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
 
       if (constExpr[0])
       {
+        int c1 = 0, c2 = 0;
+        // Stack now: exprL tokShortCirc exprR tokGoto tokLogAnd exprMID ?/tokLogAnd
         if (
 #ifndef NO_FP
             isFloat(condTypeSynPtr) ?
@@ -5323,16 +5326,42 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
               (truncUint(sl) != 0))
         {
           if (constExpr[1])
+          {
             *ConstExpr = 1, s = smid;
-          // TBD??? else can drop exprL and exprR subexpressions
+          }
+          else
+          {
+            // Drop exprL and exprR subexpressions
+            c1 = oldIdxLeft - (oldSpLeft - sp) - *idx; // includes tokShortCirc, tokGoto, tokLogAnd
+            c2 = 1; // include '?'/tokLogAnd
+          }
         }
         else
         {
           if (constExpr[2])
+          {
             *ConstExpr = 1, s = sr;
-          // TBD??? else can drop exprL and exprMID subexpressions
+          }
+          else
+          {
+            // Drop exprL and exprMID subexpressions
+            c1 = oldIdxCond - (oldSpCond - sp) - *idx + 1; // includes tokShortCirc
+            c2 = (oldIdxRight - (oldSpRight - sp)) -
+                 (oldIdxLeft - (oldSpLeft - sp)) + 3; // includes tokGoto, tokLogAnd, '?'/tokLogAnd
+          }
+        }
+        if (c1)
+        {
+          int pos = oldIdxRight - (oldSpRight - sp) + 2 - c2;
+          if (!structs && stack[pos - 1][0] == tokUnaryStar)
+            stack[pos++][0] = tokUnaryPlus, c2--; // ensure non-lvalue-ness by hiding the dereference
+          del(pos, c2);
+          del(*idx + 1, c1);
         }
       }
+      // finish transforming "cond ? a : b" into "*(cond ? &a : &b)", insert '*'
+      if (structs)
+        ins2(oldIdxRight + 2 - (oldSpRight - sp), tokUnaryStar, 0); // use 0 deref size to drop meaningless dereferences
       simplifyConstExpr(s, *ConstExpr, ExprTypeSynPtr, oldIdxRight + 1 - (oldSpRight - sp), *idx + 1);
     }
     break;
