@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2016, Alexey Frunze
+Copyright (c) 2014-2017, Alexey Frunze
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -84,6 +84,7 @@ int strcmp(char*, char*);
 int strncmp(char*, char*, size_t);
 char* strpbrk(char*, char*);
 void* memcpy(void*, void*, size_t);
+int memcmp(void*, void*, size_t);
 void* memset(void*, int, size_t);
 void* memmove(void*, void*, size_t);
 
@@ -252,6 +253,24 @@ void DetermineVaListType(void)
 }
 #endif // DETERMINE_VA_LIST
 #endif // __SMALLER_C__
+
+size_t StrAnyOf(char* s, char* ss)
+{
+  size_t idx = 1, slen;
+  if (!s || !*s || !ss)
+    return 0;
+  slen = strlen(s);
+  for (;;)
+  {
+    size_t sslen = strlen(ss);
+    if (sslen == 0)
+      return 0;
+    if (slen == sslen && !memcmp(s, ss, slen))
+      return idx;
+    ss += sslen + 1;
+    idx++;
+  }
+}
 
 void DeleteTemporaryFiles(void)
 {
@@ -1389,7 +1408,8 @@ int main(int argc, char* argv[])
 
   for (i = 1; i < argc; i++)
   {
-    if (!strcmp(argv[i], "-verbose") || !strcmp(argv[i], "-v"))
+    if (StrAnyOf(argv[i], "-verbose\0"
+                          "-v\0"))
     {
       verbose = 1;
       argv[i] = NULL;
@@ -1415,12 +1435,13 @@ int main(int argc, char* argv[])
         continue;
       }
     }
-    else if (!strcmp(argv[i], "-map") ||
-             !strcmp(argv[i], "-entry") ||
-             !strcmp(argv[i], "-origin") ||
-             !strcmp(argv[i], "-stack") ||
-             !strcmp(argv[i], "-minheap") ||
-             !strcmp(argv[i], "-maxheap"))
+    else if (StrAnyOf(argv[i], "-map\0"
+                               "-pesubsys\0"
+                               "-entry\0"
+                               "-origin\0"
+                               "-stack\0"
+                               "-minheap\0"
+                               "-maxheap\0"))
     {
       if (i + 1 < argc)
       {
@@ -1443,12 +1464,12 @@ int main(int argc, char* argv[])
         continue;
       }
     }
-    else if (!strcmp(argv[i], "-signed-char") ||
-             !strcmp(argv[i], "-unsigned-char") ||
-             !strcmp(argv[i], "-leading-underscore") ||
-             !strcmp(argv[i], "-no-leading-underscore") ||
-             !strcmp(argv[i], "-winstack") ||
-             !strcmp(argv[i], "-Wall"))
+    else if (StrAnyOf(argv[i], "-signed-char\0"
+                               "-unsigned-char\0"
+                               "-leading-underscore\0"
+                               "-no-leading-underscore\0"
+                               "-winstack\0"
+                               "-Wall\0"))
     {
       if (!strcmp(argv[i], "-unsigned-char"))
         UnsignedChar = 1;
@@ -1458,8 +1479,8 @@ int main(int argc, char* argv[])
       argv[i] = NULL;
       continue;
     }
-    else if (!strcmp(argv[i], "-norel") ||
-             !strcmp(argv[i], "-gui"))
+    else if (StrAnyOf(argv[i], "-norel\0"
+                               "-gui\0"))
     {
       AddOption(&LinkerOptions, &LinkerOptionsLen, argv[i]);
       argv[i] = NULL;

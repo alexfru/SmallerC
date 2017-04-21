@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2016, Alexey Frunze
+Copyright (c) 2014-2017, Alexey Frunze
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -33,9 +33,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /*                                                                           */
 /*          Produces:                                                        */
 /*          - 16/32-bit DOS executables                                      */
-/*            (tiny model/.COM, small model/.EXE, huge model/.EXE)           */
+/*            (tiny model/.COM, small model/.EXE,                            */
+/*             huge model/.EXE, unreal model/.EXE,                           */
+/*             32-bit DPMI/.EXE)                                             */
 /*          - 32-bit PE/Windows executables                                  */
 /*          - 32-bit ELF/Linux executables                                   */
+/*          - 32-bit OMAGIC a.out executables                                */
 /*          - 16/32-bit flat executables                                     */
 /*                                                                           */
 /*                                 Main file                                 */
@@ -563,6 +566,24 @@ void DetermineVaListType(void)
 }
 #endif // DETERMINE_VA_LIST
 #endif // __SMALLER_C__
+
+size_t StrAnyOf(char* s, char* ss)
+{
+  size_t idx = 1, slen;
+  if (!s || !*s || !ss)
+    return 0;
+  slen = strlen(s);
+  for (;;)
+  {
+    size_t sslen = strlen(ss);
+    if (sslen == 0)
+      return 0;
+    if (slen == sslen && !memcmp(s, ss, slen))
+      return idx;
+    ss += sslen + 1;
+    idx++;
+  }
+}
 
 void error(char* format, ...)
 {
@@ -1142,8 +1163,10 @@ int FindSymbolByName(const char* SymName)
     // - section end, e.g. __stop__text (for .text)
     // - stack start, e.g. __start_stack__
     // which aren't defined yet
-    if (!strcmp(SymName, "__start_allcode__") || !strcmp(SymName, "__stop_allcode__") ||
-        !strcmp(SymName, "__start_alldata__") || !strcmp(SymName, "__stop_alldata__") ||
+    if (StrAnyOf(SymName, "__start_allcode__\0"
+                          "__stop_allcode__\0"
+                          "__start_alldata__\0"
+                          "__stop_alldata__\0") ||
         (!strncmp(SymName, "__start_", sizeof "__start_" - 1) && SymName[sizeof "__start_" - 1] != '\0') ||
         (!strncmp(SymName, "__stop_", sizeof "__stop_" - 1) && SymName[sizeof "__stop_" - 1] != '\0'))
       DeferSymbol(SymName);
@@ -1843,8 +1866,8 @@ void Pass(int pass, FILE* fout, uint32 hdrsz)
             break;
           case FormatDosExeHuge:
             // Force 4-byte alignment of the .relot and .relod relocation sections in the huge mode(l)
-            if (!strcmp(pMeta->pSectNames + pSect->h.sh_name, ".relot") ||
-                !strcmp(pMeta->pSectNames + pSect->h.sh_name, ".relod"))
+            if (StrAnyOf(pMeta->pSectNames + pSect->h.sh_name, ".relot\0"
+                                                               ".relod\0"))
               align = 4;
             if (align > 16)
               error("Section alignment larger than paragraph size (16)\n");
@@ -3199,10 +3222,20 @@ int main(int argc, char* argv[])
         OutputFormat = FormatDosExeUnreal;
         continue;
       }
-      else if (!strcmp(argv[i], "-pe") || !strcmp(argv[i], "-win")) // TBD??? UEFI types
+      else if (StrAnyOf(argv[i], "-pe\0"
+                                 "-win\0"))
       {
         OutputFormat = FormatWinPe32;
         continue;
+      }
+      else if (!strcmp(argv[i], "-pesubsys")) // primarily for UEFI subsystems
+      {
+        if (i + 1 < argc)
+        {
+          ++i;
+          PeOptionalHeader.Subsystem = strtoul(argv[i], NULL, 0);
+          continue;
+        }
       }
       else if (!strcmp(argv[i], "-gui"))
       {
