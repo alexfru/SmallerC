@@ -251,7 +251,7 @@ unsigned d2f(unsigned char* digits, int cnt, int eexp)
 
   // Convert the numerator to binary
   for (tmp = 0; tmp < cnt; tmp++)
-    ChainMultiplyAdd(ConstBinDigits, numBytes, 10, ConstDigits[tmp]);
+    ChainMultiplyAdd(ConstBinDigits, numBytes, 10, digits[tmp]);
   for (tmp = eexp; tmp > 0; tmp--)
     ChainMultiplyAdd(ConstBinDigits, numBytes, 10, 0);
 
