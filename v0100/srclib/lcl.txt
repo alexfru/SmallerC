@@ -188,6 +188,7 @@ cosh.c
 sinh.c
 tanh.c
 cvtdf.c
+cvtfd.c
 
 lngfu.c
 lngfs.c
