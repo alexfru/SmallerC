@@ -116,6 +116,9 @@ atoi.c
 atol.c
 strtol.c
 strtoul.c
+strtof.c
+strtod.c
+atof.c
 rand.c
 srand.c
 bsearch.c

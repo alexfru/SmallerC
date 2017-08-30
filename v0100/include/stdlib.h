@@ -44,6 +44,9 @@ int atoi(char*);
 long atol(char*);
 long strtol(char*, char**, int);
 unsigned long strtoul(char*, char**, int);
+float strtof(char*, char**);
+double strtod(char*, char**);
+double atof(char*);
 #endif
 
 #define RAND_MAX 32767

@@ -592,6 +592,7 @@ TestCase cases[] =
 #if defined(__SMALLER_C__)
   { __LINE__, "1e", "%e", EOF, { tFloat, &fouts[0] } }, // msvcrt,OW,glibc return 1/1.0
   { __LINE__, "1e1", "%2e", 0, { tFloat, &fouts[0] } }, // msvcrt,OW,glibc return 1/1.0
+  { __LINE__, "1e\x80\xFF", "%e", 0, { tFloat, &fouts[0] } }, // msvcrt,glibc return 1/1.0
 #endif
   { __LINE__, "nan", "%2e", 0 },
   { __LINE__, "inf", "%2e", 0 },
@@ -648,6 +649,12 @@ TestCase cases[] =
   { __LINE__, "ab", "a%hnb%hn", 0, { tShort, &souts[0], { &shorts[1] }, tShort, &souts[1], { &shorts[2] } } },
   { __LINE__, "some text", "some text%n", 0, { tInt, &iouts[0], { &ints[9] } } },
   { __LINE__, "sometext", "some text%n", 0, { tInt, &iouts[0], { &ints[8] } } },
+  { __LINE__, "\x80\xFF", "\x80\xFF%n", 0, { tInt, &iouts[0], { &ints[2] } } },
+  { __LINE__, "\x80\xFF""123\x80\xFF", "\x80\xFF%d\x80\xFF%n", 1, { tInt, &iouts[0], { &ints[123] }, tInt, &iouts[1], { &ints[7] } } },
+  { __LINE__, "\x80\xFF""1.5\x80\xFF", "\x80\xFF%e\x80\xFF%n", 1, { tFloat, &fouts[0], { &f1_5 }, tInt, &iouts[0], { &ints[7] } } },
+  { __LINE__, "\x80\xFF""1.\x80\xFF", "\x80\xFF%e\x80\xFF%n", 1, { tFloat, &fouts[0], { &f1 }, tInt, &iouts[0], { &ints[6] } } },
+  { __LINE__, "1\x80\xFF", "%e\x80\xFF%n", 1, { tFloat, &fouts[0], { &f1 }, tInt, &iouts[0], { &ints[3] } } },
+  { __LINE__, "1.\x80\xFF", "%e\x80\xFF%n", 1, { tFloat, &fouts[0], { &f1 }, tInt, &iouts[0], { &ints[4] } } },
   { __LINE__, "a", "b%d", 0, },
   { __LINE__, "", "a", EOF, },
   { __LINE__, "-123", "%ld", 1, { tLong, &louts[0], { &l_123 } } },
