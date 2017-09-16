@@ -3,13 +3,13 @@ bindir = $(prefix)/bin
 libdir = $(prefix)/smlrc/lib
 incdir = $(prefix)/smlrc/include
 
-CFLAGS = -pipe -Wall -O2
+CFLAGS = -pipe -Wall -O0 -g
 CFLAGS += -DHOST_LINUX -DPATH_PREFIX='"$(prefix)"'
 
 CC = gcc
 
 bins = smlrc smlrl smlrcc smlrpp n2f
-libs = lcdh.a lcdu.a lcds.a lcw.a lcl.a lcdp.a
+libs = lcdh.a lcdu.a lcds.a lcw.a lcl.a lcdp.a lcm.a
 stub = dpstub.exe
 
 all: $(libs) $(stub)

@@ -148,6 +148,7 @@ char* OutName;
 #define FormatFlat32       7
 #define FormatWinPe32      8
 #define FormatElf32        9
+#define FormatMach32       10
 int OutputFormat = 0;
 
 const char* LibName[] =
@@ -162,6 +163,7 @@ const char* LibName[] =
   NULL,     // FormatFlat32
   "lcw.a",  // FormatWinPe32
   "lcl.a",  // FormatElf32
+  "lcm.a",  // FormatMach32
 };
 
 int verbose = 0;
@@ -563,7 +565,7 @@ int EscapingNeeded(char* s)
 }
 
 // TBD!!! I should probably abandon the idea of launching subordinates via
-// shell (using system()) and instead use exec*()/CreateProcess() and such 
+// shell (using system()) and instead use exec*()/CreateProcess() and such
 // to avoid this quoting/escaping mess.
 size_t Escape(char* out, char* in, size_t outsz)
 {
@@ -940,7 +942,7 @@ void Link(void)
   System(LinkerOptions);
 
 #ifdef HOST_LINUX
-  if (OutputFormat == FormatElf32 && OutName)
+  if ((OutputFormat == FormatElf32 || OutputFormat == FormatMach32) && OutName)
   {
     char* cmd = NULL;
     size_t cmdlen = 0;
@@ -1620,6 +1622,15 @@ int main(int argc, char* argv[])
       argv[i] = NULL;
       LinkStdLib = 1;
       continue;
+    } else if (!strcmp(argv[i], "-macos"))
+    {
+      OutputFormat = FormatMach32;
+      AddOption(&CompilerOptions, &CompilerOptionsLen, "-seg32");
+      DefineMacro("_MACOS");
+      AddOption(&LinkerOptions, &LinkerOptionsLen, "-mach");
+      argv[i] = NULL;
+      LinkStdLib = 1;
+      continue;
     }
     else if (!strcmp(argv[i], "-flat16"))
     {
@@ -1784,6 +1795,7 @@ int main(int argc, char* argv[])
       OutName = LinkStdLib ? "aout.exe" : "a.out";
       break;
     case FormatElf32:
+    case FormatMach32:
       OutName = "a.out";
       break;
     case FormatFlat16:
@@ -1831,6 +1843,7 @@ int main(int argc, char* argv[])
       DefineMacro("__SMALLER_C_32__");
       break;
     case FormatElf32:
+    case FormatMach32:
       DefineMacro("__SMALLER_C_32__");
       break;
     case FormatFlat16:
