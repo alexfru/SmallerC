@@ -110,7 +110,7 @@ static unsigned num;
 static char name[L_tmpnam];
 static size_t plen;
 
-#ifndef _LINUX
+#if !defined(_LINUX) && !defined(_MACOS)
 static
 void TryPath(char* path)
 {
@@ -178,6 +178,8 @@ void TryEnvPath(char* evname)
   }
 }
 #else
+
+#ifdef _LINUX
 static
 int SysAccess(char* name, int amode)
 {
@@ -186,6 +188,19 @@ int SysAccess(char* name, int amode)
       "mov ecx, [ebp + 12]\n"
       "int 0x80");
 }
+#endif   // _LINUX
+
+#ifdef _MACOS
+static
+int SysAccess(char* name, int amode)
+{
+  asm("mov eax, 33\n" // sys_access
+      "push dword [ebp + 12]\n"
+      "push dword [ebp + 8]\n"
+      "sub esp, 4\n"
+      "int 0x80");
+}
+#endif  // _MACOS
 
 #endif
 
@@ -197,7 +212,7 @@ char* __tmpnam(char* buf, unsigned iterations)
   if (!*name)
   {
     // On the first use, determine the directory for temporary files
-#ifndef _LINUX
+#if !defined(_LINUX) && !defined(_MACOS)
     TryEnvPath("TEMP");
     if (!*name)
       TryEnvPath("TMP");
@@ -266,7 +281,7 @@ char* __tmpnam(char* buf, unsigned iterations)
       break;
     }
 #endif
-#ifdef _LINUX
+#if defined(_LINUX) || defined(_MACOS)
     attrOrError = -SysAccess(buf, 0/*F_OK*/);
     if (attrOrError)
     {

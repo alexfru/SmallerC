@@ -128,3 +128,16 @@ int rename(char* old, char* new)
 }
 
 #endif // _LINUX
+
+#ifdef _MACOS
+
+int rename(char* old, char* new)
+{
+  asm("mov eax, 128\n" // sys_rename
+      "push dword [ebp + 12]\n"
+      "push dword [ebp + 8]\n"
+      "sub esp, 4\n"
+      "int 0x80");
+}
+
+#endif // _MACOS

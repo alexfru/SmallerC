@@ -24,7 +24,7 @@ size_t fwrite(void* ptr, size_t esize, size_t ecount, FILE* f)
       size--;
     }
   }
-#ifndef _LINUX
+#if !defined( _LINUX) && !defined(_MACOS)
   else if (f->flags & _IOBINARY)
 #else
   else
@@ -57,7 +57,7 @@ size_t fwrite(void* ptr, size_t esize, size_t ecount, FILE* f)
       }
     }
   }
-#ifndef _LINUX
+#if !defined(_LINUX) && !defined(_MACOS)
   else
   {
     while (size)

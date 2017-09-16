@@ -73,7 +73,7 @@ clock_t clock(void)
 
 #endif // _WINDOWS
 
-#ifdef _LINUX
+#if defined(_LINUX) || defined(_MACOS)
 
 struct tms
 {
@@ -83,6 +83,7 @@ struct tms
   clock_t tms_cstime;
 };
 
+#ifdef _LINUX
 static
 clock_t SysTimes(struct tms* buf)
 {
@@ -90,6 +91,82 @@ clock_t SysTimes(struct tms* buf)
       "mov ebx, [ebp + 8]\n"
       "int 0x80");
 }
+#endif  // _LINUX
+
+#ifdef _MACOS
+
+#define CLK_TCK 60 // TODO(tilarids): Can't be always true. Fix it.
+#define CONVTCK(r)  (r.tv_sec * CLK_TCK + r.tv_usec / (1000000 / CLK_TCK))
+
+typedef long suseconds_t;
+struct timeval
+{
+  time_t       tv_sec;   /* seconds since Jan. 1, 1970 */
+  suseconds_t  tv_usec;  /* and microseconds */
+};
+
+struct rusage
+{
+  struct timeval ru_utime; /* user time used */
+  struct timeval ru_stime; /* system time used */
+  long ru_maxrss;          /* max resident set size */
+  long ru_ixrss;           /* integral shared text memory size */
+  long ru_idrss;           /* integral unshared data size */
+  long ru_isrss;           /* integral unshared stack size */
+  long ru_minflt;          /* page reclaims */
+  long ru_majflt;          /* page faults */
+  long ru_nswap;           /* swaps */
+  long ru_inblock;         /* block input operations */
+  long ru_oublock;         /* block output operations */
+  long ru_msgsnd;          /* messages sent */
+  long ru_msgrcv;          /* messages received */
+  long ru_nsignals;        /* signals received */
+  long ru_nvcsw;           /* voluntary context switches */
+  long ru_nivcsw;          /* involuntary context switches */
+};
+
+static
+int SysGetrusage(int who, struct rusage *rusage) {
+  asm("mov eax, 117\n" // sys_getrusage
+      "push dword [ebp + 12]\n"
+      "push dword [ebp + 8]\n"
+      "sub esp, 4\n"
+      "int 0x80");
+}
+
+#define RUSAGE_SELF 0
+#define RUSAGE_CHILDREN -1
+
+static
+int SysGettimeofday(long tv[2], int tz[2])
+{
+  asm("mov eax, 116\n" // sys_gettimeofday
+      "push dword [ebp + 12]\n"
+      "push dword [ebp + 8]\n"
+      "sub esp, 4\n"
+      "int 0x80");
+}
+
+clock_t
+SysTimes(struct tms *tp)
+{
+  struct rusage ru;
+  struct timeval t;
+
+  if (SysGetrusage(RUSAGE_SELF, &ru) < 0)
+    return ((clock_t)-1);
+  tp->tms_utime = CONVTCK(ru.ru_utime);
+  tp->tms_stime = CONVTCK(ru.ru_stime);
+  if (SysGetrusage(RUSAGE_CHILDREN, &ru) < 0)
+    return ((clock_t)-1);
+  tp->tms_cutime = CONVTCK(ru.ru_utime);
+  tp->tms_cstime = CONVTCK(ru.ru_stime);
+  if (SysGettimeofday(&t, (struct timezone *)0))
+    return ((clock_t)-1);
+  return ((clock_t)(CONVTCK(t)));
+}
+
+#endif  // _MACOS
 
 clock_t clock(void)
 {

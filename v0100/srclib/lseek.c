@@ -111,3 +111,17 @@ off_t lseek(int fd, off_t offset, int whence)
 }
 
 #endif // _LINUX
+
+#ifdef _MACOS
+
+off_t lseek(int fd, off_t offset, int whence)
+{
+  asm("mov eax, 199\n" // sys_lseek
+      "push dword [ebp + 16]\n"
+      "push dword [ebp + 12]\n"
+      "push dword [ebp + 8]\n"
+      "sub esp, 4\n"
+      "int 0x80");
+}
+
+#endif // _MACOS

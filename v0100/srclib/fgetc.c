@@ -16,7 +16,7 @@ static int __fgetc(FILE* f)
 
 int fgetc(FILE* f)
 {
-#ifndef _LINUX
+#if !defined(_LINUX) && !defined(_MACOS)
   int c = __fgetc(f);
   if (f->flags & _IOBINARY)
     return c;

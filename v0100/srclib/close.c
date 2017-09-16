@@ -109,3 +109,16 @@ int close(int fd)
 }
 
 #endif // _LINUX
+
+#ifdef _MACOS
+
+int close(int fd)
+{
+  asm("mov eax, 6\n" // sys_close
+      "push dword [ebp + 8]\n"
+      "sub esp, 4\n"
+      "int 0x80");
+}
+
+#endif // _MACOS
+

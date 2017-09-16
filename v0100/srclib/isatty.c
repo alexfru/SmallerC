@@ -125,10 +125,29 @@ int SysIoctl(int fd, int cmd, ...)
       "int 0x80");
 }
 
+#endif // _LINUX
+
+#ifdef _MACOS
+
+static
+int SysIoctl(int fd, int cmd, ...)
+{
+  asm("mov eax, 54\n" // sys_ioctl
+      "push dword [ebp + 16]\n"
+      "push dword [ebp + 12]\n"
+      "push dword [ebp + 8]\n" // may read garbage, but shouldn't crash
+      "sub esp,4\n"
+      "int 0x80");
+}
+
+#endif // _MACOS
+
+#if defined(_LINUX) || defined(_MACOS)
+
 int isatty(int fd)
 {
   unsigned char termios[60/*sizeof(struct termios)*/];
   return SysIoctl(fd, 0x00005401/*TCGETS*/, termios) == 0;
 }
 
-#endif // _LINUX
+#endif // defined(_LINUX) || defined(_MACOS)

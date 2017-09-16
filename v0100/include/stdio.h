@@ -63,7 +63,7 @@ extern FILE *__stdin, *__stdout, *__stderr;
 #define TMP_MAX 10000
 #endif
 
-#ifdef _LINUX
+#if defined(_LINUX) || defined(_MACOS)
 #define FOPEN_MAX 20
 #define FILENAME_MAX 4096
 #define L_tmpnam 20

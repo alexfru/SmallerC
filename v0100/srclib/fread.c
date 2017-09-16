@@ -16,7 +16,7 @@ size_t fread(void* ptr, size_t esize, size_t ecount, FILE* f)
   if (!size)
     return 0;
 
-#ifndef _LINUX
+#if !defined(_LINUX) && !defined(_MACOS)
   if (f->flags & _IOBINARY)
 #endif
   {
@@ -47,7 +47,7 @@ size_t fread(void* ptr, size_t esize, size_t ecount, FILE* f)
       }
     }
   }
-#ifndef _LINUX
+#if !defined(_LINUX) && !defined(_MACOS)
   else
   {
     while (size)

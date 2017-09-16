@@ -244,3 +244,17 @@ int open(char* name, int oflag, ...)
 }
 
 #endif // _LINUX
+
+#ifdef _MACOS
+
+int open(char* name, int oflag, ...)
+{
+  asm("mov eax, 5\n" // sys_open
+      "push dword [ebp + 16]\n" // may read garbage, but shouldn't crash
+      "push dword [ebp + 12]\n"
+      "push dword [ebp + 8]\n"
+      "sub esp, 4\n"
+      "int 0x80");
+}
+
+#endif // _MACOS

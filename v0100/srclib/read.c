@@ -184,3 +184,17 @@ ssize_t read(int fd, void* buf, size_t size)
 }
 
 #endif // _LINUX
+
+#ifdef _MACOS
+
+ssize_t read(int fd, void* buf, size_t size)
+{
+  asm("mov eax, 3\n" // sys_read
+      "push dword [ebp + 16]\n"
+      "push dword [ebp + 12]\n"
+      "push dword [ebp + 8]\n"
+      "sub esp, 4\n"
+      "int 0x80");
+}
+
+#endif // _MACOS

@@ -40,7 +40,7 @@ void* malloc(unsigned size)
 #endif // _DOS
 
 
-#ifdef _LINUX
+#if defined(_LINUX)
 
 static
 char* SysBrk(char* newBreak)
@@ -88,7 +88,7 @@ void* __sbrk(int increment)
   return (CurBreak += increment) - increment;
 }
 
-#endif // _LINUX
+#endif // defined(_LINUX)
 
 
 #ifndef __HUGE_OR_UNREAL__
@@ -179,7 +179,7 @@ int init(void)
 
 #endif // _DOS
 
-#ifdef _LINUX
+#if defined(_LINUX)
 
 static
 int init(void)
@@ -209,13 +209,40 @@ int init(void)
   return 0;
 }
 
-#endif // _LINUX
+#endif // defined(_LINUX)
+
+#if defined(_MACOS)
+
+unsigned char buffer[64 * 1024 * 1024];
+
+static
+int init(void)
+{
+  __heap_start = buffer;
+  __heap_stop =  buffer + sizeof(buffer);
+
+  // TODO(tilarids): Not sure if we need this. Check and remove?
+  for (unsigned* blk = (unsigned*)__heap_start; blk < (unsigned*)__heap_stop; ++blk) {
+    *blk = 0;
+  }
+
+  unsigned heapsz = __heap_stop - __heap_start - 2*HEADER_FOOTER_SZ;
+
+  *((unsigned*)__heap_start + 0) = heapsz;
+  *((unsigned*)__heap_start + 1) = 0; // free
+  *((unsigned*)__heap_stop - 2) = 0; // free
+  *((unsigned*)__heap_stop - 1) = heapsz;
+
+  return 0;
+}
+
+#endif // defined(_MACOS)
 
 void* malloc(unsigned size)
 {
   static int uninitialized = -1;
   unsigned* blk;
-#ifdef _LINUX
+#if defined(_LINUX)
   unsigned* last;
   unsigned togrow;
 #endif
@@ -232,7 +259,7 @@ void* malloc(unsigned size)
 
   size = (size + 2*HEADER_FOOTER_SZ - 1) & -2*HEADER_FOOTER_SZ;
 
-#ifdef _LINUX
+#if defined(_LINUX)
   last =
 #endif
   blk = (unsigned*)__heap_start;
@@ -265,13 +292,13 @@ void* malloc(unsigned size)
       return (void*)((unsigned)blk + HEADER_FOOTER_SZ);
     }
 
-#ifdef _LINUX
+#if defined(_LINUX)
     last = blk;
 #endif
     blk = nxtblk;
   }
 
-#ifdef _LINUX
+#if defined(_LINUX)
   if (!last[1]) // if last block is free, it will be reused
   {
     togrow = size - last[0];

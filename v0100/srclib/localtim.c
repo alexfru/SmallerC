@@ -73,6 +73,23 @@ int SysGettimeofday(long tv[2], int tz[2])
       "int 0x80");
 }
 
+#endif  // _LINUX
+
+#ifdef _MACOS
+
+static
+int SysGettimeofday(long tv[2], int tz[2])
+{
+  asm("mov eax, 116\n" // sys_gettimeofday
+      "push dword [ebp + 12]\n"
+      "push dword [ebp + 8]\n"
+      "sub esp, 4\n"
+      "int 0x80");
+}
+
+#endif  // _MACOS
+
+#if defined(_LINUX) || defined(_MACOS)
 // localtime() must take UTC/GMT time and return local time
 struct tm* localtime(time_t* t)
 {
@@ -87,4 +104,4 @@ struct tm* localtime(time_t* t)
   return __breaktime(t);
 }
 
-#endif // _LINUX
+#endif // defined(_LINUX) || defined(_MACOS)

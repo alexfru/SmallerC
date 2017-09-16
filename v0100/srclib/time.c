@@ -175,3 +175,22 @@ time_t time(time_t* t)
 }
 
 #endif // _LINUX
+
+#ifdef _MACOS
+
+time_t time(time_t* t)
+{
+  volatile long timeval[2];
+  volatile long timezone[2];
+
+  asm("mov eax, 116\n" // sys_gettimeofday
+      "push dword [ebp + 12]\n"
+      "push dword [ebp + 8]\n"
+      "sub esp, 4\n"
+      "int 0x80");
+
+  // TODO(tilarids): Check out if it actually generates a proper code.
+  return (time_t)timeval[0];
+}
+
+#endif // _MACOS

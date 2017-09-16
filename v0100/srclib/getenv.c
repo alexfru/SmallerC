@@ -235,7 +235,7 @@ err:
 
 #endif // _WINDOWS
 
-#ifdef _LINUX
+#if defined(_LINUX) || defined(_MACOS)
 
 extern char** __environ;
 
@@ -253,4 +253,4 @@ char* getenv(char* name)
   return NULL;
 }
 
-#endif // _LINUX
+#endif // defined(_LINUX) || defined(_MACOS)

@@ -687,7 +687,44 @@ int SysExecve(char* path, char* argv[], char* envp[])
       "mov edx, [ebp + 16]\n"
       "int 0x80");
 }
+#endif  // _LINUX
 
+#ifdef _MACOS
+
+#include <sys/types.h>
+
+static
+pid_t SysFork(void)
+{
+  asm("mov eax, 2\n" // sys_fork
+      "int 0x80");
+}
+
+static
+pid_t SysWaitpid(pid_t pid, int* status, int options)
+{
+  asm("mov eax, 7\n" // sys_wait4
+      "push dword 0\n"
+      "push dword [ebp + 16]\n"
+      "push dword [ebp + 12]\n"
+      "push dword [ebp + 8]\n"
+      "sub esp, 4\n"
+      "int 0x80");
+}
+
+static
+int SysExecve(char* path, char* argv[], char* envp[])
+{
+  asm("mov eax, 59\n" // sys_execve
+      "push dword [ebp + 16]\n"
+      "push dword [ebp + 12]\n"
+      "push dword [ebp + 8]\n"
+      "sub esp, 4\n"
+      "int 0x80");
+}
+#endif  // _MACOS
+
+#if defined(_LINUX) || defined(_MACOS)
 extern char** __environ;
 
 int system(char* cmd)

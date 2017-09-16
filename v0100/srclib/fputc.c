@@ -34,7 +34,7 @@ static int __fputc(int c, FILE* f)
 
 int fputc(int c, FILE* f)
 {
-#ifndef _LINUX
+#if !defined(_LINUX) && !defined(_MACOS)
   if (c == '\n' && !(f->flags & _IOBINARY))
     __fputc('\r', f); // insert '\r'
 #endif
