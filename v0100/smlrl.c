@@ -2629,36 +2629,66 @@ void RwDosExe(void)
 
 void RwMach(void)
 {
-  if (FormatMach32 != OutputFormat)
-  {
-    error("Use this function to output Mach-O files only.");
-  }
   int hasData = !(pSectDescrs[SectCnt - 1].Attrs & SHF_EXECINSTR); // non-executable/data sections, if any, are last
   FILE* fout = Fopen(OutName, "wb+");
+  uint32 sectionIdx;
+  uint32 hdrsz;
+  uint32 sections_stop = 0;
+  uint32 vmaddr_stop = 0;
+  uint32 text_start;
+  uint32 predefinedLinkeditSize = 52;
+  Mach32_SegmentCmd linkeditSegmentCmd;
+  static const uint32 num_syms = 2;
+  static const uint32 strsize = 28;
+  Mach32_SymtabCmd symtabCmd;
+  Mach32_ThreadCmd unixThreadCmd =
+  {
+    MACH_LC_UNIXTHREAD,         // cmd
+    sizeof(Mach32_ThreadCmd),   // cmdsize
+    MACH_X86_THREAD_STATE,      // flavor
+    16,                         // count
+    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, // state
+  };
+  Mach32_Nlist mhExecuteHeaderSym =
+  {
+    2,                            // n_strx
+    MACH_N_EXT | MACH_N_ABS,      // n_type
+    0x01,                         // n_sect
+    MACH_REFERENCED_DYNAMICALLY,  // n_desc
+    0x0,                          // n_value
+  };
+  Mach32_Nlist startSym =
+  {
+    22,                                     // n_strx
+    MACH_N_EXT | MACH_N_SECT,               // n_type
+    0x01,                                   // n_sect
+    MACH_REFERENCE_FLAG_UNDEFINED_NON_LAZY, // n_desc
+    0,                                      // n_value
+  };
+  char predefinedStringTable[] = "\x20\x0__mh_execute_header\x0start";
 
   MachHeader.ncmds = 4 + hasData;
   MachHeader.sizeofcmds = (1 + hasData) * (sizeof(Mach32_SegmentCmd) + sizeof(Mach32_Section))
                         + sizeof(Mach32_SegmentCmd) + sizeof(Mach32_SymtabCmd)
                         + sizeof(Mach32_ThreadCmd);
 
-  uint32 hdrsz = sizeof MachHeader + MachHeader.sizeofcmds;
-  Origin = hdrsz;
+  hdrsz = sizeof MachHeader + MachHeader.sizeofcmds;
+  Origin = hdrsz; // TBD!!! origin / image base should not be a small address close to 0!!!
   Pass(0, NULL, hdrsz);
 
-  uint32 sections_stop = 0;
-  uint32 vmaddr_stop = 0;
-  uint32 text_start = pSectDescrs[SectCnt].Start;
+  text_start = pSectDescrs[SectCnt].Start;
 
   Fwrite(&MachHeader, sizeof MachHeader, fout);
 
-  for (int sectionIdx = SectCnt; sectionIdx <= SectCnt + hasData; ++sectionIdx)
+  for (sectionIdx = SectCnt; sectionIdx <= SectCnt + hasData; ++sectionIdx)
   {
+    Mach32_SegmentCmd segmentCmd;
+    Mach32_Section section;
     uint32 start = pSectDescrs[sectionIdx].Start;
     uint32 stop = pSectDescrs[sectionIdx].Stop;
+    uint32 realSize = stop - start;
     sections_stop = stop;
     vmaddr_stop = stop;
-
-    uint32 realSize = stop - start;
 
     if ((sectionIdx == SectCnt + 1) && UseBss) // data
     {
@@ -2668,7 +2698,6 @@ void RwMach(void)
       realSize = ((pSectDescrs[i].Stop + 0xFFF) & 0xFFFFF000) - start;
       sections_stop = ((pSectDescrs[i].Stop + 0xFFF) & 0xFFFFF000);
     }
-    Mach32_SegmentCmd segmentCmd;
     segmentCmd.cmd = MACH_LC_SEGMENT;
     segmentCmd.cmdsize = sizeof(Mach32_SegmentCmd) + sizeof(Mach32_Section);
     // NOTE: Using proper names drives otool crazy.
@@ -2683,7 +2712,6 @@ void RwMach(void)
     segmentCmd.nsects = 0x1;
     segmentCmd.flags = 0x0;
 
-    Mach32_Section section;
     strncpy(section.sectname, pSectDescrs[sectionIdx].pName, 16);
     strncpy(section.segname, pSectDescrs[sectionIdx].pName, 16);
     section.addr = start;
@@ -2704,8 +2732,6 @@ void RwMach(void)
   sections_stop = AlignTo(sections_stop, 4096);
   vmaddr_stop = AlignTo(vmaddr_stop, 4096);
 
-  uint32 predefinedLinkeditSize = 52;
-  Mach32_SegmentCmd linkeditSegmentCmd;
   linkeditSegmentCmd.cmd = MACH_LC_SEGMENT;
   linkeditSegmentCmd.cmdsize = sizeof(Mach32_SegmentCmd);
   strncpy(linkeditSegmentCmd.segname, "__LINKEDIT", 16);
@@ -2720,9 +2746,6 @@ void RwMach(void)
   linkeditSegmentCmd.flags = 0x0;
 
   // TODO(tilarids): Consider writing a proper symbol table.
-  static const uint32 num_syms = 2;
-  static const uint32 strsize = 28;
-  Mach32_SymtabCmd symtabCmd;
   symtabCmd.cmd = MACH_LC_SYMTAB;
   symtabCmd.cmdsize = sizeof(Mach32_SymtabCmd);
   symtabCmd.symoff = sections_stop;
@@ -2730,14 +2753,6 @@ void RwMach(void)
   symtabCmd.stroff = sections_stop + num_syms * sizeof(Mach32_Nlist);
   symtabCmd.strsize = strsize;
 
-  Mach32_ThreadCmd unixThreadCmd =
-  {
-    MACH_LC_UNIXTHREAD,         // cmd
-    sizeof(Mach32_ThreadCmd),   // cmdsize
-    MACH_X86_THREAD_STATE,      // flavor
-    16,                         // count
-    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, // state
-  };
   unixThreadCmd.state.eip = FindSymbolAddress(EntryPoint);
 
   Fwrite(&linkeditSegmentCmd, sizeof linkeditSegmentCmd, fout);
@@ -2748,23 +2763,6 @@ void RwMach(void)
 
   // Write symbols table.
   // TODO(tilarids): Write a proper table instead of predefined one.
-  Mach32_Nlist mhExecuteHeaderSym =
-  {
-    2,                            // n_strx
-    MACH_N_EXT | MACH_N_ABS,      // n_type
-    0x01,                         // n_sect
-    MACH_REFERENCED_DYNAMICALLY,  // n_desc
-    0x0,                          // n_value
-  };
-
-  Mach32_Nlist startSym =
-  {
-    22,                                     // n_strx
-    MACH_N_EXT | MACH_N_SECT,               // n_type
-    0x01,                                   // n_sect
-    MACH_REFERENCE_FLAG_UNDEFINED_NON_LAZY, // n_desc
-    0,                                      // n_value
-  };
   startSym.n_value = FindSymbolAddress(EntryPoint);
 
   Fwrite(&mhExecuteHeaderSym, sizeof mhExecuteHeaderSym, fout);
@@ -2772,7 +2770,6 @@ void RwMach(void)
 
   // Write string table.
   // TODO(tilarids): Write a proper string table instead of predefined one.
-  char predefinedStringTable[] = "\x20\x0__mh_execute_header\x0start";
   Fwrite(predefinedStringTable, sizeof predefinedStringTable, fout);
 
   Fclose(fout);
