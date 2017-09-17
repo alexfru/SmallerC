@@ -213,13 +213,14 @@ int init(void)
 
 #if defined(_MACOS)
 
-unsigned char buffer[64 * 1024 * 1024];
+static
+unsigned buffer[64/4 * 1024 * 1024]; // 64MB heap in .bss
 
 static
 int init(void)
 {
   __heap_start = buffer;
-  __heap_stop =  buffer + sizeof(buffer);
+  __heap_stop = __heap_start + sizeof(buffer);
 
   // TODO(tilarids): Not sure if we need this. Check and remove?
   for (unsigned* blk = (unsigned*)__heap_start; blk < (unsigned*)__heap_stop; ++blk) {
