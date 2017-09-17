@@ -256,7 +256,7 @@ void DetermineVaListType(void)
 #endif // DETERMINE_VA_LIST
 #endif // __SMALLER_C__
 
-size_t StrAnyOf(char* s, char* ss)
+size_t StrAnyOf(const char* s, const char* ss)
 {
   size_t idx = 1, slen;
   if (!s || !*s || !ss)
@@ -1622,7 +1622,8 @@ int main(int argc, char* argv[])
       argv[i] = NULL;
       LinkStdLib = 1;
       continue;
-    } else if (!strcmp(argv[i], "-macos"))
+    }
+    else if (!strcmp(argv[i], "-macos"))
     {
       OutputFormat = FormatMach32;
       AddOption(&CompilerOptions, &CompilerOptionsLen, "-seg32");

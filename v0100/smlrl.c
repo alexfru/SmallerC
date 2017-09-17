@@ -82,6 +82,7 @@ void exit(int);
 size_t strlen(char*);
 int strcmp(char*, char*);
 int strncmp(char*, char*, size_t);
+char* strncpy(char*, char*, size_t);
 void* memmove(void*, void*, size_t);
 void* memcpy(void*, void*, size_t);
 void* memset(void*, int, size_t);
@@ -257,12 +258,13 @@ C_ASSERT(sizeof(Elf32_Rela) == 12);
 C_ASSERT(sizeof(Elf32_Phdr) == 32);
 #endif
 
-typedef struct  {
+typedef struct
+{
 #define MACH_MAGIC_32                0xfeedface
   uint32 magic;
 #define MACH_CPU_ARCH_ABI32          0x00000000
 #define MACH_CPU_TYPE_I386           0x00000007
-#define MACH_CPU_TYPE_X86            MACH_CPU_ARCH_ABI32 | MACH_CPU_TYPE_I386
+#define MACH_CPU_TYPE_X86            (MACH_CPU_ARCH_ABI32 | MACH_CPU_TYPE_I386)
   uint32 cputype;
 #define MACH_CPU_SUBTYPE_I386_ALL    0x00000003
   uint32 cpusubtype;
@@ -274,7 +276,8 @@ typedef struct  {
   uint32 flags;
 } Mach32_Header;
 
-typedef struct {
+typedef struct
+{
 #define MACH_LC_SEGMENT       0x1
 #define MACH_LC_SYMTAB        0x2
 #define MACH_LC_THREAD        0x4
@@ -283,7 +286,8 @@ typedef struct {
   uint32 cmdsize;
 } Mach32_LoadCmd;
 
-typedef struct {
+typedef struct
+{
   uint32 cmd;
   uint32 cmdsize;
   char segname[16];
@@ -300,7 +304,8 @@ typedef struct {
   uint32 flags;
 } Mach32_SegmentCmd;
 
-typedef struct {
+typedef struct
+{
   uint32  eax;
   uint32  ebx;
   uint32  ecx;
@@ -319,7 +324,8 @@ typedef struct {
   uint32  gs;
 } Mach32_ThreadState;
 
-typedef struct {
+typedef struct
+{
   uint32  cmd;            /* MACH_LC_THREAD or MACH_LC_UNIXTHREAD */
   uint32  cmdsize;        /* total size of this command */
 #define MACH_X86_THREAD_STATE 0x1
@@ -328,7 +334,8 @@ typedef struct {
   Mach32_ThreadState state;
 } Mach32_ThreadCmd;
 
-typedef struct {
+typedef struct
+{
   char sectname[16];
   char segname[16];
   uint32 addr;
@@ -342,7 +349,8 @@ typedef struct {
   uint32 reserved2;
 } Mach32_Section;
 
-typedef struct {
+typedef struct
+{
   uint32 cmd;
   uint32 cmdsize;
   uint32 symoff;
@@ -351,7 +359,8 @@ typedef struct {
   uint32 strsize;
 } Mach32_SymtabCmd;
 
-typedef struct {
+typedef struct
+{
   uint32 n_strx;
 #define MACH_N_EXT   0x1
 #define MACH_N_ABS   0x2
@@ -675,7 +684,7 @@ void DetermineVaListType(void)
 #endif // DETERMINE_VA_LIST
 #endif // __SMALLER_C__
 
-size_t StrAnyOf(char* s, char* ss)
+size_t StrAnyOf(const char* s, const char* ss)
 {
   size_t idx = 1, slen;
   if (!s || !*s || !ss)
@@ -881,7 +890,8 @@ void FillWithByte(unsigned char byte, size_t size, FILE* stream)
   }
 }
 
-int AlignTo(size_t ofs, size_t align) {
+size_t AlignTo(size_t ofs, size_t align)
+{
   return (ofs + align - 1) / align * align;
 }
 
@@ -1895,16 +1905,16 @@ Elf32_Phdr ElfProgramHeaders[2] =
   }
 };
 
-Mach32_Header MachHeader = {
-  MACH_MAGIC_32,   // magic
+Mach32_Header MachHeader =
+{
+  MACH_MAGIC_32,                // magic
   MACH_CPU_TYPE_X86,            // cputype
-  MACH_CPU_SUBTYPE_I386_ALL,      // cpusubtype
-  MACH_EXECUTE,      // filetype
-  0,      // ncmds
-  0,      // sizeofcmds
-  MACH_NOUNDEFS,      // flags
+  MACH_CPU_SUBTYPE_I386_ALL,    // cpusubtype
+  MACH_EXECUTE,                 // filetype
+  0,                            // ncmds
+  0,                            // sizeofcmds
+  MACH_NOUNDEFS,                // flags
 };
-
 
 tAout AoutHeader =
 {
@@ -2005,7 +2015,7 @@ void Pass(int pass, FILE* fout, uint32 hdrsz)
 
           if (align > 1)
           {
-            newOfs = AlignTo(ofs, align);;
+            newOfs = AlignTo(ofs, align);
             if (newOfs < ofs)
               errSectTooBig();
             if (pass)
@@ -2617,18 +2627,19 @@ void RwDosExe(void)
   Fclose(fout);
 }
 
-void RwMach(void) {
-  if (FormatMach32 != OutputFormat) {
+void RwMach(void)
+{
+  if (FormatMach32 != OutputFormat)
+  {
     error("Use this function to output Mach-O files only.");
   }
   int hasData = !(pSectDescrs[SectCnt - 1].Attrs & SHF_EXECINSTR); // non-executable/data sections, if any, are last
   FILE* fout = Fopen(OutName, "wb+");
 
   MachHeader.ncmds = 4 + hasData;
-  MachHeader.sizeofcmds = (1 + hasData)*(sizeof(Mach32_SegmentCmd) + sizeof(Mach32_Section))
+  MachHeader.sizeofcmds = (1 + hasData) * (sizeof(Mach32_SegmentCmd) + sizeof(Mach32_Section))
                         + sizeof(Mach32_SegmentCmd) + sizeof(Mach32_SymtabCmd)
                         + sizeof(Mach32_ThreadCmd);
-
 
   uint32 hdrsz = sizeof MachHeader + MachHeader.sizeofcmds;
   Origin = hdrsz;
@@ -2640,9 +2651,8 @@ void RwMach(void) {
 
   Fwrite(&MachHeader, sizeof MachHeader, fout);
 
-
-
-  for (int sectionIdx = SectCnt; sectionIdx <= SectCnt + hasData; ++sectionIdx) {
+  for (int sectionIdx = SectCnt; sectionIdx <= SectCnt + hasData; ++sectionIdx)
+  {
     uint32 start = pSectDescrs[sectionIdx].Start;
     uint32 stop = pSectDescrs[sectionIdx].Stop;
     sections_stop = stop;
@@ -2650,10 +2660,11 @@ void RwMach(void) {
 
     uint32 realSize = stop - start;
 
-    if ((sectionIdx == SectCnt + 1) && UseBss) {  // data
+    if ((sectionIdx == SectCnt + 1) && UseBss) // data
+    {
       uint32 i = SectCnt - 1;
       while (pSectDescrs[i].Attrs & SHT_NOBITS)
-          i--;
+        i--;
       realSize = ((pSectDescrs[i].Stop + 0xFFF) & 0xFFFFF000) - start;
       sections_stop = ((pSectDescrs[i].Stop + 0xFFF) & 0xFFFFF000);
     }
@@ -2708,24 +2719,24 @@ void RwMach(void) {
   linkeditSegmentCmd.nsects = 0x0;
   linkeditSegmentCmd.flags = 0x0;
 
-
   // TODO(tilarids): Consider writing a proper symbol table.
   static const uint32 num_syms = 2;
   static const uint32 strsize = 28;
   Mach32_SymtabCmd symtabCmd;
-  symtabCmd.cmd =  MACH_LC_SYMTAB;
-  symtabCmd.cmdsize =  sizeof(Mach32_SymtabCmd);
-  symtabCmd.symoff =  sections_stop;
-  symtabCmd.nsyms =  num_syms;
-  symtabCmd.stroff =  sections_stop + num_syms * sizeof(Mach32_Nlist);
-  symtabCmd.strsize =  strsize;
+  symtabCmd.cmd = MACH_LC_SYMTAB;
+  symtabCmd.cmdsize = sizeof(Mach32_SymtabCmd);
+  symtabCmd.symoff = sections_stop;
+  symtabCmd.nsyms = num_syms;
+  symtabCmd.stroff = sections_stop + num_syms * sizeof(Mach32_Nlist);
+  symtabCmd.strsize = strsize;
 
-  Mach32_ThreadCmd unixThreadCmd = {
-    MACH_LC_UNIXTHREAD,       // cmd
-    sizeof(Mach32_ThreadCmd),  // cmdsize
-    MACH_X86_THREAD_STATE,    // flavor
-    16,                       // count
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, // state
+  Mach32_ThreadCmd unixThreadCmd =
+  {
+    MACH_LC_UNIXTHREAD,         // cmd
+    sizeof(Mach32_ThreadCmd),   // cmdsize
+    MACH_X86_THREAD_STATE,      // flavor
+    16,                         // count
+    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, // state
   };
   unixThreadCmd.state.eip = FindSymbolAddress(EntryPoint);
 
@@ -2737,7 +2748,8 @@ void RwMach(void) {
 
   // Write symbols table.
   // TODO(tilarids): Write a proper table instead of predefined one.
-  Mach32_Nlist mhExecuteHeaderSym = {
+  Mach32_Nlist mhExecuteHeaderSym =
+  {
     2,                            // n_strx
     MACH_N_EXT | MACH_N_ABS,      // n_type
     0x01,                         // n_sect
@@ -2745,7 +2757,8 @@ void RwMach(void) {
     0x0,                          // n_value
   };
 
-  Mach32_Nlist startSym = {
+  Mach32_Nlist startSym =
+  {
     22,                                     // n_strx
     MACH_N_EXT | MACH_N_SECT,               // n_type
     0x01,                                   // n_sect
@@ -2764,6 +2777,7 @@ void RwMach(void) {
 
   Fclose(fout);
 }
+
 void RwPeElf(void)
 {
   int hasData = !(pSectDescrs[SectCnt - 1].Attrs & SHF_EXECINSTR); // non-executable/data sections, if any, are last
@@ -3130,6 +3144,7 @@ void RwPeElf(void)
       }
     }
   }
+
   Fclose(fout);
 }
 
