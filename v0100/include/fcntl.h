@@ -12,10 +12,17 @@
 #define O_RDWR      0x0002
 #define O_ACCMODE   0x0003
 
+#ifdef _MACOS
+#define O_CREAT     0x0200
+#define O_EXCL      0x0800
+#define O_TRUNC     0x0400
+#define O_APPEND    0x0008
+#else
 #define O_CREAT     0x0040
 #define O_EXCL      0x0080
 #define O_TRUNC     0x0200
 #define O_APPEND    0x0400
+#endif
 
 #ifndef __MODE_T_DEF
 #define __MODE_T_DEF

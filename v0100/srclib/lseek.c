@@ -116,12 +116,32 @@ off_t lseek(int fd, off_t offset, int whence)
 
 off_t lseek(int fd, off_t offset, int whence)
 {
-  asm("mov eax, 199\n" // sys_lseek
-      "push dword [ebp + 16]\n"
-      "push dword [ebp + 12]\n"
+  asm("push dword [ebp + 16]\n"
+
+      "mov  eax, [ebp + 12]\n"
+      "mov  edx, eax\n"
+      "sar  edx, 31\n" // sign-extend offset from 32 bits to 64 bits
+      "push edx\n"
+      "push eax\n"
+
       "push dword [ebp + 8]\n"
-      "sub esp, 4\n"
-      "int 0x80");
+      "sub  esp, 4\n"
+      "mov  eax, 199\n" // sys_lseek
+      "int  0x80\n"
+
+      "jnc  .check_32bit\n"
+
+      ".ret_1:\n"       // error
+      "mov  eax, -1\n"
+      "jmp  .done\n"
+
+      ".check_32bit:\n"
+      "or   edx, edx\n"
+      "jnz  .ret_1\n"   // offset >= 4GB: doesn't fit into 32 bits
+      "add  eax, 0\n"
+      "js   .ret_1\n"   // offset >= 2GB: doesn't fit into 32 bits
+
+      ".done:");
 }
 
 #endif // _MACOS

@@ -126,7 +126,8 @@ struct rusage
 };
 
 static
-int SysGetrusage(int who, struct rusage *rusage) {
+int SysGetrusage(int who, struct rusage *rusage)
+{
   asm("mov eax, 117\n" // sys_getrusage
       "push dword [ebp + 12]\n"
       "push dword [ebp + 8]\n"
@@ -138,18 +139,10 @@ int SysGetrusage(int who, struct rusage *rusage) {
 #define RUSAGE_CHILDREN -1
 
 static
-int SysGettimeofday(long tv[2], int tz[2])
+clock_t SysTimes(struct tms *tp)
 {
-  asm("mov eax, 116\n" // sys_gettimeofday
-      "push dword [ebp + 12]\n"
-      "push dword [ebp + 8]\n"
-      "sub esp, 4\n"
-      "int 0x80");
-}
-
-clock_t
-SysTimes(struct tms *tp)
-{
+  // TBD: figure this out.
+/*
   struct rusage ru;
   struct timeval t;
 
@@ -164,6 +157,8 @@ SysTimes(struct tms *tp)
   if (SysGettimeofday(&t, (struct timezone *)0))
     return ((clock_t)-1);
   return ((clock_t)(CONVTCK(t)));
+*/
+  return (clock_t)-1;
 }
 
 #endif  // _MACOS

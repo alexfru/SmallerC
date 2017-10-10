@@ -75,32 +75,21 @@ int SysGettimeofday(long tv[2], int tz[2])
 
 #endif  // _LINUX
 
-#ifdef _MACOS
-
-static
-int SysGettimeofday(long tv[2], int tz[2])
-{
-  asm("mov eax, 116\n" // sys_gettimeofday
-      "push dword [ebp + 12]\n"
-      "push dword [ebp + 8]\n"
-      "sub esp, 4\n"
-      "int 0x80");
-}
-
-#endif  // _MACOS
-
 #if defined(_LINUX) || defined(_MACOS)
 // localtime() must take UTC/GMT time and return local time
 struct tm* localtime(time_t* t)
 {
   // TBD??? struct timezone (or the whole gettimeofday()) is obsolete per POSIX 2008, use something else???
   // TBD??? honor other TZ settings???
+  // TBD: figure out how to get the time zone on MacOS.
+#ifdef _LINUX
   time_t tt = *t;
   long tv[2];
   int tz[2] = { 0 };
   t = &tt;
   if (SysGettimeofday(tv, tz) == 0)
     tt -= tz[0] * 60;
+#endif  // _LINUX
   return __breaktime(t);
 }
 

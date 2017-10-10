@@ -721,7 +721,7 @@ void test_sio4(void) {
 
 	err = lno = 0;
 	pr("stdout");
-#ifndef _LINUX
+#if !defined(_LINUX) && !defined(_MACOS)
 	system(".\\libtest.exe test-stdout >stdio.tmp");
 #else
 	system("./libtest test-stdout >stdio.tmp");
@@ -821,7 +821,7 @@ void test_exit(void) {
 	FILE	*f;
 	pr("exit");
 	remove(TMPFILE);
-#ifndef _LINUX
+#if !defined(_LINUX) && !defined(_MACOS)
 	system(".\\libtest.exe test-atexit");
 #else
 	system("./libtest test-atexit");

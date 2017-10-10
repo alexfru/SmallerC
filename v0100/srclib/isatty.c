@@ -125,6 +125,12 @@ int SysIoctl(int fd, int cmd, ...)
       "int 0x80");
 }
 
+int isatty(int fd)
+{
+  unsigned char termios[60/*sizeof(struct termios)*/];
+  return SysIoctl(fd, 0x00005401/*TCGETS*/, termios) == 0;
+}
+
 #endif // _LINUX
 
 #ifdef _MACOS
@@ -140,14 +146,10 @@ int SysIoctl(int fd, int cmd, ...)
       "int 0x80");
 }
 
-#endif // _MACOS
-
-#if defined(_LINUX) || defined(_MACOS)
-
 int isatty(int fd)
 {
-  unsigned char termios[60/*sizeof(struct termios)*/];
-  return SysIoctl(fd, 0x00005401/*TCGETS*/, termios) == 0;
+  unsigned char termios[44/*sizeof(struct termios)*/];
+  return SysIoctl(fd, 0x402C7413/*TIOCGETA*/, termios) == 0;
 }
 
-#endif // defined(_LINUX) || defined(_MACOS)
+#endif // _MACOS

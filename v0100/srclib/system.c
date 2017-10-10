@@ -697,7 +697,20 @@ static
 pid_t SysFork(void)
 {
   asm("mov eax, 2\n" // sys_fork
-      "int 0x80");
+      "sub esp, 4\n"
+      "int 0x80\n"
+      "jnc .diff\n"
+
+      "mov eax, -1\n" // error
+      "jmp .done\n"
+
+      ".diff:\n"
+      "or  edx, edx\n"
+      "jz  .done\n" // parent: eax = pid of child
+
+      "xor eax, eax\n" // child: eax = 0
+
+      ".done:\n");
 }
 
 static

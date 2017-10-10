@@ -55,7 +55,7 @@ int main(int argc, char* argv[])
   }
   else
   {
-#ifndef _LINUX
+#if !defined(_LINUX) && !defined(_MACOS)
     system("exc.exe DE");
 //    system("exc.exe BP");
     system("exc.exe OF");

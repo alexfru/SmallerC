@@ -282,7 +282,12 @@ char* __tmpnam(char* buf, unsigned iterations)
     }
 #endif
 #if defined(_LINUX) || defined(_MACOS)
+    // The access system call returns negated E* codes on Linux
+    // and non-negated E* codes on MacOS.
     attrOrError = -SysAccess(buf, 0/*F_OK*/);
+#ifdef _MACOS
+    attrOrError = -attrOrError;
+#endif
     if (attrOrError)
     {
       if (attrOrError == 2/*ENOENT*/)
