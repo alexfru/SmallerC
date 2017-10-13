@@ -36,12 +36,25 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /*                                                                           */
 /*****************************************************************************/
 
+#ifndef HOST_MACOS
 #ifndef HOST_LINUX
 #ifndef HOST_WINDOWS
 #ifndef HOST_DOS
-#error HOST_LINUX or HOST_WINDOWS or HOST_DOS must be defined
+#error HOST_MACOS or HOST_LINUX or HOST_WINDOWS or HOST_DOS must be defined
 #endif
 #endif
+#endif
+#endif
+
+#ifdef UNIX_LIKE
+#undef UNIX_LIKE
+#endif
+
+#ifdef HOST_MACOS
+#define UNIX_LIKE 1
+#endif
+#ifdef HOST_LINUX
+#define UNIX_LIKE 1
 #endif
 
 #ifndef PATH_PREFIX
@@ -941,7 +954,7 @@ void Link(void)
 
   System(LinkerOptions);
 
-#ifdef HOST_LINUX
+#ifdef UNIX_LIKE
   if ((OutputFormat == FormatElf32 || OutputFormat == FormatMach32) && OutName)
   {
     char* cmd = NULL;
@@ -993,7 +1006,7 @@ void Archive(void)
       pslash = pbackslash;
     }
 
-#ifndef HOST_LINUX
+#ifndef UNIX_LIKE
     // If there's no slash, it could be "c:file" in DOS/Windows
     if (!pslash && ((*name >= 'A' && *name <= 'Z') || (*name >= 'a' && *name <= 'z')) && name[1] == ':')
       pslash = name + 1;
@@ -1065,7 +1078,7 @@ void Archive(void)
   DeleteTemporaryFiles();
 }
 
-#ifndef HOST_LINUX
+#ifndef UNIX_LIKE
 // Returns the path to the executable in forms like these (not an exhaustive list):
 // - "c:\\path\\"
 // - "c:"
@@ -1253,7 +1266,7 @@ void AddSystemPaths(char* argv0)
       goto endsearch;
   }
 
-#ifdef HOST_LINUX
+#ifdef UNIX_LIKE
   epath = getenv("HOME");
   if (epath)
   {
@@ -1349,7 +1362,7 @@ int main(int argc, char* argv[])
   fatargs(&argc, &argv);
 
   // Set the compiler and linker names early as their options will pile up
-#ifdef HOST_LINUX
+#ifdef UNIX_LIKE
   AddOption(&CompilerOptions, &CompilerOptionsLen, "smlrc");
   AddOption(&LinkerOptions, &LinkerOptionsLen, "smlrl");
 #else
@@ -1391,7 +1404,7 @@ int main(int argc, char* argv[])
   }
   if (PreprocessWithGcc)
   {
-#ifdef HOST_LINUX
+#ifdef UNIX_LIKE
     AddOptions(&PrepOptions, &PrepOptionsLen, "gcc -E -undef -nostdinc");
 #else
     AddOptions(&PrepOptions, &PrepOptionsLen, "gcc.exe -E -undef -nostdinc");
@@ -1401,7 +1414,7 @@ int main(int argc, char* argv[])
   {
     // Don't use ucpp's default path for system headers and undefine
     // __STDC_VERSION__ since Smaller C is not fully standard.
-#ifdef HOST_LINUX
+#ifdef UNIX_LIKE
     AddOptions(&PrepOptions, &PrepOptionsLen, "smlrpp -U __STDC_VERSION__ -zI");
 #else
     AddOptions(&PrepOptions, &PrepOptionsLen, "smlrpp.exe -U __STDC_VERSION__ -zI");
@@ -1735,7 +1748,7 @@ int main(int argc, char* argv[])
   // FASM usable as NASM). And we always assemble to ELF.
   if (AssemblerName == NULL && (AssemblerName = getenv("SMLRASM")) == NULL)
   {
-#ifdef HOST_LINUX
+#ifdef UNIX_LIKE
     AssemblerName = "nasm";
 #else
     // Use explicit extensions (".exe") to let system() know that
@@ -1752,6 +1765,13 @@ int main(int argc, char* argv[])
 
   if (!OutputFormat)
   {
+#ifdef HOST_MACOS
+    OutputFormat = FormatMach32;
+    AddOption(&CompilerOptions, &CompilerOptionsLen, "-seg32");
+    DefineMacro("_MACOS");
+    AddOption(&LinkerOptions, &LinkerOptionsLen, "-mach");
+    LinkStdLib = 1;
+#else
 #ifdef HOST_LINUX
     OutputFormat = FormatElf32;
     AddOption(&CompilerOptions, &CompilerOptionsLen, "-seg32");
@@ -1773,6 +1793,7 @@ int main(int argc, char* argv[])
     DefineMacro("_DOS");
     AddOption(&LinkerOptions, &LinkerOptionsLen, "-huge");
     LinkStdLib = 1;
+#endif
 #endif
 #endif
 #endif
@@ -1844,6 +1865,8 @@ int main(int argc, char* argv[])
       DefineMacro("__SMALLER_C_32__");
       break;
     case FormatElf32:
+      DefineMacro("__SMALLER_C_32__");
+      break;
     case FormatMach32:
       DefineMacro("__SMALLER_C_32__");
       break;
