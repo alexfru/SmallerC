@@ -306,6 +306,23 @@ typedef struct
 
 typedef struct
 {
+  char sectname[16];
+  char segname[16];
+  uint32 addr;
+  uint32 size;
+  uint32 offset;
+  uint32 align;
+  uint32 reloff;
+  uint32 nreloc;
+#define S_ATTR_PURE_INSTRUCTIONS 0x80000000
+#define S_ATTR_SOME_INSTRUCTIONS 0x400
+  uint32 flags;
+  uint32 reserved1;
+  uint32 reserved2;
+} Mach32_Section;
+
+typedef struct
+{
   uint32  eax;
   uint32  ebx;
   uint32  ecx;
@@ -333,21 +350,6 @@ typedef struct
   uint32  count;          /* count of longs in thread state */
   Mach32_ThreadState state;
 } Mach32_ThreadCmd;
-
-typedef struct
-{
-  char sectname[16];
-  char segname[16];
-  uint32 addr;
-  uint32 size;
-  uint32 offset;
-  uint32 align;
-  uint32 reloff;
-  uint32 nreloc;
-  uint32 flags;
-  uint32 reserved1;
-  uint32 reserved2;
-} Mach32_Section;
 
 typedef struct
 {
@@ -890,7 +892,7 @@ void FillWithByte(unsigned char byte, size_t size, FILE* stream)
   }
 }
 
-size_t AlignTo(size_t ofs, size_t align)
+uint32 AlignTo(uint32 ofs, uint32 align)
 {
   return (ofs + align - 1) / align * align;
 }
@@ -2193,7 +2195,6 @@ void Pass(int pass, FILE* fout, uint32 hdrsz)
     case FormatWinPe32:
     case FormatElf32:
     case FormatAout:
-    // TODO(tilarids): Do we need this for Mach-O format?
     case FormatMach32:
       if (!isDataSection &&
           (j + 1 == SectCnt ||
@@ -2633,9 +2634,10 @@ void RwMach(void)
   FILE* fout = Fopen(OutName, "wb+");
   uint32 sectionIdx;
   uint32 hdrsz;
-  uint32 sections_stop = 0;
-  uint32 vmaddr_stop = 0;
-  uint32 text_start;
+  uint32 imageBase;
+  int hasPageZero;
+  uint32 start, stop;
+  uint32 sections_stop, vmaddr_stop;
   uint32 predefinedLinkeditSize = 52;
   Mach32_SegmentCmd linkeditSegmentCmd;
   static const uint32 num_syms = 2;
@@ -2666,86 +2668,168 @@ void RwMach(void)
     0,                                      // n_value
   };
   char predefinedStringTable[] = "\x20\x0__mh_execute_header\x0start";
+  Mach32_SegmentCmd segz = // unmapped memory to catch NULL pointer dereferences
+  {
+    MACH_LC_SEGMENT, // cmd
+    sizeof(Mach32_SegmentCmd), // cmdsize
+    { "__PAGEZERO" }, // segname
+    0, // vmaddr
+    0, // vmsize
+    0, // fileoff
+    0, // filesize
+    0, // maxprot
+    0, // initprot
+    0, // nsects
+    0, // flags
+  };
+  // TBD!!! Check if this is still true: using proper segment/section names drives otool crazy.
+  Mach32_SegmentCmd seg[2] =
+  {
+    {
+      MACH_LC_SEGMENT, // cmd
+      sizeof(Mach32_SegmentCmd) + sizeof(Mach32_Section), // cmdsize
+      { "__TEXT" }, // segname
+      0, // vmaddr
+      0, // vmsize
+      0, // fileoff
+      0, // filesize
+      MACH_VM_PROT_READ | MACH_VM_PROT_EXECUTE | MACH_VM_PROT_WRITE, // maxprot
+      MACH_VM_PROT_READ | MACH_VM_PROT_EXECUTE, // initprot
+      1, // nsects
+      0, // flags
+    },
+    {
+      MACH_LC_SEGMENT, // cmd
+      sizeof(Mach32_SegmentCmd) + sizeof(Mach32_Section), // cmdsize
+      { "__DATA" }, // segname
+      0, // vmaddr
+      0, // vmsize
+      0, // fileoff
+      0, // filesize
+      MACH_VM_PROT_READ | MACH_VM_PROT_EXECUTE | MACH_VM_PROT_WRITE, // maxprot
+      MACH_VM_PROT_READ | MACH_VM_PROT_WRITE, // initprot
+      1, // nsects
+      0, // flags
+    },
+  };
+  Mach32_Section sect[2] =
+  {
+    {
+      { "__text" }, // sectname
+      { "__TEXT" }, // segname
+      0, // addr
+      0, // size
+      0, // offset
+      0, // align
+      0, // reloff
+      0, // nreloc
+      S_ATTR_PURE_INSTRUCTIONS | S_ATTR_SOME_INSTRUCTIONS, // flags
+      0, // reserved1
+      0, // reserved2
+    },
+    {
+      { "__data" }, // sectname
+      { "__DATA" }, // segname
+      0, // addr
+      0, // size
+      0, // offset
+      0, // align
+      0, // reloff
+      0, // nreloc
+      0, // flags
+      0, // reserved1
+      0, // reserved2
+    },
+  };
+  // Note that we create sections (in addition to segments) and
+  // a couple of symbols to make the OS and tools happy (there
+  // seem to be tighter checks in newer MacOS).
+  // They shouldn't be needed otherwise.
 
-  MachHeader.ncmds = 4 + hasData;
-  MachHeader.sizeofcmds = (1 + hasData) * (sizeof(Mach32_SegmentCmd) + sizeof(Mach32_Section))
-                        + sizeof(Mach32_SegmentCmd) + sizeof(Mach32_SymtabCmd)
-                        + sizeof(Mach32_ThreadCmd);
+  if (Origin == 0xFFFFFFFF)
+    imageBase = 0x1000; // default image base if origin is unspecified
+  else
+    imageBase = Origin & 0xFFFFF000;
+  if (imageBase >= 0xFFFFF000)
+    errSectTooBig();
+  hasPageZero = imageBase != 0;
+
+  MachHeader.ncmds = hasPageZero + 4 + hasData;
+  MachHeader.sizeofcmds =
+    hasPageZero * sizeof(Mach32_SegmentCmd) +
+    (1 + hasData) * (sizeof(Mach32_SegmentCmd) + sizeof(Mach32_Section)) +
+    sizeof(Mach32_SegmentCmd) + sizeof(Mach32_SymtabCmd) +
+    sizeof(Mach32_ThreadCmd);
 
   hdrsz = sizeof MachHeader + MachHeader.sizeofcmds;
-  Origin = hdrsz; // TBD!!! origin / image base should not be a small address close to 0!!!
-  Pass(0, NULL, hdrsz);
+  Origin = imageBase + hdrsz;
 
-  text_start = pSectDescrs[SectCnt].Start;
+  Pass(0, NULL, hdrsz);
 
   Fwrite(&MachHeader, sizeof MachHeader, fout);
 
-  for (sectionIdx = SectCnt; sectionIdx <= SectCnt + hasData; ++sectionIdx)
-  {
-    Mach32_SegmentCmd segmentCmd;
-    Mach32_Section section;
-    uint32 start = pSectDescrs[sectionIdx].Start;
-    uint32 stop = pSectDescrs[sectionIdx].Stop;
-    uint32 realSize = stop - start;
-    sections_stop = stop;
-    vmaddr_stop = stop;
+  // Note that the header is part of the code segment.
+  start = imageBase;
+  stop = (pSectDescrs[SectCnt].Stop + 0xFFF) & 0xFFFFF000;
+  seg[0].filesize = seg[0].vmsize = stop - start;
+  seg[0].vmaddr = start;
+  sect[0].addr = Origin;
+  sect[0].offset = hdrsz;
+  sect[0].size = stop - Origin; 
 
-    if ((sectionIdx == SectCnt + 1) && UseBss) // data
+  if (hasData)
+  {
+    start = pSectDescrs[SectCnt + 1].Start & 0xFFFFF000;
+    stop = (pSectDescrs[SectCnt + 1].Stop + 0xFFF) & 0xFFFFF000;
+
+    seg[1].vmsize = stop - start;
+    sect[1].addr = seg[1].vmaddr = start;
+    sect[1].offset = seg[1].fileoff = start - imageBase;
+
+    if ((pSectDescrs[SectCnt - 1].Attrs & SHT_NOBITS) && UseBss)
     {
       uint32 i = SectCnt - 1;
       while (pSectDescrs[i].Attrs & SHT_NOBITS)
         i--;
-      realSize = ((pSectDescrs[i].Stop + 0xFFF) & 0xFFFFF000) - start;
-      sections_stop = ((pSectDescrs[i].Stop + 0xFFF) & 0xFFFFF000);
+      seg[1].filesize = ((pSectDescrs[i].Stop + 0xFFF) & 0xFFFFF000) - start;
     }
-    segmentCmd.cmd = MACH_LC_SEGMENT;
-    segmentCmd.cmdsize = sizeof(Mach32_SegmentCmd) + sizeof(Mach32_Section);
-    // NOTE: Using proper names drives otool crazy.
-    strncpy(segmentCmd.segname, pSectDescrs[sectionIdx].pName, 16);
-    segmentCmd.vmaddr = AlignTo(start - text_start, 0x1000);
-    segmentCmd.vmsize = AlignTo(stop - start, 0x1000);
-    segmentCmd.fileoff = AlignTo(start - text_start, 0x1000);
-    // TODO(tilarids): Update with an appropriate file size.
-    segmentCmd.filesize = AlignTo(realSize, 0x1000);
-    segmentCmd.maxprot = MACH_VM_PROT_READ | MACH_VM_PROT_EXECUTE | MACH_VM_PROT_WRITE;
-    segmentCmd.initprot = MACH_VM_PROT_READ | MACH_VM_PROT_EXECUTE | MACH_VM_PROT_WRITE;
-    segmentCmd.nsects = 0x1;
-    segmentCmd.flags = 0x0;
+    else
+    {
+      seg[1].filesize = stop - start;
+    }
 
-    strncpy(section.sectname, pSectDescrs[sectionIdx].pName, 16);
-    strncpy(section.segname, pSectDescrs[sectionIdx].pName, 16);
-    section.addr = start;
-    section.size = realSize;
-    section.offset = start;
-    section.align = 0x0;
-    section.reloff = 0x0;
-    section.nreloc = 0x0;
-    section.flags = 0x0;
-    section.reserved1 = 0x0;
-    section.reserved2 = 0x0;
-
-    Fwrite(&segmentCmd, sizeof segmentCmd, fout);
-    Fwrite(&section, sizeof section, fout);
+    sect[1].size = seg[1].filesize; 
   }
 
-  // Align sections stop.
-  sections_stop = AlignTo(sections_stop, 4096);
-  vmaddr_stop = AlignTo(vmaddr_stop, 4096);
+  if (hasPageZero)
+  {
+    segz.vmsize = imageBase;
+    Fwrite(&segz, sizeof segz, fout);
+  }
+
+  for (sectionIdx = 0; sectionIdx <= hasData; ++sectionIdx)
+  {
+    Fwrite(&seg[sectionIdx], sizeof seg[sectionIdx], fout);
+    Fwrite(&sect[sectionIdx], sizeof sect[sectionIdx], fout);
+  }
+
+  sections_stop = seg[hasData].fileoff + seg[hasData].filesize;
+  vmaddr_stop = seg[hasData].vmaddr + seg[hasData].vmsize;
 
   linkeditSegmentCmd.cmd = MACH_LC_SEGMENT;
   linkeditSegmentCmd.cmdsize = sizeof(Mach32_SegmentCmd);
   strncpy(linkeditSegmentCmd.segname, "__LINKEDIT", 16);
   linkeditSegmentCmd.vmaddr = vmaddr_stop;
-  // TODO(tilarids): Should we change the vmsize here?
+  // TBD???(tilarids): Should we change the vmsize here?
   linkeditSegmentCmd.vmsize = 0x1000;
   linkeditSegmentCmd.fileoff = sections_stop;
   linkeditSegmentCmd.filesize = predefinedLinkeditSize;
-  linkeditSegmentCmd.maxprot = MACH_VM_PROT_READ;
+  linkeditSegmentCmd.maxprot = MACH_VM_PROT_READ | MACH_VM_PROT_EXECUTE | MACH_VM_PROT_WRITE;
   linkeditSegmentCmd.initprot = MACH_VM_PROT_READ;
   linkeditSegmentCmd.nsects = 0x0;
   linkeditSegmentCmd.flags = 0x0;
 
-  // TODO(tilarids): Consider writing a proper symbol table.
+  // TBD??? Consider writing a proper symbol table.
   symtabCmd.cmd = MACH_LC_SYMTAB;
   symtabCmd.cmdsize = sizeof(Mach32_SymtabCmd);
   symtabCmd.symoff = sections_stop;
@@ -2761,15 +2845,16 @@ void RwMach(void)
 
   Pass(1, fout, hdrsz);
 
-  // Write symbols table.
-  // TODO(tilarids): Write a proper table instead of predefined one.
+  // Write the symbol table.
+  // TBD??? Write a proper table instead of the predefined one.
+  mhExecuteHeaderSym.n_value = imageBase;
   startSym.n_value = FindSymbolAddress(EntryPoint);
 
   Fwrite(&mhExecuteHeaderSym, sizeof mhExecuteHeaderSym, fout);
   Fwrite(&startSym, sizeof startSym, fout);
 
-  // Write string table.
-  // TODO(tilarids): Write a proper string table instead of predefined one.
+  // Write the string table.
+  // TBD??? Write a proper string table instead of the predefined one.
   Fwrite(predefinedStringTable, sizeof predefinedStringTable, fout);
 
   Fclose(fout);
