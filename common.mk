@@ -3,7 +3,7 @@ bindir = $(prefix)/bin
 libdir = $(prefix)/smlrc/lib
 incdir = $(prefix)/smlrc/include
 
-CFLAGS = -pipe -Wall -O0 -g
+CFLAGS = -pipe -Wall -O2
 CFLAGS += -DPATH_PREFIX='"$(prefix)"'
 
 CC = gcc

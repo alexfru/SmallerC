@@ -421,7 +421,7 @@ static int OP_BIN(int x)
 
 static ppval eval_opbin(int op, ppval v1, ppval v2)
 {
-	ppval r;
+	ppval r = { 0 };
 	int iv2 = 0;
 
 	switch (op) {

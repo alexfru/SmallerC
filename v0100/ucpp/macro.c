@@ -490,7 +490,7 @@ int handle_define(struct lexer_state *ls)
 
 	/* now, we have the arguments. Let's get the macro contents. */
 	while (!next_token(ls) && ls->ctok->type != NEWLINE) {
-		struct token t;
+		struct token t = { 0 };
 
 		t.type = ls->ctok->type;
 		if (ltwws && ttMWS(t.type)) continue;
@@ -761,7 +761,7 @@ static int collect_arguments(struct lexer_state *ls, struct token_fifo *tfi,
 		}
 	}
 	while (!unravel(ls)) {
-		struct token t;
+		struct token t = { 0 };
 
 		if (ct->type == LPAR) npar ++;
 		else if (ct->type == RPAR && (-- npar) == 0) {

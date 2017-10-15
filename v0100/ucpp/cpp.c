@@ -948,7 +948,7 @@ static int handle_if(struct lexer_state *ls)
 	/* first, get the whole line */
 	tf.art = tf.nt = 0;
 	while (!next_token(ls) && ls->ctok->type != NEWLINE) {
-		struct token t;
+		struct token t = { 0 };
 
 		if (ltww && ttMWS(ls->ctok->type)) continue;
 		ltww = ttMWS(ls->ctok->type);
@@ -968,7 +968,7 @@ static int handle_if(struct lexer_state *ls)
 	/* handle the "defined" operator */
 	tf1.art = tf1.nt = 0;
 	while (tf.art < tf.nt) {
-		struct token *ct, rt;
+		struct token *ct, rt = { 0 };
 		struct macro *m;
 		size_t nidx, eidx;
 
@@ -1044,7 +1044,7 @@ static int handle_if(struct lexer_state *ls)
 			char *aname;
 			struct assert *a;
 			int av = 0;
-			struct token rt;
+			struct token rt = { 0 };
 
 			atl.art = atl.nt = 0;
 			while (i < tf1.nt && ttMWS(tf1.t[i].type)) i ++;
@@ -1116,7 +1116,7 @@ static int handle_if(struct lexer_state *ls)
 			/*
 			 * a rogue identifier; we replace it with "0".
 			 */
-			struct token rt;
+			struct token rt = { 0 };
 
 			rt.type = NUMBER;
 			rt.name = "0";
@@ -1250,7 +1250,7 @@ include_last_chance:
 	tf.art = tf.nt = 0;
 	while (!next_token(&alt_ls)) {
 		if (!ttMWS(alt_ls.ctok->type)) {
-			struct token t;
+			struct token t = { 0 };
 
 			t.type = alt_ls.ctok->type;
 			t.line = l;
@@ -1274,7 +1274,7 @@ include_macro:
 	tf.art = tf.nt = 0;
 	while (!next_token(ls) && ls->ctok->type != NEWLINE) {
 		if (!ttMWS(ls->ctok->type)) {
-			struct token t;
+			struct token t = { 0 };
 
 			t.type = ls->ctok->type;
 			t.line = l;
@@ -1415,7 +1415,7 @@ static int handle_line(struct lexer_state *ls, unsigned long flags)
 	tf.art = tf.nt = 0;
 	while (!next_token(ls) && ls->ctok->type != NEWLINE) {
 		if (!ttMWS(ls->ctok->type)) {
-			struct token t;
+			struct token t = { 0 };
 
 			t.type = ls->ctok->type;
 			t.line = l;
@@ -1605,7 +1605,7 @@ static void handle_pragma(struct lexer_state *ls)
 		if (!ttMWS(ls->ctok->type)) break;
 	if (ls->ctok->type != NEWLINE) {
 		do {
-			struct token t;
+			struct token t = { 0 };
 
 			t.type = ls->ctok->type;
 			if (ttMWS(t.type)) continue;

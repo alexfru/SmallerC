@@ -128,9 +128,9 @@ int cmp_token_list(struct token_fifo *f1, struct token_fifo *f2)
 int handle_assert(struct lexer_state *ls)
 {
 	int ina = 0, ltww;
-	struct token t;
+	struct token t = { 0 };
 	struct token_fifo *atl = 0;
-	struct assert *a;
+	struct assert *a = NULL;
 	char *aname = NULL;
 	int ret = -1;
 	long l = ls->line;
@@ -242,7 +242,7 @@ handle_assert_warp_ign:
 int handle_unassert(struct lexer_state *ls)
 {
 	int ltww;
-	struct token t;
+	struct token t = { 0 };
 	struct token_fifo atl;
 	struct assert *a;
 	int ret = -1;
