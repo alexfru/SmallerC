@@ -193,7 +193,7 @@ int SysAccess(char* name, int amode)
   asm("mov eax, 33\n" // sys_access
       "mov ebx, [ebp + 8]\n"
       "mov ecx, [ebp + 12]\n"
-      "int 0x80");
+      "int 0x80"); // returns -"errno", e.g. -ENOENT.
 }
 #endif // _LINUX
 
@@ -201,11 +201,12 @@ int SysAccess(char* name, int amode)
 static
 int SysAccess(char* name, int amode)
 {
-  asm("mov eax, 33\n" // sys_access
+  asm("mov  eax, 33\n" // sys_access
       "push dword [ebp + 12]\n"
       "push dword [ebp + 8]\n"
-      "sub esp, 4\n"
-      "int 0x80");
+      "sub  esp, 4\n"
+      "int  0x80\n" // returns "errno", e.g. ENOENT.
+      "neg  eax"); // unify with Linux: change to -"errno".
 }
 #endif // _MACOS
 
@@ -289,12 +290,9 @@ char* __tmpnam(char* buf, unsigned iterations)
     }
 #endif
 #ifdef UNIX_LIKE
-    // The access system call returns negated E* codes on Linux
-    // and non-negated E* codes on MacOS.
+    // SysAccess(), defined above, returns -errno,
+    // e.g. -ENOENT on both Linux and MacOS.
     attrOrError = -SysAccess(buf, 0/*F_OK*/);
-#ifdef _MACOS
-    attrOrError = -attrOrError;
-#endif
     if (attrOrError)
     {
       if (attrOrError == 2/*ENOENT*/)

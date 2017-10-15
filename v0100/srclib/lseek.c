@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014-2016, Alexey Frunze
+  Copyright (c) 2014-2017, Alexey Frunze
   2-clause BSD license.
 */
 #include <unistd.h>
@@ -107,7 +107,11 @@ off_t lseek(int fd, off_t offset, int whence)
       "mov ebx, [ebp + 8]\n"
       "mov ecx, [ebp + 12]\n"
       "mov edx, [ebp + 16]\n"
-      "int 0x80");
+      "int 0x80\n"
+      "add eax, 0\n"
+      "jns .done\n"
+      "mov eax, -1\n" // should really return -1 on error. TBD??? set errno?
+      ".done:");
 }
 
 #endif // _LINUX
@@ -131,6 +135,7 @@ off_t lseek(int fd, off_t offset, int whence)
 
       "jnc  .check_32bit\n"
 
+      // TBD??? set errno?
       ".ret_1:\n"       // error
       "mov  eax, -1\n"
       "jmp  .done\n"

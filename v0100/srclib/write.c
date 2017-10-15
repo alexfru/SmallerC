@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014-2016, Alexey Frunze
+  Copyright (c) 2014-2017, Alexey Frunze
   2-clause BSD license.
 */
 #include <unistd.h>
@@ -182,7 +182,11 @@ ssize_t write(int fd, void* buf, size_t size)
       "mov ebx, [ebp + 8]\n"
       "mov ecx, [ebp + 12]\n"
       "mov edx, [ebp + 16]\n"
-      "int 0x80");
+      "int 0x80\n"
+      "add eax, 0\n"
+      "jns .done\n"
+      "mov eax, -1\n" // should really return -1 on error. TBD??? set errno?
+      ".done:");
 }
 
 #endif // _LINUX
@@ -191,12 +195,15 @@ ssize_t write(int fd, void* buf, size_t size)
 
 ssize_t write(int fd, void* buf, size_t size)
 {
-  asm("mov eax, 4\n" // sys_write
+  asm("mov  eax, 4\n" // sys_write
       "push dword [ebp + 16]\n"
       "push dword [ebp + 12]\n"
       "push dword [ebp + 8]\n"
-      "sub esp, 4\n"
-      "int 0x80");
+      "sub  esp, 4\n"
+      "int  0x80\n"
+      "jnc  .done\n"
+      "mov  eax, -1\n" // should really return -1 on error. TBD??? set errno?
+      ".done:");
 }
 
 #endif // _MACOS

@@ -672,7 +672,11 @@ static
 pid_t SysFork(void)
 {
   asm("mov eax, 2\n" // sys_fork
-      "int 0x80");
+      "int 0x80\n"
+      "add eax, 0\n"
+      "jns .done\n"
+      "mov eax, -1\n" // error
+      ".done:");
 }
 
 static
@@ -723,24 +727,24 @@ pid_t SysFork(void)
 static
 pid_t SysWaitpid(pid_t pid, int* status, int options)
 {
-  asm("mov eax, 7\n" // sys_wait4
+  asm("mov  eax, 7\n" // sys_wait4
       "push dword 0\n"
       "push dword [ebp + 16]\n"
       "push dword [ebp + 12]\n"
       "push dword [ebp + 8]\n"
-      "sub esp, 4\n"
-      "int 0x80");
+      "sub  esp, 4\n"
+      "int  0x80");
 }
 
 static
 int SysExecve(char* path, char* argv[], char* envp[])
 {
-  asm("mov eax, 59\n" // sys_execve
+  asm("mov  eax, 59\n" // sys_execve
       "push dword [ebp + 16]\n"
       "push dword [ebp + 12]\n"
       "push dword [ebp + 8]\n"
-      "sub esp, 4\n"
-      "int 0x80");
+      "sub  esp, 4\n"
+      "int  0x80");
 }
 #endif  // _MACOS
 

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014-2016, Alexey Frunze
+  Copyright (c) 2014-2017, Alexey Frunze
   2-clause BSD license.
 */
 #include <unistd.h>
@@ -105,7 +105,11 @@ int close(int fd)
 {
   asm("mov eax, 6\n" // sys_close
       "mov ebx, [ebp + 8]\n"
-      "int 0x80");
+      "int 0x80\n"
+      "add eax, 0\n"
+      "jns .done\n"
+      "mov eax, -1\n" // should really return -1 on error. TBD??? set errno?
+      ".done:");
 }
 
 #endif // _LINUX
@@ -114,10 +118,13 @@ int close(int fd)
 
 int close(int fd)
 {
-  asm("mov eax, 6\n" // sys_close
+  asm("mov  eax, 6\n" // sys_close
       "push dword [ebp + 8]\n"
-      "sub esp, 4\n"
-      "int 0x80");
+      "sub  esp, 4\n"
+      "int  0x80\n"
+      "jnc  .done\n"
+      "mov  eax, -1\n" // should really return -1 on error. TBD??? set errno?
+      ".done:");
 }
 
 #endif // _MACOS
