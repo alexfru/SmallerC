@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014-2016, Alexey Frunze
+  Copyright (c) 2014-2017, Alexey Frunze
   2-clause BSD license.
 */
 #ifdef __HUGE__
@@ -7,6 +7,13 @@
 #endif
 #ifdef __UNREAL__
 #define __HUGE_OR_UNREAL__
+#endif
+
+#ifdef _LINUX
+#define UNIX_LIKE
+#endif
+#ifdef _MACOS
+#define UNIX_LIKE
 #endif
 
 extern int main(int argc, char** argv);
@@ -20,7 +27,7 @@ extern void __x87init(void);
 #include <stdlib.h>
 #include <unistd.h>
 
-#if !defined(_LINUX) && !defined(_MACOS)
+#ifndef UNIX_LIKE
 // Implements the logic of __getmainargs() from msvcrt.dll, msvcr70.dll ... msvcr120.dll.
 //static
 int __ArgParser__(char* in, char* out, char** argv)
@@ -564,7 +571,7 @@ void __start__(void)
 
 #endif // _WINDOWS
 
-#if defined(_LINUX) || defined(_MACOS)
+#ifdef UNIX_LIKE
 
 char** __environ;
 
@@ -577,5 +584,4 @@ void __start__(int argc, char** argv)
   exit(main(argc, argv));
 }
 
-#endif // defined(_LINUX) || defined(_MACOS)
-
+#endif // UNIX_LIKE

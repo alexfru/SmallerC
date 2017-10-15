@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014-2016, Alexey Frunze
+  Copyright (c) 2014-2017, Alexey Frunze
   2-clause BSD license.
 */
 #include <string.h>
@@ -10,6 +10,13 @@
 #endif
 #ifdef __UNREAL__
 #define __HUGE_OR_UNREAL__
+#endif
+
+#ifdef _LINUX
+#define UNIX_LIKE
+#endif
+#ifdef _MACOS
+#define UNIX_LIKE
 #endif
 
 char* __EnvVar;
@@ -235,7 +242,7 @@ err:
 
 #endif // _WINDOWS
 
-#if defined(_LINUX) || defined(_MACOS)
+#ifdef UNIX_LIKE
 
 extern char** __environ;
 
@@ -253,4 +260,4 @@ char* getenv(char* name)
   return NULL;
 }
 
-#endif // defined(_LINUX) || defined(_MACOS)
+#endif // UNIX_LIKE

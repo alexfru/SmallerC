@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014-2016, Alexey Frunze
+  Copyright (c) 2014-2017, Alexey Frunze
   2-clause BSD license.
 */
 #include <time.h>
@@ -9,6 +9,13 @@
 #endif
 #ifdef __UNREAL__
 #define __HUGE_OR_UNREAL__
+#endif
+
+#ifdef _LINUX
+#define UNIX_LIKE
+#endif
+#ifdef _MACOS
+#define UNIX_LIKE
 #endif
 
 #ifdef _DOS
@@ -73,7 +80,7 @@ clock_t clock(void)
 
 #endif // _WINDOWS
 
-#if defined(_LINUX) || defined(_MACOS)
+#ifdef UNIX_LIKE
 
 struct tms
 {
@@ -91,12 +98,14 @@ clock_t SysTimes(struct tms* buf)
       "mov ebx, [ebp + 8]\n"
       "int 0x80");
 }
-#endif  // _LINUX
+#endif // _LINUX
 
 #ifdef _MACOS
 
-#define CLK_TCK 60 // TODO(tilarids): Can't be always true. Fix it.
+/*
+#define CLK_TCK 60 // TBD!!! Can't be always true. Fix it.
 #define CONVTCK(r)  (r.tv_sec * CLK_TCK + r.tv_usec / (1000000 / CLK_TCK))
+*/
 
 typedef long suseconds_t;
 struct timeval
@@ -161,7 +170,7 @@ clock_t SysTimes(struct tms *tp)
   return (clock_t)-1;
 }
 
-#endif  // _MACOS
+#endif // _MACOS
 
 clock_t clock(void)
 {

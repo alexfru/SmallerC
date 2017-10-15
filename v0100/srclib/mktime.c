@@ -4,6 +4,13 @@
 */
 #include "itime.h"
 
+#ifdef _LINUX
+#define UNIX_LIKE
+#endif
+#ifdef _MACOS
+#define UNIX_LIKE
+#endif
+
 #ifdef _DOS
 
 #ifdef __SMALLER_C_32__
@@ -70,9 +77,9 @@ int SysGettimeofday(long tv[2], int tz[2])
       "int 0x80");
 }
 
-#endif  // _LINUX
+#endif // _LINUX
 
-#if defined(_LINUX) || defined(_MACOS)
+#ifdef UNIX_LIKE
 // mktime() must take local time and return UTC/GMT time
 time_t mktime(struct tm* tm)
 {
@@ -85,8 +92,8 @@ time_t mktime(struct tm* tm)
   int tz[2] = { 0 };
   if (SysGettimeofday(tv, tz) == 0)
     tt += tz[0] * 60;
-#endif  // _LINUX
+#endif // _LINUX
   return tt;
 }
 
-#endif // defined(_LINUX) || defined(_MACOS)
+#endif // UNIX_LIKE

@@ -1,8 +1,15 @@
 /*
-  Copyright (c) 2014, Alexey Frunze
+  Copyright (c) 2014-2017, Alexey Frunze
   2-clause BSD license.
 */
 #include "istdio.h"
+
+#ifdef _LINUX
+#define UNIX_LIKE
+#endif
+#ifdef _MACOS
+#define UNIX_LIKE
+#endif
 
 static int __fputc(int c, FILE* f)
 {
@@ -34,7 +41,7 @@ static int __fputc(int c, FILE* f)
 
 int fputc(int c, FILE* f)
 {
-#if !defined(_LINUX) && !defined(_MACOS)
+#ifndef UNIX_LIKE
   if (c == '\n' && !(f->flags & _IOBINARY))
     __fputc('\r', f); // insert '\r'
 #endif

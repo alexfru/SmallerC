@@ -51,10 +51,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #ifdef HOST_MACOS
-#define UNIX_LIKE 1
+#define UNIX_LIKE
 #endif
 #ifdef HOST_LINUX
-#define UNIX_LIKE 1
+#define UNIX_LIKE
 #endif
 
 #ifndef PATH_PREFIX

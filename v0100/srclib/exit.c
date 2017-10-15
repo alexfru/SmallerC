@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014-2016, Alexey Frunze
+  Copyright (c) 2014-2017, Alexey Frunze
   2-clause BSD license.
 */
 #include "istdio.h"
@@ -9,6 +9,13 @@
 #endif
 #ifdef __UNREAL__
 #define __HUGE_OR_UNREAL__
+#endif
+
+#ifdef _LINUX
+#define UNIX_LIKE
+#endif
+#ifdef _MACOS
+#define UNIX_LIKE
 #endif
 
 void (*__pAtExitIterator)(void);
@@ -120,9 +127,9 @@ void __ExitInner(int iterator, int flushclose, int status)
   ExitProcess(status);
 #endif // _WINDOWS
 
-#if defined(_LINUX) || defined(_MACOS)
+#ifdef UNIX_LIKE
   SysExit(status);
-#endif // defined(_LINUX) || defined(_MACOS)
+#endif // UNIX_LIKE
 }
 
 void _Exit(int status)

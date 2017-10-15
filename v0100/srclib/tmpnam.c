@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014-2016, Alexey Frunze
+  Copyright (c) 2014-2017, Alexey Frunze
   2-clause BSD license.
 */
 #include "istdio.h"
@@ -11,6 +11,13 @@
 #endif
 #ifdef __UNREAL__
 #define __HUGE_OR_UNREAL__
+#endif
+
+#ifdef _LINUX
+#define UNIX_LIKE
+#endif
+#ifdef _MACOS
+#define UNIX_LIKE
 #endif
 
 #ifdef _DOS
@@ -110,7 +117,7 @@ static unsigned num;
 static char name[L_tmpnam];
 static size_t plen;
 
-#if !defined(_LINUX) && !defined(_MACOS)
+#ifndef UNIX_LIKE
 static
 void TryPath(char* path)
 {
@@ -188,7 +195,7 @@ int SysAccess(char* name, int amode)
       "mov ecx, [ebp + 12]\n"
       "int 0x80");
 }
-#endif   // _LINUX
+#endif // _LINUX
 
 #ifdef _MACOS
 static
@@ -200,7 +207,7 @@ int SysAccess(char* name, int amode)
       "sub esp, 4\n"
       "int 0x80");
 }
-#endif  // _MACOS
+#endif // _MACOS
 
 #endif
 
@@ -212,7 +219,7 @@ char* __tmpnam(char* buf, unsigned iterations)
   if (!*name)
   {
     // On the first use, determine the directory for temporary files
-#if !defined(_LINUX) && !defined(_MACOS)
+#ifndef UNIX_LIKE
     TryEnvPath("TEMP");
     if (!*name)
       TryEnvPath("TMP");
@@ -281,7 +288,7 @@ char* __tmpnam(char* buf, unsigned iterations)
       break;
     }
 #endif
-#if defined(_LINUX) || defined(_MACOS)
+#ifdef UNIX_LIKE
     // The access system call returns negated E* codes on Linux
     // and non-negated E* codes on MacOS.
     attrOrError = -SysAccess(buf, 0/*F_OK*/);

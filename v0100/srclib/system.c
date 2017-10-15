@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014-2016, Alexey Frunze
+  Copyright (c) 2014-2017, Alexey Frunze
   2-clause BSD license.
 */
 #include <stdlib.h>
@@ -12,6 +12,13 @@
 #endif
 #ifdef __UNREAL__
 #define __HUGE_OR_UNREAL__
+#endif
+
+#ifdef _LINUX
+#define UNIX_LIKE
+#endif
+#ifdef _MACOS
+#define UNIX_LIKE
 #endif
 
 #ifdef __SMALLER_C_32__
@@ -737,7 +744,7 @@ int SysExecve(char* path, char* argv[], char* envp[])
 }
 #endif  // _MACOS
 
-#if defined(_LINUX) || defined(_MACOS)
+#ifdef UNIX_LIKE
 extern char** __environ;
 
 int system(char* cmd)
@@ -794,4 +801,4 @@ end:
   return res;
 }
 
-#endif // _LINUX
+#endif // UNIX_LIKE

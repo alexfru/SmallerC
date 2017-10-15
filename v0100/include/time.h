@@ -22,9 +22,16 @@ typedef unsigned long time_t;
 #endif
 
 #ifdef __SMALLER_C_32__
-#if !defined(_LINUX) && !defined(_MACOS)
+#ifdef _DOS
 typedef unsigned long clock_t;
-#else
+#endif
+#ifdef _WINDOWS
+typedef unsigned long clock_t;
+#endif
+#ifdef _LINUX
+typedef long clock_t;
+#endif
+#ifdef _MACOS
 typedef long clock_t;
 #endif
 #endif
@@ -37,7 +44,11 @@ typedef long clock_t;
 #define CLOCKS_PER_SEC 1000 // clock() uses GetTickCount()
 #endif
 
-#if defined(_LINUX) || defined(_MACOS)
+#ifdef _LINUX
+#define CLOCKS_PER_SEC 1000000 // clock() based on times()'s tms_utime + tms_stime
+#endif
+
+#ifdef _MACOS
 #define CLOCKS_PER_SEC 1000000 // clock() based on times()'s tms_utime + tms_stime
 #endif
 

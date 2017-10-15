@@ -1,11 +1,18 @@
 /*
-  Copyright (c) 2014, Alexey Frunze
+  Copyright (c) 2014-2017, Alexey Frunze
   2-clause BSD license.
 */
 #include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include "istdio.h"
+
+#ifdef _LINUX
+#define UNIX_LIKE
+#endif
+#ifdef _MACOS
+#define UNIX_LIKE
+#endif
 
 size_t fread(void* ptr, size_t esize, size_t ecount, FILE* f)
 {
@@ -16,7 +23,7 @@ size_t fread(void* ptr, size_t esize, size_t ecount, FILE* f)
   if (!size)
     return 0;
 
-#if !defined(_LINUX) && !defined(_MACOS)
+#ifndef UNIX_LIKE
   if (f->flags & _IOBINARY)
 #endif
   {
@@ -47,7 +54,7 @@ size_t fread(void* ptr, size_t esize, size_t ecount, FILE* f)
       }
     }
   }
-#if !defined(_LINUX) && !defined(_MACOS)
+#ifndef UNIX_LIKE
   else
   {
     while (size)

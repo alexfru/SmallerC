@@ -1,8 +1,15 @@
 /*
-  Copyright (c) 2014-2015, Alexey Frunze
+  Copyright (c) 2014-2017, Alexey Frunze
   2-clause BSD license.
 */
 #include "itime.h"
+
+#ifdef _LINUX
+#define UNIX_LIKE
+#endif
+#ifdef _MACOS
+#define UNIX_LIKE
+#endif
 
 #ifdef _DOS
 
@@ -75,7 +82,7 @@ int SysGettimeofday(long tv[2], int tz[2])
 
 #endif  // _LINUX
 
-#if defined(_LINUX) || defined(_MACOS)
+#ifdef UNIX_LIKE
 // localtime() must take UTC/GMT time and return local time
 struct tm* localtime(time_t* t)
 {
@@ -93,4 +100,4 @@ struct tm* localtime(time_t* t)
   return __breaktime(t);
 }
 
-#endif // defined(_LINUX) || defined(_MACOS)
+#endif // UNIX_LIKE
