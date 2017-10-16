@@ -1,6 +1,6 @@
 Precompiled Smaller C binaries for DOS.
 (You may want to use faster DPMI binaries from ../bindp.)
-These can be used for cross-compiling for Windows and Linux as well.
+These can be used for cross-compiling for Windows, Linux and MacOS as well.
 
 System requirements:
 - DOS: MS-DOS 4.01 or better, i80386 CPU & i80387 FPU or better
