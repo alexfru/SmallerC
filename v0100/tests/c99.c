@@ -11,6 +11,9 @@
 
   How to compile for Linux:
     smlrcc -linux c99.c -o c99l
+
+  How to compile for MacOS:
+    smlrcc -macos c99.c -o c99m
 */
 
 #include <stdio.h>

@@ -28,6 +28,12 @@
     ./genopa >testopa.c
     smlrcc -linux testopa.c -o testopa
     ./testopa
+
+  How to compile for and use under MacOS:
+    smlrcc -macos genopa.c -o genopa
+    ./genopa >testopa.c
+    smlrcc -macos testopa.c -o testopa
+    ./testopa
 */
 
 /*

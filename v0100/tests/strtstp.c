@@ -13,6 +13,9 @@
 
   How to compile for Linux:
     smlrcc -linux strtstp.c -o strtstpl
+
+  How to compile for MacOS:
+    smlrcc -macos strtstp.c -o strtstpm
 */
 
 #ifndef __SMALLER_C__

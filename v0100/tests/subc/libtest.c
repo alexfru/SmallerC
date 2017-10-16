@@ -9,6 +9,9 @@
 
   How to compile for Linux:
     smlrcc -linux libtest.c -o libtest
+
+  How to compile for MacOS:
+    smlrcc -macos libtest.c -o libtest
 */
 
 /*

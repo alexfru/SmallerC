@@ -13,6 +13,9 @@
 
   How to compile for Linux:
     smlrcc -linux intn.c -o intnl
+
+  How to compile for MacOS:
+    smlrcc -macos intn.c -o intnm
 */
 
 #include <inttypes.h>

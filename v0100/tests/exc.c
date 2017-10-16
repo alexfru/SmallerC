@@ -10,6 +10,9 @@
 
   How to compile for Linux:
     smlrcc -linux exc.c -o exc
+
+  How to compile for MacOS:
+    smlrcc -macos exc.c -o exc
 */
 
 #include <stdio.h>

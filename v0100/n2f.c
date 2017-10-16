@@ -75,6 +75,9 @@
 
   How to compile for Linux:
     smlrcc -linux n2f.c -o n2f
+
+  How to compile for MacOS:
+    smlrcc -macos n2f.c -o n2f
 */
 
 #include <stdio.h>

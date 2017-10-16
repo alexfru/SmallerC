@@ -18,6 +18,12 @@
     ./genfp1 >testfp1.c
     smlrcc -linux testfp1.c -o testfp1
     ./testfp1
+
+  How to compile for and use under MacOS:
+    smlrcc -macos genfp1.c -o genfp1
+    ./genfp1 >testfp1.c
+    smlrcc -macos testfp1.c -o testfp1
+    ./testfp1
 */
 
 #include <stdio.h>

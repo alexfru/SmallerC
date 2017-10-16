@@ -18,6 +18,12 @@
     ./genrtrip >rtrip.c
     smlrcc -linux rtrip.c -o rtrip
     ./rtrip
+
+  How to compile for and use under MacOS:
+    smlrcc -macos genrtrip.c -o genrtrip
+    ./genrtrip >rtrip.c
+    smlrcc -macos rtrip.c -o rtrip
+    ./rtrip
 */
 
 #include <limits.h>

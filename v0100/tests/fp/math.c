@@ -11,6 +11,9 @@
 
   How to compile for Linux:
     smlrcc -linux math.c -o mathl
+
+  How to compile for MacOS:
+    smlrcc -macos math.c -o mathm
 */
 
 #include <math.h>

@@ -38,6 +38,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /*             32-bit DPMI/.EXE)                                             */
 /*          - 32-bit PE/Windows executables                                  */
 /*          - 32-bit ELF/Linux executables                                   */
+/*          - 32-bit Mach-O/Mac OS X executables                             */
 /*          - 32-bit OMAGIC a.out executables                                */
 /*          - 16/32-bit flat executables                                     */
 /*                                                                           */

@@ -11,6 +11,9 @@
 
   How to compile for Linux:
     smlrcc -linux fpconst.c -o fpconstl
+
+  How to compile for MacOS:
+    smlrcc -macos fpconst.c -o fpconstm
 */
 
 #include <stdio.h>

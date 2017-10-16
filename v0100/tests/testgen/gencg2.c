@@ -19,6 +19,12 @@
     ./gencg2 >testcg2.c
     smlrcc -linux testcg2.c -o testcg2
     ./testcg2
+
+  How to compile for and use under MacOS:
+    smlrcc -macos gencg2.c -o gencg2
+    ./gencg2 >testcg2.c
+    smlrcc -macos testcg2.c -o testcg2
+    ./testcg2
 */
 
 #include <limits.h>

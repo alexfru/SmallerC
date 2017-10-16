@@ -9,6 +9,9 @@
 
   How to compile for Linux:
     smlrcc -linux cq.c -o cql
+
+  How to compile for MacOS:
+    smlrcc -macos cq.c -o cqm
 */
 
    struct defs {

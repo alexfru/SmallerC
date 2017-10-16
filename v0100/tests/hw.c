@@ -11,6 +11,9 @@
 
   How to compile for Linux:
     smlrcc -linux hw.c -o hwl
+
+  How to compile for MacOS:
+    smlrcc -macos hw.c -o hwm
 */
 
 #include <stdio.h>

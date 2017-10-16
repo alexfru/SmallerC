@@ -13,6 +13,9 @@
 
   How to compile for Linux:
     smlrcc -ppg -linux pptst1.c -o pptst1l
+
+  How to compile for MacOS:
+    smlrcc -ppg -macos pptst1.c -o pptst1m
 */
 
 #include <stddef.h>

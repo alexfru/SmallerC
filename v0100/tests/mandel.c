@@ -21,6 +21,9 @@
 
   How to compile for Linux:
     smlrcc -linux mandel.c -o mandell
+
+  How to compile for MacOS:
+    smlrcc -macos mandel.c -o mandelm
 */
 #include <stdio.h>
 #include <math.h>

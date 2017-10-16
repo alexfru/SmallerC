@@ -11,6 +11,9 @@
 
   How to compile for Linux:
     smlrcc -linux scanf.c -o scanfl
+
+  How to compile for MacOS:
+    smlrcc -macos scanf.c -o scanfm
 */
 
 #include <limits.h>

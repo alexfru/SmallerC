@@ -13,6 +13,9 @@
 
   How to compile for Linux:
     smlrcc -linux prstr.c -o prstrl
+
+  How to compile for MacOS:
+    smlrcc -macos prstr.c -o prstrm
 */
 
 #include <stdio.h>
