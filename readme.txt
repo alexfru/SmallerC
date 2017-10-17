@@ -3,7 +3,8 @@ currently supporting most of the C language common between C89/ANSI C
 and C99 (minus some C89 and plus some C99 features).
 
 Currently it generates 16-bit and 32-bit 80386+ assembly code for NASM
-that can then be assembled and linked into DOS, Windows and Linux programs.
+that can then be assembled and linked into DOS, Windows, Linux and Mac OS X
+programs.
 (You may use YASM or FASM instead of NASM)
 
 Code generation for MIPS CPUs is also supported (primarily for RetroBSD).
@@ -36,6 +37,7 @@ Trillek: http://trillek.org/
 
 Other projects based on/using Smaller C:
 NewBasic Compiler: http://fysnet.net/nbc.htm
+FYS OS: http://www.fysnet.net/fysos.htm
 Sweet32 CPU and toolchain: https://github.com/Basman74/Sweet32-CPU
 
 Normative and other useful documents on C:
