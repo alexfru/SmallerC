@@ -1,0 +1,6 @@
+rem Run the following commands to make Windows executables:
+copy /b m.dat + z.dat + n2f.dat    n2f.exe
+copy /b m.dat + z.dat + smlrc.dat  smlrc.exe
+copy /b m.dat + z.dat + smlrcc.dat smlrcc.exe
+copy /b m.dat + z.dat + smlrl.dat  smlrl.exe
+copy /b m.dat + z.dat + smlrpp.dat smlrpp.exe
