@@ -19,8 +19,8 @@ and the linker and supports options similar to those of gcc).
 
 The standard C library is work-in-progress and it's close to completion.
 
-See the Wiki for more up-to-date details:
-http://github.com/alexfru/SmallerC/wiki
+See the project documentation for more up-to-date details:
+https://github.com/alexfru/SmallerC/tree/master/v0100/doc
 
 For the lack of a better place, you can discuss Smaller C here:
 https://hackaday.io/project/5569-smaller-c
