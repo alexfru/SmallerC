@@ -1,17 +1,16 @@
 ﻿# Smaller C Linker
-&nbsp;
 
 ## Table of contents
 
-[What is Smaller C linker?](#wiki-what-is-smaller-c-linker)
+[What is Smaller C linker?](#what-is-smaller-c-linker)
 
-[What features does the linker have?](#wiki-what-features-does-the-linker-have)
+[What features does the linker have?](#what-features-does-the-linker-have)
 
-[How do I compile the linker?](#wiki-how-do-i-compile-the-linker)
+[How do I compile the linker?](#how-do-i-compile-the-linker)
 
-[How do I run the linker?](#wiki-how-do-i-run-the-linker)
+[How do I run the linker?](#how-do-i-run-the-linker)
 
-[Limitations and implementation details](#wiki-limitations-and-implementation-details)
+[Limitations and implementation details](#limitations-and-implementation-details)
 
 ## What is Smaller C linker?
 

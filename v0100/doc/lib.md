@@ -1,5 +1,4 @@
 ﻿# Smaller C Standard Library
-&nbsp;
 
 ## Table of contents
 

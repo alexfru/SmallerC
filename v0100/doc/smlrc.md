@@ -1,35 +1,34 @@
 ﻿# Smaller C Core Compiler
-&nbsp;
 
 ## Table of contents
 
-[About this document](#wiki-about-this-document)
+[About this document](#about-this-document)
 
-[What is Smaller C?](#wiki-what-is-smaller-c)
+[What is Smaller C?](#what-is-smaller-c)
 
-[Why yet another compiler?](#wiki-why-yet-another-compiler)
+[Why yet another compiler?](#why-yet-another-compiler)
 
-[What features are supported by Smaller C?](#wiki-what-features-are-supported-by-smaller-c)
+[What features are supported by Smaller C?](#what-features-are-supported-by-smaller-c)
 
-[What features are NOT supported by Smaller C?](#wiki-what-features-are-not-supported-by-smaller-c)
+[What features are NOT supported by Smaller C?](#what-features-are-not-supported-by-smaller-c)
 
-[Calling conventions](#wiki-calling-conventions)
+[Calling conventions](#calling-conventions)
 
-[Limitations and implementation details](#wiki-limitations-and-implementation-details)
+[Limitations and implementation details](#limitations-and-implementation-details)
 
-[How do I compile Smaller C on/for x86?](#wiki-how-do-i-compile-smaller-c-onfor-x86)
+[How do I compile Smaller C on/for x86?](#how-do-i-compile-smaller-c-onfor-x86)
 
-[How do I compile Smaller C for MIPS?](#wiki-how-do-i-compile-smaller-c-for-mips)
+[How do I compile Smaller C for MIPS?](#how-do-i-compile-smaller-c-for-mips)
 
-[How do I compile Smaller C for TR3200?](#wiki-how-do-i-compile-smaller-c-for-tr3200)
+[How do I compile Smaller C for TR3200?](#how-do-i-compile-smaller-c-for-tr3200)
 
-[How do I run Smaller C?](#wiki-how-do-i-run-smaller-c)
+[How do I run Smaller C?](#how-do-i-run-smaller-c)
 
-[How do I compile Smaller C with itself?](#wiki-how-do-i-compile-smaller-c-with-itself)
+[How do I compile Smaller C with itself?](#how-do-i-compile-smaller-c-with-itself)
 
-[Miscellaneous](#wiki-miscellaneous)
+[Miscellaneous](#miscellaneous)
 
-[TODO](#wiki-todo)
+[TODO](#todo)
 
 ## About this document
 

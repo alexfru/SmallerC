@@ -1,13 +1,12 @@
 ﻿# Smaller C Preprocessor
-&nbsp;
 
 ## Table of contents
 
-[What is Smaller C Preprocessor?](#wiki-what-is-smaller-c-preprocessor)
+[What is Smaller C Preprocessor?](#what-is-smaller-c-preprocessor)
 
-[What features does Smaller C Preprocessor have?](#wiki-what-features-does-smaller-c-preprocessor-have)
+[What features does Smaller C Preprocessor have?](#what-features-does-smaller-c-preprocessor-have)
 
-[How do I compile Smaller C Preprocessor?](#wiki-how-do-i-compile-smaller-c-preprocessor)
+[How do I compile Smaller C Preprocessor?](#how-do-i-compile-smaller-c-preprocessor)
 
 ## What is Smaller C Preprocessor?
 

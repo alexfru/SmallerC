@@ -1,17 +1,16 @@
 ﻿# Smaller C Compiler Driver
-&nbsp;
 
 ## Table of contents
 
-[What is Smaller C Compiler Driver?](#wiki-what-is-smaller-c-compiler-driver)
+[What is Smaller C Compiler Driver?](#what-is-smaller-c-compiler-driver)
 
-[What features does Smaller C Compiler Driver have?](#wiki-what-features-does-smaller-c-compiler-driver-have)
+[What features does Smaller C Compiler Driver have?](#what-features-does-smaller-c-compiler-driver-have)
 
-[How do I compile Smaller C Compiler Driver?](#wiki-how-do-i-compile-smaller-c-compiler-driver)
+[How do I compile Smaller C Compiler Driver?](#how-do-i-compile-smaller-c-compiler-driver)
 
-[How do I run Smaller C Compiler Driver?](#wiki-how-do-i-run-smaller-c-compiler-driver)
+[How do I run Smaller C Compiler Driver?](#how-do-i-run-smaller-c-compiler-driver)
 
-[Limitations and implementation details](#wiki-limitations-and-implementation-details)
+[Limitations and implementation details](#limitations-and-implementation-details)
 
 ## What is Smaller C Compiler Driver?
 
