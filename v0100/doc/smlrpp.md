@@ -10,11 +10,13 @@
 
 ## What is Smaller C Preprocessor?
 
-Smaller C preprocessor (smlrpp) is a version of ucpp adapted for use with Smaller C (ucpp 1.3.2 was used as the basis).
+Smaller C preprocessor (smlrpp) is a version of ucpp adapted for use with
+Smaller C (ucpp 1.3.2 was used as the basis).
 
 ## What features does Smaller C Preprocessor have?
 
-smlrpp (ucpp) is a C preprocessor compliant to ISO-C99. For more information please see the language standard and/or the ucpp documentation.
+smlrpp (ucpp) is a C preprocessor compliant to ISO-C99. For more information
+please see the language standard and/or the ucpp documentation.
 
 ## How do I compile Smaller C Preprocessor?
 
