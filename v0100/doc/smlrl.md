@@ -213,6 +213,10 @@ Options:
     16-bit and 32-bit code, you must know what you're doing.
 *   The linker does not support **SHT_RELA** relocation sections.
 *   The linker does not support weak symbols (**STB_WEAK**).
+*   The linker does not support common symbols (**SHN_COMMON**). If you're
+    linking object files produced with gcc, you may suppress generation of
+    common symbols with the **-fno-common** option and gcc will explicitly
+    use the **.bss** section insted.
 *   The linker does not support dynamic linking.
 *   The linker does not produce relocateable Linux/ELF or MacOS/Mach-O
     executables as of now. Fortunately, Linux and MacOS support

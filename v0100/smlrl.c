@@ -177,7 +177,9 @@ typedef struct
   uint16 e_shentsize;
   uint16 e_shnum;
   uint16 e_shstrndx;
-#define SHN_UNDEF   0
+#define SHN_UNDEF     0
+#define SHN_LORESERVE 0xFF00
+#define SHN_COMMON    0xFFF2
 } Elf32_Ehdr;
 
 typedef struct
@@ -1641,6 +1643,8 @@ uint32 FindSymbolAddress(const char* SymName)
             pSym->st_name &&
             !strcmp(pMeta->pSections[pSect->h.sh_link].d.pStr + pSym->st_name, SymName))
         {
+          if (pSym->st_shndx == SHN_COMMON)
+            error("Common symbols unsupported\n");
           tElfSection* pSect = &pMeta->pSections[pSym->st_shndx];
           addr = pSect->OutOffset + pSym->st_value;
           return addr;
