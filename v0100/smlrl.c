@@ -111,6 +111,23 @@ void* realloc(void*, size_t);
 void free(void*);
 #endif
 
+// By default don't support relocations with local symbols
+// other than section symbols in DOS huge memory model.
+// This is to conserve memory.
+#ifndef SUPPORT_LOCAL_RELS
+
+#ifdef __SMALLER_C__
+#ifdef __HUGE__
+#define SHOULDNT_SUPPORT_LOCAL_RELS
+#endif
+#endif
+
+#ifndef SHOULDNT_SUPPORT_LOCAL_RELS
+#define SUPPORT_LOCAL_RELS
+#endif
+
+#endif // SUPPORT_LOCAL_RELS
+
 typedef unsigned char uchar, uint8;
 typedef signed char schar, int8;
 typedef unsigned short ushort, uint16;
@@ -1032,7 +1049,9 @@ void loadElfObj(tElfMeta* pMeta, const char* ElfName, FILE* file, uint32 objOfs)
     case SHT_SYMTAB:
       {
         uint32 cnt, sz, ofs;
+#ifndef SUPPORT_LOCAL_RELS
         uint32 i;
+#endif
 
         cnt = pSect->h.sh_size / sizeof(Elf32_Sym);
         if (!cnt ||
@@ -1053,8 +1072,8 @@ void loadElfObj(tElfMeta* pMeta, const char* ElfName, FILE* file, uint32 objOfs)
         Fseek(file, objOfs + ofs, SEEK_SET);
         Fread(pSect->d.pSym, sz, file);
 
+#ifndef SUPPORT_LOCAL_RELS
         // Collect all local section symbols and throw away other local symbols
-
         for (cnt = i = 0; i < pSect->h.sh_info; i++)
         {
           Elf32_Sym* pSym = &pSect->d.pSym[i];
@@ -1079,6 +1098,7 @@ void loadElfObj(tElfMeta* pMeta, const char* ElfName, FILE* file, uint32 objOfs)
           free(pSect->d.pSym);
           pSect->d.pSym = NULL;
         }
+#endif
       }
       break;
 
@@ -1256,7 +1276,11 @@ int FindSymbolByName(const char* SymName)
       if (pSect->h.sh_type != SHT_SYMTAB)
         continue;
 
+#ifdef SUPPORT_LOCAL_RELS
+      for (symIdx = pSect->h.sh_info; symIdx < pSect->h.sh_entsize; symIdx++)
+#else
       for (symIdx = pSect->h.sh_addralign; symIdx < pSect->h.sh_entsize; symIdx++)
+#endif
       {
         Elf32_Sym* pSym = &pSect->d.pSym[symIdx];
 
@@ -1315,7 +1339,11 @@ void CheckDuplicates(void)
       if (pSect->h.sh_type != SHT_SYMTAB)
         continue;
 
+#ifdef SUPPORT_LOCAL_RELS
+      for (symIdx = pSect->h.sh_info; symIdx < pSect->h.sh_entsize; symIdx++)
+#else
       for (symIdx = pSect->h.sh_addralign; symIdx < pSect->h.sh_entsize; symIdx++)
+#endif
       {
         Elf32_Sym* pSym = &pSect->d.pSym[symIdx];
 
@@ -1336,7 +1364,11 @@ void CheckDuplicates(void)
               if (pSect2->h.sh_type != SHT_SYMTAB)
                 continue;
 
+#ifdef SUPPORT_LOCAL_RELS
+              for (symIdx2 = pSect2->h.sh_info; symIdx2 < pSect2->h.sh_entsize; symIdx2++)
+#else
               for (symIdx2 = pSect2->h.sh_addralign; symIdx2 < pSect2->h.sh_entsize; symIdx2++)
+#endif
               {
                 Elf32_Sym* pSym2 = &pSect2->d.pSym[symIdx2];
 
@@ -1379,7 +1411,11 @@ void FindAllSymbols(void)
         if (pSect->h.sh_type != SHT_SYMTAB)
           continue;
 
+#ifdef SUPPORT_LOCAL_RELS
+        for (symIdx = pSect->h.sh_info; symIdx < pSect->h.sh_entsize; symIdx++)
+#else
         for (symIdx = pSect->h.sh_addralign; symIdx < pSect->h.sh_entsize; symIdx++)
+#endif
         {
           Elf32_Sym* pSym = &pSect->d.pSym[symIdx];
 
@@ -1591,7 +1627,11 @@ uint32 FindSymbolAddress(const char* SymName)
       if (pSect->h.sh_type != SHT_SYMTAB)
         continue;
 
+#ifdef SUPPORT_LOCAL_RELS
+      for (symIdx = pSect->h.sh_info; symIdx < pSect->h.sh_entsize; symIdx++)
+#else
       for (symIdx = pSect->h.sh_addralign; symIdx < pSect->h.sh_entsize; symIdx++)
+#endif
       {
         Elf32_Sym* pSym = &pSect->d.pSym[symIdx];
 
@@ -1627,6 +1667,9 @@ void Relocate(tElfMeta* pMeta, tElfSection* pRelSect, Elf32_Rel* pRel, unsigned 
   }
   else
   {
+#ifdef SUPPORT_LOCAL_RELS
+    pSym = &pSymSect->d.pSym[symIdx];
+#else
     if (symIdx >= pSymSect->h.sh_info)
     {
       // it's a global symbol
@@ -1634,7 +1677,7 @@ void Relocate(tElfMeta* pMeta, tElfSection* pRelSect, Elf32_Rel* pRel, unsigned 
     }
     else
     {
-      // it's a local section symbol
+      // it must be a local symbol for a section
       uint32 i;
       for (i = 0; i < pSymSect->h.sh_addralign; i++)
         if (pSymSect->d.pSym[i].st_value == symIdx)
@@ -1642,7 +1685,10 @@ void Relocate(tElfMeta* pMeta, tElfSection* pRelSect, Elf32_Rel* pRel, unsigned 
           pSym = &pSymSect->d.pSym[i];
           break;
         }
+      if (!pSym)
+        goto err;
     }
+#endif
 
     if (pSym->st_name)
       name = pMeta->pSections[pSymSect->h.sh_link].d.pStr + pSym->st_name;
@@ -1657,7 +1703,16 @@ void Relocate(tElfMeta* pMeta, tElfSection* pRelSect, Elf32_Rel* pRel, unsigned 
     {
       symAddr = FindSymbolAddress(name);
     }
+#ifdef SUPPORT_LOCAL_RELS
+    else if ((pSym->st_info >> 4) == STB_LOCAL)
+    {
+      symAddr = pMeta->pSections[pSym->st_shndx].OutOffset + pSym->st_value;
+    }
+#endif
     else
+#ifndef SUPPORT_LOCAL_RELS
+      err:
+#endif
       error("Unsupported relocation symbol type\n");
   }
 
@@ -3293,7 +3348,11 @@ void GenerateMap(void)
         tElfSection* pSect = &pMeta->pSections[sectIdx];
         if (pSect->h.sh_type != SHT_SYMTAB)
           continue;
+#ifdef SUPPORT_LOCAL_RELS
+        for (symIdx = pSect->h.sh_info; symIdx < pSect->h.sh_entsize; symIdx++)
+#else
         for (symIdx = pSect->h.sh_addralign; symIdx < pSect->h.sh_entsize; symIdx++)
+#endif
         {
           Elf32_Sym* pSym = &pSect->d.pSym[symIdx];
           // Check exported symbols
