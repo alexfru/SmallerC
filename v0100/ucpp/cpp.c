@@ -2226,7 +2226,7 @@ void add_incpath(char *path)
  * memory structures and may be called even if the current pre-processing
  * is not finished or reported an error.
  */
-void wipeout()
+void wipeout(void)
 {
 	struct lexer_state ls;
 

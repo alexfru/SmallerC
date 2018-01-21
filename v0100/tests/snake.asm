@@ -98,7 +98,7 @@ _BiosSetGfxMode:
 	push	bp
 	mov	bp, sp
 	;sub	sp,          0
-; loc     mode : (@4): unsigned
+; loc     mode : (@4) : unsigned
 mov ah, 0
 mov al, [bp + 4]
 int 0x10
@@ -117,9 +117,9 @@ _pokeb:
 	push	bp
 	mov	bp, sp
 	;sub	sp,          0
-; loc     seg : (@4): unsigned
-; loc     ofs : (@6): unsigned
-; loc     val : (@8): unsigned char
+; loc     seg : (@4) : unsigned
+; loc     ofs : (@6) : unsigned
+; loc     val : (@8) : unsigned char
 push ds
 mov  ds, [bp + 4]
 mov  bx, [bp + 6]
@@ -141,9 +141,9 @@ _poke:
 	push	bp
 	mov	bp, sp
 	;sub	sp,          0
-; loc     seg : (@4): unsigned
-; loc     ofs : (@6): unsigned
-; loc     val : (@8): unsigned
+; loc     seg : (@4) : unsigned
+; loc     ofs : (@6) : unsigned
+; loc     val : (@8) : unsigned
 push ds
 mov  ds, [bp + 4]
 mov  bx, [bp + 6]
@@ -164,8 +164,8 @@ _peekb:
 	push	bp
 	mov	bp, sp
 	;sub	sp,          0
-; loc     seg : (@4): unsigned
-; loc     ofs : (@6): unsigned
+; loc     seg : (@4) : unsigned
+; loc     ofs : (@6) : unsigned
 push ds
 mov  ds, [bp + 4]
 mov  bx, [bp + 6]
@@ -186,8 +186,8 @@ _peek:
 	push	bp
 	mov	bp, sp
 	;sub	sp,          0
-; loc     seg : (@4): unsigned
-; loc     ofs : (@6): unsigned
+; loc     seg : (@4) : unsigned
+; loc     ofs : (@6) : unsigned
 push ds
 mov  ds, [bp + 4]
 mov  bx, [bp + 6]
@@ -209,10 +209,10 @@ _BiosGetTicks:
 	push	bp
 	mov	bp, sp
 	 sub	sp,          6
-; loc     ticks : (@4): * unsigned
-; loc     low : (@-2): unsigned
-; loc     high1 : (@-4): unsigned
-; loc     high2 : (@-6): unsigned
+; loc     ticks : (@4) : * unsigned
+; loc     low : (@-2) : unsigned
+; loc     high1 : (@-4) : unsigned
+; loc     high2 : (@-6) : unsigned
 ; RPN'ized expression: "high2 ( 110 , 64 peek ) = "
 ; Expanded expression: "(@-6)  110  64  peek ()4 =(2) "
 ; Fused expression:    "( 110 , 64 , peek )4 =(170) *(@-6) ax "
@@ -283,8 +283,8 @@ _delay:
 	push	bp
 	mov	bp, sp
 	 sub	sp,         10
-; loc     milliseconds : (@4): unsigned
-; loc     tcnt : (@-2): unsigned
+; loc     milliseconds : (@4) : unsigned
+; loc     tcnt : (@-2) : unsigned
 ; RPN'ized expression: "tcnt milliseconds 27 + 55 / = "
 ; Expanded expression: "(@-2) (@4) *(2) 27 + 55 /u =(2) "
 ; Fused expression:    "+ *(@4) 27 /u ax 55 =(170) *(@-2) ax "
@@ -300,7 +300,7 @@ _delay:
 ; RPN'ized expression: "2 "
 ; Expanded expression: "2 "
 ; Expression value: 2
-; loc     ticks : (@-10): [2u] [2u] unsigned
+; loc     ticks : (@-10) : [2u] [2u] unsigned
 ; RPN'ized expression: "( ticks 0 + *u BiosGetTicks ) "
 ; Expanded expression: " (@-10)  BiosGetTicks ()2 "
 ; Fused expression:    "( (@-10) , BiosGetTicks )2 "
@@ -385,12 +385,12 @@ _lineh:
 	push	bp
 	mov	bp, sp
 	 sub	sp,          4
-; loc     x : (@4): unsigned
-; loc     y : (@6): unsigned
-; loc     w : (@8): unsigned
-; loc     chr : (@10): unsigned
-; loc     color : (@12): unsigned
-; loc     ofs : (@-2): unsigned
+; loc     x : (@4) : unsigned
+; loc     y : (@6) : unsigned
+; loc     w : (@8) : unsigned
+; loc     chr : (@10) : unsigned
+; loc     color : (@12) : unsigned
+; loc     ofs : (@-2) : unsigned
 ; RPN'ized expression: "ofs y 40 * x + 2 * = "
 ; Expanded expression: "(@-2) (@6) *(2) 40 * (@4) *(2) + 2 * =(2) "
 ; Fused expression:    "* *(@6) 40 + ax *(@4) * ax 2 =(170) *(@-2) ax "
@@ -399,7 +399,7 @@ _lineh:
 	add	ax, [bp+4]
 	imul	ax, ax, 2
 	mov	[bp-2], ax
-; loc     v : (@-4): unsigned
+; loc     v : (@-4) : unsigned
 ; RPN'ized expression: "v color 8 << chr | = "
 ; Expanded expression: "(@-4) (@12) *(2) 8 << (@10) *(2) | =(2) "
 ; Fused expression:    "<< *(@12) 8 | ax *(@10) =(170) *(@-4) ax "
@@ -452,12 +452,12 @@ _linev:
 	push	bp
 	mov	bp, sp
 	 sub	sp,          4
-; loc     x : (@4): unsigned
-; loc     y : (@6): unsigned
-; loc     h : (@8): unsigned
-; loc     chr : (@10): unsigned
-; loc     color : (@12): unsigned
-; loc     ofs : (@-2): unsigned
+; loc     x : (@4) : unsigned
+; loc     y : (@6) : unsigned
+; loc     h : (@8) : unsigned
+; loc     chr : (@10) : unsigned
+; loc     color : (@12) : unsigned
+; loc     ofs : (@-2) : unsigned
 ; RPN'ized expression: "ofs y 40 * x + 2 * = "
 ; Expanded expression: "(@-2) (@6) *(2) 40 * (@4) *(2) + 2 * =(2) "
 ; Fused expression:    "* *(@6) 40 + ax *(@4) * ax 2 =(170) *(@-2) ax "
@@ -466,7 +466,7 @@ _linev:
 	add	ax, [bp+4]
 	imul	ax, ax, 2
 	mov	[bp-2], ax
-; loc     v : (@-4): unsigned
+; loc     v : (@-4) : unsigned
 ; RPN'ized expression: "v color 8 << chr | = "
 ; Expanded expression: "(@-4) (@12) *(2) 8 << (@10) *(2) | =(2) "
 ; Fused expression:    "<< *(@12) 8 | ax *(@10) =(170) *(@-4) ax "
@@ -521,13 +521,13 @@ _box:
 	push	bp
 	mov	bp, sp
 	;sub	sp,          0
-; loc     x : (@4): unsigned
-; loc     y : (@6): unsigned
-; loc     w : (@8): unsigned
-; loc     h : (@10): unsigned
-; loc     chr : (@12): unsigned
-; loc     color : (@14): unsigned
-; loc     solid : (@16): unsigned
+; loc     x : (@4) : unsigned
+; loc     y : (@6) : unsigned
+; loc     w : (@8) : unsigned
+; loc     h : (@10) : unsigned
+; loc     chr : (@12) : unsigned
+; loc     color : (@14) : unsigned
+; loc     solid : (@16) : unsigned
 ; if
 ; RPN'ized expression: "solid "
 ; Expanded expression: "(@16) *(2) "
@@ -630,11 +630,11 @@ _text:
 	push	bp
 	mov	bp, sp
 	 sub	sp,          4
-; loc     x : (@4): unsigned
-; loc     y : (@6): unsigned
-; loc     s : (@8): * char
-; loc     color : (@10): unsigned
-; loc     ofs : (@-2): unsigned
+; loc     x : (@4) : unsigned
+; loc     y : (@6) : unsigned
+; loc     s : (@8) : * char
+; loc     color : (@10) : unsigned
+; loc     ofs : (@-2) : unsigned
 ; RPN'ized expression: "ofs y 40 * x + 2 * = "
 ; Expanded expression: "(@-2) (@6) *(2) 40 * (@4) *(2) + 2 * =(2) "
 ; Fused expression:    "* *(@6) 40 + ax *(@4) * ax 2 =(170) *(@-2) ax "
@@ -656,7 +656,7 @@ L49:
 	test	ax, ax
 	je	L50
 ; {
-; loc         v : (@-4): unsigned
+; loc         v : (@-4) : unsigned
 ; RPN'ized expression: "v color 8 << s ++p *u | = "
 ; Expanded expression: "(@-4) (@10) *(2) 8 << (@8) ++p(2) *(-1) | =(2) "
 ; Fused expression:    "<< *(@10) 8 push-ax ++p(2) *(@8) | *sp *ax =(170) *(@-4) ax "
@@ -703,15 +703,15 @@ _number:
 	push	bp
 	mov	bp, sp
 	 sub	sp,          8
-; loc     x : (@4): unsigned
-; loc     y : (@6): unsigned
-; loc     n : (@8): unsigned
-; loc     color : (@10): unsigned
+; loc     x : (@4) : unsigned
+; loc     y : (@6) : unsigned
+; loc     n : (@8) : unsigned
+; loc     color : (@10) : unsigned
 ; RPN'ized expression: "6 "
 ; Expanded expression: "6 "
 ; Expression value: 6
-; loc     s : (@-6): [6u] char
-; loc     i : (@-8): int
+; loc     s : (@-6) : [6u] char
+; loc     i : (@-8) : int
 ; for
 ; RPN'ized expression: "i 4 = "
 ; Expanded expression: "(@-8) 4 =(2) "
@@ -825,7 +825,7 @@ _srand:
 	push	bp
 	mov	bp, sp
 	;sub	sp,          0
-; loc     seed : (@4): unsigned
+; loc     seed : (@4) : unsigned
 ; RPN'ized expression: "rand_next 0 + *u seed = "
 ; Expanded expression: "rand_next 0 + (@4) *(2) =(2) "
 ; Fused expression:    "+ rand_next 0 =(170) *ax *(@4) "
@@ -848,7 +848,7 @@ _main:
 ; RPN'ized expression: "2 "
 ; Expanded expression: "2 "
 ; Expression value: 2
-; loc     ticks : (@-4): [2u] unsigned
+; loc     ticks : (@-4) : [2u] unsigned
 ; RPN'ized expression: "( 1 BiosSetGfxMode ) "
 ; Expanded expression: " 1  BiosSetGfxMode ()2 "
 ; Fused expression:    "( 1 , BiosSetGfxMode )2 "
@@ -936,13 +936,13 @@ _newtarget:
 ; for
 L68:
 ; {
-; loc         bit : (@-2): unsigned
+; loc         bit : (@-2) : unsigned
 ; RPN'ized expression: "bit 0 = "
 ; Expanded expression: "(@-2) 0 =(2) "
 ; Fused expression:    "=(170) *(@-2) 0 "
 	mov	ax, 0
 	mov	[bp-2], ax
-; loc         i : (@-4): unsigned
+; loc         i : (@-4) : unsigned
 ; RPN'ized expression: "i ( rand ) 40 2 - 25 2 - * % = "
 ; Expanded expression: "(@-4)  rand ()0 874 % =(2) "
 ; Fused expression:    "( rand )0 % ax 874 =(170) *(@-4) ax "
@@ -1101,8 +1101,8 @@ _play:
 	push	bp
 	mov	bp, sp
 	 sub	sp,          6
-; loc     i : (@-2): unsigned
-; loc     key : (@-4): unsigned
+; loc     i : (@-2) : unsigned
+; loc     key : (@-4) : unsigned
 ; RPN'ized expression: "( 1 , 32 14 | , 32 , 25 , 40 , 0 , 0 box ) "
 ; Expanded expression: " 1  46  32  25  40  0  0  box ()14 "
 ; Fused expression:    "( 1 , 46 , 32 , 25 , 40 , 0 , 0 , box )14 "
@@ -1627,7 +1627,7 @@ L125:
 	jmp	L93
 L123:
 ; {
-; loc             bit : (@-6): unsigned
+; loc             bit : (@-6) : unsigned
 ; RPN'ized expression: "bit 0 = "
 ; Expanded expression: "(@-6) 0 =(2) "
 ; Fused expression:    "=(170) *(@-6) 0 "
@@ -1918,6 +1918,7 @@ L82:
 
 
 ; Identifier table:
+; Ident 
 ; Ident __floatsisf
 ; Ident __floatunsisf
 ; Ident __fixsfsi
@@ -1972,7 +1973,7 @@ L82:
 ; Ident seed
 ; Ident play
 ; Ident newtarget
-; Bytes used: 441/5632
+; Bytes used: 443/5632
 
 ; Next label number: 143
 ; Compilation succeeded.

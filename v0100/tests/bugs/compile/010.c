@@ -1,8 +1,10 @@
+extern int a;
+static int a; // shouldn't compile
+
+void f(void);
+static void f(void) {} // shouldn't compile
+
 int main(void)
 {
-  // We don't validate all redefinitions and
-  // the last definition obscures previous ones.
-  // Should not compile.
-  int a = 0, a = 0;
-  return a;
+  return 0;
 }

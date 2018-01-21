@@ -1,9 +1,12 @@
-// We don't validate all redefinitions and
-// the last definition obscures previous ones.
-// Should not compile.
-struct S { int a, a; };
-
 int main(void)
 {
+  {
+    extern int v;
+    void f(void);
+  }
+  {
+    extern char* v; // shouldn't compile
+    int f(int); // shouldn't compile
+  }
   return 0;
 }

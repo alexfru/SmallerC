@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2012-2017, Alexey Frunze
+Copyright (c) 2012-2018, Alexey Frunze
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -516,7 +516,7 @@ STATIC
 int FindTaggedDecl(char* s, int start, int* CurScope);
 #ifndef NO_TYPEDEF_ENUM
 STATIC
-int FindTypedef(char* s, int* CurScope, int forUse);
+int FindTypedef(char* s);
 #endif
 STATIC
 int GetDeclSize(int SyntaxPtr, int SizeForDeref);
@@ -565,6 +565,7 @@ int MacroTableLen = 0;
 */
 char IdentTable[MAX_IDENT_TABLE_LEN];
 int IdentTableLen = 0;
+int DummyIdent; // corresponds to empty string
 
 #ifndef MAX_GOTO_LABELS
 #define MAX_GOTO_LABELS 16
@@ -666,7 +667,7 @@ char* CurFxnName = NULL;
 #ifndef NO_FUNC_
 int CurFxnNameLabel = 0;
 #endif
-int Main; // if inside main()
+int IsMain; // if inside main()
 
 int ParseLevel = 0; // Parse level/scope (file:0, fxn:1+)
 int ParamLevel = 0; // 1+ if parsing params, 0 otherwise
@@ -2257,6 +2258,12 @@ int GetToken(void)
   return tokEof;
 }
 
+STATIC
+void errorRedecl(char* s)
+{
+  error("Invalid or unsupported redeclaration of '%s'\n", s);
+}
+
 #ifdef MIPS
 #ifndef CAN_COMPILE_32BIT
 #error MIPS target requires a 32-bit compiler
@@ -2920,7 +2927,7 @@ int derefAnyPtr(int ExprTypeSynPtr)
   case '(':
     return ExprTypeSynPtr;
   }
-  errorInternal(666); // TBD!!! code
+  errorInternal(22);
   return -1;
 }
 
@@ -5403,6 +5410,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
         {
           j = i;
           ofs = SyntaxStack1[i + 1];
+          break;
         }
         i++;
       }
@@ -5902,12 +5910,6 @@ void errorTagRedef(int ident)
 }
 
 STATIC
-void errorRedef(char* s)
-{
-  error("Redefinition of identifier '%s'\n", s);
-}
-
-STATIC
 void errorVarSize(void)
 {
   error("Variable(s) take(s) too much space\n");
@@ -5970,9 +5972,6 @@ int tsd[] =
 STATIC
 int TokenStartsDeclaration(int t, int params)
 {
-#ifndef NO_TYPEDEF_ENUM
-  int CurScope;
-#endif
   unsigned i;
 
   for (i = 0; i < sizeof tsd / sizeof tsd[0]; i++)
@@ -5985,8 +5984,7 @@ int TokenStartsDeclaration(int t, int params)
 #endif
 #ifndef NO_TYPEDEF_ENUM
          t == tokEnum ||
-         (t == tokIdent &&
-          FindTypedef(TokenIdentName, &CurScope, 1) >= 0) ||
+         (t == tokIdent && FindTypedef(TokenIdentName) >= 0) ||
 #endif
          (!params && (t == tokExtern ||
 #ifndef NO_TYPEDEF_ENUM
@@ -6145,11 +6143,9 @@ int FindTaggedDecl(char* s, int start, int* CurScope)
 #ifndef NO_TYPEDEF_ENUM
 // TBD??? rename this fxn? Cleanup/unify search functions?
 STATIC
-int FindTypedef(char* s, int* CurScope, int forUse)
+int FindTypedef(char* s)
 {
   int i;
-
-  *CurScope = 1;
 
   for (i = SyntaxStackCnt - 1; i >= 0; i--)
   {
@@ -6161,9 +6157,7 @@ int FindTypedef(char* s, int* CurScope, int forUse)
       // (i.e. if it's a variable/function declaration),
       // then the type is unknown for the purpose of
       // declaring a variable of this type
-      if (forUse && t == tokIdent)
-        return -1;
-      return i;
+      return (t == tokIdent) ? -1 : i;
     }
 
     if (t == ')')
@@ -6175,11 +6169,6 @@ int FindTypedef(char* s, int* CurScope, int forUse)
         t = SyntaxStack0[--i];
         c += (t == '(') - (t == ')');
       }
-    }
-    else if (t == '#')
-    {
-      // the scope has changed to the outer scope
-      *CurScope = 0;
     }
   }
 
@@ -6361,7 +6350,7 @@ void DumpDecl(int SyntaxPtr, int IsParam)
     switch (tok)
     {
     case tokLocalOfs:
-      printf2("(@%d): ", truncInt(v));
+      printf2("(@%d) : ", truncInt(v));
       break;
 
     case tokIdent:
@@ -6390,6 +6379,12 @@ void DumpDecl(int SyntaxPtr, int IsParam)
       }
 
       printf2("%s : ", IdentTable + v);
+      if (!IsParam && (i + 1 < SyntaxStackCnt) && SyntaxStack0[i + 1] == tokIdent)
+      {
+        // renamed local static variable
+        GenPrintLabel(IdentTable + SyntaxStack1[++i]);
+        printf2(" : ");
+      }
       break;
 
     case '[':
@@ -6558,17 +6553,17 @@ int ParseArrayDimension(int AllowEmptyDimension)
 
 STATIC
 void ParseFxnParams(int tok);
+static int BrkCntTargetFxn[2];
 STATIC
 int ParseBlock(int BrkCntTarget[2], int casesIdx);
 STATIC
 void AddFxnParamSymbols(int SyntaxPtr);
+STATIC
+void CheckRedecl(int lastSyntaxPtr);
 
 STATIC
 int ParseBase(int tok, int base[2])
 {
-#ifndef NO_TYPEDEF_ENUM
-  int CurScope;
-#endif
   int valid = 1;
   base[1] = 0;
 
@@ -6728,7 +6723,6 @@ lcont:
       {
         int lastVal = -1, val = 0;
         int maxVal = (int)(truncUint(~0u) >> 1); // max positive signed int
-        int CurScope;
         char* erange = "Enumeration constant out of range\n";
 
         tok = GetToken();
@@ -6736,16 +6730,13 @@ lcont:
         {
           char* s;
           int ident;
+          int lastSyntaxPtr;
 
           if (tok != tokIdent)
             errorUnexpectedToken(tok);
 
           s = TokenIdentName;
-          if (FindTypedef(s, &CurScope, 0) >= 0 && CurScope)
-            errorRedef(s);
-
           ident = AddIdent(s);
-
           empty = 0;
 
           tok = GetToken();
@@ -6780,6 +6771,7 @@ lcont:
             lastVal = val = lastVal + 1;
           }
 
+          lastSyntaxPtr = SyntaxStackCnt;
           PushSyntax2(tokIdent, ident);
           PushSyntax2(tokNumInt, val);
 
@@ -6787,6 +6779,8 @@ lcont:
             tok = GetToken();
           else if (tok != '}')
             errorUnexpectedToken(tok);
+
+          CheckRedecl(lastSyntaxPtr);
         }
 
         if (empty)
@@ -6902,7 +6896,7 @@ lcont:
 
 #ifndef NO_TYPEDEF_ENUM
   case tokIdent:
-    if ((base[1] = FindTypedef(TokenIdentName, &CurScope, 1)) >= 0)
+    if ((base[1] = FindTypedef(TokenIdentName)) >= 0)
     {
       base[0] = tokTypedef;
       tok = GetToken();
@@ -7469,6 +7463,233 @@ int InitStruct(int synPtr, int tok)
   return tok;
 }
 
+STATIC
+int compatCheck2(int lastSyntaxPtr, int i)
+{
+  int res = 0;
+  int c = 0;
+  int t;
+  for (;;)
+  {
+    t = SyntaxStack0[lastSyntaxPtr];
+    if (t != SyntaxStack0[i])
+    {
+      if (SyntaxStack0[i] == ')' && SyntaxStack0[i - 1] == '(')
+      {
+        // Complete a previously incomplete parameter specification
+        int c1 = 1;
+        // Skip over the function params
+        do
+        {
+          t = SyntaxStack0[lastSyntaxPtr++];
+          c1 += (t == '(') - (t == ')');
+        } while (c1);
+        lastSyntaxPtr--;
+      }
+      else
+        goto lend;
+    }
+
+    if (t != tokIdent &&
+        SyntaxStack1[lastSyntaxPtr] != SyntaxStack1[i])
+    {
+      if (SyntaxStack0[lastSyntaxPtr - 1] == '[')
+      {
+        // Complete an incomplete array dimension or check for dimension mismatch
+        if (SyntaxStack1[lastSyntaxPtr] == 0)
+          SyntaxStack1[lastSyntaxPtr] = SyntaxStack1[i];
+        else if (SyntaxStack1[i])
+          goto lend;
+      }
+      else
+        goto lend;
+    }
+
+    c += (t == '(') - (t == ')') + (t == '[') - (t == ']');
+
+    if (!c)
+    {
+      switch (t)
+      {
+      case tokVoid:
+      case tokChar: case tokSChar: case tokUChar:
+#ifdef CAN_COMPILE_32BIT
+      case tokShort: case tokUShort:
+#endif
+      case tokInt: case tokUnsigned:
+#ifndef NO_FP
+      case tokFloat:
+#endif
+      case tokStructPtr:
+        goto lok;
+      }
+    }
+
+    lastSyntaxPtr++;
+    i++;
+  }
+
+lok:
+  res = 1;
+
+lend:
+  return res;
+}
+
+STATIC
+void CheckRedecl(int lastSyntaxPtr)
+{
+  int tid, id, external = 0;
+  int i;
+  int curScopeOnly;
+  int level = ParseLevel;
+
+  tid = SyntaxStack0[lastSyntaxPtr];
+  id = SyntaxStack1[lastSyntaxPtr];
+  switch (tid)
+  {
+  case tokIdent:
+    switch (SyntaxStack0[lastSyntaxPtr + 1])
+    {
+#ifndef NO_TYPEDEF_ENUM
+    case tokNumInt:
+      tid = tokEnumPtr;
+      break;
+#endif
+
+    default:
+      external = 1;
+      // fallthrough
+    case tokLocalOfs: // block-scope auto
+    case tokIdent: // block-scope static
+      ;
+    }
+    // fallthrough
+
+  case tokTypedef:
+    break;
+
+  case tokMemberIdent:
+    {
+      int c = 1;
+      i = lastSyntaxPtr - 1;
+      do
+      {
+        int t = SyntaxStack0[i];
+        c -= (t == '(') - (t == ')') + (t == '{') - (t == '}');
+        if (c == 1 &&
+            t == tokMemberIdent && SyntaxStack1[i] == id &&
+            SyntaxStack0[i + 1] == tokLocalOfs)
+          errorRedecl(IdentTable + id);
+        i--;
+      } while (c);
+    }
+    return;
+
+  default:
+    errorInternal(23);
+  }
+
+  // limit search to current scope for typedef and enum,
+  // ditto for non-external declarations
+  curScopeOnly = tid != tokIdent || !external;
+
+  for (i = lastSyntaxPtr - 1; i >= 0; i--)
+  {
+    int t = SyntaxStack0[i];
+
+    switch (t)
+    {
+    case ')':
+      {
+        // Skip over the function params
+        int c = -1;
+        while (c)
+        {
+          t = SyntaxStack0[--i];
+          c += (t == '(') - (t == ')');
+        }
+      }
+      break;
+
+    case '#':
+      // the scope has changed to the outer scope
+      if (curScopeOnly)
+        return;
+      level--;
+      break;
+
+    case tokTypedef:
+    case tokIdent:
+      if (SyntaxStack1[i] == id)
+      {
+#ifndef NO_TYPEDEF_ENUM
+        if (t == tokIdent && SyntaxStack0[i + 1] == tokNumInt)
+          t = tokEnumPtr;
+#endif
+        if (level == ParseLevel)
+        {
+#ifndef NO_TYPEDEF_ENUM
+          // within the current scope typedefs and enum constants
+          // can't be redefined nor can clash with anything else
+          if (tid != tokIdent || t != tokIdent)
+            errorRedecl(IdentTable + id);
+#endif
+          // block scope:
+          //   can differentiate between auto(tokLocalOfs), static(tokIdent),
+          //   extern/proto(nothing) in SyntaxStack*[], hence dup checks and
+          //   type match checks needed here
+          // file scope:
+          //   can't differentiate between static(nothing), extern(nothing),
+          //   neither(nothing) in SyntaxStack*[], but duplicate definitions
+          //   are taken care of (in CG), hence only type match checks needed
+          //   here
+          if (level) // block scope: check for bad dups
+          {
+            switch (SyntaxStack0[i + 1])
+            {
+            case tokLocalOfs: // block-scope auto
+            case tokIdent: // block-scope static
+              // auto and static can't be redefined in block scope
+              errorRedecl(IdentTable + id);
+            default:
+              // extern can't be redefined as non-extern in block scope
+              if (!external)
+                errorRedecl(IdentTable + id);
+            }
+            // extern/proto type match check follows
+          }
+
+          if (compatCheck2(lastSyntaxPtr, i))
+            return;
+          errorRedecl(IdentTable + id);
+        }
+        else // elseof if (level == ParseLevel)
+        {
+          // The new decl is extern/proto.
+          // Ignore typedef and enum
+          if (t == tokIdent)
+          {
+            switch (SyntaxStack0[i + 1])
+            {
+            case tokLocalOfs: // block-scope auto
+            case tokIdent: // block-scope static
+              // Ignore auto and static
+              break;
+            default:
+              // extern/proto
+              if (compatCheck2(lastSyntaxPtr, i))
+                return;
+              errorRedecl(IdentTable + id);
+            }
+          }
+        }
+      } // endof if (SyntaxStack1[i] == id)
+      break;
+    } // endof switch (t)
+  } // endof for (i = lastSyntaxPtr - 1; i >= 0; i--)
+}
+
 // DONE: support extern
 // DONE: support static
 // DONE: support basic initialization
@@ -7759,7 +7980,7 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
             // It's a static variable in function scope, "rename" it by providing
             // an alternative unique numeric identifier right next to it and use it
             staticLabel = LabelCnt++;
-            InsertSyntax2(++lastSyntaxPtr, tokIdent, AddNumericIdent(staticLabel));
+            InsertSyntax2(lastSyntaxPtr + 1, tokIdent, AddNumericIdent(staticLabel));
           }
         }
       }
@@ -7777,14 +7998,10 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
 #ifndef NO_TYPEDEF_ENUM
       if (typeDef)
       {
-        int CurScope;
-        char* s = IdentTable + SyntaxStack1[lastSyntaxPtr];
 #ifndef NO_ANNOTATIONS
         DumpDecl(lastSyntaxPtr, 0);
 #endif
         SyntaxStack0[lastSyntaxPtr] = 0; // hide tokIdent for now
-        if (FindTypedef(s, &CurScope, 0) >= 0 && CurScope)
-          errorRedef(s);
         SyntaxStack0[lastSyntaxPtr] = tokTypedef; // change tokIdent to tokTypedef
       }
       else
@@ -7949,7 +8166,7 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
 #endif
 
         CurFxnName = IdentTable + SyntaxStack1[lastSyntaxPtr];
-        Main = !strcmp(CurFxnName, "main");
+        IsMain = !strcmp(CurFxnName, "main");
 
         gotoLabCnt = 0;
 
@@ -7982,6 +8199,8 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
         GenFxnProlog();
         CurFxnEpilogLabel = LabelCnt++;
 
+        // A new scope begins before the function parameters
+        PushSyntax('#');
         AddFxnParamSymbols(lastSyntaxPtr);
 
 #ifndef NO_FUNC_
@@ -7992,7 +8211,9 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
         }
 #endif
 
-        tok = ParseBlock(NULL, 0);
+        // The block doesn't begin yet another new scope.
+        // This is to catch redeclarations of the function parameters.
+        tok = ParseBlock(BrkCntTargetFxn, 0);
         ParseLevel--;
         if (tok != '}')
           //error("ParseDecl(): '}' expected\n");
@@ -8004,7 +8225,7 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
 
         // DONE: if execution of main() reaches here, before the epilog (i.e. without using return),
         // main() should return 0.
-        if (Main)
+        if (IsMain)
         {
           sp = 0;
           push(tokNumInt);
@@ -8052,6 +8273,7 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
         CurFxnName = NULL;
         IdentTableLen = undoIdents; // remove all identifier names
         SyntaxStackCnt = undoSymbolsPtr; // remove all params and locals
+        SyntaxStack1[SymFuncPtr] = DummyIdent;
       }
 #ifndef NO_ANNOTATIONS
       else if (isFxn)
@@ -8060,6 +8282,8 @@ int ParseDecl(int tok, unsigned structInfo[4], int cast, int label)
         DumpDecl(lastSyntaxPtr, 0);
       }
 #endif
+
+      CheckRedecl(lastSyntaxPtr);
 
       if ((tok == ';') | (tok == '}'))
         break;
@@ -8127,12 +8351,12 @@ void ParseFxnParams(int tok)
     PushBase(base);
 
 #ifndef NO_TYPEDEF_ENUM
-      // Convert enums into ints
-      if (SyntaxStack0[SyntaxStackCnt - 1] == tokEnumPtr)
-      {
-        SyntaxStack0[SyntaxStackCnt - 1] = tokInt;
-        SyntaxStack1[SyntaxStackCnt - 1] = 0;
-      }
+    // Convert enums into ints
+    if (SyntaxStack0[SyntaxStackCnt - 1] == tokEnumPtr)
+    {
+      SyntaxStack0[SyntaxStackCnt - 1] = tokInt;
+      SyntaxStack1[SyntaxStackCnt - 1] = 0;
+    }
 #endif
 
     /* Decay arrays to pointers */
@@ -8234,9 +8458,7 @@ void AddFxnParamSymbols(int SyntaxPtr)
     if (tok == tokIdent)
     {
       unsigned sz;
-#ifndef NO_ANNOTATIONS
       int paramPtr;
-#endif
 
       if (i + 1 >= SyntaxStackCnt)
         //error("Internal error: AddFxnParamSymbols(): Invalid input\n");
@@ -8255,9 +8477,7 @@ void AddFxnParamSymbols(int SyntaxPtr)
         errorDecl();
 
       // Let's calculate this parameter's relative on-stack location
-#ifndef NO_ANNOTATIONS
       paramPtr = SyntaxStackCnt;
-#endif
       PushSyntax2(SyntaxStack0[i], SyntaxStack1[i]);
       PushSyntax2(tokLocalOfs, paramOfs);
 
@@ -8280,6 +8500,9 @@ void AddFxnParamSymbols(int SyntaxPtr)
 #ifndef NO_ANNOTATIONS
           DumpDecl(paramPtr, 0);
 #endif
+          if (IdentTable[SyntaxStack1[paramPtr]] == '<')
+            error("Parameter name expected\n");
+          CheckRedecl(paramPtr);
           i--;
           break;
         }
@@ -8544,7 +8767,7 @@ int ParseStatement(int tok, int BrkCntTarget[2], int casesIdx)
       tok = GetToken();
       // If this return is the last statement in the function, the epilogue immediately
       // follows and there's no need to jump to it.
-      if (!(tok == '}' && ParseLevel == 1 && !Main))
+      if (!(tok == '}' && ParseLevel == 1 && !IsMain))
         GenJumpUncond(CurFxnEpilogLabel);
     }
     else if (tok == tokWhile)
@@ -9251,7 +9474,15 @@ int ParseBlock(int BrkCntTarget[2], int casesIdx)
 {
   int tok = GetToken();
 
-  PushSyntax('#'); // mark the beginning of a new scope
+  // Catch redeclarations of function parameters by not
+  // beginning a new scope if this block begins a function
+  // (the caller of ParseBlock() must've begun a new scope
+  // already, before the function parameters).
+  if (BrkCntTarget == BrkCntTargetFxn)
+    BrkCntTarget = NULL;
+  else
+  // Otherwise begin a new scope.
+    PushSyntax('#');
 
   for (;;)
   {
@@ -9306,7 +9537,7 @@ int main(int argc, char** argv)
     tokNumUint,
     ']',
     tokChar
-  }; // SyntaxStackCnt must be initialized to the number of elements in SyntaxStackInit[][]
+  }; // SyntaxStackCnt must be initialized to the number of elements in SyntaxStackInit[]
   memcpy(SyntaxStack0, SyntaxStackInit, sizeof SyntaxStackInit);
   SyntaxStackCnt = sizeof SyntaxStackInit / sizeof SyntaxStackInit[0];
 
@@ -9315,6 +9546,8 @@ int main(int argc, char** argv)
   DetermineVaListType();
 #endif
 #endif
+
+  SyntaxStack1[SymFuncPtr] = DummyIdent = AddIdent("");
 
 #ifndef NO_FP
   {

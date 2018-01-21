@@ -19,7 +19,7 @@ static char hint_DeleteFileA[] = "\0\0DeleteFileA";
 extern char _kernel32_dll__[];
 static char* pdll = _kernel32_dll__; // pull trailers for sections .kernel32_hints and .kernel32_iat
 
-int DeleteFileA(char*)
+int DeleteFileA(char* FileName)
 {
   asm(
     "push dword [ebp+8]\n"

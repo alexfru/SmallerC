@@ -74,7 +74,7 @@ typical _small C_ implementation.
 *   decimal, octal and hexadecimal integer constants, e.g. **15**, **017**,
     **0xF**, **32768u**
 *   floating-point constants, e.g. **1.5e5**, **.5f**, **.5L**
-*   character constants, e.g. **'a'**, **'\''**, **'\n'**, **'\0'**,
+*   character constants, e.g. **'a'**, **'\\''**, **'\n'**, **'\0'**,
     **'\x41'**
 *   string literals, e.g. **"string"**
 *   **void**
@@ -251,14 +251,11 @@ typical _small C_ implementation.
 *   16-bit versions of the compiler (except if compiled with the **-huge**
     and **-unreal** options) will not compile your C code into 32-bit
     assembly
-*   there are no redeclaration checks currently, e.g. **int i, i;** is
-    considered valid, the first **i** is obscured by the second **i**. If
-    **i** is a global variable, you'll get an assembly- or link-time error.
-    Likewise, if you define several local variables (or struct/union members)
-    with the same name (which normally should result in a compile-time
-    error), only the last one will be visible. Similarly, function prototypes
-    should match those of function definitions or bad things may happen at
-    run time.
+*   redeclaration/redefinition checks are imperfect
+*   specifically, _composite types_ can be constructed for arrays but not
+    always for functions/prototypes (parameter specification can't change
+    from specified to unspecified, that is, you can't have **void f(int);**
+    followed by **void f();**, but you can have the two in reverse order)
 *   there are no checks for the missing **return** statement at the end of
     the function
 *   there are minimal type checks in the assignment operator **=** and in

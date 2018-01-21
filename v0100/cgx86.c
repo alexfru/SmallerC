@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2012-2016, Alexey Frunze
+Copyright (c) 2012-2018, Alexey Frunze
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -62,6 +62,8 @@ void GenAddGlobal(char* s, int use)
     {
       if (!strcmp(GlobalsTable + i + 2, s))
       {
+        if (GlobalsTable[i] & use & 1)
+          errorRedecl(s); // the assembler would error-out in this case as well
         GlobalsTable[i] |= use;
         return;
       }
