@@ -7486,6 +7486,16 @@ int compatCheck2(int lastSyntaxPtr, int i)
         } while (c1);
         lastSyntaxPtr--;
       }
+      else if (t == ')' &&
+               SyntaxStack0[i - 1] == '(' && SyntaxStack0[i] == tokIdent &&
+               SyntaxStack0[i + 1] == tokVoid && SyntaxStack0[i + 2] == ')')
+      {
+        // As an exception allow foo(void) to be redeclared as foo()
+        // since this happens very often in code.
+        // This weakens our redeclaration checks, however. Warn about it.
+        i += 2;
+        warning("Redeclaration from no parameters to unspecified parameters.\n");
+      }
       else
         goto lend;
     }
