@@ -6882,7 +6882,7 @@ lcont:
         if (SyntaxStack0[i] == tokStructPtr)
         {
           int j = SyntaxStack1[i];
-          if (SyntaxStack1[j + 1] == tagIdent)
+          if (SyntaxStack1[j + 1] == tagIdent && !GetDeclSize(i, 0))
             SyntaxStack1[i] = typePtr;
         }
         else if (SyntaxStack0[i] == '#')
