@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014-2016, Alexey Frunze
+  Copyright (c) 2014-2018, Alexey Frunze
   2-clause BSD license.
 */
 #include <string.h>
@@ -147,7 +147,7 @@ time_t time(time_t* t)
   struct tm tm;
   time_t res;
 
-  GetSystemTime(&st);
+  __GetSystemTime(&st);
   tm.tm_year = st.wYear - 1900;
   tm.tm_mon  = st.wMonth - 1;
   tm.tm_mday = st.wDay;

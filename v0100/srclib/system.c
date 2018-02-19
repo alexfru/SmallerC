@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014-2017, Alexey Frunze
+  Copyright (c) 2014-2018, Alexey Frunze
   2-clause BSD license.
 */
 #include <stdlib.h>
@@ -641,15 +641,15 @@ int system(char* cmd)
     strcat(params, cmd);
   }
 
-  if (!CreateProcessA(comspec, params, NULL, NULL, 0, 0, NULL, NULL, &si, &pi))
+  if (!__CreateProcessA(comspec, params, NULL, NULL, 0, 0, NULL, NULL, &si, &pi))
   {
     goto end;
   }
 
-  WaitForSingleObject(pi.hProcess, INFINITE);
-  GetExitCodeProcess(pi.hProcess, &res);
-  CloseHandle(pi.hProcess);
-  CloseHandle(pi.hThread);
+  __WaitForSingleObject(pi.hProcess, INFINITE);
+  __GetExitCodeProcess(pi.hProcess, &res);
+  __CloseHandle(pi.hProcess);
+  __CloseHandle(pi.hThread);
 
 end:
 

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014-2017, Alexey Frunze
+  Copyright (c) 2014-2018, Alexey Frunze
   2-clause BSD license.
 */
 #include <string.h>
@@ -215,7 +215,7 @@ char* getenv(char* name)
     }
     p = p2;
 
-    len = GetEnvironmentVariableA(name, p, sz);
+    len = __GetEnvironmentVariableA(name, p, sz);
 
     if (len == 0)
     {

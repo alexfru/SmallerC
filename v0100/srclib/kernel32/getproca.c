@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014-2016, Alexey Frunze
+  Copyright (c) 2014-2018, Alexey Frunze
   2-clause BSD license.
 */
 #ifdef _WINDOWS
@@ -19,7 +19,7 @@ static char hint_GetProcAddress[] = "\0\0GetProcAddress";
 extern char _kernel32_dll__[];
 static char* pdll = _kernel32_dll__; // pull trailers for sections .kernel32_hints and .kernel32_iat
 
-void (*GetProcAddress(void* hModule, char* lpProcName))()
+void (*__GetProcAddress(void* hModule, char* lpProcName))()
 {
   asm(
     "push dword [ebp+12]\n"

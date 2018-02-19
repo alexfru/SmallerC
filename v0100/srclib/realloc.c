@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014-2016, Alexey Frunze
+  Copyright (c) 2014-2018, Alexey Frunze
   2-clause BSD license.
 */
 #include <string.h>
@@ -139,8 +139,8 @@ void* realloc(void* ptr, unsigned size)
 void* realloc(void* ptr, unsigned size)
 {
   return ptr ?
-    HeapReAlloc(GetProcessHeap(), 0, ptr, size) :
-    HeapAlloc(GetProcessHeap(), 0, size);
+    __HeapReAlloc(__GetProcessHeap(), 0, ptr, size) :
+    __HeapAlloc(__GetProcessHeap(), 0, size);
 }
 
 #endif // _WINDOWS

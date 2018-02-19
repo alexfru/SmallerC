@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014-2017, Alexey Frunze
+  Copyright (c) 2014-2018, Alexey Frunze
   2-clause BSD license.
 */
 #include <unistd.h>
@@ -64,7 +64,7 @@ int DosSeek(int handle, unsigned offset, int whence, unsigned* offsetOrError)
 #endif // _DPMI
 
 #ifdef __SMALLER_C_32__
-off_t lseek(int fd, off_t offset, int whence)
+off_t __lseek(int fd, off_t offset, int whence)
 {
   unsigned offsetOrError;
   if (DosSeek(fd, offset, whence, &offsetOrError))
@@ -79,7 +79,7 @@ off_t lseek(int fd, off_t offset, int whence)
 
 #include "iwin32.h"
 
-off_t lseek(int fd, off_t offset, int whence)
+off_t __lseek(int fd, off_t offset, int whence)
 {
   unsigned res;
 
@@ -90,9 +90,9 @@ off_t lseek(int fd, off_t offset, int whence)
   // 0, 1 and 2 or if any other valid handle can ever be equal to 0, 1 or 2.
   // If 0, 1 and 2 can be valid handles in the system, I'll need to renumber/translate handles in the C library.
   if (fd >= STDIN_FILENO && fd <= STDERR_FILENO)
-    fd = GetStdHandle(STD_INPUT_HANDLE - fd);
+    fd = __GetStdHandle(STD_INPUT_HANDLE - fd);
 
-  res = SetFilePointer(fd, offset, 0, whence);
+  res = __SetFilePointer(fd, offset, 0, whence);
   return res;
 }
 
@@ -101,7 +101,7 @@ off_t lseek(int fd, off_t offset, int whence)
 
 #ifdef _LINUX
 
-off_t lseek(int fd, off_t offset, int whence)
+off_t __lseek(int fd, off_t offset, int whence)
 {
   asm("mov eax, 19\n" // sys_lseek
       "mov ebx, [ebp + 8]\n"
@@ -118,7 +118,7 @@ off_t lseek(int fd, off_t offset, int whence)
 
 #ifdef _MACOS
 
-off_t lseek(int fd, off_t offset, int whence)
+off_t __lseek(int fd, off_t offset, int whence)
 {
   asm("push dword [ebp + 16]\n"
 

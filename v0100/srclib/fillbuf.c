@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014, Alexey Frunze
+  Copyright (c) 2014-2018, Alexey Frunze
   2-clause BSD license.
 */
 #include <stdlib.h>
@@ -70,7 +70,7 @@ int __fillbuf(FILE* f)
 
   f->ptr = f->buf;
 
-  if ((rread = read(f->fd, f->buf, f->bufsz)) <= 0)
+  if ((rread = __read(f->fd, f->buf, f->bufsz)) <= 0)
   {
     if (!rread)
       f->flags |= _IOEOF; // if simply read 0 bytes

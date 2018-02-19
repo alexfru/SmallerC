@@ -124,7 +124,7 @@ void __ExitInner(int iterator, int flushclose, int status)
 #endif // _DOS
 
 #ifdef _WINDOWS
-  ExitProcess(status);
+  __ExitProcess(status);
 #endif // _WINDOWS
 
 #ifdef UNIX_LIKE

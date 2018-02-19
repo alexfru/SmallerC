@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014-2016, Alexey Frunze
+  Copyright (c) 2014-2018, Alexey Frunze
   2-clause BSD license.
 */
 #ifdef _WINDOWS
@@ -19,7 +19,7 @@ static char hint_CloseHandle[] = "\0\0CloseHandle";
 extern char _kernel32_dll__[];
 static char* pdll = _kernel32_dll__; // pull trailers for sections .kernel32_hints and .kernel32_iat
 
-int CloseHandle(unsigned Handle)
+int __CloseHandle(unsigned Handle)
 {
   asm(
     "push dword [ebp+8]\n"

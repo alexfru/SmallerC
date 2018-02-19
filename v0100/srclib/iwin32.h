@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014-2016, Alexey Frunze
+  Copyright (c) 2014-2018, Alexey Frunze
   2-clause BSD license.
 */
 #ifndef __IWIN32_H
@@ -83,89 +83,89 @@ typedef struct _PROCESS_INFORMATION
 struct _EXCEPTION_POINTERS;
 typedef int (*TOP_LEVEL_EXCEPTION_FILTER)(struct _EXCEPTION_POINTERS*);
 
-void ExitProcess(unsigned);
+void __ExitProcess(unsigned);
 
-char* GetCommandLineA(void);
+char* __GetCommandLineA(void);
 
-unsigned GetStdHandle(unsigned);
-unsigned GetFileType(unsigned);
+unsigned __GetStdHandle(unsigned);
+unsigned __GetFileType(unsigned);
 
-int CloseHandle(unsigned);
+int __CloseHandle(unsigned);
 
-unsigned GetLastError(void);
-void SetLastError(unsigned);
+unsigned __GetLastError(void);
+void __SetLastError(unsigned);
 
-unsigned GetProcessHeap(void);
-void* HeapAlloc(unsigned,
-                unsigned,
-                unsigned);
-int HeapFree(unsigned,
-             unsigned,
-             void*);
-void* HeapReAlloc(unsigned,
+unsigned __GetProcessHeap(void);
+void* __HeapAlloc(unsigned,
                   unsigned,
-                  void*,
                   unsigned);
+int __HeapFree(unsigned,
+               unsigned,
+               void*);
+void* __HeapReAlloc(unsigned,
+                    unsigned,
+                    void*,
+                    unsigned);
 
-unsigned CreateFileA(char*,
-                     unsigned,
+unsigned __CreateFileA(char*,
+                       unsigned,
+                       unsigned,
+                       void*,
+                       unsigned,
+                       unsigned,
+                       unsigned);
+int __DeleteFileA(char*);
+int __MoveFileA(char*, char*);
+
+int __ReadFile(unsigned,
+               void*,
+               unsigned,
+               unsigned*,
+               void*);
+int __WriteFile(unsigned,
+                void*,
+                unsigned,
+                unsigned*,
+                void*);
+
+unsigned __SetFilePointer(unsigned,
+                          int,
+                          int*,
+                          unsigned);
+
+unsigned __GetFileAttributesA(char*);
+
+unsigned __GetEnvironmentVariableA(char*,
+                                   char*,
+                                   unsigned);
+
+unsigned __GetTickCount(void);
+void __GetSystemTime(struct _SYSTEMTIME*);
+int __SystemTimeToTzSpecificLocalTime(struct _TIME_ZONE_INFORMATION*,
+                                      struct _SYSTEMTIME*,
+                                      struct _SYSTEMTIME*);
+int __TzSpecificLocalTimeToSystemTime(struct _TIME_ZONE_INFORMATION*,
+                                      struct _SYSTEMTIME*,
+                                      struct _SYSTEMTIME*);
+
+int __CreateProcessA(char*,
+                     char*,
+                     struct _SECURITY_ATTRIBUTES*,
+                     struct _SECURITY_ATTRIBUTES*,
+                     int,
                      unsigned,
                      void*,
-                     unsigned,
-                     unsigned,
-                     unsigned);
-int DeleteFileA(char*);
-int MoveFileA(char*, char*);
+                     char*,
+                     struct _STARTUPINFO*,
+                     struct _PROCESS_INFORMATION*);
+int __GetExitCodeProcess(unsigned, unsigned*);
 
-int ReadFile(unsigned,
-             void*,
-             unsigned,
-             unsigned*,
-             void*);
-int WriteFile(unsigned,
-              void*,
-              unsigned,
-              unsigned*,
-              void*);
+unsigned __WaitForSingleObject(unsigned, unsigned);
 
-unsigned SetFilePointer(unsigned,
-                        int,
-                        int*,
-                        unsigned);
+TOP_LEVEL_EXCEPTION_FILTER* __SetUnhandledExceptionFilter(TOP_LEVEL_EXCEPTION_FILTER*);
 
-unsigned GetFileAttributesA(char*);
-
-unsigned GetEnvironmentVariableA(char*,
-                                 char*,
-                                 unsigned);
-
-unsigned GetTickCount(void);
-void GetSystemTime(struct _SYSTEMTIME*);
-int SystemTimeToTzSpecificLocalTime(struct _TIME_ZONE_INFORMATION*,
-                                    struct _SYSTEMTIME*,
-                                    struct _SYSTEMTIME*);
-int TzSpecificLocalTimeToSystemTime(struct _TIME_ZONE_INFORMATION*,
-                                    struct _SYSTEMTIME*,
-                                    struct _SYSTEMTIME*);
-
-int CreateProcessA(char*,
-                   char*,
-                   struct _SECURITY_ATTRIBUTES*,
-                   struct _SECURITY_ATTRIBUTES*,
-                   int,
-                   unsigned,
-                   void*,
-                   char*,
-                   struct _STARTUPINFO*,
-                   struct _PROCESS_INFORMATION*);
-int GetExitCodeProcess(unsigned, unsigned*);
-
-unsigned WaitForSingleObject(unsigned, unsigned);
-
-TOP_LEVEL_EXCEPTION_FILTER* SetUnhandledExceptionFilter(TOP_LEVEL_EXCEPTION_FILTER*);
-
-void* LoadLibraryExA(char*, unsigned, unsigned);
-int FreeLibrary(void*);
-void (*GetProcAddress(void*, char*))();
+void* __LoadLibraryExA(char*, unsigned, unsigned);
+int __FreeLibrary(void*);
+void (*__GetProcAddress(void*, char*))();
 
 #endif

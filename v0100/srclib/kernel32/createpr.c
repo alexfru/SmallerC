@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014-2016, Alexey Frunze
+  Copyright (c) 2014-2018, Alexey Frunze
   2-clause BSD license.
 */
 #ifdef _WINDOWS
@@ -23,16 +23,16 @@ struct _SECURITY_ATTRIBUTES;
 struct _STARTUPINFO;
 struct _PROCESS_INFORMATION;
 
-int CreateProcessA(char* lpApplicationName,
-                   char* lpCommandLine,
-                   struct _SECURITY_ATTRIBUTES* lpProcessAttributes,
-                   struct _SECURITY_ATTRIBUTES* lpThreadAttributes,
-                   int bInheritHandles,
-                   unsigned dwCreationFlags,
-                   void* lpEnvironment,
-                   char* lpCurrentDirectory,
-                   struct _STARTUPINFO* lpStartupInfo,
-                   struct _PROCESS_INFORMATION* lpProcessInformation)
+int __CreateProcessA(char* lpApplicationName,
+                     char* lpCommandLine,
+                     struct _SECURITY_ATTRIBUTES* lpProcessAttributes,
+                     struct _SECURITY_ATTRIBUTES* lpThreadAttributes,
+                     int bInheritHandles,
+                     unsigned dwCreationFlags,
+                     void* lpEnvironment,
+                     char* lpCurrentDirectory,
+                     struct _STARTUPINFO* lpStartupInfo,
+                     struct _PROCESS_INFORMATION* lpProcessInformation)
 {
   asm(
     "push dword [ebp+44]\n"

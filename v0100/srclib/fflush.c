@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014, Alexey Frunze
+  Copyright (c) 2014-2018, Alexey Frunze
   2-clause BSD license.
 */
 #include "istdio.h"
@@ -12,7 +12,7 @@ static int fflush1(FILE* f)
     if (f->ptr != f->buf) // if there's anything in the buffer, flush
     {
       size_t sz = f->bufsz - f->cnt;
-      ssize_t written = write(f->fd, f->buf, sz); // TBD!!! review these writes/sizes
+      ssize_t written = __write(f->fd, f->buf, sz); // TBD!!! review these writes/sizes
       if (written <= 0 || written != sz)
       {
         f->flags |= _IOERR;

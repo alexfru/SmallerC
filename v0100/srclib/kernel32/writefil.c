@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014-2016, Alexey Frunze
+  Copyright (c) 2014-2018, Alexey Frunze
   2-clause BSD license.
 */
 #ifdef _WINDOWS
@@ -19,11 +19,11 @@ static char hint_WriteFile[] = "\0\0WriteFile";
 extern char _kernel32_dll__[];
 static char* pdll = _kernel32_dll__; // pull trailers for sections .kernel32_hints and .kernel32_iat
 
-int WriteFile(unsigned Handle,
-              void* Buffer,
-              unsigned NumberOfBytesToWrite,
-              unsigned* NumberOfBytesWritten,
-              void* Overlapped)
+int __WriteFile(unsigned Handle,
+                void* Buffer,
+                unsigned NumberOfBytesToWrite,
+                unsigned* NumberOfBytesWritten,
+                void* Overlapped)
 {
   asm(
     "push dword [ebp+24]\n"

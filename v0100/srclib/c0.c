@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014-2017, Alexey Frunze
+  Copyright (c) 2014-2018, Alexey Frunze
   2-clause BSD license.
 */
 #ifdef __HUGE__
@@ -379,7 +379,7 @@ int setargs(int* pargc, char*** pargv, void* psp, char* argv0)
 void __interrupt __ExcIsr(void)
 {
   static char msg[] = "\r\nUnhandled exception!\r\n";
-  write(STDERR_FILENO, msg, sizeof msg - 1);
+  __write(STDERR_FILENO, msg, sizeof msg - 1);
   _Exit(EXIT_FAILURE);
 }
 
@@ -491,7 +491,7 @@ static char emptyarg[] = "", *emptyargv[2] = { emptyarg, NULL };
 static
 int setargs(int* pargc, char*** pargv)
 {
-  char* line = GetCommandLineA();
+  char* line = __GetCommandLineA();
   unsigned len = strlen(line);
   char* buf = malloc(len + 1); // receptacle for *argv[] chars because *GetCommandLineA() is read-only
   char** ptrbuf = malloc(((len + 1) / 2 + 1) * sizeof(char*)); // receptacle for argv[] pointers
@@ -531,10 +531,10 @@ int UnhandledExceptionHandler(struct _EXCEPTION_POINTERS* ExceptionInfo)
   (void)ExceptionInfo;
 
   // TBD??? Dump the register state???
-  WriteFile(GetStdHandle(STD_ERROR_HANDLE), msg, sizeof msg - 1, &NumberOfBytesWritten, 0);
+  __WriteFile(__GetStdHandle(STD_ERROR_HANDLE), msg, sizeof msg - 1, &NumberOfBytesWritten, 0);
 
   // Terminate immediately w/o invoking Dr. Watson or Windows Error Reporting (WER)
-  ExitProcess(EXIT_FAILURE);
+  __ExitProcess(EXIT_FAILURE);
 
   // The following is not reached because of ExitProcess()
 
@@ -551,12 +551,12 @@ void __start__(void)
   char** argv;
 
   // Windows doesn't use file handles 0,1,2 for stdin,stdout,stderr.
-  __stdin->fd = GetStdHandle(STD_INPUT_HANDLE);
-  __stdout->fd = GetStdHandle(STD_OUTPUT_HANDLE);
-  __stderr->fd = GetStdHandle(STD_ERROR_HANDLE);
+  __stdin->fd = __GetStdHandle(STD_INPUT_HANDLE);
+  __stdout->fd = __GetStdHandle(STD_OUTPUT_HANDLE);
+  __stderr->fd = __GetStdHandle(STD_ERROR_HANDLE);
 
   // Register exception handlers
-  SetUnhandledExceptionFilter(&UnhandledExceptionHandler);
+  __SetUnhandledExceptionFilter(&UnhandledExceptionHandler);
 
   // Set argc and argv
   setargs(&argc, &argv);

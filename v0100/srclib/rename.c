@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014-2017, Alexey Frunze
+  Copyright (c) 2014-2018, Alexey Frunze
   2-clause BSD license.
 */
 #ifdef __HUGE__
@@ -110,7 +110,7 @@ int rename(char* old, char* new)
 
 int rename(char* old, char* new)
 {
-  if (MoveFileA(old, new))
+  if (__MoveFileA(old, new))
     return 0;
   return -1;
 }

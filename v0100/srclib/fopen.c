@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014, Alexey Frunze
+  Copyright (c) 2014-2018, Alexey Frunze
   2-clause BSD license.
 */
 #include <fcntl.h>
@@ -50,7 +50,7 @@ FILE* fopen(char* name, char* mode)
     goto err;
   }
 
-  if ((fd = open(name, oflags, 0666)) < 0)
+  if ((fd = __open(name, oflags, 0666)) < 0)
   {
     goto err;
   }

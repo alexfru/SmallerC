@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014-2016, Alexey Frunze
+  Copyright (c) 2014-2018, Alexey Frunze
   2-clause BSD license.
 */
 #ifdef _WINDOWS
@@ -19,10 +19,10 @@ static char hint_SetFilePointer[] = "\0\0SetFilePointer";
 extern char _kernel32_dll__[];
 static char* pdll = _kernel32_dll__; // pull trailers for sections .kernel32_hints and .kernel32_iat
 
-unsigned SetFilePointer(unsigned hFile,
-                        int lDistanceToMove,
-                        int* lpDistanceToMoveHigh,
-                        unsigned dwMoveMethod)
+unsigned __SetFilePointer(unsigned hFile,
+                          int lDistanceToMove,
+                          int* lpDistanceToMoveHigh,
+                          unsigned dwMoveMethod)
 {
   asm(
     "push dword [ebp+20]\n"

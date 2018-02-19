@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014, Alexey Frunze
+  Copyright (c) 2014-2018, Alexey Frunze
   2-clause BSD license.
 */
 #include <unistd.h>
@@ -9,7 +9,7 @@
 #ifdef __SMALLER_C_32__
 long ftell(FILE* f)
 {
-  long pos = lseek(f->fd, 0L, SEEK_CUR);
+  long pos = __lseek(f->fd, 0L, SEEK_CUR);
   if (pos == -1)
   {
 //    errno = EUNKNOWN;

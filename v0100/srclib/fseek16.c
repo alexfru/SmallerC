@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014, Alexey Frunze
+  Copyright (c) 2014-2018, Alexey Frunze
   2-clause BSD license.
 */
 #include <unistd.h>
@@ -92,7 +92,7 @@ int __fseek(FILE* f, fpos_t* offset, int whence)
     return 0;
 
   pos = *offset; // preserve the position parameter
-  if (__lseek(f->fd, &pos, whence))
+  if (__lseekp(f->fd, &pos, whence))
   {
     return -1;
   }

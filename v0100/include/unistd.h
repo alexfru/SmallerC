@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014, Alexey Frunze
+  Copyright (c) 2014-2018, Alexey Frunze
   2-clause BSD license.
 */
 #ifndef __UNISTD_H
@@ -53,14 +53,20 @@ typedef struct
 #define STDOUT_FILENO 1
 #define STDERR_FILENO 2
 
+int __close(int);
 int close(int);
 #ifdef __SMALLER_C_32__
+off_t __lseek(int, off_t, int);
 off_t lseek(int, off_t, int);
 #endif
-int/*0 on success,-1 on failure*/ __lseek(int/*file handle*/, fpos_t*/*position in/out*/, int/*whence*/);
+int/*0 on success,-1 on failure*/ __lseekp(int/*file handle*/, fpos_t*/*position in/out*/, int/*whence*/);
+ssize_t __read(int, void*, size_t);
 ssize_t read(int, void*, size_t);
+ssize_t __write(int, void*, size_t);
 ssize_t write(int, void*, size_t);
+int __unlink(char*);
 int unlink(char*);
+int __isatty(int);
 int isatty(int);
 
 #endif

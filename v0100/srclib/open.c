@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014-2017, Alexey Frunze
+  Copyright (c) 2014-2018, Alexey Frunze
   2-clause BSD license.
 */
 #include <fcntl.h>
@@ -95,7 +95,7 @@ int DosExtOpen(char* name, int mode, int attr, int action, unsigned* handleOrErr
 }
 #endif // _DPMI
 
-int open(char* name, int oflag, ...)
+int __open(char* name, int oflag, ...)
 {
   mode_t* psmode = (oflag & O_CREAT) ? (&oflag + 1) : 0;
   int omode = oflag & O_ACCMODE;
@@ -135,15 +135,15 @@ int open(char* name, int oflag, ...)
 #ifdef __SMALLER_C_16__
       fpos_t pos;
       pos.halves[1] = pos.halves[0] = 0;
-      if (__lseek(handle, &pos, SEEK_END))
+      if (__lseekp(handle, &pos, SEEK_END))
       {
-        close(handle);
+        __close(handle);
         return -1;
       }
 #else
-      if (lseek(handle, 0, SEEK_END) == -1)
+      if (__lseek(handle, 0, SEEK_END) == -1)
       {
-        close(handle);
+        __close(handle);
         return -1;
       }
 #endif
@@ -160,7 +160,7 @@ int open(char* name, int oflag, ...)
 
 #include "iwin32.h"
 
-int open(char* name, int oflag, ...)
+int __open(char* name, int oflag, ...)
 {
   mode_t* psmode = (oflag & O_CREAT) ? (&oflag + 1) : 0;
   int omode = oflag & O_ACCMODE;
@@ -204,13 +204,13 @@ int open(char* name, int oflag, ...)
   if (psmode && (*psmode & S_IWUSR) == 0)
     attr = FILE_ATTRIBUTE_READONLY; // read-only attribute
 
-  handle = CreateFileA(name,
-                       omode,
-                       FILE_SHARE_READ,
-                       NULL,
-                       action,
-                       attr,
-                       NULL);
+  handle = __CreateFileA(name,
+                         omode,
+                         FILE_SHARE_READ,
+                         NULL,
+                         action,
+                         attr,
+                         NULL);
   if (handle != INVALID_HANDLE_VALUE)
   {
     // Problem: Windows does not support the append mode directly
@@ -218,9 +218,9 @@ int open(char* name, int oflag, ...)
     // Any solution other than maintaining somewhere O_APPEND flag associated with every Windows handle???
     if (oflag & O_APPEND)
     {
-      if (lseek(handle, 0, SEEK_END) == -1)
+      if (__lseek(handle, 0, SEEK_END) == -1)
       {
-        close(handle);
+        __close(handle);
         return -1;
       }
     }
@@ -234,7 +234,7 @@ int open(char* name, int oflag, ...)
 
 #ifdef _LINUX
 
-int open(char* name, int oflag, ...)
+int __open(char* name, int oflag, ...)
 {
   asm("mov eax, 5\n" // sys_open
       "mov ebx, [ebp + 8]\n"
@@ -251,7 +251,7 @@ int open(char* name, int oflag, ...)
 
 #ifdef _MACOS
 
-int open(char* name, int oflag, ...)
+int __open(char* name, int oflag, ...)
 {
   asm("mov  eax, 5\n" // sys_open
       "push dword [ebp + 16]\n" // may read garbage, but shouldn't crash

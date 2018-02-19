@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014-2017, Alexey Frunze
+  Copyright (c) 2014-2018, Alexey Frunze
   2-clause BSD license.
 */
 #ifdef __HUGE__
@@ -83,7 +83,7 @@ int DosDelete(char* name, unsigned* error)
 }
 #endif // _DPMI
 
-int unlink(char* name)
+int __unlink(char* name)
 {
   unsigned error;
   if (DosDelete(name, &error))
@@ -97,9 +97,9 @@ int unlink(char* name)
 
 #include "iwin32.h"
 
-int unlink(char* name)
+int __unlink(char* name)
 {
-  if (DeleteFileA(name))
+  if (__DeleteFileA(name))
     return 0;
   return -1;
 }
@@ -108,7 +108,7 @@ int unlink(char* name)
 
 #ifdef _LINUX
 
-int unlink(char* name)
+int __unlink(char* name)
 {
   asm("mov eax, 10\n" // sys_unlink
       "mov ebx, [ebp + 8]\n"
@@ -123,7 +123,7 @@ int unlink(char* name)
 
 #ifdef _MACOS
 
-int unlink(char* name)
+int __unlink(char* name)
 {
   asm("mov  eax, 10\n" // sys_unlink
       "push dword [ebp + 8]\n"

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014-2017, Alexey Frunze
+  Copyright (c) 2014-2018, Alexey Frunze
   2-clause BSD license.
 */
 #include <unistd.h>
@@ -86,7 +86,7 @@ int DosRead(int handle, void* buf, unsigned size, unsigned* sizeOrError)
 }
 #endif // _DPMI
 
-ssize_t read(int fd, void* buf, size_t size)
+ssize_t __read(int fd, void* buf, size_t size)
 {
   ssize_t cnt = 0;
   char* p = buf;
@@ -142,7 +142,7 @@ ssize_t read(int fd, void* buf, size_t size)
 
 #include "iwin32.h"
 
-ssize_t read(int fd, void* buf, size_t size)
+ssize_t __read(int fd, void* buf, size_t size)
 {
   unsigned readOrError;
 
@@ -158,9 +158,9 @@ ssize_t read(int fd, void* buf, size_t size)
   // 0, 1 and 2 or if any other valid handle can ever be equal to 0, 1 or 2.
   // If 0, 1 and 2 can be valid handles in the system, I'll need to renumber/translate handles in the C library.
   if (fd >= STDIN_FILENO && fd <= STDERR_FILENO)
-    fd = GetStdHandle(STD_INPUT_HANDLE - fd);
+    fd = __GetStdHandle(STD_INPUT_HANDLE - fd);
 
-  if (ReadFile(fd, buf, size, &readOrError, 0))
+  if (__ReadFile(fd, buf, size, &readOrError, 0))
   {
     return readOrError;
   }
@@ -174,7 +174,7 @@ ssize_t read(int fd, void* buf, size_t size)
 
 #ifdef _LINUX
 
-ssize_t read(int fd, void* buf, size_t size)
+ssize_t __read(int fd, void* buf, size_t size)
 {
   asm("mov eax, 3\n" // sys_read
       "mov ebx, [ebp + 8]\n"
@@ -191,7 +191,7 @@ ssize_t read(int fd, void* buf, size_t size)
 
 #ifdef _MACOS
 
-ssize_t read(int fd, void* buf, size_t size)
+ssize_t __read(int fd, void* buf, size_t size)
 {
   asm("mov  eax, 3\n" // sys_read
       "push dword [ebp + 16]\n"

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014-2017, Alexey Frunze
+  Copyright (c) 2014-2018, Alexey Frunze
   2-clause BSD license.
 */
 #include <unistd.h>
@@ -69,7 +69,7 @@ int DosClose(int handle, unsigned* error)
 }
 #endif // _DPMI
 
-int close(int fd)
+int __close(int fd)
 {
   unsigned error;
   if (DosClose(fd, &error))
@@ -83,7 +83,7 @@ int close(int fd)
 
 #include "iwin32.h"
 
-int close(int fd)
+int __close(int fd)
 {
   // TBD??? Fix this hack???
   // GetStdHandle(STD_INPUT_HANDLE), GetStdHandle(STD_OUTPUT_HANDLE) and GetStdHandle(STD_ERROR_HANDLE)
@@ -92,16 +92,16 @@ int close(int fd)
   // 0, 1 and 2 or if any other valid handle can ever be equal to 0, 1 or 2.
   // If 0, 1 and 2 can be valid handles in the system, I'll need to renumber/translate handles in the C library.
   if (fd >= STDIN_FILENO && fd <= STDERR_FILENO)
-    fd = GetStdHandle(STD_INPUT_HANDLE - fd);
+    fd = __GetStdHandle(STD_INPUT_HANDLE - fd);
 
-  return CloseHandle(fd) ? 0 : -1;
+  return __CloseHandle(fd) ? 0 : -1;
 }
 
 #endif // _WINDOWS
 
 #ifdef _LINUX
 
-int close(int fd)
+int __close(int fd)
 {
   asm("mov eax, 6\n" // sys_close
       "mov ebx, [ebp + 8]\n"
@@ -116,7 +116,7 @@ int close(int fd)
 
 #ifdef _MACOS
 
-int close(int fd)
+int __close(int fd)
 {
   asm("mov  eax, 6\n" // sys_close
       "push dword [ebp + 8]\n"

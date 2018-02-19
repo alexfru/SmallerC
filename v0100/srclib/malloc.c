@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014-2017, Alexey Frunze
+  Copyright (c) 2014-2018, Alexey Frunze
   2-clause BSD license.
 */
 #ifdef __HUGE__
@@ -332,7 +332,7 @@ void* malloc(unsigned size)
 
 void* malloc(unsigned size)
 {
-  return HeapAlloc(GetProcessHeap(), 0, size); // 8-byte-aligned
+  return __HeapAlloc(__GetProcessHeap(), 0, size); // 8-byte-aligned
 }
 
 #endif // _WINDOWS

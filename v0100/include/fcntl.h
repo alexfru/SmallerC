@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014, Alexey Frunze
+  Copyright (c) 2014-2018, Alexey Frunze
   2-clause BSD license.
 */
 #ifndef __FCNTL_H
@@ -36,7 +36,9 @@ typedef long off_t;
 #endif
 #endif
 
+int __creat(char*, mode_t);
 int creat(char*, mode_t);
+int __open(char*, int, ...);
 int open(char*, int, ...);
 
 #endif

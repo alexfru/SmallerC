@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014-2016, Alexey Frunze
+  Copyright (c) 2014-2018, Alexey Frunze
   2-clause BSD license.
 */
 #ifdef _WINDOWS
@@ -19,7 +19,7 @@ static char hint_GetProcessHeap[] = "\0\0GetProcessHeap";
 extern char _kernel32_dll__[];
 static char* pdll = _kernel32_dll__; // pull trailers for sections .kernel32_hints and .kernel32_iat
 
-unsigned GetProcessHeap(void)
+unsigned __GetProcessHeap(void)
 {
   asm(
     "call dword [__imp__GetProcessHeap]"

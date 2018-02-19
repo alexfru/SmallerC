@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014-2017, Alexey Frunze
+  Copyright (c) 2014-2018, Alexey Frunze
   2-clause BSD license.
 */
 #include "itime.h"
@@ -47,7 +47,7 @@ struct tm* localtime(time_t* t)
   st1.wMinute       = tm->tm_min;
   st1.wSecond       = tm->tm_sec;
   st1.wMilliseconds = 0;
-  if (!SystemTimeToTzSpecificLocalTime(0, &st1, &st2))
+  if (!__SystemTimeToTzSpecificLocalTime(0, &st1, &st2))
   {
     return NULL;
   }

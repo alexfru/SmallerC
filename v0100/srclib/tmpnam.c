@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014-2017, Alexey Frunze
+  Copyright (c) 2014-2018, Alexey Frunze
   2-clause BSD license.
 */
 #include "istdio.h"
@@ -155,7 +155,7 @@ void TryPath(char* path)
     *name = '\0';
 #endif
 #ifdef _WINDOWS
-  attrOrError = GetFileAttributesA(name);
+  attrOrError = __GetFileAttributesA(name);
   if (attrOrError == INVALID_FILE_ATTRIBUTES || !(attrOrError & FILE_ATTRIBUTE_DIRECTORY))
     *name = '\0';
 #endif
@@ -281,10 +281,10 @@ char* __tmpnam(char* buf, unsigned iterations)
     }
 #endif
 #ifdef _WINDOWS
-    attrOrError = GetFileAttributesA(buf);
+    attrOrError = __GetFileAttributesA(buf);
     if (attrOrError == INVALID_FILE_ATTRIBUTES)
     {
-      if (GetLastError() == ERROR_FILE_NOT_FOUND)
+      if (__GetLastError() == ERROR_FILE_NOT_FOUND)
         return buf;
       break;
     }

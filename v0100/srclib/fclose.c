@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014, Alexey Frunze
+  Copyright (c) 2014-2018, Alexey Frunze
   2-clause BSD license.
 */
 #include <stdlib.h>
@@ -19,7 +19,7 @@ int fclose(FILE* f)
   // TBD??? Should I let go of stdin, stdout, stderr handles and close the underlying files???
   if ((f->flags & _IOTERM) == 0)
   {
-    if (close(f->fd) < 0)
+    if (__close(f->fd) < 0)
       res = EOF;
     f->fd = -1;
   }

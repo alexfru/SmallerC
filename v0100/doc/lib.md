@@ -500,7 +500,7 @@ SEEK_SET, SEEK_CUR, SEEK_END
 STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO
 
 lseek() (available in 32-bit, huge and unreal memory models only since they
-provide the long/32-bit type, but you might use \_\_lseek() instead, however,
+provide the long/32-bit type, but you might use \_\_lseekp() instead, however,
 the latter has not been tested)
 
 read(), write()
@@ -509,7 +509,7 @@ unlink() (has basic semantics of remove())
 
 isatty()
 
-\_\_lseek() (Smaller C-specific; similar to lseek() but offsets are
+\_\_lseekp() (Smaller C-specific; similar to lseek() but offsets are
 passed/returned via a pointer to fpos_t and fpos_t consists of 2 16-bit
 integers as opposed to 1 32-bit integer; this function is intended for the
 tiny and small memory models in which 32-bit/long types aren't supported;

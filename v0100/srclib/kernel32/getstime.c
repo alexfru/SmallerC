@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014-2016, Alexey Frunze
+  Copyright (c) 2014-2018, Alexey Frunze
   2-clause BSD license.
 */
 #ifdef _WINDOWS
@@ -21,7 +21,7 @@ static char* pdll = _kernel32_dll__; // pull trailers for sections .kernel32_hin
 
 struct _SYSTEMTIME;
 
-void GetSystemTime(struct _SYSTEMTIME* pSystemTime)
+void __GetSystemTime(struct _SYSTEMTIME* pSystemTime)
 {
   asm(
     "push dword [ebp+8]\n"

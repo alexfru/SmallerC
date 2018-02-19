@@ -24,14 +24,22 @@ toupper.c
 
 errno.c
 
+open_.c
 open.c
+creat_.c
 creat.c
+close_.c
 close.c
+read_.c
 read.c
+write_.c
 write.c
+lseek_.c
 lseek.c
 lseek16.c
+unlink_.c
 unlink.c
+isatty_.c
 isatty.c
 
 setlocal.c
@@ -47,6 +55,7 @@ stdio2.c
 stdin.c
 stdout.c
 stderr.c
+fileno_.c
 fileno.c
 fopen.c
 freopen.c

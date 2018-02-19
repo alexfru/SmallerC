@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014, Alexey Frunze
+  Copyright (c) 2014-2018, Alexey Frunze
   2-clause BSD license.
 */
 #include <unistd.h>
@@ -59,7 +59,7 @@ int fseek(FILE* f, long offset, int whence)
   if (f->flags & _IOAPPEND)
     return 0;
 
-  if (lseek(f->fd, offset, whence) == -1)
+  if (__lseek(f->fd, offset, whence) == -1)
   {
     return -1;
   }

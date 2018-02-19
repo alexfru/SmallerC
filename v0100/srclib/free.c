@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014-2016, Alexey Frunze
+  Copyright (c) 2014-2018, Alexey Frunze
   2-clause BSD license.
 */
 #ifdef __HUGE__
@@ -84,7 +84,7 @@ void free(void* ptr)
 
 void free(void* ptr)
 {
-  HeapFree(GetProcessHeap(), 0, ptr);
+  __HeapFree(__GetProcessHeap(), 0, ptr);
 }
 
 #endif // _WINDOWS

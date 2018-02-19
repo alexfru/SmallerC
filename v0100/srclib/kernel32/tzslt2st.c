@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014-2016, Alexey Frunze
+  Copyright (c) 2014-2018, Alexey Frunze
   2-clause BSD license.
 */
 #ifdef _WINDOWS
@@ -22,9 +22,9 @@ static char* pdll = _kernel32_dll__; // pull trailers for sections .kernel32_hin
 struct _TIME_ZONE_INFORMATION;
 struct _SYSTEMTIME;
 
-int TzSpecificLocalTimeToSystemTime(struct _TIME_ZONE_INFORMATION* lpTimeZoneInformation,
-                                    struct _SYSTEMTIME* lpLocalTime,
-                                    struct _SYSTEMTIME* lpUniversalTime)
+int __TzSpecificLocalTimeToSystemTime(struct _TIME_ZONE_INFORMATION* lpTimeZoneInformation,
+                                      struct _SYSTEMTIME* lpLocalTime,
+                                      struct _SYSTEMTIME* lpUniversalTime)
 {
   asm(
     "push dword [ebp+16]\n"

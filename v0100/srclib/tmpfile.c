@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014, Alexey Frunze
+  Copyright (c) 2014-2018, Alexey Frunze
   2-clause BSD license.
 */
 #include <fcntl.h>
@@ -24,7 +24,7 @@ FILE* tmpfile(void)
     if (!__tmpnam(name, 1))
       continue;
 
-    if ((fd = open(name, O_EXCL | O_CREAT | O_TRUNC | O_RDWR, 0666)) >= 0)
+    if ((fd = __open(name, O_EXCL | O_CREAT | O_TRUNC | O_RDWR, 0666)) >= 0)
       break;
   }
 

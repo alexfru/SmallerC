@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014, Alexey Frunze
+  Copyright (c) 2014-2018, Alexey Frunze
   2-clause BSD license.
 */
 #include <unistd.h>
@@ -9,7 +9,7 @@
 
 int __ftell(FILE* f, fpos_t* pos)
 {
-  if (__lseek(f->fd, pos, SEEK_CUR))
+  if (__lseekp(f->fd, pos, SEEK_CUR))
   {
 //    errno = EUNKNOWN;
     return -1;

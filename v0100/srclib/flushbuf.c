@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014, Alexey Frunze
+  Copyright (c) 2014-2018, Alexey Frunze
   2-clause BSD license.
 */
 #include <stdlib.h>
@@ -39,7 +39,7 @@ int __flushbuf(int c, FILE* f)
 
   if (f->ptr != f->buf) // if there's really anything in the buffer, flush
   {
-    written = write(f->fd, f->buf, f->bufsz); // TBD!!! review these writes/sizes
+    written = __write(f->fd, f->buf, f->bufsz); // TBD!!! review these writes/sizes
     if (written <= 0 || written != f->bufsz)
     {
       f->flags |= _IOERR;

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014, Alexey Frunze
+  Copyright (c) 2014-2018, Alexey Frunze
   2-clause BSD license.
 */
 #include <unistd.h>
@@ -26,9 +26,9 @@ void rewind(FILE* f)
 {
   fpos_t pos;
   pos.halves[1] = pos.halves[0] = 0;
-  __lseek(f->fd, &pos, SEEK_SET);
+  __lseekp(f->fd, &pos, SEEK_SET);
 }
 #else
-  lseek(f->fd, 0, SEEK_SET);
+  __lseek(f->fd, 0, SEEK_SET);
 #endif
 }

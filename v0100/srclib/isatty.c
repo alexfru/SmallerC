@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014-2016, Alexey Frunze
+  Copyright (c) 2014-2018, Alexey Frunze
   2-clause BSD license.
 */
 #include <unistd.h>
@@ -83,7 +83,7 @@ int DosQueryDevFileFlags(int handle, unsigned* flagsOrError)
 }
 #endif // _DPMI
 
-int isatty(int fd)
+int __isatty(int fd)
 {
   unsigned flagsOrError;
   // Check if fd is a device handle
@@ -98,7 +98,7 @@ int isatty(int fd)
 
 #include "iwin32.h"
 
-int isatty(int fd)
+int __isatty(int fd)
 {
   // TBD??? Fix this hack???
   // GetStdHandle(STD_INPUT_HANDLE), GetStdHandle(STD_OUTPUT_HANDLE) and GetStdHandle(STD_ERROR_HANDLE)
@@ -107,8 +107,8 @@ int isatty(int fd)
   // 0, 1 and 2 or if any other valid handle can ever be equal to 0, 1 or 2.
   // If 0, 1 and 2 can be valid handles in the system, I'll need to renumber/translate handles in the C library.
   if (fd >= STDIN_FILENO && fd <= STDERR_FILENO)
-    fd = GetStdHandle(STD_INPUT_HANDLE - fd);
-  return GetFileType(fd) == FILE_TYPE_CHAR;
+    fd = __GetStdHandle(STD_INPUT_HANDLE - fd);
+  return __GetFileType(fd) == FILE_TYPE_CHAR;
 }
 
 #endif // _WINDOWS
@@ -125,7 +125,7 @@ int SysIoctl(int fd, int cmd, ...)
       "int 0x80");
 }
 
-int isatty(int fd)
+int __isatty(int fd)
 {
   unsigned char termios[60/*sizeof(struct termios)*/];
   return SysIoctl(fd, 0x00005401/*TCGETS*/, termios) == 0;
@@ -146,7 +146,7 @@ int SysIoctl(int fd, int cmd, ...)
       "int 0x80");
 }
 
-int isatty(int fd)
+int __isatty(int fd)
 {
   unsigned char termios[44/*sizeof(struct termios)*/];
   return SysIoctl(fd, 0x402C7413/*TIOCGETA*/, termios) == 0;

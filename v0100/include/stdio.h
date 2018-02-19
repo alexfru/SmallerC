@@ -111,6 +111,7 @@ int ferror(FILE*);
 int feof(FILE*);
 int setvbuf(FILE*, char*, int, size_t);
 void setbuf(FILE*, char*);
+int __fileno(FILE*);
 int fileno(FILE*);
 char* tmpnam(char*);
 FILE* tmpfile(void);

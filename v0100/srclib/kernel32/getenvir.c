@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014-2016, Alexey Frunze
+  Copyright (c) 2014-2018, Alexey Frunze
   2-clause BSD license.
 */
 #ifdef _WINDOWS
@@ -19,9 +19,9 @@ static char hint_GetEnvironmentVariableA[] = "\0\0GetEnvironmentVariableA";
 extern char _kernel32_dll__[];
 static char* pdll = _kernel32_dll__; // pull trailers for sections .kernel32_hints and .kernel32_iat
 
-unsigned GetEnvironmentVariableA(char* lpName,
-                                 char* lpBuffer,
-                                 unsigned nSize)
+unsigned __GetEnvironmentVariableA(char* lpName,
+                                   char* lpBuffer,
+                                   unsigned nSize)
 {
   asm(
     "push dword [ebp+16]\n"

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014-2016, Alexey Frunze
+  Copyright (c) 2014-2018, Alexey Frunze
   2-clause BSD license.
 */
 #include <unistd.h>
@@ -83,7 +83,7 @@ int __DosSeek(int handle, unsigned short offset[2], int whence)
 }
 #endif // _DPMI
 
-int __lseek(int fd, fpos_t* offset, int whence)
+int __lseekp(int fd, fpos_t* offset, int whence)
 {
   fpos_t o = *offset;
   if (__DosSeek(fd, &o, whence))
@@ -98,7 +98,7 @@ int __lseek(int fd, fpos_t* offset, int whence)
 
 #ifndef _DOS
 
-int __lseek(int fd, fpos_t* offset, int whence)
+int __lseekp(int fd, fpos_t* offset, int whence)
 {
   union
   {
@@ -107,7 +107,7 @@ int __lseek(int fd, fpos_t* offset, int whence)
   } u;
   u.fo = *offset;
 
-  if ((u.o = lseek(fd, u.o, whence)) != -1)
+  if ((u.o = __lseek(fd, u.o, whence)) != -1)
   {
     *offset = u.fo;
     return 0;

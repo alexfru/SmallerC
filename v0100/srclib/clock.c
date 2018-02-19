@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014-2017, Alexey Frunze
+  Copyright (c) 2014-2018, Alexey Frunze
   2-clause BSD license.
 */
 #include <time.h>
@@ -72,8 +72,8 @@ clock_t clock(void)
 {
   static unsigned initialized, initticks;
   if (initialized)
-    return GetTickCount() - initticks;
-  initticks = GetTickCount();
+    return __GetTickCount() - initticks;
+  initticks = __GetTickCount();
   initialized = 1;
   return 0;
 }

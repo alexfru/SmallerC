@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014-2016, Alexey Frunze
+  Copyright (c) 2014-2018, Alexey Frunze
   2-clause BSD license.
 */
 #ifdef _WINDOWS
@@ -21,7 +21,7 @@ static char* pdll = _kernel32_dll__; // pull trailers for sections .kernel32_hin
 
 typedef struct TOP_LEVEL_EXCEPTION_FILTER TOP_LEVEL_EXCEPTION_FILTER;
 
-TOP_LEVEL_EXCEPTION_FILTER* SetUnhandledExceptionFilter(TOP_LEVEL_EXCEPTION_FILTER* lpTopLevelExceptionFilter)
+TOP_LEVEL_EXCEPTION_FILTER* __SetUnhandledExceptionFilter(TOP_LEVEL_EXCEPTION_FILTER* lpTopLevelExceptionFilter)
 {
   asm(
     "push dword [ebp+8]\n"
