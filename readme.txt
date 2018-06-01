@@ -29,15 +29,16 @@ Links:
 NASM: http://nasm.us/
 YASM: http://yasm.tortall.net/
 FASM: http://flatassembler.net/
-CWSDPMI: http://homer.rice.edu/~sandmann/cwsdpmi/
+CWSDPMI: https://sandmann.dotster.com/cwsdpmi/
 HX DOS Extender: https://web.archive.org/web/20141003032346/http://www.japheth.de/
 RetroBSD: http://retrobsd.org/
 VASM: http://sun.hasenbraten.de/vasm/
 Trillek: http://trillek.org/
 
 Other projects based on/using Smaller C:
-NewBasic Compiler: http://fysnet.net/nbc.htm
+"ROM C" (like ROM Basic but C): https://hackaday.io/project/29198-native-c-pic32-color-video-on-tv
 FYS OS: http://www.fysnet.net/fysos.htm
+NewBasic Compiler: http://fysnet.net/nbc.htm
 Sweet32 CPU and toolchain: https://github.com/Basman74/Sweet32-CPU
 
 Normative and other useful documents on C:
