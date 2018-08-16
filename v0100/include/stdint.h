@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014-2016, Alexey Frunze
+  Copyright (c) 2014-2018, Alexey Frunze
   2-clause BSD license.
 */
 #ifndef __STDINT_H
@@ -26,7 +26,7 @@ typedef int intmax_t;
 #define INTMAX_MAX 32767
 typedef unsigned uintmax_t;
 #define UINTMAX_MAX 65535U
-#endif
+#endif // __SMALLER_C_16__
 
 #ifdef __SMALLER_C_32__
 #define INTPTR_MIN (-2147483647-1)
@@ -43,7 +43,7 @@ typedef long intmax_t;
 #define INTMAX_MAX 2147483647L
 typedef unsigned long uintmax_t;
 #define UINTMAX_MAX 4294967295UL
-#endif
+#endif // __SMALLER_C_32__
 
 typedef signed char int8_t, int_least8_t, int_fast8_t;
 typedef unsigned char uint8_t, uint_least8_t, uint_fast8_t;
@@ -86,7 +86,7 @@ typedef unsigned uint32_t, uint_least32_t, uint_fast32_t;
 #define UINT32_MAX       4294967295U
 #define UINT_LEAST32_MAX 4294967295U
 #define UINT_FAST32_MAX  4294967295U
-#endif
+#endif // __SMALLER_C_32__
 
 #ifdef __SMALLER_PP__
 
@@ -99,7 +99,7 @@ typedef unsigned uint32_t, uint_least32_t, uint_fast32_t;
 
 #define INTMAX_C(val) (val)
 #define UINTMAX_C(val) (val##U)
-#endif
+#endif // __SMALLER_C_16__
 
 #ifdef __SMALLER_C_32__
 #define INT16_C(val) (val)
@@ -110,8 +110,38 @@ typedef unsigned uint32_t, uint_least32_t, uint_fast32_t;
 
 #define INTMAX_C(val) (val)
 #define UINTMAX_C(val) (val##UL)
-#endif
+#endif // __SMALLER_C_32__
 
-#endif
+#endif // __SMALLER_PP__
+
+#ifndef WCHAR_MAX
+
+#ifdef __SMALLER_C_WCHAR16__
+#ifdef __SMALLER_C_SWCHAR__
+//typedef short wchar_t;
+#define WCHAR_MIN (-32767-1)
+#define WCHAR_MAX 32767
+#endif // __SMALLER_C_SWCHAR__
+#ifdef __SMALLER_C_UWCHAR__
+//typedef unsigned short wchar_t;
+#define WCHAR_MIN 0
+#define WCHAR_MAX 0xFFFF
+#endif // __SMALLER_C_UWCHAR__
+#endif // __SMALLER_C_WCHAR16__
+
+#ifdef __SMALLER_C_WCHAR32__
+#ifdef __SMALLER_C_SWCHAR__
+//typedef int wchar_t;
+#define WCHAR_MIN (-2147483647-1)
+#define WCHAR_MAX 2147483647
+#endif // __SMALLER_C_SWCHAR__
+#ifdef __SMALLER_C_UWCHAR__
+//typedef unsigned wchar_t;
+#define WCHAR_MIN 0U
+#define WCHAR_MAX 4294967295U
+#endif // __SMALLER_C_UWCHAR__
+#endif // __SMALLER_C_WCHAR32__
+
+#endif // WCHAR_MAX
 
 #endif

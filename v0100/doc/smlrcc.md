@@ -187,6 +187,19 @@ Compile one or more C files into assembly files (note the -S option):
     signed. This is the **default**.
 *   **-unsigned-char** (passed to the core compiler) This makes **char**
     unsigned.
+*   **-signed-wchar** (passed to the core compiler) This makes **wchar_t**
+    signed. This is the **default** for **-elf**, **-linux**, **-macos**.
+*   **-unsigned-wchar** (passed to the core compiler) This makes **wchar_t**
+    unsigned. This is the **default** for **-tiny**, **-dost**, **-small**,
+    **-doss**, **-huge**, **-dosh**, **-unreal**, **-dosu**, **-aout**,
+    **-dosp**, **-pe**, **-win**, **-flat16**, **-flat32**.
+*   **-short-wchar** (passed to the core compiler) This makes **wchar_t**
+    short/16-bit. This is the **default** for **-tiny**, **-dost**,
+    **-small**, **-doss**, **-huge**, **-dosh**, **-unreal**, **-dosu**,
+    **-aout**, **-dosp**, **-pe**, **-win**, **-flat16**, **-flat32**.
+*   **-long-wchar** (passed to the core compiler) This makes **wchar_t**
+    long/32-bit (only in 32-bit, huge and unreal mode(l)s). This is the
+    **default** for **-elf**, **-linux**, **-macos**.
 *   **-leading-underscore** (passed to the core compiler) This prefixes
     global C identifiers with an underscore, so you get labels like **_main**
     for **main()** and **_printf** for **printf()** in the generated assembly

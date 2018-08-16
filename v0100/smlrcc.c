@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2017, Alexey Frunze
+Copyright (c) 2014-2018, Alexey Frunze
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -1351,7 +1351,10 @@ void DefineMacro(char* s)
 int main(int argc, char* argv[])
 {
   int i;
-  int UnsignedChar = 0;
+  size_t MatchingString;
+  int UnsignedChar = 0; // default in smlrc
+  int UnsignedWideChar = -1;
+  int ShortWideChar = -1;
 
 #ifdef __SMALLER_C__
 #ifdef DETERMINE_VA_LIST
@@ -1479,17 +1482,38 @@ int main(int argc, char* argv[])
         continue;
       }
     }
-    else if (StrAnyOf(argv[i], "-signed-char\0"
-                               "-unsigned-char\0"
-                               "-leading-underscore\0"
-                               "-no-leading-underscore\0"
-                               "-winstack\0"
-                               "-Wall\0"))
+    else if ((MatchingString = StrAnyOf(argv[i], "-signed-char\0"
+                                                 "-unsigned-char\0"
+                                                 "-signed-wchar\0"
+                                                 "-unsigned-wchar\0"
+                                                 "-short-wchar\0"
+                                                 "-long-wchar\0"
+                                                 "-leading-underscore\0"
+                                                 "-no-leading-underscore\0"
+                                                 "-winstack\0"
+                                                 "-Wall\0")) != 0)
     {
-      if (!strcmp(argv[i], "-unsigned-char"))
-        UnsignedChar = 1;
-      else if (!strcmp(argv[i], "-signed-char"))
+      switch (MatchingString) // 1-based
+      {
+      case 1: // "-signed-char"
         UnsignedChar = 0;
+        break;
+      case 2: // "-unsigned-char"
+        UnsignedChar = 1;
+        break;
+      case 3: // "-signed-wchar"
+        UnsignedWideChar = 0;
+        break;
+      case 4: // "-unsigned-wchar"
+        UnsignedWideChar = 1;
+        break;
+      case 5: // "-short-wchar"
+        ShortWideChar = 1;
+        break;
+      case 6: // "-long-wchar"
+        ShortWideChar = 0;
+        break;
+      }
       AddOption(&CompilerOptions, &CompilerOptionsLen, argv[i]);
       argv[i] = NULL;
       continue;
@@ -1827,6 +1851,46 @@ int main(int argc, char* argv[])
     }
   }
 
+  // Handle wchar_t options
+  switch (OutputFormat)
+  {
+  case FormatDosComTiny:
+  case FormatFlat16:
+  case FormatFlat32:
+  case FormatDosExeSmall:
+  case FormatDosExeHuge:
+  case FormatDosExeUnreal:
+  case FormatAoutDpmi:
+  case FormatWinPe32:
+    // The default wchar_t for these formats is 16-bit unsigned short int,
+    // which coincides with the default in smlrc.
+    // If something else has been specified explicitly, that option is
+    // ready to be passed to smlrc.
+    if (UnsignedWideChar < 0)
+      UnsignedWideChar = 1;
+    if (ShortWideChar < 0)
+      ShortWideChar = 1;
+    break;
+  case FormatElf32:
+  case FormatMach32:
+    // The default wchar_t for these formats is 32-bit signed int, which
+    // does not coincide with the default in smlrc (16-bit unsigned short int).
+    // If something else has been specified explicitly, that option is
+    // ready to be passed to smlrc. Otherwise, we'll supply it now to
+    // override the default of smlrc.
+    if (UnsignedWideChar < 0)
+    {
+      UnsignedWideChar = 0;
+      AddOption(&CompilerOptions, &CompilerOptionsLen, "-signed-wchar");
+    }
+    if (ShortWideChar < 0)
+    {
+      ShortWideChar = 0;
+      AddOption(&CompilerOptions, &CompilerOptionsLen, "-long-wchar");
+    }
+    break;
+  }
+
   // Figure out if we need to create a library ('-c -o file.a' specified)
   if (DontLink && !CompileToAsm && OutName)
   {
@@ -1881,6 +1945,14 @@ int main(int argc, char* argv[])
       DefineMacro("__SMALLER_C_UCHAR__");
     else
       DefineMacro("__SMALLER_C_SCHAR__");
+    if (UnsignedWideChar)
+      DefineMacro("__SMALLER_C_UWCHAR__");
+    else
+      DefineMacro("__SMALLER_C_SWCHAR__");
+    if (ShortWideChar)
+      DefineMacro("__SMALLER_C_WCHAR16__");
+    else
+      DefineMacro("__SMALLER_C_WCHAR32__");
     DefineMacro("__SMALLER_PP__");
     // Also suppress unnecessary primitive preprocessing in smlrc
     AddOption(&CompilerOptions, &CompilerOptionsLen, "-nopp");

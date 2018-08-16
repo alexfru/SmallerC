@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2014, Alexey Frunze
+  Copyright (c) 2014-2018, Alexey Frunze
   2-clause BSD license.
 */
 #ifndef __STDLIB_H
@@ -13,6 +13,26 @@
 #define __SIZE_T_DEF
 typedef unsigned size_t;
 #endif
+
+#ifndef __WCHAR_T_DEF
+#define __WCHAR_T_DEF
+#ifdef __SMALLER_C_WCHAR16__
+#ifdef __SMALLER_C_SWCHAR__
+typedef short wchar_t;
+#endif // __SMALLER_C_SWCHAR__
+#ifdef __SMALLER_C_UWCHAR__
+typedef unsigned short wchar_t;
+#endif // __SMALLER_C_UWCHAR__
+#endif // __SMALLER_C_WCHAR16__
+#ifdef __SMALLER_C_WCHAR32__
+#ifdef __SMALLER_C_SWCHAR__
+typedef int wchar_t;
+#endif // __SMALLER_C_SWCHAR__
+#ifdef __SMALLER_C_UWCHAR__
+typedef unsigned wchar_t;
+#endif // __SMALLER_C_UWCHAR__
+#endif // __SMALLER_C_WCHAR32__
+#endif // __WCHAR_T_DEF
 
 #define EXIT_SUCCESS 0
 #define EXIT_FAILURE 1

@@ -217,7 +217,7 @@ va_start(), va_arg(), va_end()
 
 NULL
 
-size_t, ptrdiff_t
+size_t, ptrdiff_t, wchar_t
 
 offsetof()
 
@@ -261,6 +261,8 @@ uint32_t, uint_least32_t, uint_fast32_t
 [U]INT8_C(), [U]INT16_C(), [U]INT32_C(), [U]INTMAX_C()
 
 Note there are no [u]int64_t types.
+
+WCHAR_MIN, WCHAR_MAX
 
 ### stdio.h
 
@@ -363,7 +365,7 @@ thoroughly tested)
 
 NULL
 
-size_t
+size_t, wchar_t
 
 div_t, ldiv_t
 
@@ -592,15 +594,14 @@ Type-generic math isn't supported by Smaller C.
 
 ### wchar.h (C99)
 
-The type wchar_t and wide characters and wide string literals aren't
-supported by Smaller C. Further, it looks like this functionality may need to
-be implemented differently for different platforms.
+Not implemented (yet?), although wide characters and wide string literals are
+supported (wchar_t is defined in stddef.h and stdlib.h; WCHAR_MIN and
+WCHAR_MAX are defined in stdint.h).
 
 ### wctype.h (C99)
 
-The type wchar_t and wide characters and wide string literals aren't
-supported by Smaller C. Further, it looks like this functionality may need to
-be implemented differently for different platforms.
+Not implemented (yet?), although wide characters and wide string literals are
+supported (wchar_t is defined in stddef.h and stdlib.h).
 
 ## POSIX compatibility
 

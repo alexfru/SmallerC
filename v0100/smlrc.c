@@ -54,6 +54,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define NO_FOR_DECL
 #define NO_STRUCT_BY_VAL
 #define NO_FP
+#define NO_WCHAR
 #endif
 
 // Passing and returning structures by value is currenly supported
@@ -335,6 +336,8 @@ int fsetpos(FILE*, fpos_t*);
 #define tokEnumPtr    0x93
 #define tokIntr       0x94
 #define tokNumFloat   0x95
+#define tokNumCharWide 0x96
+#define tokLitStrWide 0x97
 
 //#define FormatFlat      0
 #define FormatSegmented 1
@@ -345,8 +348,9 @@ int fsetpos(FILE*, fpos_t*);
 #define SymVoidSynPtr 0
 #define SymIntSynPtr  1
 #define SymUintSynPtr 2
-#define SymFloatSynPtr 3
-#define SymFuncPtr    4
+#define SymWideCharSynPtr 3
+#define SymFloatSynPtr 4
+#define SymFuncPtr    5
 
 #ifndef STACK_SIZE
 #define STACK_SIZE 129
@@ -479,6 +483,10 @@ STATIC
 void errorInternal(int n);
 STATIC
 void errorChrStr(void);
+#ifndef NO_WCHAR
+STATIC
+void errorWideNonWide(void);
+#endif
 STATIC
 void errorStrLen(void);
 STATIC
@@ -541,6 +549,7 @@ char TokenIdentName[MAX_IDENT_LEN + 1];
 int TokenIdentNameLen = 0;
 char TokenValueString[MAX_STRING_LEN + 1];
 unsigned TokenStringLen = 0;
+unsigned TokenStringSize = 0; // TokenStringLen * sizeof(char/wchar_t)
 int LineNo = 1;
 int LinePos = 1;
 char CharQueue[MAX_CHAR_QUEUE_LEN];
@@ -639,6 +648,10 @@ char** CurHeaderFooter;
 
 int CharIsSigned = 1;
 int SizeOfWord = 2; // in chars (char can be a multiple of octets); ints and pointers are of word size
+int SizeOfWideChar = 2; // in chars/bytes, 2 or 4
+int WideCharIsSigned = 0; // 0 or 1
+int WideCharType1;
+int WideCharType2; // (un)signed counterpart of WideCharType1
 
 // TBD??? implement a function to allocate N labels with overflow checks
 int LabelCnt = 1; // label counter for jumps
@@ -999,6 +1012,7 @@ unsigned char tktk[] =
   // Helper (pseudo-)tokens:
   tokNumInt, tokLitStr, tokLocalOfs, tokNumUint, tokIdent, tokShortCirc,
   tokSChar, tokShort, tokLong, tokUChar, tokUShort, tokULong, tokNumFloat,
+  tokNumCharWide, tokLitStrWide
 };
 
 char* tks[] =
@@ -1020,7 +1034,8 @@ char* tks[] =
   ">u", ">=u", ">>=u", "/=u", "%=u",
   // Helper (pseudo-)tokens:
   "<NumInt>",  "<LitStr>", "<LocalOfs>", "<NumUint>", "<Ident>", "<ShortCirc>",
-  "signed char", "short", "long", "unsigned char", "unsigned short", "unsigned long", "float"
+  "signed char", "short", "long", "unsigned char", "unsigned short", "unsigned long", "float",
+  "<NumCharWide>", "<LitStrWide>"
 };
 
 STATIC
@@ -1305,10 +1320,12 @@ void GetIdent(void)
   if (*p != '_' && !isalpha(*p & 0xFFu))
     error("Identifier expected\n");
 
+#ifdef NO_WCHAR
   if (*p == 'L' &&
       (p[1] == '\'' || p[1] == '"'))
     //error("Wide characters and strings not supported\n");
     errorChrStr();
+#endif
 
   TokenIdentNameLen = 0;
   TokenIdentName[TokenIdentNameLen++] = *p;
@@ -1326,25 +1343,79 @@ void GetIdent(void)
 }
 
 STATIC
-void GetString(char terminator, int option)
+unsigned GetCharValue(int wide)
 {
   char* p = CharQueue;
-  int ch = '\0';
-
-  TokenStringLen = 0;
-  TokenValueString[TokenStringLen] = '\0';
-
-  ShiftCharN(1);
-  while (!(*p == terminator || strchr("\n\r", *p)))
+  unsigned ch = 0;
+  int cnt = 0;
+#ifdef NO_WCHAR
+  (void)wide;
+#endif
+  if (*p == '\\')
   {
-    ch = *p;
-    if (ch == '\\')
+    ShiftCharN(1);
+    if (strchr("\n\r", *p))
+      goto lerr;
+    if (*p == 'x')
     {
+      // hexadecimal character codes \xN+
+      // hexadecimal escape sequence is not limited in length per se
+      // (may have many leading zeroes)
+      static char digs[] = "0123456789ABCDEFabcdef";
+      static char vals[] =
+      {
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+        10, 11, 12, 13, 14, 15,
+        10, 11, 12, 13, 14, 15
+      };
+      char* pp;
+      int zeroes = 0;
       ShiftCharN(1);
-      ch = *p;
-      if (strchr("\n\r", ch))
-        break;
-      switch (ch)
+      if (strchr("\n\r", *p))
+        goto lerr;
+      if (*p == '0')
+      {
+        do
+        {
+          ShiftCharN(1);
+        } while (*p == '0');
+        zeroes = 1;
+      }
+      while (*p && (pp = strchr(digs, *p)) != NULL)
+      {
+        ch <<= 4;
+        ch |= vals[pp - digs];
+        ShiftCharN(1);
+#ifndef NO_WCHAR
+        if (++cnt > (wide ? SizeOfWideChar * 2 : 2))
+#else
+        if (++cnt > 2)
+#endif
+        {
+          if (PrepDontSkipTokens)
+            goto lerr;
+        }
+      }
+      if (zeroes + cnt == 0)
+        goto lerr;
+    }
+    else if (*p >= '0' && *p <= '7')
+    {
+      // octal character codes \N+
+      // octal escape sequence is terminated after three octal digits
+      do
+      {
+        ch <<= 3;
+        ch |= *p - '0';
+        ShiftCharN(1);
+        ++cnt;
+      } while (*p >= '0' && *p <= '7' && cnt < 3);
+      if (ch >> 8)
+        goto lerr;
+    }
+    else
+    {
+      switch (*p)
       {
       case 'a': ch = '\a'; ShiftCharN(1); break;
       case 'b': ch = '\b'; ShiftCharN(1); break;
@@ -1353,82 +1424,77 @@ void GetString(char terminator, int option)
       case 'r': ch = '\r'; ShiftCharN(1); break;
       case 't': ch = '\t'; ShiftCharN(1); break;
       case 'v': ch = '\v'; ShiftCharN(1); break;
-      // DONE: \nnn, \xnn
-      case 'x':
-        {
-          // hexadecimal character codes \xN+
-          int cnt = 0;
-          ch = 0;
-          ShiftCharN(1);
-          while (*p != '\0' && (isdigit(*p & 0xFFu) || strchr("abcdefABCDEF", *p)))
-          {
-            ch = (ch * 16) & 0xFF;
-            if (*p >= 'a') ch += *p - 'a' + 10;
-            else if (*p >= 'A') ch += *p - 'A' + 10;
-            else ch += *p - '0';
-            ShiftCharN(1);
-            cnt++;
-          }
-          if (!cnt)
-            //error("Unsupported or invalid character/string constant\n");
-            errorChrStr();
-          ch -= (ch >= 0x80 && CHAR_MIN < 0) * 0x100;
-        }
-        break;
       default:
-        if (*p >= '0' && *p <= '7')
-        {
-          // octal character codes \N+
-          int cnt = 0;
-          ch = 0;
-          while (*p >= '0' && *p <= '7')
-          {
-            ch = (ch * 8) & 0xFF;
-            ch += *p - '0';
-            ShiftCharN(1);
-            // octal escape sequence is terminated after three octal digits
-            if (++cnt == 3)
-              break;
-          }
-          ch -= (ch >= 0x80 && CHAR_MIN < 0) * 0x100;
-        }
-        else
-        {
-          ShiftCharN(1);
-        }
-        break;
-      } // endof switch (ch)
-    } // endof if (ch == '\\')
-    else
-    {
-      ShiftCharN(1);
+        goto lself;
+      }
     }
+  }
+  else
+  {
+lself:
+    if (strchr("\n\r", *p))
+    {
+lerr:
+      //error("Unsupported or invalid character/string constant\n");
+      errorChrStr();
+    }
+    ch = *p & 0xFFu;
+#ifndef NO_WCHAR
+    if (wide && ch > 0x7F && PrepDontSkipTokens)
+      error("Only ASCII chars supported as wide chars\n");
+#endif
+    ShiftCharN(1);
+  }
+  return ch;
+}
 
-    if (terminator == '\'')
-    {
-      // Multi-character character constants aren't supported
-      if (TokenStringLen++ != 0)
-        //error("Character constant too long\n");
-        errorChrStr();
-    }
-    else switch (option)
+STATIC
+void GetString(char terminator, int wide, int option)
+{
+  char* p = CharQueue;
+  unsigned ch = '\0';
+#ifndef NO_WCHAR
+  unsigned chsz = wide ? SizeOfWideChar : 1;
+#else
+  unsigned chsz = 1;
+#endif
+  int i;
+
+  TokenStringLen = 0;
+  TokenStringSize = 0;
+  TokenValueString[TokenStringLen] = '\0';
+
+  ShiftCharN(1);
+  while (!(*p == terminator || strchr("\n\r", *p)))
+  {
+    ch = GetCharValue(wide);
+    switch (option)
     {
     case '#': // string literal (with file name) for #line and #include
       if (TokenStringLen == MAX_STRING_LEN)
         errorStrLen();
       TokenValueString[TokenStringLen++] = ch;
       TokenValueString[TokenStringLen] = '\0';
+      TokenStringSize += chsz;
       break;
     case 'a': // string literal for asm()
       printf2("%c", ch);
       break;
     case 'd': // string literal / array of char in expression or initializer
       // Dump the char data to the appropriate data section
-      GenDumpChar(ch & 0xFFu);
+      for (i = 0; i < chsz; i++)
+      {
+        GenDumpChar(ch & 0xFFu);
+        ch >>= 8;
+        TokenStringLen++; // GenDumpChar() expects it to grow, doesn't know about wchar_t
+      }
+      TokenStringLen -= chsz;
       // fallthrough
     default: // skipped string literal (we may still need the size)
-      if (TokenStringLen++ == UINT_MAX)
+      if (TokenStringSize > UINT_MAX - chsz)
         errorStrLen();
+      TokenStringSize += chsz;
+      TokenStringLen++;
       break;
     } // endof switch (option)
   } // endof while (!(*p == '\0' || *p == terminator || strchr("\n\r", *p)))
@@ -1437,19 +1503,8 @@ void GetString(char terminator, int option)
     //error("Unsupported or invalid character/string constant\n");
     errorChrStr();
 
-  if (terminator == '\'')
-  {
-    if (TokenStringLen == 0)
-      //error("Character constant too short\n");
-      errorChrStr();
-
-    TokenValueInt = ch & 0xFFu;
-    TokenValueInt -= (CharIsSigned && TokenValueInt >= 0x80) * 0x100;
-  }
-  else if (option == 'd')
-  {
+  if (option == 'd')
     GenDumpChar(-1);
-  }
 
   ShiftCharN(1);
 
@@ -1756,6 +1811,7 @@ int GetTokenInner(void)
 {
   char* p = CharQueue;
   int ch = *p;
+  int wide = 0;
 
   // these single-character tokens/operators need no further processing
   if (strchr(",;:()[]{}~?", ch))
@@ -1825,16 +1881,74 @@ int GetTokenInner(void)
     return GetNumber();
 
   // parse character and string constants
+#ifndef NO_WCHAR
+  if (ch == 'L' && (p[1] == '\'' || p[1] == '"'))
+  {
+    wide = 1; ShiftCharN(1); ch = *p;
+  }
+#endif
   if (ch == '\'')
   {
-    GetString(ch, 'd');
-    return tokNumInt;
+    unsigned v = 0;
+    int cnt = 0;
+#ifndef NO_WCHAR
+    int max_cnt = wide ? 1 : SizeOfWord;
+#else
+    int max_cnt = SizeOfWord;
+#endif
+    ShiftCharN(1);
+    if (strchr("'\n\r", *p))
+      //error("Character constant too short\n");
+      errorChrStr();
+    do
+    {
+      v <<= 8;
+      v |= GetCharValue(wide);
+      if (++cnt > max_cnt)
+        //error("Character constant too long\n");
+        errorChrStr();
+    } while (!strchr("'\n\r", *p));
+    if (*p != '\'')
+      //error("Unsupported or invalid character/string constant\n");
+      errorChrStr();
+    ShiftCharN(1);
+#ifndef NO_WCHAR
+    if (wide)
+    {
+      TokenValueInt = v;
+#ifdef CAN_COMPILE_32BIT
+      TokenValueInt -= (WideCharIsSigned && SizeOfWideChar == 2 &&
+                        TokenValueInt >= 0x8000) * 0x10000;
+#endif
+      return tokNumCharWide;
+    }
+    else
+#endif
+    {
+      if (cnt == 1)
+      {
+        TokenValueInt = v;
+        TokenValueInt -= (CharIsSigned && TokenValueInt >= 0x80) * 0x100;
+      }
+      else
+      {
+        TokenValueInt = v;
+#ifdef CAN_COMPILE_32BIT
+        TokenValueInt -= (SizeOfWord == 2 && TokenValueInt >= 0x8000) * 0x10000;
+#endif
+      }
+      return tokNumInt;
+    }
   }
   else if (ch == '"')
   {
-    // The caller of GetTokenInner()/GetToken() will call GetString('"', 'd')
+    // The caller of GetTokenInner()/GetToken() will call GetString('"', wide, 'd')
     // to complete string literal parsing and storing as appropriate
+#ifndef NO_WCHAR
+    return wide ? tokLitStrWide : tokLitStr;
+#else
     return tokLitStr;
+#endif
   }
 
   return tokEof;
@@ -1885,7 +1999,11 @@ int GetToken(void)
       if (PrepDontSkipTokens)
         return tok;
       if (tok == tokLitStr)
-        GetString('"', 0);
+        GetString('"', 0, 0);
+#ifndef NO_WCHAR
+      else if (tok == tokLitStrWide)
+        GetString('"', 1, 0);
+#endif
       continue;
     }
 
@@ -1999,9 +2117,9 @@ int GetToken(void)
         if (*p == '"' || *p == '<')
         {
           if (*p == '"')
-            GetString('"', '#');
+            GetString('"', 0, '#');
           else
-            GetString('>', '#');
+            GetString('>', 0, '#');
 
           if (strlen(TokenValueString) > MAX_FILE_NAME_LEN)
             //error("File name too long in preprocessor output\n");
@@ -2167,9 +2285,9 @@ int GetToken(void)
 
         quot = *p;
         if (*p == '"')
-          GetString('"', '#');
+          GetString('"', 0, '#');
         else if (*p == '<')
-          GetString('>', '#');
+          GetString('>', 0, '#');
         else
           //error("Invalid file name\n");
           errorFileName();
@@ -2569,17 +2687,32 @@ int exprUnary(int tok, int* gotUnary, int commaSeparator, int argOfSizeOf)
 #ifndef NO_FP
         tok == tokNumFloat ||
 #endif
+#ifndef NO_WCHAR
+        tok == tokNumCharWide ||
+#endif
         tok == tokNumUint)
     {
       push2(tok, TokenValueInt);
       *gotUnary = 1;
       tok = GetToken();
     }
-    else if (tok == tokLitStr)
+    else if (tok == tokLitStr
+#ifndef NO_WCHAR
+             || tok == tokLitStrWide
+#endif
+            )
     {
       int lbl = LabelCnt++;
-      unsigned len = 1;
       int id;
+      int ltok = tok;
+#ifndef NO_WCHAR
+      int wide = tok == tokLitStrWide;
+      unsigned chsz = wide ? SizeOfWideChar : 1;
+#else
+      int wide = 0;
+      unsigned chsz = 1;
+#endif
+      unsigned sz = chsz;
 
       // imitate definition: char #[len] = "...";
 
@@ -2589,22 +2722,31 @@ int exprUnary(int tok, int* gotUnary, int commaSeparator, int argOfSizeOf)
           puts2(CurHeaderFooter[1]);
         puts2(RoDataHeaderFooter[0]);
 
+#ifndef NO_WCHAR
+        if (wide)
+          GenWordAlignment(0);
+#endif
         GenNumLabel(lbl);
       }
 
       do
       {
-        GetString('"', sizeofLevel ? 0 : 'd'); // throw away string data inside sizeof, e.g. sizeof "a" or sizeof("a" + 1)
-        if (len + TokenStringLen < len ||
-            len + TokenStringLen >= truncUint(-1))
+        GetString('"', wide, sizeofLevel ? 0 : 'd'); // throw away string data inside sizeof, e.g. sizeof "a" or sizeof("a" + 1)
+        if (sz + TokenStringSize < sz ||
+            sz + TokenStringSize >= truncUint(-1))
           errorStrLen();
-        len += TokenStringLen;
+        sz += TokenStringSize;
         tok = GetToken();
-      } while (tok == tokLitStr); // concatenate adjacent string literals
+      } while (tok == ltok); // concatenate adjacent string literals
+
+#ifndef NO_WCHAR
+      if ((ltok ^ (tokLitStr ^ tokLitStrWide)) == tok)
+        errorWideNonWide();
+#endif
 
       if (!sizeofLevel)
       {
-        GenZeroData(1, 0);
+        GenZeroData(chsz, 0);
 
         puts2(RoDataHeaderFooter[1]);
         if (CurHeaderFooter)
@@ -2614,9 +2756,13 @@ int exprUnary(int tok, int* gotUnary, int commaSeparator, int argOfSizeOf)
       // DONE: can this break incomplete yet declarations???, e.g.: int x[sizeof("az")][5];
       PushSyntax2(tokIdent, id = AddNumericIdent(lbl));
       PushSyntax('[');
-      PushSyntax2(tokNumUint, len);
+      PushSyntax2(tokNumUint, sz / chsz);
       PushSyntax(']');
+#ifndef NO_WCHAR
+      PushSyntax(wide ? WideCharType1 : tokChar);
+#else
       PushSyntax(tokChar);
+#endif
 
       push2(tokIdent, id);
       *gotUnary = 1;
@@ -3469,6 +3615,15 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
     *ExprTypeSynPtr = SymUintSynPtr;
     *ConstExpr = 1;
     break;
+#ifndef NO_WCHAR
+  case tokNumCharWide:
+    // recode tokNumCharWide to tokNumInt to minimize changes in the CGs
+    stack[*idx + 1][0] = tokNumInt;
+    // return the constant's type: wchar_t
+    *ExprTypeSynPtr = SymWideCharSynPtr;
+    *ConstExpr = 1;
+    break;
+#endif
 #ifndef NO_FP
   case tokNumFloat:
     // recode tokNumFloat to tokNumInt to minimize changes in the CGs
@@ -5873,6 +6028,14 @@ void errorChrStr(void)
   error("Invalid or unsupported character constant or string literal\n");
 }
 
+#ifndef NO_WCHAR
+STATIC
+void errorWideNonWide(void)
+{
+  error("Unsupported concatenation of wide and non-wide string literals\n");
+}
+#endif
+
 STATIC
 void errorStrLen(void)
 {
@@ -7143,7 +7306,11 @@ int InitVar(int synPtr, int tok)
     if (tok != '{')
     {
       t = SyntaxStack0[p + 3];
-      if ((tok != tokLitStr) | ((t != tokChar) & (t != tokUChar) & (t != tokSChar)))
+      if (((tok != tokLitStr) | ((t != tokChar) & (t != tokUChar) & (t != tokSChar)))
+#ifndef NO_WCHAR
+          & ((tok != tokLitStrWide) | ((t != WideCharType1) & (t != WideCharType2)))
+#endif
+         )
         errorUnexpectedToken(tok);
     }
     tok = InitArray(p, tok);
@@ -7279,6 +7446,9 @@ int InitArray(int synPtr, int tok)
   unsigned elementCnt = 0;
   unsigned elementsRequired = SyntaxStack1[synPtr + 1];
   int arrOfChar = (elementType == tokChar) | (elementType == tokUChar) | (elementType == tokSChar);
+#ifndef NO_WCHAR
+  int arrOfWideChar = (elementType == WideCharType1) | (elementType == WideCharType2);
+#endif
 
   if (tok == '{')
   {
@@ -7286,28 +7456,48 @@ int InitArray(int synPtr, int tok)
     tok = GetToken();
   }
 
-  if (arrOfChar & (tok == tokLitStr))
+  if ((arrOfChar & (tok == tokLitStr))
+#ifndef NO_WCHAR
+      | (arrOfWideChar & (tok == tokLitStrWide))
+#endif
+     )
   {
+    int ltok = tok;
+    unsigned sz = 0;
     // this is 'someArray[someCountIfAny] = "some string"' or
     // 'someArray[someCountIfAny] = { "some string" }'
     do
     {
-      GetString('"', 'd');
-      if (elementCnt + TokenStringLen < elementCnt ||
-          elementCnt + TokenStringLen >= truncUint(-1))
+#ifndef NO_WCHAR
+      GetString('"', arrOfWideChar, 'd');
+#else
+      GetString('"', 0, 'd');
+#endif
+      if (sz + TokenStringSize < sz ||
+          sz + TokenStringSize >= truncUint(-1))
         errorStrLen();
+      sz += TokenStringSize;
       elementCnt += TokenStringLen;
       tok = GetToken();
-    } while (tok == tokLitStr); // concatenate adjacent string literals
+    } while (tok == ltok); // concatenate adjacent string literals
+
+#ifndef NO_WCHAR
+    if ((ltok ^ (tokLitStr ^ tokLitStrWide)) == tok)
+      errorWideNonWide();
+#endif
 
     if (elementsRequired && elementCnt > elementsRequired)
       errorStrLen();
 
     if (elementCnt < elementsRequired)
+#ifndef NO_WCHAR
+      GenZeroData((elementsRequired - elementCnt) * elementSz, 0);
+#else
       GenZeroData(elementsRequired - elementCnt, 0);
+#endif
 
     if (!elementsRequired)
-      GenZeroData(1, 0), elementCnt++;
+      GenZeroData(elementSz, 0), elementCnt++;
 
     if (braces)
     {
@@ -9422,7 +9612,7 @@ int ParseStatement(int tok, int BrkCntTarget[2], int casesIdx)
 
       do
       {
-        GetString('"', 'a');
+        GetString('"', 0, 'a');
         tok = GetToken();
       } while (tok == tokLitStr); // concatenate adjacent string literals
       printf2("\n");
@@ -9541,6 +9731,7 @@ int main(int argc, char** argv)
     tokVoid,     // SymVoidSynPtr
     tokInt,      // SymIntSynPtr
     tokUnsigned, // SymUintSynPtr
+    tokVoid,     // SymWideCharSynPtr
     tokFloat,    // SymFloatSynPtr
     tokIdent,    // SymFuncPtr
     '[',
@@ -9592,6 +9783,32 @@ int main(int argc, char** argv)
       CharIsSigned = 0;
       continue;
     }
+#ifndef NO_WCHAR
+    else if (!strcmp(argv[i], "-signed-wchar"))
+    {
+      WideCharIsSigned = 1;
+      continue;
+    }
+    else if (!strcmp(argv[i], "-unsigned-wchar"))
+    {
+      // this is the default option
+      WideCharIsSigned = 0;
+      continue;
+    }
+    else if (!strcmp(argv[i], "-short-wchar"))
+    {
+      // this is the default option
+      SizeOfWideChar = 2;
+      continue;
+    }
+#ifdef CAN_COMPILE_32BIT
+    else if (!strcmp(argv[i], "-long-wchar"))
+    {
+      SizeOfWideChar = 4;
+      continue;
+    }
+#endif
+#endif
     else if (!strcmp(argv[i], "-leading-underscore"))
     {
       // this is the default option for x86
@@ -9729,6 +9946,21 @@ int main(int argc, char** argv)
   if (!OutFile)
     error("Output file not specified\n");
 
+#ifndef NO_WCHAR
+  WideCharType1 = WideCharIsSigned ? tokInt : tokUnsigned;
+  WideCharType2 = WideCharType1 ^ tokInt ^ tokUnsigned;
+#ifdef CAN_COMPILE_32BIT
+  if (SizeOfWideChar > SizeOfWord)
+    error("Wide char too wide\n");
+  if (SizeOfWord == 4 && SizeOfWideChar == 2)
+  {
+    WideCharType1 = WideCharIsSigned ? tokShort : tokUShort;
+    WideCharType2 = WideCharType1 ^ tokShort ^ tokUShort;
+  }
+#endif
+  SyntaxStack0[SymWideCharSynPtr] = WideCharType1;
+#endif
+
   GenInitFinalize();
 
 #ifndef NO_PREPROCESSOR
@@ -9750,7 +9982,19 @@ int main(int argc, char** argv)
     DefineMacro("__SMALLER_C_SCHAR__", "");
   else
     DefineMacro("__SMALLER_C_UCHAR__", "");
+#ifndef NO_WCHAR
+  if (WideCharIsSigned)
+    DefineMacro("__SMALLER_C_SWCHAR__", "");
+  else
+    DefineMacro("__SMALLER_C_UWCHAR__", "");
+#ifdef CAN_COMPILE_32BIT
+  if (SizeOfWideChar == 4)
+    DefineMacro("__SMALLER_C_WCHAR32__", "");
+  else
 #endif
+    DefineMacro("__SMALLER_C_WCHAR16__", "");
+#endif
+#endif // NO_PREPROCESSOR
 
   // populate CharQueue[] with the initial file characters
   ShiftChar();

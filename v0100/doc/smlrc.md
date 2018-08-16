@@ -76,7 +76,10 @@ typical _small C_ implementation.
 *   floating-point constants, e.g. **1.5e5**, **.5f**, **.5L**
 *   character constants, e.g. **'a'**, **'\\''**, **'\n'**, **'\0'**,
     **'\x41'**
+*   _multi-character_ character constants, e.g. **'ab'**
 *   string literals, e.g. **"string"**
+*   _wide_ character constants and _wide_ string literals, e.g. **L'a'**,
+    **L"string"**
 *   **void**
 *   **char** (signed by default, can be changed to unsigned via a
     command-line option)
@@ -139,8 +142,6 @@ typical _small C_ implementation.
 *   most of the _preprocessor_. The core compiler (smlrc) relies on an
     external preprocessor (smlrpp (which is a version of ucpp adapted for use
     with Smaller C) or gcc).
-*   _multi-character_ character constants, _wide_ character constants and
-    _wide_ string literals, e.g. **'abcd'**, **L'a'**, **L"string"**
 *   **long long**
 *   _designated initializers_, _compound literals_
 *   structure/union _bit-fields_ and _flexible array members_
@@ -193,6 +194,13 @@ typical _small C_ implementation.
 *   **short** and **unsigned short** are 16-bit
 *   **int** and **unsigned int** are either 16-bit or 32-bit, depending on
     the mode(l)
+*   **wchar_t** is either unsigned or signed, 16-bit or 32-bit, depending on
+    the relevant options
+*   Wide string literals can't be concatenated with adjacent plain string
+    literals
+*   Non-ASCII chars may not appear in wide characters or wide string
+    literals, use hexadecimal escape sequences to work around this, e.g.
+    **L'\xF1'** for Latin small letter N with tilde
 *   struct/union members are naturally aligned by default, that is, 16-bit
     types are 2-byte-aligned and 32-bit types are 4-byte-aligned. Use
     **#pragma pack()** if necessary
@@ -418,6 +426,13 @@ or like this (in Linux):
     **-no-externs**.
 *   **-signed-char** This makes **char** signed. This is the **default**.
 *   **-unsigned-char** This makes **char** unsigned.
+*   **-signed-wchar** This makes **wchar_t** signed.
+*   **-unsigned-wchar** This makes **wchar_t** unsigned. This is the
+    **default**.
+*   **-short-wchar** This makes **wchar_t** short/16-bit. This is the
+    **default**.
+*   **-long-wchar** This makes **wchar_t** long/32-bit (only in 32-bit, huge
+    and unreal mode(l)s).
 *   **-leading-underscore** (x86 only) This prefixes global C identifiers
     with an underscore, so you get labels like **_main** for **main()** and
     **_printf** for **printf()** in the assembly code. This is the
