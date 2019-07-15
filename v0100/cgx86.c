@@ -385,7 +385,7 @@ void GenPrintInstr(int instr, int val)
   switch (instr)
   {
   case X86InstrLeave:
-    p = (OutputFormat != FormatSegHuge && OutputFormat != FormatSegUnreal) ? "leave" : "db\t0x66\n\tleave";
+    p = (OutputFormat != FormatSegHuge && OutputFormat != FormatSegUnreal) ? ( (OutputFormat == FormatSegmented && SizeOfWord == 2) ? "mov sp, bp\n\tpop bp" : "leave") : "db\t0x66\n\tleave";
     break;
 
   case X86InstrRet:
@@ -675,6 +675,14 @@ void GenPrintInstr1Operand(int instr, int instrval, int operand, int operandval)
     }
   }
 #endif
+  
+  if(OutputFormat == FormatSegmented && SizeOfWord == 2 && instr == X86InstrPush && (operand != X86OpRegBpWord && operand != X86OpRegSpWord && operand != X86OpRegAWord && operand != X86OpRegBWord && operand != X86OpRegCWord &&operand != X86OpRegDWord))
+  {
+    printf2("\tmov ax, "); GenPrintOperand(operand, operandval); GenPrintNewLine();
+    printf2("\tpush ax"); GenPrintNewLine();
+    return;
+  }
+
 
   GenPrintInstr(instr, instrval);
   GenPrintOperand(operand, operandval);
