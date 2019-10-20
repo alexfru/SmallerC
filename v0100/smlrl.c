@@ -2939,8 +2939,8 @@ void RwPe(void)
     imageBase = Origin & 0xFFFFF000;
   if (imageBase >= 0xFFFFF000)
     errSectTooBig();
-  hdrsz = 4096; // make the first section page-aligned in the file
-  // hdrsz = 1024; // traditional 1KB size of headers, 1st section isn't page-aligned in file
+  // hdrsz = 4096; // make the first section page-aligned in the file
+  hdrsz = 1024; // traditional 1KB size of headers, 1st section isn't page-aligned in file
   Origin = imageBase + 4096;
 
   PeOptionalHeader.SizeOfHeaders = hdrsz;
