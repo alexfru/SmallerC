@@ -2921,7 +2921,7 @@ void RwMach(void)
   Fclose(fout);
 }
 
-void RwPeElf(void)
+void RwPe(void)
 {
   int hasData = !(pSectDescrs[SectCnt - 1].Attrs & SHF_EXECINSTR); // non-executable/data sections, if any, are last
   FILE* fout = Fopen(OutName, "wb+");
@@ -2929,24 +2929,24 @@ void RwPeElf(void)
   uint32 imageBase = 0;
   uint32 peImportsStart = 0;
 
-  // Based on the file format, figure out:
+  // Figure out:
   // - header sizes
   // - start offsets/base addresses
   // - stack size and location
   if (Origin == 0xFFFFFFFF)
-    imageBase = (OutputFormat == FormatWinPe32) ? 0x00400000 : 0x08048000; // default image base if origin is unspecified
+    imageBase = 0x00400000; // default image base if origin is unspecified
   else
     imageBase = Origin & 0xFFFFF000;
   if (imageBase >= 0xFFFFF000)
     errSectTooBig();
-  hdrsz = 4096; // make the first section page-aligned
-  Origin = imageBase + hdrsz;
+  hdrsz = 4096; // make the first section page-aligned in the file
+  // hdrsz = 1024; // traditional 1KB size of headers, 1st section isn't page-aligned in file
+  Origin = imageBase + 4096;
+
+  PeOptionalHeader.SizeOfHeaders = hdrsz;
 
   Pass(0, NULL, hdrsz);
 
-  switch (OutputFormat)
-  {
-  case FormatWinPe32:
     {
       uint32 hsz = sizeof DosMzExeStub +
                    sizeof "PE\0" +
@@ -2964,8 +2964,9 @@ void RwPeElf(void)
       stop = (pSectDescrs[SectCnt].Stop + 0xFFF) & 0xFFFFF000;
       PeOptionalHeader.BaseOfCode =
         PeSectionHeaders[0].VirtualAddress =
-          PeSectionHeaders[0].PointerToRawData =
-            start - imageBase;
+          start - imageBase;
+      PeSectionHeaders[0].PointerToRawData =
+        hdrsz;
       PeSectionHeaders[0].Misc.VirtualSize = PeSectionHeaders[0].SizeOfRawData =
         PeOptionalHeader.SizeOfCode = stop - start;
 
@@ -2975,8 +2976,9 @@ void RwPeElf(void)
         stop = (pSectDescrs[SectCnt + 1].Stop + 0xFFF) & 0xFFFFF000;
         PeOptionalHeader.BaseOfData =
           PeSectionHeaders[1].VirtualAddress =
-            PeSectionHeaders[1].PointerToRawData =
-              start - imageBase;
+            start - imageBase;
+        PeSectionHeaders[1].PointerToRawData =
+          PeSectionHeaders[0].PointerToRawData + PeSectionHeaders[0].SizeOfRawData;
         PeSectionHeaders[1].Misc.VirtualSize =
           PeOptionalHeader.SizeOfInitializedData = stop - start;
 
@@ -3008,60 +3010,11 @@ void RwPeElf(void)
       Fwrite(&PeFileHeader, sizeof PeFileHeader, fout);
       Fwrite(&PeOptionalHeader, sizeof PeOptionalHeader, fout);
       Fwrite(PeSectionHeaders, sizeof PeSectionHeaders, fout);
-      FillWithByte(0, 4096 - hsz, fout);
+      FillWithByte(0, hdrsz - hsz, fout);
     }
-    break;
-  case FormatElf32:
-    {
-      uint32 hsz = sizeof ElfHeader +
-                   sizeof ElfProgramHeaders;
-      uint32 start, stop;
-
-      ElfHeader.e_phnum = 1 + hasData;
-
-      ElfHeader.e_entry = FindSymbolAddress(EntryPoint);
-
-      start = pSectDescrs[SectCnt].Start & 0xFFFFF000;
-      stop = (pSectDescrs[SectCnt].Stop + 0xFFF) & 0xFFFFF000;
-      ElfProgramHeaders[0].p_offset = start - imageBase;
-      ElfProgramHeaders[0].p_vaddr = ElfProgramHeaders[0].p_paddr = start;
-      ElfProgramHeaders[0].p_filesz = ElfProgramHeaders[0].p_memsz = stop - start;
-
-      if (hasData)
-      {
-        start = pSectDescrs[SectCnt + 1].Start & 0xFFFFF000;
-        stop = (pSectDescrs[SectCnt + 1].Stop + 0xFFF) & 0xFFFFF000;
-        ElfProgramHeaders[1].p_offset = start - imageBase;
-        ElfProgramHeaders[1].p_vaddr = ElfProgramHeaders[1].p_paddr = start;
-        ElfProgramHeaders[1].p_memsz = stop - start;
-
-        if ((pSectDescrs[SectCnt - 1].Attrs & SHT_NOBITS) && UseBss)
-        {
-          uint32 i = SectCnt - 1;
-          while (pSectDescrs[i].Attrs & SHT_NOBITS)
-            i--;
-          ElfProgramHeaders[1].p_filesz = ((pSectDescrs[i].Stop + 0xFFF) & 0xFFFFF000) - start;
-        }
-        else
-        {
-          ElfProgramHeaders[1].p_filesz = stop - start;
-        }
-      }
-      else
-      {
-        memset(&ElfProgramHeaders[1], 0, sizeof ElfProgramHeaders[1]);
-      }
-
-      Fwrite(&ElfHeader, sizeof ElfHeader, fout);
-      Fwrite(ElfProgramHeaders, sizeof ElfProgramHeaders, fout);
-      FillWithByte(0, 4096 - hsz, fout);
-    }
-    break;
-  }
 
   Pass(1, fout, hdrsz);
 
-  if (OutputFormat == FormatWinPe32)
   {
     uint32 pos = ftell(fout); // TBD!!! clean up
     // In PE, some importing-related addresses must be relative to the image base, so make them relative
@@ -3073,35 +3026,35 @@ void RwPeElf(void)
         tPeImageImportDescriptor id;
         uint32 ofs, v;
 
-        Fseek(fout, iofs - imageBase, SEEK_SET);
+        Fseek(fout, iofs - Origin + hdrsz, SEEK_SET);
         Fread(&id, sizeof id, fout);
         if (!id.u.OrdinalFirstThunk || !id.Name || !id.FirstThunk)
           break;
         id.u.OrdinalFirstThunk -= imageBase;
         id.Name -= imageBase;
         id.FirstThunk -= imageBase;
-        Fseek(fout, iofs - imageBase, SEEK_SET);
+        Fseek(fout, iofs - Origin + hdrsz, SEEK_SET);
         Fwrite(&id, sizeof id, fout);
 
         for (ofs = id.u.OrdinalFirstThunk; ; ofs += sizeof v)
         {
-          Fseek(fout, ofs, SEEK_SET);
+          Fseek(fout, ofs - 4096 + hdrsz, SEEK_SET);
           Fread(&v, sizeof v, fout);
           if (!v)
             break;
           v -= imageBase;
-          Fseek(fout, ofs, SEEK_SET);
+          Fseek(fout, ofs - 4096 + hdrsz, SEEK_SET);
           Fwrite(&v, sizeof v, fout);
         }
 
         for (ofs = id.FirstThunk; ; ofs += sizeof v)
         {
-          Fseek(fout, ofs, SEEK_SET);
+          Fseek(fout, ofs - 4096 + hdrsz, SEEK_SET);
           Fread(&v, sizeof v, fout);
           if (!v)
             break;
           v -= imageBase;
-          Fseek(fout, ofs, SEEK_SET);
+          Fseek(fout, ofs - 4096 + hdrsz, SEEK_SET);
           Fwrite(&v, sizeof v, fout);
         }
       }
@@ -3292,6 +3245,78 @@ void RwPeElf(void)
   Fclose(fout);
 }
 
+void RwElf(void)
+{
+  int hasData = !(pSectDescrs[SectCnt - 1].Attrs & SHF_EXECINSTR); // non-executable/data sections, if any, are last
+  FILE* fout = Fopen(OutName, "wb+");
+  uint32 hdrsz = 0;
+  uint32 imageBase = 0;
+
+  // Figure out:
+  // - header sizes
+  // - start offsets/base addresses
+  // - stack size and location
+  if (Origin == 0xFFFFFFFF)
+    imageBase = 0x08048000; // default image base if origin is unspecified
+  else
+    imageBase = Origin & 0xFFFFF000;
+  if (imageBase >= 0xFFFFF000)
+    errSectTooBig();
+  hdrsz = 4096; // make the first section page-aligned
+  Origin = imageBase + hdrsz;
+
+  Pass(0, NULL, hdrsz);
+
+    {
+      uint32 hsz = sizeof ElfHeader +
+                   sizeof ElfProgramHeaders;
+      uint32 start, stop;
+
+      ElfHeader.e_phnum = 1 + hasData;
+
+      ElfHeader.e_entry = FindSymbolAddress(EntryPoint);
+
+      start = pSectDescrs[SectCnt].Start & 0xFFFFF000;
+      stop = (pSectDescrs[SectCnt].Stop + 0xFFF) & 0xFFFFF000;
+      ElfProgramHeaders[0].p_offset = start - imageBase;
+      ElfProgramHeaders[0].p_vaddr = ElfProgramHeaders[0].p_paddr = start;
+      ElfProgramHeaders[0].p_filesz = ElfProgramHeaders[0].p_memsz = stop - start;
+
+      if (hasData)
+      {
+        start = pSectDescrs[SectCnt + 1].Start & 0xFFFFF000;
+        stop = (pSectDescrs[SectCnt + 1].Stop + 0xFFF) & 0xFFFFF000;
+        ElfProgramHeaders[1].p_offset = start - imageBase;
+        ElfProgramHeaders[1].p_vaddr = ElfProgramHeaders[1].p_paddr = start;
+        ElfProgramHeaders[1].p_memsz = stop - start;
+
+        if ((pSectDescrs[SectCnt - 1].Attrs & SHT_NOBITS) && UseBss)
+        {
+          uint32 i = SectCnt - 1;
+          while (pSectDescrs[i].Attrs & SHT_NOBITS)
+            i--;
+          ElfProgramHeaders[1].p_filesz = ((pSectDescrs[i].Stop + 0xFFF) & 0xFFFFF000) - start;
+        }
+        else
+        {
+          ElfProgramHeaders[1].p_filesz = stop - start;
+        }
+      }
+      else
+      {
+        memset(&ElfProgramHeaders[1], 0, sizeof ElfProgramHeaders[1]);
+      }
+
+      Fwrite(&ElfHeader, sizeof ElfHeader, fout);
+      Fwrite(ElfProgramHeaders, sizeof ElfProgramHeaders, fout);
+      FillWithByte(0, 4096 - hsz, fout);
+    }
+
+  Pass(1, fout, hdrsz);
+
+  Fclose(fout);
+}
+
 void RelocateAndWriteAllSections(void)
 {
   switch (OutputFormat)
@@ -3312,8 +3337,10 @@ void RelocateAndWriteAllSections(void)
     RwDosExe();
     break;
   case FormatWinPe32:
+    RwPe();
+    break;
   case FormatElf32:
-    RwPeElf();
+    RwElf();
     break;
   case FormatMach32:
     RwMach();
