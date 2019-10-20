@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2017, Alexey Frunze
+Copyright (c) 2014-2019, Alexey Frunze
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -1643,9 +1643,10 @@ uint32 FindSymbolAddress(const char* SymName)
             pSym->st_name &&
             !strcmp(pMeta->pSections[pSect->h.sh_link].d.pStr + pSym->st_name, SymName))
         {
+          tElfSection* pSect;
           if (pSym->st_shndx == SHN_COMMON)
             error("Common symbols unsupported\n");
-          tElfSection* pSect = &pMeta->pSections[pSym->st_shndx];
+          pSect = &pMeta->pSections[pSym->st_shndx];
           addr = pSect->OutOffset + pSym->st_value;
           return addr;
         }
