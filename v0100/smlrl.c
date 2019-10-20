@@ -3272,6 +3272,7 @@ void RwPeElf(void)
             (totalFixupsSize + 0x1FF) & 0xFFFFFE00;
 
         PeOptionalHeader.SizeOfImage += PeSectionHeaders[idx].Misc.VirtualSize;
+        PeOptionalHeader.SizeOfImage = (PeOptionalHeader.SizeOfImage + 0xFFF) & 0xFFFFF000;
         PeOptionalHeader.SizeOfInitializedData += PeSectionHeaders[idx].Misc.VirtualSize;
 
         Fseek(fout, pos, SEEK_SET);
