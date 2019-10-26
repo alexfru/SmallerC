@@ -1,23 +1,12 @@
 /*
-  Copyright (c) 2014-2018, Alexey Frunze
+  Copyright (c) 2014-2019, Alexey Frunze
   2-clause BSD license.
 */
 #ifdef _WINDOWS
 
-asm(
-  "section .kernel32_hints\n"
-  "dd _hint_GetEnvironmentVariableA"
-);
-
-asm(
-  "section .kernel32_iat\n"
-  "__imp__GetEnvironmentVariableA: dd _hint_GetEnvironmentVariableA"
-);
-
-static char hint_GetEnvironmentVariableA[] = "\0\0GetEnvironmentVariableA";
-
-extern char _kernel32_dll__[];
-static char* pdll = _kernel32_dll__; // pull trailers for sections .kernel32_hints and .kernel32_iat
+#define DLL "kernel32"
+#define FXN "GetEnvironmentVariableA"
+#include "../dimports.h"
 
 unsigned __GetEnvironmentVariableA(char* lpName,
                                    char* lpBuffer,

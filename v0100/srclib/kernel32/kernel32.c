@@ -1,28 +1,35 @@
 /*
-  Copyright (c) 2014-2016, Alexey Frunze
+  Copyright (c) 2014-2019, Alexey Frunze
   2-clause BSD license.
 */
 #ifdef _WINDOWS
 
 asm(
-  "section .kernel32_hints_trailer\n"
-  "dd 0" // make sure the section isn't empty
-);
+" section .dll_import0_kernel32 write align=4\n"
+"     extern __start__dll_import2_kernel32\n"
+"     extern __start__dll_iat2_kernel32\n"
+"     dd __start__dll_import2_kernel32, 0, 0, __kernel32_dll__, __start__dll_iat2_kernel32\n"
 
-asm(
-  "section .kernel32_iat_trailer\n"
-  "dd 0" // make sure the section isn't empty
-);
+// .dll_import2_kernel32 section follows.
 
-asm(
-  "section .dll_imports\n"
-  "extern __start__kernel32_hints\n"
-  "extern __start__kernel32_iat\n"
-  "dd __start__kernel32_hints, 0, 0, __kernel32_dll__, __start__kernel32_iat"
-);
+" section .dll_import2_kernel32_trailer write align=4\n"
+"     dd 0\n"
 
-char _kernel32_dll__[] = "kernel32.dll"; // win32 functions will pull this file by this symbol
-extern char _dll_imports;
-static char* pimports = &_dll_imports; // pull the header & trailer for the dll imports table (section .dll_imports)
+// .dll_import3_kernel32 section follows.
+
+" section .dll_import4_kernel32 write align=1\n"
+"     global __kernel32_dll__\n"
+" __kernel32_dll__:\n" // win32 functions will pull this file by this symbol
+"     db \"kernel32.dll\", 0\n"
+
+// .dll_iat2_kernel32 section follows.
+
+" section .dll_iat2_kernel32_trailer write align=4\n"
+"     dd 0\n"
+
+" section .data\n"
+"     extern __dll_imports\n"
+"     dd __dll_imports\n" // pull ../dimports.c
+);
 
 #endif // _WINDOWS

@@ -254,9 +254,9 @@ Options:
     **\_\_start_stack\_\_** symbol. The symbols **\_\_stop_alldata\_\_** and
     **\_\_start_stack\_\_** can be used to create a memory heap between the
     two locations.
-*   The linker treats section **.dll_imports** and sections with names ending
-    in **_hints** and **_iat** specially when making a Windows/PE executable.
-    These sections construct the DLL import table and the linker won't
+*   When making a Windows/PE executable the linker treats specially sections
+    whose names begin with **.dll_import** and **.dll_iat**.
+    These sections construct the DLL import tables and the linker won't
     generate relocation information for the data contained in them. Also
-    special is symbol **\_\_dll_imports**, which resides in section
-    **.dll_imports**. Don't use these names.
+    special are symbols **\_\_dll_imports**, **\_\_dll_imports_end**,
+    **\_\_dll_iats**, **\_\_dll_iats_end**. Don't use these names.

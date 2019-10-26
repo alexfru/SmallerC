@@ -1,23 +1,12 @@
 /*
-  Copyright (c) 2014-2018, Alexey Frunze
+  Copyright (c) 2014-2019, Alexey Frunze
   2-clause BSD license.
 */
 #ifdef _WINDOWS
 
-asm(
-  "section .kernel32_hints\n"
-  "dd _hint_WriteFile"
-);
-
-asm(
-  "section .kernel32_iat\n"
-  "__imp__WriteFile: dd _hint_WriteFile"
-);
-
-static char hint_WriteFile[] = "\0\0WriteFile";
-
-extern char _kernel32_dll__[];
-static char* pdll = _kernel32_dll__; // pull trailers for sections .kernel32_hints and .kernel32_iat
+#define DLL "kernel32"
+#define FXN "WriteFile"
+#include "../dimports.h"
 
 int __WriteFile(unsigned Handle,
                 void* Buffer,

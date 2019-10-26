@@ -3003,7 +3003,20 @@ void RwPe(void)
 
       peImportsStart = FindSymbolAddress("__dll_imports");
       if (peImportsStart)
+      {
+        uint32 peImportsStop = FindSymbolAddress("__dll_imports_end");
+        uint32 peIatsStart = FindSymbolAddress("__dll_iats");
         PeOptionalHeader.DataDirectory[1].VirtualAddress = peImportsStart - imageBase;
+        if (peImportsStop)
+          PeOptionalHeader.DataDirectory[1].Size = peImportsStop - peImportsStart;
+        if (peIatsStart)
+        {
+          uint32 peIatsStop = FindSymbolAddress("__dll_iats_end");
+          PeOptionalHeader.DataDirectory[12].VirtualAddress = peIatsStart - imageBase;
+          if (peIatsStop)
+            PeOptionalHeader.DataDirectory[12].Size = peIatsStop - peIatsStart;
+        }
+      }
 
       Fwrite(DosMzExeStub, sizeof DosMzExeStub, fout);
       Fwrite("PE\0", sizeof "PE\0", fout);
@@ -3097,15 +3110,12 @@ void RwPe(void)
             if (!pRelSect)
               continue;
 
-            // Don't create relocations for anything in sections ".dll_imports",
-            // "*_hints", "*_iat".
+            // Don't create relocations for anything in sections whose names
+            // start with ".dll_import" or ".dll_iat".
             sectName = pSectDescrs[j].pName;
             sectNameLen = strlen(sectName);
-            if (!strcmp(sectName, ".dll_imports") ||
-                (sectNameLen >= sizeof "_hints" &&
-                 !strcmp(sectName + sectNameLen - sizeof "_hints" + 1, "_hints")) ||
-                (sectNameLen >= sizeof "_iat" &&
-                 !strcmp(sectName + sectNameLen - sizeof "_iat" + 1, "_iat")))
+            if (!strncmp(sectName, ".dll_import", sizeof ".dll_import" - 1) ||
+                !strncmp(sectName, ".dll_iat", sizeof ".dll_iat" - 1))
               continue;
 
             // Write relocation records

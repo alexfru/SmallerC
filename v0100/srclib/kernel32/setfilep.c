@@ -1,23 +1,12 @@
 /*
-  Copyright (c) 2014-2018, Alexey Frunze
+  Copyright (c) 2014-2019, Alexey Frunze
   2-clause BSD license.
 */
 #ifdef _WINDOWS
 
-asm(
-  "section .kernel32_hints\n"
-  "dd _hint_SetFilePointer"
-);
-
-asm(
-  "section .kernel32_iat\n"
-  "__imp__SetFilePointer: dd _hint_SetFilePointer"
-);
-
-static char hint_SetFilePointer[] = "\0\0SetFilePointer";
-
-extern char _kernel32_dll__[];
-static char* pdll = _kernel32_dll__; // pull trailers for sections .kernel32_hints and .kernel32_iat
+#define DLL "kernel32"
+#define FXN "SetFilePointer"
+#include "../dimports.h"
 
 unsigned __SetFilePointer(unsigned hFile,
                           int lDistanceToMove,
