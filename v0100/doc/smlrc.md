@@ -20,8 +20,6 @@
 
 [How do I compile Smaller C for MIPS?](#how-do-i-compile-smaller-c-for-mips)
 
-[How do I compile Smaller C for TR3200?](#how-do-i-compile-smaller-c-for-tr3200)
-
 [How do I run Smaller C?](#how-do-i-run-smaller-c)
 
 [How do I compile Smaller C with itself?](#how-do-i-compile-smaller-c-with-itself)
@@ -342,14 +340,6 @@ you can do it like so (you'll need the
 > ice2aout smlrcrb.elf smlrc
 
 > chmod +x smlrc
-
-## How do I compile Smaller C for TR3200?
-
-If you want to compile it with TR3200 code generation instead of x86 code
-generation, you need to define the **TR3200** macro at compile time. For
-example, with gcc you'd do it like this:
-
-> gcc -Wall -Wextra -DTR3200 -O2 smlrc.c -o smlrc
 
 ## How do I run Smaller C?
 

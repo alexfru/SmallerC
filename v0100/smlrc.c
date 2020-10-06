@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2012-2018, Alexey Frunze
+Copyright (c) 2012-2020, Alexey Frunze
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /*                                                                           */
 /*            Produces 16/32-bit 80386 assembly output for NASM.             */
 /*             Produces 32-bit MIPS assembly output for gcc/as.              */
-/*             Produces 32-bit TR3200 assembly output for vasm.              */
 /*                                                                           */
 /*                                 Main file                                 */
 /*                                                                           */
@@ -55,14 +54,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define NO_STRUCT_BY_VAL
 #define NO_FP
 #define NO_WCHAR
-#endif
-
-// Passing and returning structures by value is currenly supported
-// on x86 and MIPS only
-#ifdef TR3200
-#ifndef NO_STRUCT_BY_VAL
-#define NO_STRUCT_BY_VAL
-#endif
 #endif
 
 #ifndef __SMALLER_C__
@@ -2388,11 +2379,7 @@ void errorRedecl(char* s)
 #endif
 #include "cgmips.c"
 #else
-#ifdef TR3200
-#include "cgtr3k2.c"
-#else
 #include "cgx86.c"
-#endif // #ifdef TR3200
 #endif // #ifdef MIPS
 
 // expr.c code

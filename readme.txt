@@ -9,8 +9,6 @@ programs.
 
 Code generation for MIPS CPUs is also supported (primarily for RetroBSD).
 
-Code generation for the TR3200 CPU and VASM is supported (see Trillek).
-
 The compiler is capable of compiling itself.
 
 The core compiler comes with a preprocessor (ucpp), a linker and a compiler
@@ -32,8 +30,6 @@ FASM: http://flatassembler.net/
 CWSDPMI: https://sandmann.dotster.com/cwsdpmi/
 HX DOS Extender: https://web.archive.org/web/20141003032346/http://www.japheth.de/
 RetroBSD: http://retrobsd.org/
-VASM: http://sun.hasenbraten.de/vasm/
-Trillek: http://trillek.org/
 
 Other projects based on/using Smaller C:
 "ROM C" (like ROM Basic but C): https://hackaday.io/project/29198-native-c-pic32-color-video-on-tv
@@ -52,3 +48,5 @@ The New C Standard: An Economic and Cultural Commentary:
   http://www.knosof.co.uk/cbook/cbook.html
 The Development of the C Language by Dennis M. Ritchie:
   https://www.bell-labs.com/usr/dmr/www/chist.html
+The Standard C Library by P.J. Plauger
+  https://www.amazon.com/dp/0131315099
