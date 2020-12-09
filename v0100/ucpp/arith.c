@@ -1190,7 +1190,7 @@ ARITH_DECL_BI_SI_S(lsh)
 		 * To check for possible overflow, we right shift the
 		 * result. We need to make the shift count proper so that
 		 * we do not emit a double-warning. Besides, the left shift
-		 * could have been untruncated but yet affet the sign bit,
+		 * could have been untruncated but yet affect the sign bit,
 		 * so we must test this explicitly.
 		 */
 		arith_s w = arith_op_u(rsh)(z, (unsigned)y % SIMUL_NUMBITS);
