@@ -1868,7 +1868,7 @@ tPeImageOptionalHeader PeOptionalHeader =
   4096,     // SizeOfHeaders
   0,        // CheckSum
   3,        // Subsystem (Windows CUI)
-  0x400,    // DllCharacteristics
+  0,        // DllCharacteristics
   0x100000, // SizeOfStackReserve
   0x10000,  // SizeOfStackCommit
   0x4000000,// SizeOfHeapReserve
