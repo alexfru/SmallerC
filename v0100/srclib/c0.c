@@ -488,6 +488,10 @@ void _start(unsigned long exitAddr, void* psp, void* env, char* argv0,
 
 static char emptyarg[] = "", *emptyargv[2] = { emptyarg, NULL };
 
+// Import something from msvcrt.dll to reduce false positives in anti-virus software.
+extern int __msvcrt_abs(int);
+static int (*pabs)(int) = &__msvcrt_abs;
+
 static
 int setargs(int* pargc, char*** pargv)
 {

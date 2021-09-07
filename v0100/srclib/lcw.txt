@@ -63,6 +63,9 @@ kernel32/wait4sob.c
 kernel32/writefi_.c
 kernel32/writefil.c
 
+fakmvcrt/msvcrt.c
+fakmvcrt/abs.c
+
 c0w.asm
 c0.c
 x87.c
