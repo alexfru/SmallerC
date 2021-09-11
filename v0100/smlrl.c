@@ -1461,6 +1461,14 @@ int SectDescCmp(const void* p1_, const void* p2_)
     if (!strcmp(p2->pName, ".text"))
       return +1;
   }
+  // but make .dll_* appear before all other writable data sections (if any)
+  if (i && (p1->Attrs & SHF_WRITE))
+  {
+    int i1 = !strncmp(p1->pName, ".dll_", sizeof ".dll_" - 1);
+    int i2 = !strncmp(p2->pName, ".dll_", sizeof ".dll_" - 1);
+    if (i1 != i2)
+      return i2 - i1;
+  }
   return i;
 }
 
@@ -1926,6 +1934,20 @@ tPeImageSectionHeader PeSectionHeaderRoData =
   0x40000040   // Characteristics (data, readable)
 };
 
+tPeImageSectionHeader PeSectionHeaderImpData =
+{
+  { ".idata" }, // Name
+  { 0 },       // VirtualSize
+  0,           // VirtualAddress
+  0,           // SizeOfRawData
+  0,           // PointerToRawData
+  0,           // PointerToRelocations
+  0,           // PointerToLinenumbers
+  0,           // NumberOfRelocations
+  0,           // NumberOfLinenumbers
+  0xc0000040   // Characteristics (data, readable, writable)
+};
+
 tPeImageSectionHeader PeSectionHeaderData =
 {
   { ".data" }, // Name
@@ -2310,12 +2332,18 @@ void Pass(int pass, FILE* fout, uint32 hdrsz)
            !(pSectDescrs[j].Attrs & SHT_NOBITS) &&
            (j + 1 == SectCnt ||
             (pSectDescrs[j + 1].Attrs & SHT_NOBITS))); // last written data section
+        int lastImpData =
+          OutputFormat == FormatWinPe32 &&
+          !strncmp(pSectDescrs[j].pName, ".dll_", sizeof ".dll_" - 1) &&
+          ((pSectDescrs[j].Attrs & (SHT_NOBITS | SHF_WRITE | SHF_EXECINSTR)) == SHF_WRITE) &&
+          (j + 1 == SectCnt ||
+           strncmp(pSectDescrs[j + 1].pName, ".dll_", sizeof ".dll_" - 1)); // last import data section in PE
         int lastRoData =
           OutputFormat == FormatWinPe32 &&
           !(pSectDescrs[j].Attrs & (SHT_NOBITS | SHF_WRITE | SHF_EXECINSTR)) &&
           (j + 1 == SectCnt ||
            (pSectDescrs[j + 1].Attrs & SHF_WRITE)); // last read-only data section in PE
-        if (lastRoData || lastData)
+        if (lastRoData || lastImpData || lastData)
         {
           // The data section has been written.
           // Pad the data section to an integral number of 4KB pages
@@ -2971,6 +2999,7 @@ void RwPe(void)
   int tmpCnt = SectCnt;
   int textSectCnt = 0;
   int roDataSectCnt = 0;
+  int impDataSectCnt = 0;
   int dataSectCnt = 0;
   int bssSectCnt = 0;
   int hasData = 0;
@@ -2988,6 +3017,12 @@ void RwPe(void)
   while (tmpCnt &&
          !(pSectDescrs[j].Attrs & SHT_NOBITS) &&
          !(pSectDescrs[j].Attrs & SHF_EXECINSTR) &&
+         (pSectDescrs[j].Attrs & SHF_WRITE) &&
+         !strncmp(pSectDescrs[j].pName, ".dll_", sizeof ".dll_" - 1))
+    tmpCnt--, j++, impDataSectCnt++;
+  while (tmpCnt &&
+         !(pSectDescrs[j].Attrs & SHT_NOBITS) &&
+         !(pSectDescrs[j].Attrs & SHF_EXECINSTR) &&
          (pSectDescrs[j].Attrs & SHF_WRITE))
     tmpCnt--, j++, dataSectCnt++;
   while (tmpCnt &&
@@ -2999,7 +3034,7 @@ void RwPe(void)
   if (!textSectCnt || tmpCnt)
     errInternal(3);
 
-  hasData = roDataSectCnt || dataSectCnt || bssSectCnt;
+  hasData = roDataSectCnt || impDataSectCnt || dataSectCnt || bssSectCnt;
 
   // Figure out:
   // - header sizes
@@ -3024,10 +3059,11 @@ void RwPe(void)
                    sizeof "PE\0" +
                    sizeof PeFileHeader +
                    sizeof PeOptionalHeader +
-                   sizeof(tPeImageSectionHeader) * 4/*.text,.rdata,.data,.reloc*/;
+                   sizeof(tPeImageSectionHeader) * 5/*.text,.rdata,.idata,.data,.reloc*/;
       uint32 start, stop;
 
-      PeFileHeader.NumberOfSections = 1 + !!roDataSectCnt + (dataSectCnt || bssSectCnt);
+      PeFileHeader.NumberOfSections =
+        1 + !!roDataSectCnt + !!impDataSectCnt + (dataSectCnt || bssSectCnt);
 
       PeOptionalHeader.ImageBase = imageBase;
       PeOptionalHeader.AddressOfEntryPoint = FindSymbolAddress(EntryPoint) - imageBase;
@@ -3090,6 +3126,31 @@ void RwPe(void)
           PeSectionHeaderData.PointerToRawData +=
             PeSectionHeaderRoData.SizeOfRawData;
         }
+
+        // Carve out .dll_* into the .idata section
+        if (impDataSectCnt)
+        {
+          PeSectionHeaderImpData.Misc.VirtualSize =
+            ((pSectDescrs[textSectCnt + roDataSectCnt + impDataSectCnt - 1].Stop + 0xFFF) & 0xFFFFF000) -
+            pSectDescrs[textSectCnt + roDataSectCnt].Start & 0xFFFFF000;
+          PeSectionHeaderData.Misc.VirtualSize -=
+            PeSectionHeaderImpData.Misc.VirtualSize;
+
+          PeSectionHeaderImpData.VirtualAddress =
+            PeSectionHeaderData.VirtualAddress;
+          PeSectionHeaderData.VirtualAddress +=
+            PeSectionHeaderImpData.Misc.VirtualSize;
+
+          PeSectionHeaderImpData.SizeOfRawData =
+            PeSectionHeaderImpData.Misc.VirtualSize;
+          PeSectionHeaderData.SizeOfRawData -=
+            PeSectionHeaderImpData.SizeOfRawData;
+
+          PeSectionHeaderImpData.PointerToRawData =
+            PeSectionHeaderData.PointerToRawData;
+          PeSectionHeaderData.PointerToRawData +=
+            PeSectionHeaderImpData.SizeOfRawData;
+        }
       }
 
       PeOptionalHeader.SizeOfImage = stop - imageBase;
@@ -3118,9 +3179,13 @@ void RwPe(void)
       Fwrite(&PeSectionHeaderText, sizeof PeSectionHeaderText, fout);
       if (roDataSectCnt)
         Fwrite(&PeSectionHeaderRoData, sizeof PeSectionHeaderRoData, fout);
+      if (impDataSectCnt)
+        Fwrite(&PeSectionHeaderImpData, sizeof PeSectionHeaderImpData, fout);
       if (dataSectCnt || bssSectCnt)
         Fwrite(&PeSectionHeaderData, sizeof PeSectionHeaderData, fout);
       if (!roDataSectCnt)
+        Fwrite(&PeSectionHeaderZero, sizeof PeSectionHeaderZero, fout);
+      if (!impDataSectCnt)
         Fwrite(&PeSectionHeaderZero, sizeof PeSectionHeaderZero, fout);
       if (!(dataSectCnt || bssSectCnt))
         Fwrite(&PeSectionHeaderZero, sizeof PeSectionHeaderZero, fout);
@@ -3320,7 +3385,8 @@ void RwPe(void)
         uint32 idx = PeFileHeader.NumberOfSections++;
         tPeImageSectionHeader* lastHdr =
           (dataSectCnt || bssSectCnt) ? &PeSectionHeaderData :
-          (roDataSectCnt ? &PeSectionHeaderRoData : &PeSectionHeaderText);
+          (impDataSectCnt ? &PeSectionHeaderImpData :
+           (roDataSectCnt ? &PeSectionHeaderRoData : &PeSectionHeaderText));
 
         PeFileHeader.Characteristics &= ~1; // reset no relocations
         // TBD??? PeFileHeader.Characteristics |= 0x20; // large address aware
