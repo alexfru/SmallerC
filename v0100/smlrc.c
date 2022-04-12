@@ -5852,7 +5852,10 @@ int printf2(char* format, ...)
 #endif
 
   if (!OutFile)
+  {
+    va_end(vl);
     return 0;
+  }
 #ifndef __SMALLER_C__
   res = vfprintf(OutFile, format, vl);
 #else
@@ -5963,7 +5966,10 @@ void warning(char* format, ...)
   warnCnt++;
 
   if (!warnings)
+  {
+    va_end(vl);
     return;
+  }
 
   printf("Warning in \"%s\" (%d:%d)\n", FileNames[fidx], LineNo, LinePos);
 

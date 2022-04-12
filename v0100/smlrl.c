@@ -3655,6 +3655,7 @@ void fatargs(int* pargc, char*** pargv)
     errMem();
   }
 
+  char** oldpp = pp; // used to free memory on memory errors
   pp[j++] = (*pargv)[0]; // skip program name
 
   for (i = 1; i < *pargc; i++)
@@ -3674,6 +3675,7 @@ void fatargs(int* pargc, char*** pargv)
       if ((fsz = fsize(f)) < 0)
       {
         fclose(f);
+        free(oldpp);
         errMem();
       }
       if (fsz > 0)
@@ -3699,6 +3701,7 @@ void fatargs(int* pargc, char*** pargv)
                 (pp = realloc(pp, s)) == NULL)
             {
               fclose(f);
+              free(oldpp);
               errMem();
             }
             pp[j++] = p;
@@ -3708,6 +3711,7 @@ void fatargs(int* pargc, char*** pargv)
         else
         {
           fclose(f);
+          free(oldpp);
           errMem();
         }
       }
