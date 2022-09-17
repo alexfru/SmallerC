@@ -350,6 +350,8 @@ or like this (in Linux):
 > ./smlrc [options] somefile.c somefile.asm
 
 **Options**:
+*   **-8086** (x86 only) This chooses output 8086 compatible instructions
+    only, use this flag only with **-seg16** .
 *   **-seg16** (x86 only) This chooses 16-bit output and wraps code and data
     into separate generic **SECTION** blocks. This is the **default**. Note:
     does not support **long**, **float**, **double**, **long double**.

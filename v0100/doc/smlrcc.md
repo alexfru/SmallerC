@@ -218,6 +218,8 @@ Compile one or more C files into assembly files (note the -S option):
     stack accesses beyond it will cause the process to crash.
 *   **-Wall** (passed to the core compiler) will cause printing of
     compilation warnings.
+*   **-8086** On 16-bit modes generate 8086 compatible instructions insted of
+    386 instructions.
 *   **-dost** Selects the tiny memory model for DOS .COM programs
     (CS=DS=ES=SS, all code, data and stack are in the same segment). The
     types **long**, **float**, **double** aren't available in this model.

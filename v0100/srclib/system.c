@@ -135,6 +135,36 @@ unsigned DosGetExitCode(void)
 static
 int DosExec(char* comspec, struct execparams* p, unsigned* error)
 {
+  #ifdef __SMALLER_C_8086__
+  asm("mov     [cs:savebp], bp\n"
+      "mov     [cs:savesp], sp\n"
+      "mov     [cs:savess], ss\n"
+      "jmp     skipdata\n"
+      "savebp  dw 0\n"
+      "savesp  dw 0\n"
+      "savess  dw 0\n"
+      "skipdata:\n"
+
+      "mov     ax, 0x4b00\n"
+      "mov     dx, [bp + 4]\n"
+      "mov     bx, [bp + 6]\n"
+      "int     0x21\n"
+
+      "mov bx, ax\n"
+      "mov     ax, [cs:savess]\n"
+      "mov     ss, ax\n"
+      "mov     sp, [cs:savesp]\n"
+      "mov     bp, [cs:savebp]\n"
+      "mov     ds, ax\n"
+      "mov     es, ax\n"
+      "mov ax, bx\n"
+
+      "cmc\n"
+      "sbb     ax, ax\n"
+      "and     ax, 1\n"
+      "mov     si, [bp + 8]\n"
+      "mov     [si], bx");
+  #else
   asm("mov     [cs:saveebp], ebp\n"
       "mov     [cs:saveesp], esp\n"
       "mov     [cs:savess], ss\n"
@@ -161,6 +191,7 @@ int DosExec(char* comspec, struct execparams* p, unsigned* error)
       "and     ax, 1\n"
       "mov     si, [bp + 8]\n"
       "mov     [si], bx");
+  #endif
 }
 
 static

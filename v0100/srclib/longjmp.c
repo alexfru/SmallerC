@@ -13,6 +13,7 @@ typedef struct
 } jmp_buf[1];
 */
 
+
 #ifdef __SMALLER_C_16__
 
 int setjmp(jmp_buf jb)
@@ -41,7 +42,17 @@ void longjmp(jmp_buf jb, int val)
   asm("mov ax, [bp+6]"); // val
   // if val is 0, make it 1
   asm("or ax, ax");
+#ifdef __SMALLER_C_8086__
+  asm("jz .setz");
+  asm("mov bl, 0");
+  asm("jmp .setzAfter");
+  asm(".setz:");
+  asm("mov bl, 1");
+  asm(".setzAfter:");
+#else
   asm("setz bl");
+#endif // __SMALLER_C_8086__
+
   asm("or al, bl");
 
   asm("mov bx, [bp+4]"); // jb

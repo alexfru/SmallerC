@@ -162,6 +162,7 @@ char* OutName;
 #define FormatWinPe32      8
 #define FormatElf32        9
 #define FormatMach32       10
+#define FormatDosComTiny86 11
 int OutputFormat = 0;
 
 const char* LibName[] =
@@ -177,9 +178,11 @@ const char* LibName[] =
   "lcw.a",  // FormatWinPe32
   "lcl.a",  // FormatElf32
   "lcm.a",  // FormatMach32
+  "lcds86.a", // FormatDosComTiny86
 };
 
 int verbose = 0;
+int Use8086InstrOnly = 0;
 
 int PreprocessWithGcc = 0;
 int UseExternalPreprocessor = 0; // 1 if use gcc/ucpp, 0 if use primitive pp in smlrc
@@ -1536,9 +1539,19 @@ int main(int argc, char* argv[])
       argv[i] = NULL;
       continue;
     }
+    else if (!strcmp(argv[i], "-8086"))
+    {
+      Use8086InstrOnly = 1;
+      if(OutputFormat = FormatDosComTiny)
+        OutputFormat = FormatDosComTiny86;
+      AddOption(&CompilerOptions, &CompilerOptionsLen, argv[i]);
+      DefineMacro("__SMALLER_C_8086__");
+      argv[i] = NULL;
+      continue;
+    }
     else if (!strcmp(argv[i], "-tiny"))
     {
-      OutputFormat = FormatDosComTiny;
+      OutputFormat = Use8086InstrOnly ? FormatDosComTiny86 : FormatDosComTiny;
       AddOption(&CompilerOptions, &CompilerOptionsLen, "-seg16");
       AddOption(&LinkerOptions, &LinkerOptionsLen, argv[i]);
       argv[i] = NULL;
@@ -1546,7 +1559,7 @@ int main(int argc, char* argv[])
     }
     else if (!strcmp(argv[i], "-dost"))
     {
-      OutputFormat = FormatDosComTiny;
+      OutputFormat = Use8086InstrOnly ? FormatDosComTiny86 : FormatDosComTiny;
       AddOption(&CompilerOptions, &CompilerOptionsLen, "-seg16");
       DefineMacro("_DOS");
       AddOption(&LinkerOptions, &LinkerOptionsLen, "-tiny");
@@ -1832,6 +1845,7 @@ int main(int argc, char* argv[])
   {
     switch (OutputFormat)
     {
+    case FormatDosComTiny86:
     case FormatDosComTiny:
       OutName = "aout.com";
       break;
@@ -1858,6 +1872,7 @@ int main(int argc, char* argv[])
   // Handle wchar_t options
   switch (OutputFormat)
   {
+  case FormatDosComTiny86:
   case FormatDosComTiny:
   case FormatFlat16:
   case FormatFlat32:
@@ -1912,6 +1927,7 @@ int main(int argc, char* argv[])
     DefineMacro("__SMALLER_C__");
     switch (OutputFormat)
     {
+    case FormatDosComTiny86:
     case FormatDosComTiny:
       DefineMacro("__SMALLER_C_16__");
       break;

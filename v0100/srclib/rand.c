@@ -18,10 +18,18 @@ unsigned short __Seed[2] = { 1 };
 static void helper(unsigned short seed[2])
 {
   asm("mov bx, [bp+4]");
+  #ifdef __SMALLER_C_8086__
+  asm("mov ax, [bx]");
+  asm("mov cx, 15245");
+  asm("imul cx");
+  asm("add ax, 12345");
+  asm("mov [bx], ax");
+  #else
   asm("mov eax, [bx]");
   asm("imul eax, eax, 1103515245");
   asm("add eax, 12345");
   asm("mov [bx], eax");
+  #endif
 }
 
 int rand(void)

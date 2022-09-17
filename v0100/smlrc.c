@@ -2379,11 +2379,7 @@ void errorRedecl(char* s)
   #endif
   #include "cgmips.c"
 #else
-  #ifdef I86
-    #include "cgi86.c"
-  #else
-    #include "cgx86.c"
-  #endif
+  #include "cgx86.c"
 #endif // #ifdef MIPS
 
 // expr.c code
