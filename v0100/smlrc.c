@@ -2374,12 +2374,16 @@ void errorRedecl(char* s)
 }
 
 #ifdef MIPS
-#ifndef CAN_COMPILE_32BIT
-#error MIPS target requires a 32-bit compiler
-#endif
-#include "cgmips.c"
+  #ifndef CAN_COMPILE_32BIT
+    #error MIPS target requires a 32-bit compiler
+  #endif
+  #include "cgmips.c"
 #else
-#include "cgx86.c"
+  #ifdef I86
+    #include "cgi86.c"
+  #else
+    #include "cgx86.c"
+  #endif
 #endif // #ifdef MIPS
 
 // expr.c code
@@ -5852,7 +5856,10 @@ int printf2(char* format, ...)
 #endif
 
   if (!OutFile)
+  {
+    va_end(vl);
     return 0;
+  }
 #ifndef __SMALLER_C__
   res = vfprintf(OutFile, format, vl);
 #else
@@ -5963,7 +5970,10 @@ void warning(char* format, ...)
   warnCnt++;
 
   if (!warnings)
+  {
+    va_end(vl);
     return;
+  }
 
   printf("Warning in \"%s\" (%d:%d)\n", FileNames[fidx], LineNo, LinePos);
 

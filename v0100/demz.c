@@ -15,6 +15,7 @@ int main(int argc, char* argv[])
   if (c1 != 'M' || c2 != 'Z')
   {
     printf("%s is not an MZ .EXE!\n", argv[1]);
+    fclose(fin);
     fclose(fout);
     remove(argv[2]);
     return EXIT_FAILURE;

@@ -16,7 +16,8 @@ __start:
     mov [cs:_ss], ax ; preserve SS as the data segment, which we may need to access from ISRs
     mov ds, ax ; DS=ES=SS in small model .EXEs and in tiny model .COMs
     mov es, ax
-    mov bx, cs
+    mov bx, ax ; On 8086 only AX can receive CS value
+    mov ax, cs
     cmp ax, bx
     jne exe
     ; CS=SS means it's a .COM program.
