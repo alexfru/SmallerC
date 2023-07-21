@@ -152,17 +152,18 @@ typedef struct
 
 char* OutName;
 
-#define FormatDosComTiny   1
-#define FormatDosExeSmall  2
-#define FormatDosExeHuge   3
-#define FormatDosExeUnreal 4
-#define FormatAoutDpmi     5
-#define FormatFlat16       6
-#define FormatFlat32       7
-#define FormatWinPe32      8
-#define FormatElf32        9
-#define FormatMach32       10
-#define FormatDosComTiny86 11
+#define FormatDosComTiny    1
+#define FormatDosExeSmall   2
+#define FormatDosExeHuge    3
+#define FormatDosExeUnreal  4
+#define FormatAoutDpmi      5
+#define FormatFlat16        6
+#define FormatFlat32        7
+#define FormatWinPe32       8
+#define FormatElf32         9
+#define FormatMach32        10
+#define FormatDosComTiny86  11
+#define FormatDosExeSmall86 12
 int OutputFormat = 0;
 
 const char* LibName[] =
@@ -179,6 +180,7 @@ const char* LibName[] =
   "lcl.a",  // FormatElf32
   "lcm.a",  // FormatMach32
   "lcds86.a", // FormatDosComTiny86
+  "lcds86.a", // FormatDosExeSmall86
 };
 
 int verbose = 0;
@@ -1542,7 +1544,7 @@ int main(int argc, char* argv[])
     else if (!strcmp(argv[i], "-8086"))
     {
       Use8086InstrOnly = 1;
-      if(OutputFormat = FormatDosComTiny)
+      if(OutputFormat == FormatDosComTiny)
         OutputFormat = FormatDosComTiny86;
       AddOption(&CompilerOptions, &CompilerOptionsLen, argv[i]);
       DefineMacro("__SMALLER_C_8086__");
@@ -1569,7 +1571,7 @@ int main(int argc, char* argv[])
     }
     else if (!strcmp(argv[i], "-small"))
     {
-      OutputFormat = FormatDosExeSmall;
+      OutputFormat = Use8086InstrOnly ? FormatDosExeSmall86 : FormatDosExeSmall;
       AddOption(&CompilerOptions, &CompilerOptionsLen, "-seg16");
       AddOption(&LinkerOptions, &LinkerOptionsLen, argv[i]);
       argv[i] = NULL;
@@ -1577,7 +1579,7 @@ int main(int argc, char* argv[])
     }
     else if (!strcmp(argv[i], "-doss"))
     {
-      OutputFormat = FormatDosExeSmall;
+      OutputFormat = Use8086InstrOnly ? FormatDosExeSmall86 : FormatDosExeSmall;
       AddOption(&CompilerOptions, &CompilerOptionsLen, "-seg16");
       DefineMacro("_DOS");
       AddOption(&LinkerOptions, &LinkerOptionsLen, "-small");
@@ -1850,6 +1852,7 @@ int main(int argc, char* argv[])
       OutName = "aout.com";
       break;
     case FormatDosExeSmall:
+    case FormatDosExeSmall86:
     case FormatDosExeHuge:
     case FormatDosExeUnreal:
     case FormatWinPe32:
@@ -1877,6 +1880,7 @@ int main(int argc, char* argv[])
   case FormatFlat16:
   case FormatFlat32:
   case FormatDosExeSmall:
+  case FormatDosExeSmall86:
   case FormatDosExeHuge:
   case FormatDosExeUnreal:
   case FormatAoutDpmi:
@@ -1932,6 +1936,7 @@ int main(int argc, char* argv[])
       DefineMacro("__SMALLER_C_16__");
       break;
     case FormatDosExeSmall:
+    case FormatDosExeSmall86:
       DefineMacro("__SMALLER_C_16__");
       break;
     case FormatDosExeHuge:
