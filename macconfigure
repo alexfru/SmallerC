@@ -1,7 +1,0 @@
-#!/bin/sh -e
-lnk() {
-  test -e "$2" || ln -s "$1/$2" "$2"
-}
-srcdir=`readlink $0 | sed 's@/[^/]*$@@'`
-lnk "$srcdir" Makefile
-lnk "$srcdir" GNUmakefile
