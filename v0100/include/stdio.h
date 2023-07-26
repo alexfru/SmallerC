@@ -13,7 +13,7 @@
 
 #ifndef __SIZE_T_DEF
 #define __SIZE_T_DEF
-typedef unsigned size_t;
+#define size_t unsigned
 #endif
 
 #define EOF (-1)
@@ -30,13 +30,14 @@ typedef unsigned size_t;
 
 #ifndef __FPOS_T_DEF
 #define __FPOS_T_DEF
-typedef struct
+struct fpos_s
 {
   unsigned short halves[2];
-} fpos_t;
+};
+#define fpos_t struct fpos_s
 #endif
 
-typedef struct __stream FILE;
+#define FILE struct __stream
 
 extern FILE *__stdin, *__stdout, *__stderr;
 #define stdin  __stdin
@@ -101,8 +102,8 @@ void perror(char*);
 long ftell(FILE*);
 int fseek(FILE*, long, int);
 #endif
-int/*0 on success,-1 on failure*/ __ftell(FILE*, fpos_t*/*position out*/);
-int __fseek(FILE*, fpos_t*/*position in*/, int/*whence*/);
+int __ftell(FILE*, fpos_t*);
+int __fseek(FILE*, fpos_t*, int);
 void rewind(FILE*);
 int fgetpos(FILE*, fpos_t*);
 int fsetpos(FILE*, fpos_t*);

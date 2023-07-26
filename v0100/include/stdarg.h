@@ -5,7 +5,7 @@
 #ifndef __STDARG_H
 #define __STDARG_H
 
-typedef char* va_list;
+#define va_list char*
 
 #ifdef __SMALLER_PP__
 #define va_start(vl, last)      { (vl) = (char*)&(last) + ((sizeof(last) + sizeof(int) - 1) & -sizeof(int)); }
