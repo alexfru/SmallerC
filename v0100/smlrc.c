@@ -2379,7 +2379,11 @@ void errorRedecl(char* s)
   #endif
   #include "cgmips.c"
 #else
-  #include "cgx86.c"
+  #ifdef ONLY8086
+    #include "cg8086.c"
+  #else
+    #include "cgx86.c"
+  #endif
 #endif // #ifdef MIPS
 
 // expr.c code
@@ -2886,7 +2890,7 @@ int exprUnary(int tok, int* gotUnary, int commaSeparator, int argOfSizeOf)
       {
         tok = GetToken();
         tok = expr(tok, gotUnary, 0);
-        if (!*gotUnary)
+        if (!*gotUnary || tok != ']')
           //error("exprUnary(): primary expression expected in '[]'\n");
           errorUnexpectedToken(tok);
         if (tok != ']')
@@ -5853,7 +5857,9 @@ int printf2(char* format, ...)
 
   if (!OutFile)
   {
-    va_end(vl);
+    #ifndef __SMALLER_C__
+      va_end(vl);
+    #endif
     return 0;
   }
 #ifndef __SMALLER_C__
@@ -5967,7 +5973,9 @@ void warning(char* format, ...)
 
   if (!warnings)
   {
-    va_end(vl);
+    #ifndef __SMALLER_C__
+      va_end(vl);
+    #endif
     return;
   }
 

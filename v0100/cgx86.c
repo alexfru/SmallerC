@@ -72,7 +72,7 @@ void GenAddGlobal(char* s, int use)
     }
     l = strlen(s) + 1;
     if (GlobalsTableLen + l + 2 > MAX_GLOBALS_TABLE_LEN)
-      error("Table of globals exhausted\n");
+      error("Globals tbl exhausted\n");
     GlobalsTable[GlobalsTableLen++] = use;
     GlobalsTable[GlobalsTableLen++] = l;
     memcpy(GlobalsTable + GlobalsTableLen, s, l);
@@ -933,18 +933,22 @@ STATIC
 void GenFxnEpilog(void)
 {
   GenUpdateFrameSize();
+  #ifndef ONLY8086
   if(Use8086InstrOnly)
   {
+  #endif
     GenPrintInstr2Operands(X86InstrMov,0,
                           X86OpRegSpWord, 0,
                           X86OpRegBpWord, 0);
     GenPrintInstr1Operand(X86InstrPop,0,
                           X86OpRegBpWord, 0);
+  #ifndef ONLY8086
   }
   else
   {
     GenPrintInstrNoOperand(X86InstrLeave);
   }
+  #endif
   GenPrintInstrNoOperand(X86InstrRet);
 }
 
@@ -1075,8 +1079,10 @@ void GenReadCRegIdent(int opSz, int label)
 {
   if (opSz == -1)
   {
+    #ifndef ONLY8086
     if(Use8086InstrOnly)
     {
+    #endif
 
       GenPrintInstr1Operand(X86InstrPush, 0,
                             X86OpRegAWord, 0);
@@ -1089,6 +1095,7 @@ void GenReadCRegIdent(int opSz, int label)
                             X86OpRegAWord, 0);
       GenPrintInstr1Operand(X86InstrPop, 0,
                             X86OpRegAWord, 0);
+    #ifndef ONLY8086
     }
     else
     {
@@ -1096,17 +1103,21 @@ void GenReadCRegIdent(int opSz, int label)
                             X86OpRegCWord, 0,
                             X86OpIndLabelExplicitByte, label);
     }
+    #endif
   }
   else if (opSz == 1)
   {
+    #ifndef ONLY8086
     if(Use8086InstrOnly)
     {
+    #endif
       GenPrintInstr2Operands(X86InstrMov, 0,
                             X86OpRegCByte, 0,
                             X86OpIndLabelExplicitByte, label);
       GenPrintInstr2Operands(X86InstrXor, 0,
                             X86OpRegCByteHigh, 0,
                             X86OpRegCByteHigh, 0);
+    #ifndef ONLY8086
     }
     else
     {
@@ -1114,6 +1125,7 @@ void GenReadCRegIdent(int opSz, int label)
                             X86OpRegCWord, 0,
                             X86OpIndLabelExplicitByte, label);
     }
+    #endif
   }
 #ifdef CAN_COMPILE_32BIT
   else if (opSz != SizeOfWord && -opSz != SizeOfWord)
@@ -1138,8 +1150,11 @@ STATIC
 void GenReadCRegLocal(int opSz, int ofs)
 {
   if (opSz == -1)
+  {
+    #ifndef ONLY8086
     if(Use8086InstrOnly)
     {
+    #endif
 
       GenPrintInstr1Operand(X86InstrPush, 0,
                             X86OpRegAWord, 0);
@@ -1152,6 +1167,7 @@ void GenReadCRegLocal(int opSz, int ofs)
                             X86OpRegAWord, 0);
       GenPrintInstr1Operand(X86InstrPop, 0,
                             X86OpRegAWord, 0);
+    #ifndef ONLY8086
     }
     else
     {
@@ -1159,15 +1175,21 @@ void GenReadCRegLocal(int opSz, int ofs)
                             X86OpRegCWord, 0,
                             X86OpIndLocalExplicitByte, ofs);
     }
+    #endif
+  }
   else if (opSz == 1)
+  {
+    #ifndef ONLY8086
     if(Use8086InstrOnly)
     {
+    #endif
       GenPrintInstr2Operands(X86InstrMov, 0,
                             X86OpRegCByte, 0,
                             X86OpIndLocalExplicitByte, ofs);
       GenPrintInstr2Operands(X86InstrXor, 0,
                             X86OpRegCByteHigh, 0,
                             X86OpRegCByteHigh, 0);
+    #ifndef ONLY8086
     }
     else
     {
@@ -1175,6 +1197,8 @@ void GenReadCRegLocal(int opSz, int ofs)
                             X86OpRegCWord, 0,
                             X86OpIndLocalExplicitByte, ofs);
     }
+    #endif
+  }
 #ifdef CAN_COMPILE_32BIT
   else if (opSz != SizeOfWord && -opSz != SizeOfWord)
   {
@@ -1204,8 +1228,11 @@ void GenReadCRegIndirect(int opSz)
   GenRegB2Seg();
 #endif
   if (opSz == -1)
+  {
+    #ifndef ONLY8086
     if(Use8086InstrOnly)
     {
+    #endif
 
       GenPrintInstr1Operand(X86InstrPush, 0,
                             X86OpRegAWord, 0);
@@ -1218,6 +1245,7 @@ void GenReadCRegIndirect(int opSz)
                             X86OpRegAWord, 0);
       GenPrintInstr1Operand(X86InstrPop, 0,
                             X86OpRegAWord, 0);
+    #ifndef ONLY8086
     }
     else
     {
@@ -1225,15 +1253,21 @@ void GenReadCRegIndirect(int opSz)
                             X86OpRegCWord, 0,
                             X86OpIndRegBExplicitByte, 0);
     }
+    #endif
+  }
   else if (opSz == 1)
+  {
+    #ifndef ONLY8086
     if(Use8086InstrOnly)
     {
+    #endif
       GenPrintInstr2Operands(X86InstrMov, 0,
                             X86OpRegCByte, 0,
                             X86OpIndRegBExplicitByte, 0);
       GenPrintInstr2Operands(X86InstrXor, 0,
                             X86OpRegCByteHigh, 0,
                             X86OpRegCByteHigh, 0);
+    #ifndef ONLY8086
     }
     else
     {
@@ -1241,6 +1275,8 @@ void GenReadCRegIndirect(int opSz)
                             X86OpRegCWord, 0,
                             X86OpIndRegBExplicitByte, 0);
     }
+    #endif
+  }
 #ifdef CAN_COMPILE_32BIT
   else if (opSz != SizeOfWord && -opSz != SizeOfWord)
   {
@@ -2113,8 +2149,10 @@ void GenExpr1(void)
       GenPrintInstr2Operands(X86InstrTest, 0,
                              X86OpRegAWord, 0,
                              X86OpRegAWord, 0);
+      #ifndef ONLY8086
       if(Use8086InstrOnly)
       {
+      #endif
         int labelCC = LabelCnt++;
         int labelCCAfter = LabelCnt++;
         GenPrintInstr1Operand(X86InstrJcc, tokNEQ,
@@ -2129,12 +2167,14 @@ void GenExpr1(void)
                               X86OpRegAByte, 0,
                               X86OpConst, 1);
         GenNumLabel(labelCCAfter);
+      #ifndef ONLY8086
       }
       else
       {
         GenPrintInstr1Operand(X86InstrSetCc, tokNEQ,
                               X86OpRegAByte, 0);
       }
+      #endif
       // fallthrough
     case tokSChar:
       if (SizeOfWord == 2)
@@ -2216,34 +2256,42 @@ void GenExpr1(void)
         {
         case tokNumInt:
         case tokNumUint:
+          #ifndef ONLY8086
           if(Use8086InstrOnly)
           {
+          #endif
             GenPrintInstr2Operands(X86InstrMov, 0,
                                   X86OpRegAWord, 0,
                                   X86OpConst, stack[i - 1][1]);
             GenPrintInstr1Operand(X86InstrPush, 0,
                                   X86OpRegAWord, 0);
+          #ifndef ONLY8086
           }
           else
           {
             GenPrintInstr1Operand(X86InstrPush, 0,
                                   X86OpConst, stack[i - 1][1]);
           }
+          #endif
           break;
         case tokIdent:
+          #ifndef ONLY8086
           if(Use8086InstrOnly)
           {
+          #endif
             GenPrintInstr2Operands(X86InstrMov, 0,
                                   X86OpRegAWord, 0,
                                   X86OpLabel, stack[i - 1][1]);
             GenPrintInstr1Operand(X86InstrPush, 0,
                                   X86OpRegAWord, 0);
+          #ifndef ONLY8086
           }
           else
           {
             GenPrintInstr1Operand(X86InstrPush, 0,
                                   X86OpLabel, stack[i - 1][1]);
           }
+          #endif
           break;
         default:
           GenPrintInstr1Operand(X86InstrPush, 0,
@@ -2569,8 +2617,11 @@ void GenExpr1(void)
           case tokUGEQ:
           case tokEQ:
           case tokNEQ:
+            {
+            #ifndef ONLY8086
             if(Use8086InstrOnly)
             {
+            #endif
               int labelCC = LabelCnt++;
               int labelCCAfter = LabelCnt++;
               GenPrintInstr1Operand(X86InstrJcc, tok,
@@ -2585,12 +2636,14 @@ void GenExpr1(void)
                                     X86OpRegAByte, 0,
                                     X86OpConst, 1);
               GenNumLabel(labelCCAfter);
+            #ifndef ONLY8086
             }
             else
             {
               GenPrintInstr1Operand(X86InstrSetCc, tok,
                                     X86OpRegAByte, 0);
             }
+            #endif
             if (SizeOfWord == 2)
               GenPrintInstrNoOperand(X86InstrCbw);
 #ifdef CAN_COMPILE_32BIT
@@ -2599,6 +2652,7 @@ void GenExpr1(void)
                                      X86OpRegAWord, 0,
                                      X86OpRegAByte, 0);
 #endif
+            }
             break;
           }
         }
@@ -2612,13 +2666,16 @@ void GenExpr1(void)
         {
         case tokOpNumInt:
         case tokOpNumUint:
+          #ifndef ONLY8086
           if(Use8086InstrOnly)
           {
+          #endif
             GenPrintInstr2Operands(X86InstrMov, 0,
                                   X86OpRegBWord, 0,
                                   X86OpConst, stack[i + 2][1]);
             GenPrintInstr1Operand(X86InstrImul, 0,
                                   X86OpRegBWord, 0);
+          #ifndef ONLY8086
           }
           else
           {
@@ -2627,15 +2684,19 @@ void GenExpr1(void)
                                   X86OpRegAWord, 0,
                                   X86OpConst, stack[i + 2][1]);
           }
+          #endif
           break;
         case tokOpIdent:
+          #ifndef ONLY8086
           if(Use8086InstrOnly)
           {
+          #endif
             GenPrintInstr2Operands(X86InstrMov, 0,
                                   X86OpRegBWord, 0,
                                   X86OpLabel, stack[i + 2][1]);
             GenPrintInstr1Operand(X86InstrImul, 0,
                                   X86OpRegBWord, 0);
+          #ifndef ONLY8086
           }
           else
           {
@@ -2644,6 +2705,7 @@ void GenExpr1(void)
                                   X86OpRegAWord, 0,
                                   X86OpLabel, stack[i + 2][1]);
           }
+          #endif
           break;
         case tokOpLocalOfs:
           GenPrintInstr2Operands(X86InstrLea, 0,
@@ -2793,14 +2855,17 @@ void GenExpr1(void)
         {
         case tokOpNumInt:
         case tokOpNumUint:
+          #ifndef ONLY8086
           if(Use8086InstrOnly)
           {
+          #endif
             GenPrintInstr2Operands(X86InstrMov, 0,
                                   X86OpRegCByte, 0,
                                   X86OpConst, stack[i + 2][1]);
             GenPrintInstr2Operands(instr, 0,
                                   X86OpRegAWord, 0,
                                   X86OpRegCByte, 0);
+          #ifndef ONLY8086
           }
           else
           {
@@ -2808,16 +2873,20 @@ void GenExpr1(void)
                                   X86OpRegAWord, 0,
                                   X86OpConst, stack[i + 2][1]);
           }
+          #endif
           break;
         case tokOpIdent:
+          #ifndef ONLY8086
           if(Use8086InstrOnly)
           {
+          #endif
             GenPrintInstr2Operands(X86InstrMov, 0,
                                   X86OpRegCByte, 0,
                                   X86OpLabel, stack[i + 2][1]);
             GenPrintInstr2Operands(instr, 0,
                                   X86OpRegAWord, 0,
                                   X86OpRegCByte, 0);
+          #ifndef ONLY8086
           }
           else
           {
@@ -2825,6 +2894,7 @@ void GenExpr1(void)
                                   X86OpRegAWord, 0,
                                   X86OpLabel, stack[i + 2][1]);
           }
+          #endif
           break;
         case tokOpLocalOfs:
           GenPrintInstr2Operands(X86InstrLea, 0,
@@ -3595,8 +3665,10 @@ void GenFin(void)
             "\tand\tax, -2\n"  // ax = sizeof(struct) rounded up to multiple of 2 bytes
             "\tadd\tsp, 4*2\n" // remove bp, return address and 2 args from stack
             "\tsub\tsp, ax");  // allocate stack space for struct
+      #ifndef ONLY8086
       if (Use8086InstrOnly)
       {
+      #endif
         puts2("\tmov\tdi, sp\n" // di = where struct should be copied to
               "\tcld\n"
               "\trep\tmovsb\n"  // copy
@@ -3607,6 +3679,7 @@ void GenFin(void)
               "\tpush\tcx\n"  // caller will remove this 0 and first 2 bytes of struct from stack (as 2 args)
               "\tpush\tdx\n" //   and then it will push ax (first 2 bytes of struct) back
               "\tret");      // actually return to return address saved in dx
+      #ifndef ONLY8086
       }
       else
       {
@@ -3620,6 +3693,7 @@ void GenFin(void)
               "\tpush\tdx\n" //   and then it will push ax (first 2 bytes of struct) back
               "\tret");      // actually return to return address saved in dx
       }
+      #endif
     }
 #ifdef CAN_COMPILE_32BIT
     else if (OutputFormat == FormatSegHuge)

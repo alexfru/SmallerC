@@ -1373,9 +1373,17 @@ int main(int argc, char* argv[])
 
   fatargs(&argc, &argv);
 
+
+  for (i = 1; i < argc; i++)
+  {
+    if (!strcmp(argv[i], "-8086"))
+    {
+      Use8086InstrOnly = 1;
+    }
+  }
   // Set the compiler and linker names early as their options will pile up
 #ifdef UNIX_LIKE
-  AddOption(&CompilerOptions, &CompilerOptionsLen, "smlrc");
+  AddOption(&CompilerOptions, &CompilerOptionsLen, Use8086InstrOnly ? "smlrc86" :  "smlrc");
   AddOption(&LinkerOptions, &LinkerOptionsLen, "smlrl");
 #else
   // Use explicit extensions (".exe") to let system() know that
@@ -1384,7 +1392,8 @@ int main(int argc, char* argv[])
   // if possible.
   // This helps recover the program exit status under DOS and thus
   // stop compilation as soon as one compilation stage fails.
-  AddOption(&CompilerOptions, &CompilerOptionsLen, "smlrc.exe");
+
+  AddOption(&CompilerOptions, &CompilerOptionsLen, Use8086InstrOnly ? "smlrc86.exe" :  "smlrc.exe");
   AddOption(&LinkerOptions, &LinkerOptionsLen, "smlrl.exe");
 #endif
 
@@ -1546,7 +1555,7 @@ int main(int argc, char* argv[])
       Use8086InstrOnly = 1;
       if(OutputFormat == FormatDosComTiny)
         OutputFormat = FormatDosComTiny86;
-      AddOption(&CompilerOptions, &CompilerOptionsLen, argv[i]);
+      //AddOption(&CompilerOptions, &CompilerOptionsLen, argv[i]);
       DefineMacro("__SMALLER_C_8086__");
       argv[i] = NULL;
       continue;
