@@ -2890,7 +2890,7 @@ int exprUnary(int tok, int* gotUnary, int commaSeparator, int argOfSizeOf)
       {
         tok = GetToken();
         tok = expr(tok, gotUnary, 0);
-        if (!*gotUnary || tok != ']')
+        if (!*gotUnary)
           //error("exprUnary(): primary expression expected in '[]'\n");
           errorUnexpectedToken(tok);
         if (tok != ']')
