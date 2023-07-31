@@ -765,9 +765,6 @@ void GenReadCRegLocal(int opSz, int ofs)
 //                            X86OpRegCByteHigh, 0,
 //                            X86OpRegCByteHigh, 0);
       puts2(TxtXorChCh);
-      GenPrintInstr2Operands(X86InstrMovZx, 0,
-                            X86OpRegCWord, 0,
-                            X86OpIndLocalExplicitByte, ofs);
   }
   else
     GenPrintInstr2Operands(X86InstrMov, 0,
