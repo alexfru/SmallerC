@@ -17,6 +17,7 @@ echo -= DOS - Small - Target 8088 =-
 smlrc -nobss -seg16 -no-externs lb.c lb.asm
 smlrc -nobss -seg16 -no-externs -label 1001 -D ONLY8086 -D NO_ANNOTATIONS -D NO_EXTRAS smlrc.c smlrc.asm
 nasm -f bin smlrc16.asm -o bind/smlrc.exe
+rm lb.asm smlrc.asm
 
 echo -= DOS - Huge =-
 smlrcc -dosh -Wall smlrc.c -o bindh/smlrc.exe
