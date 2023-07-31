@@ -3,6 +3,7 @@
 ;  2-clause BSD license.
 ;
 bits 16
+cpu 8086
 
     extern ___start__
     extern __start__bss
@@ -16,7 +17,8 @@ __start:
     mov [cs:_ss], ax ; preserve SS as the data segment, which we may need to access from ISRs
     mov ds, ax ; DS=ES=SS in small model .EXEs and in tiny model .COMs
     mov es, ax
-    mov bx, cs
+    mov bx, ax ; On 8086 only AX can receive CS value
+    mov ax, cs
     cmp ax, bx
     jne exe
     ; CS=SS means it's a .COM program.
@@ -106,20 +108,30 @@ ___CtrlCIsr:
     mov ds, ax
     mov es, ax
 
-    push ___Int00DE
-    push 0
+    mov ax, ___Int00DE
+    push ax
+    xor ax, ax
+    push ax
     call ___DosSetVect
-;    push ___Int01DB
-;    push 1
+;    mov ax, ___Int01DB
+;    push ax
+;    mov ax, 1
+;    push ax
 ;    call ___DosSetVect
-;    push ___Int03BP
-;    push 3
+;    mov ax, ___Int03BP
+;    push ax
+;    mov ax, 3
+;    push ax
 ;    call ___DosSetVect
-    push ___Int04OF
-    push 4
+    mov ax, ___Int04OF
+    push ax
+    mov ax, 4
+    push ax
     call ___DosSetVect
-    push ___Int06UD
-    push 6
+    mov ax, ___Int06UD
+    push ax
+    mov ax, 6
+    push ax
     call ___DosSetVect
 
 terminate:

@@ -1,4 +1,4 @@
-srcdir := $(dir $(shell readlink -f \
+srcdir := $(dir $(shell readlink \
 	$(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST))))v0100
 VPATH = $(srcdir) $(srcdir)/srclib
 export PATH := $(CURDIR):$(PATH)
