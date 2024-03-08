@@ -1,0 +1,44 @@
+Name: smallerc
+Version: {{{ git_dir_version }}}
+Release: 1%{?dist}
+Summary: simple and small single-pass C compiler
+
+Group: Development/Languages
+
+License: BSD
+URL: https://github.com/alexfru/SmallerC
+VCS: {{{ git_dir_vcs }}}
+Source0: {{{ git_dir_archive }}}
+
+BuildRequires: gcc
+BuildRequires: make
+BuildRequires: nasm
+
+Requires:   nasm
+
+%description
+Smaller C is a simple and small single-pass C compiler,
+currently supporting most of the C language common between C89/ANSI C
+and C99 (minus some C89 and plus some C99 features).
+
+%prep
+{{{ git_dir_setup_macro }}}
+
+%build
+make prefix=%{_prefix}
+
+%check
+%define __arch_install_post export NO_BRP_STRIP_DEBUG=true
+%define debug_package %{nil}
+%define __strip /bin/true
+
+%install
+make DESTDIR=%{buildroot} prefix=%{_prefix} install
+
+%files
+%defattr(-,root,root)
+%{_bindir}/*
+%{_prefix}/smlrc
+
+%changelog
+{{{ git_dir_changelog }}}
