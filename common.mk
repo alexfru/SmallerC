@@ -3,17 +3,17 @@ bindir = $(prefix)/bin
 libdir = $(prefix)/smlrc/lib
 incdir = $(prefix)/smlrc/include
 
-CFLAGS = -pipe -Wall -O2
-CFLAGS += -DPATH_PREFIX='"$(prefix)"'
+CFLAGS ?= -pipe -Wall -O2
+CPPFLAGS += -DPATH_PREFIX='"$(prefix)"'
 
-CC = gcc
+CC ?= gcc
 
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Darwin)
-	CFLAGS += -DHOST_MACOS
+	CPPFLAGS += -DHOST_MACOS
 else
 # If not MacOS, assume Linux.
-	CFLAGS += -DHOST_LINUX
+	CPPFLAGS += -DHOST_LINUX
 endif
 
 bins = smlrc smlrl smlrcc smlrpp n2f
@@ -47,7 +47,7 @@ $(stub):
 	./smlrcc -small $(srcdir)/srclib/dpstub.asm -o $@
 
 smlrpp:
-	$(CC) $(CFLAGS) -o $@ -DSTAND_ALONE -DUCPP_CONFIG \
+	$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) -o $@ -DSTAND_ALONE -DUCPP_CONFIG \
 	$(srcdir)/ucpp/arith.c \
 	$(srcdir)/ucpp/assert.c \
 	$(srcdir)/ucpp/cpp.c \
