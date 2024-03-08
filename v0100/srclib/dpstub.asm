@@ -124,7 +124,13 @@ got_dpmi32:
         jne     err_invalid_exe
 
         ; TBD??? additional stub info & a.out header validation?
-
+        ; enable UMBs
+        mov     ax, 0x5803
+        mov     bx, 1
+        int     0x21
+        mov     ax, 0x5801
+        mov     bx, 0x80
+        int     0x21
         ; allocate memory for the DPMI host
         mov     bx, [pm_entry_sz]
         or      bx, 1
@@ -132,6 +138,13 @@ got_dpmi32:
         int     0x21
         jc      err_nomem
         mov     [pm_entry_seg], ax
+        ; disable UMBs
+        mov     ax, 0x5803
+        mov     bx, 0
+        int     0x21
+        mov     ax, 0x5801
+        mov     bx, 0
+        int     0x21
 
         ; enter 32-bit protected mode
         mov     es, [pm_entry_seg]
