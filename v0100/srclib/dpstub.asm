@@ -39,6 +39,11 @@ __start:
         mov     ah, 0x4a   ; resize, es = PSP
         int     0x21
 
+        ; get DOS version
+        mov     ah, 0x30
+        int     0x21
+        mov     [dos_major], al
+
         ; find %PATH% and argv[0]
         mov     es, [es:0x2c]   ; es = environment segment
         mov     [env_seg], es
@@ -134,12 +139,13 @@ got_dpmi32:
         jne     err_invalid_exe
 
         ; TBD??? additional stub info & a.out header validation?
-
+        call    include_umb
         ; allocate memory for the DPMI host
         mov     bx, [pm_entry_sz]
         or      bx, 1
         mov     ah, 0x48
         int     0x21
+        call    restore_umb  ; it preserves flags
         jc      err_nomem
         mov     [pm_entry_seg], ax
 
@@ -747,6 +753,49 @@ pmsg1:
         popad
         ret
 
+;-----------------------------------------------------------------------------
+; Make upper memory allocatable.  Clobbers Ax and Bx.
+
+include_umb:
+	cmp	byte [dos_major], 5		; Won't work before dos 5
+	jb	@f1
+	mov	ax, 0x5800		; get allocation strategy
+	int	0x21
+	mov	[old_strategy],al
+	mov	ax, 0x5802		; Get UMB status.
+	int	0x21
+	mov	[old_umb],al
+	mov	ax, 0x5801
+	mov	bx, 0x0080		; first fit, first high then low
+	int	0x21
+	mov	ax, 0x5803
+	mov	bx, 0x0001		; include UMB in memory chain
+	int	0x21
+@f1:
+	ret
+
+; Restore upper memory status.  All registers and flags preserved.
+
+restore_umb:
+	pushf
+	cmp	byte [dos_major], 5		; Won't work before dos 5
+	jb	@f2
+	push	ax
+	push	bx
+	mov	ax, 0x5803		; restore UMB status.
+	mov	bl,[old_umb]
+	xor	bh, bh
+	int	0x21
+	mov	ax, 0x5801		; restore allocation strategy
+	mov	bl,[old_strategy]
+	xor	bh, bh
+	int	0x21
+	pop	bx
+	pop	ax
+@f2:
+	popf
+	ret
+
 %if 0
 err_ok:
         mov     ax, 0x4c00
@@ -817,6 +866,10 @@ ds_seg      resw 1
 psp_seg     resw 1
 env_seg     resw 1
 path_ofs    resw 1
+
+dos_major   resb 1
+old_strategy resb 1
+old_umb     resb 1
 
 exit_sp     resw 1
 
