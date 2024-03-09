@@ -120,11 +120,11 @@ Compile one or more C files into assembly files (note the -S option):
     Smaller C standard library, which needs very little preprocessing.
 *   **-o \<output assembly/object/archive/executable file\>** Specifies the
     name of the output file. If you're making an executable and this option
-    isn't given, the executable file will be named **aout.com** (if you use
-    **-dost** or **-tiny**), **aout.exe** (if you use **-doss**, **-small**,
+    isn't given, the executable file will be named **a.com** (if you use
+    **-dost** or **-tiny**), **a.exe** (if you use **-doss**, **-small**,
     **-dosh**, **-huge**, **-dosu**, **-unreal**, **-dosp**, **-win** or
     **-pe**), **a.out** (if you use **-aout**, **-linux**, **-elf** or
-    **-macos**) or **aout.bin** (if you use **-flat16** or **-flat32**). If
+    **-macos**) or **a.bin** (if you use **-flat16** or **-flat32**). If
     you're compiling to an object file and this option isn't given, the
     object file will be named the same as the input file but will have the
     **.o** extension. Likewise, if you're translating C code to assembly code

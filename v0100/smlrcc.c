@@ -1829,16 +1829,16 @@ int main(int argc, char* argv[])
     switch (OutputFormat)
     {
     case FormatDosComTiny:
-      OutName = "aout.com";
+      OutName = "a.com";
       break;
     case FormatDosExeSmall:
     case FormatDosExeHuge:
     case FormatDosExeUnreal:
     case FormatWinPe32:
-      OutName = "aout.exe";
+      OutName = "a.exe";
       break;
     case FormatAoutDpmi:
-      OutName = LinkStdLib ? "aout.exe" : "a.out";
+      OutName = LinkStdLib ? "a.exe" : "a.out";
       break;
     case FormatElf32:
     case FormatMach32:
@@ -1846,7 +1846,7 @@ int main(int argc, char* argv[])
       break;
     case FormatFlat16:
     case FormatFlat32:
-      OutName = "aout.bin";
+      OutName = "a.bin";
       break;
     }
   }
