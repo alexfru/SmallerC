@@ -3636,7 +3636,7 @@ long fsize(FILE* binaryStream)
 void fatargs(int* pargc, char*** pargv)
 {
   int i, j = 0;
-  char** pp;
+  char **pp, **pp_to_free;
   int pcnt = *pargc;
 
   if (pcnt < 2)
@@ -3648,7 +3648,7 @@ void fatargs(int* pargc, char*** pargv)
   if (i >= pcnt)
     return;
 
-  if ((pp = malloc(++pcnt * sizeof(char*))) == NULL) // there's supposed to be one more NULL pointer argument
+  if ((pp_to_free = pp = malloc(++pcnt * sizeof(char*))) == NULL) // there's supposed to be one more NULL pointer argument
   {
     errMem();
   }
@@ -3658,7 +3658,7 @@ void fatargs(int* pargc, char*** pargv)
   for (i = 1; i < *pargc; i++)
     if ((*pargv)[i][0] != '@')
     {
-      pp[j++] = (*pargv)[i]; // it's not an name of a file with arguments, treat it as an argument
+      pp[j++] = (*pargv)[i]; // it's not a name of a file with arguments, treat it as an argument
     }
     else
     {
@@ -3672,6 +3672,7 @@ void fatargs(int* pargc, char*** pargv)
       if ((fsz = fsize(f)) < 0)
       {
         fclose(f);
+        free(pp_to_free);
         errMem();
       }
       if (fsz > 0)
@@ -3694,11 +3695,13 @@ void fatargs(int* pargc, char*** pargv)
             size_t s;
             if (++pcnt == INT_MAX ||
                 (s = (unsigned)pcnt * sizeof(char*)) / sizeof(char*) != (unsigned)pcnt ||
-                (pp = realloc(pp, s)) == NULL)
+                (pp = realloc(pp_to_free, s)) == NULL)
             {
               fclose(f);
+              free(pp_to_free);
               errMem();
             }
+            pp_to_free = pp;
             pp[j++] = p;
             p = strtok(NULL, sep);
           }
@@ -3706,6 +3709,7 @@ void fatargs(int* pargc, char*** pargv)
         else
         {
           fclose(f);
+          free(pp_to_free);
           errMem();
         }
       }
