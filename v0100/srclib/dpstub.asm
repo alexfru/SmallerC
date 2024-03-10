@@ -18,6 +18,7 @@
 bits 16
 
 FBUFSZ equ (48*1024) ; Don't change this! Must be a multiple of 8. Shared with 32-bit code.
+STKSZ equ 4096
 
 section .text
 
@@ -28,6 +29,15 @@ __start:
         mov     [ds_seg], ax
         mov     [psp_seg], es
         mov     [cs_seg], cs
+
+        ; reduce the data/stack segment, releasing some memory to DOS
+        mov     sp, stack_top
+        mov     bx, end_of_memory
+        shr     bx, 4
+        add     bx, ax     ; ax = ss
+        sub     bx, [psp_seg]
+        mov     ah, 0x4a   ; resize, es = PSP
+        int     0x21
 
         ; find %PATH% and argv[0]
         mov     es, [es:0x2c]   ; es = environment segment
@@ -881,6 +891,10 @@ regs_sp     resw 1
 regs_ss     resw 1
 regs_len equ $ - regs
 
-fbuf        resb FBUFSZ ; shared with 32-bit code
-
 alignb 16
+fbuf        resb FBUFSZ ; shared with 32-bit code
+alignb 16
+stack       resb STKSZ
+alignb 16
+stack_top:
+end_of_memory:
