@@ -45,6 +45,8 @@ __start:
         cmp     word [env_seg], 0
         je      err_noenv
         xor     di, di
+        cmp     byte [es:di], 0   ; initial 0 means no variables
+        je      vars_end
 env_search:
         cmp     word [es:di], 0x4150 ; "PA" ?
         jne     var_skip
@@ -63,6 +65,7 @@ var_end:
         inc     di
         cmp     byte [es:di], 0 ; end of all variables?
         jne     env_search
+vars_end:
         add     di, 3
         mov     si, argv0
 cpy_argv0:
