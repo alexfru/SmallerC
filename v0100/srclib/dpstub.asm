@@ -66,7 +66,10 @@ var_end:
         cmp     byte [es:di], 0 ; end of all variables?
         jne     env_search
 vars_end:
-        add     di, 3
+        inc     di
+        cmp     word [es:di], 1
+        jne     err_noenv
+        add     di, 2
         mov     si, argv0
 cpy_argv0:
         mov     al, [es:di]
