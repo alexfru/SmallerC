@@ -89,6 +89,9 @@ char* getenv(char* name)
   unsigned nlen = strlen(name);
   unsigned i, start;
 
+  if (peekb(env, 0) == 0)
+    return NULL;
+
   for (start = i = 0; ; i++)
   {
     int c = peekb(env, i);
