@@ -305,10 +305,16 @@ int setargs(int* pargc, char*** pargv)
   char* params;
 
   // First, try to extract the full program name.
+  if (!env)
+    exit(EXIT_FAILURE);
 
   // Skip past the environment strings.
   i = 0;
-  for (;;)
+  if (peekb(env, i) == 0)  // initial 0 means no variables
+  {
+    i++;
+  }
+  else for (;;)
   {
     if ((peekb(env, i) | peekb(env, i + 1)) == 0)
     {
