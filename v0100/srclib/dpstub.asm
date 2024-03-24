@@ -42,7 +42,11 @@ __start:
         ; find %PATH% and argv[0]
         mov     es, [es:0x2c]   ; es = environment segment
         mov     [env_seg], es
+        cmp     word [env_seg], 0
+        je      err_noenv
         xor     di, di
+        cmp     byte [es:di], 0   ; initial 0 means no variables
+        je      vars_end
 env_search:
         cmp     word [es:di], 0x4150 ; "PA" ?
         jne     var_skip
@@ -61,7 +65,11 @@ var_end:
         inc     di
         cmp     byte [es:di], 0 ; end of all variables?
         jne     env_search
-        add     di, 3
+vars_end:
+        inc     di
+        cmp     word [es:di], 1
+        jne     err_noenv
+        add     di, 2
         mov     si, argv0
 cpy_argv0:
         mov     al, [es:di]
@@ -690,6 +698,10 @@ err_nodpmi32:
         mov     dx, msg_nodpmi32
         jmp     error
 
+err_noenv:
+        mov     dx, msg_noenv
+        jmp     error
+
 err_nomem:
         mov     dx, msg_nomem
         jmp     error
@@ -801,6 +813,7 @@ hex_digits  db "0123456789abcdef"
 
 msg_crlf        db 13, 10, 0
 msg_nodpmi32    db "No 32-bit DPMI! Get CWSDPMI.EXE!", 0
+msg_noenv       db "No environment segment!", 0
 msg_nomem       db "Not enough memory!", 0
 msg_nodpmimem   db "Not enough DPMI memory!", 0
 msg_open        db " can't be opened!", 0
