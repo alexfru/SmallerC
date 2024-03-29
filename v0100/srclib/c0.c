@@ -309,7 +309,7 @@ int setargs(int* pargc, char*** pargv)
   {
     static char msg[] = "No environment segment!\r\n";
     __write(STDERR_FILENO, msg, sizeof msg - 1);
-    exit(EXIT_FAILURE);
+    _Exit(EXIT_FAILURE);
   }
 
   // Skip past the environment strings.

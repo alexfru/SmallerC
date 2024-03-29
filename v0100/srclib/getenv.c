@@ -89,7 +89,7 @@ char* getenv(char* name)
   unsigned nlen = strlen(name);
   unsigned i, start;
 
-  if (peekb(env, 0) == 0)
+  if (peekb(env, 0) == '\0')
     return NULL;
 
   for (start = i = 0; ; i++)
@@ -120,7 +120,7 @@ char* getenv(char* name)
           free(__EnvVar);
         if (!(p = __EnvVar = malloc(vlen + 1)))
         {
-          return 0;
+          return NULL;
         }
         while ((*p++ = peekb(env, j++)) != '\0');
         return __EnvVar;
@@ -135,7 +135,7 @@ char* getenv(char* name)
       if (peekb(env, start) == '\0')
       {
         // Reached the end of the list of environment variables
-        return 0;
+        return NULL;
       }
     }
   }
@@ -148,6 +148,9 @@ char* getenv(char* name)
   unsigned char* env = __dpmi_env;
   unsigned nlen = strlen(name);
   unsigned i, start;
+
+  if (*env == '\0')
+    return NULL;
 
   for (start = i = 0; ; i++)
   {
@@ -177,7 +180,7 @@ char* getenv(char* name)
           free(__EnvVar);
         if (!(p = __EnvVar = malloc(vlen + 1)))
         {
-          return 0;
+          return NULL;
         }
         while ((*p++ = env[j++]) != '\0');
         return __EnvVar;
@@ -192,7 +195,7 @@ char* getenv(char* name)
       if (env[start] == '\0')
       {
         // Reached the end of the list of environment variables
-        return 0;
+        return NULL;
       }
     }
   }
