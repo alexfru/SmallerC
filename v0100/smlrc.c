@@ -64,6 +64,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string.h>
 #include <ctype.h>
 #include <stdio.h>
+#include <assert.h>
 
 #if UINT_MAX >= 0xFFFFFFFF
 #define CAN_COMPILE_32BIT
@@ -3930,6 +3931,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
         *ExprTypeSynPtr = -*ExprTypeSynPtr;
       else
         ++*ExprTypeSynPtr;
+      assert(*ExprTypeSynPtr >= 0);  // avoids gcc warning
       nonVoidTypeCheck(*ExprTypeSynPtr);
       if (SyntaxStack0[*ExprTypeSynPtr] == tokStructPtr && !GetDeclSize(*ExprTypeSynPtr, 0))
         // incomplete structure/union type
