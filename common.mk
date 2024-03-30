@@ -59,3 +59,9 @@ smlrpp:
 
 all install clean: FORCE
 FORCE:
+
+# Serialization prevents build failures when concurrent invocations of
+# smlrcc on .c and .asm files in $(srcdir)/srclib/ produce intermediate
+# files such as .i, .asm, .o of non-unique names in that same source
+# directory.
+.NOTPARALLEL:
