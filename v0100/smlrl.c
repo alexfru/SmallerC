@@ -3132,7 +3132,7 @@ void RwPe(void)
         {
           PeSectionHeaderImpData.Misc.VirtualSize =
             ((pSectDescrs[textSectCnt + roDataSectCnt + impDataSectCnt - 1].Stop + 0xFFF) & 0xFFFFF000) -
-            pSectDescrs[textSectCnt + roDataSectCnt].Start & 0xFFFFF000;
+            (pSectDescrs[textSectCnt + roDataSectCnt].Start & 0xFFFFF000);
           PeSectionHeaderData.Misc.VirtualSize -=
             PeSectionHeaderImpData.Misc.VirtualSize;
 
