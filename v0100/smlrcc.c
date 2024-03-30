@@ -1041,7 +1041,7 @@ void Archive(void)
     {
       ulong l = sz;
       l += len2;
-      fh.size[sprintf(fh.size, "%lu", l)] = ' ';
+      fh.size[snprintf(fh.size, sizeof(fh.size), "%lu", l)] = ' ';
     }
     fh.fmag[0] = 0x60;
     fh.fmag[1] = 0x0A;
