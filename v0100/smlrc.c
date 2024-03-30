@@ -1153,7 +1153,7 @@ void IncludeFile(int quot)
       }
       for (i = 0; i < pl; )
       {
-        int plen = strlen(paths + i);
+        size_t plen = strlen(paths + i);
         if (plen + 1 + nlen < MAX_FILE_NAME_LEN)
         {
           strcpy(FileNames[FileCnt], paths + i);
