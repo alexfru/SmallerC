@@ -3259,7 +3259,6 @@ void RwPe(void)
             tElfSection* pSect = &pMeta->pSections[sectIdx];
             tElfSection* pRelSect = NULL;
             const char* sectName;
-            size_t sectNameLen;
             if (pSect->h.sh_type != SHT_PROGBITS)
               continue;
             if (strcmp(pSectDescrs[j].pName, pMeta->pSectNames + pSect->h.sh_name))
@@ -3280,7 +3279,6 @@ void RwPe(void)
             // Don't create relocations for anything in sections whose names
             // start with ".dll_import" or ".dll_iat".
             sectName = pSectDescrs[j].pName;
-            sectNameLen = strlen(sectName);
             if (!strncmp(sectName, ".dll_import", sizeof ".dll_import" - 1) ||
                 !strncmp(sectName, ".dll_iat", sizeof ".dll_iat" - 1))
               continue;
