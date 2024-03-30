@@ -196,7 +196,7 @@ int fsetpos(FILE*, fpos_t*);
 #endif
 
 #ifndef MAX_FILE_NAME_LEN
-#define MAX_FILE_NAME_LEN    95
+#define MAX_FILE_NAME_LEN    254
 #endif
 
 #ifndef NO_PREPROCESSOR
