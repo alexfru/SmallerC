@@ -5852,7 +5852,12 @@ int printf2(char* format, ...)
 #endif
 
   if (!OutFile)
+  {
+#ifndef __SMALLER_C__
+    va_end(vl);
+#endif
     return 0;
+  }
 #ifndef __SMALLER_C__
   res = vfprintf(OutFile, format, vl);
 #else
@@ -5963,7 +5968,12 @@ void warning(char* format, ...)
   warnCnt++;
 
   if (!warnings)
+  {
+#ifndef __SMALLER_C__
+    va_end(vl);
+#endif
     return;
+  }
 
   printf("Warning in \"%s\" (%d:%d)\n", FileNames[fidx], LineNo, LinePos);
 
@@ -6235,7 +6245,7 @@ int SymType(int SynPtr)
   if (SyntaxStack0[SynPtr] == tokIdent)
     SynPtr++;
 
-  if ((local = SyntaxStack0[SynPtr] == tokLocalOfs) != 0)
+  if ((local = (SyntaxStack0[SynPtr] == tokLocalOfs)) != 0)
     SynPtr++;
 
   switch (SyntaxStack0[SynPtr])
