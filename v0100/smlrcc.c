@@ -1026,7 +1026,7 @@ void Archive(void)
     else
     {
       ulong l = len2;
-      fh.name[sprintf(fh.name, "#1/%lu", l)] = ' '; // Use BSD(in-place) format for long names
+      fh.name[snprintf(fh.name, sizeof(fh.name), "#1/%lu", l)] = ' '; // Use BSD(in-place) format for long names
     }
     memcpy(fh.date, "1388534400", sizeof "1388534400" - 1); // TBD??? use actual file date/time???
     fh.uid[0] = '0';
