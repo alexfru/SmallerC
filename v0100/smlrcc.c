@@ -1016,6 +1016,8 @@ void Archive(void)
       name2 = pslash + 1;
 
     len2 = strlen(name2);
+    if (len2 > 255) // Arbitrary but simplifies overflow handling
+      error("File name '%s' too long\n", name2);
 
     memset(&fh, ' ', sizeof fh);
     if (len2 <= 15)
