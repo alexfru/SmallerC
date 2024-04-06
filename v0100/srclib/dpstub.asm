@@ -20,6 +20,8 @@ bits 16
 FBUFSZ equ (48*1024) ; Don't change this! Must be a multiple of 8. Shared with 32-bit code.
 STKSZ equ 4096
 
+cpu 8086
+
 section .text
 
         global __start
@@ -33,7 +35,8 @@ __start:
         ; reduce the data/stack segment, releasing some memory to DOS
         mov     sp, stack_top
         mov     bx, end_of_memory
-        shr     bx, 4
+        mov     cl, 4
+        shr     bx, cl
         add     bx, ax     ; ax = ss
         sub     bx, [psp_seg]
         mov     ah, 0x4a   ; resize, es = PSP
@@ -86,6 +89,8 @@ cpy_argv0:
         call    dpmi_detect
         jnz     err_nodpmi32
 got_dpmi32:
+
+cpu 386
 
         ; open the .exe file
         mov     dx, argv0
@@ -329,6 +334,8 @@ got_dpmi32:
         db 0x66
         retf
 
+cpu 8086
+
 dpmi_detect:
         mov     ax, 0x1687
         int     0x2f
@@ -427,6 +434,8 @@ dpmi_load7:
 dpmi_load_end:
         ret
 
+cpu 386
+
 probe_alloc:
         ; ecx = size to try to allocate and immediately free
         ; ebx = size cap
@@ -511,9 +520,17 @@ alloc_max_end:
         ; carry = 1 IFF failed
         ret
 
+cpu 8086
+
 exec:
         push    ds
-        pusha
+        push    ax
+        push    bx
+        push    cx
+        push    dx
+        push    si
+        push    di
+        push    bp
         mov     word [exec_params_env_seg], 0
         mov     word [exec_params_params + 0], exec_args
         mov     word [exec_params_params + 2], ds
@@ -529,21 +546,31 @@ exec:
         mov     [cs:save_sp], sp
         mov     ax, 0x4b00
         int     0x21
+        cli
         mov     ss, [cs:save_ss]
         mov     sp, [cs:save_sp]
+        sti
         sbb     ax, ax ; ax = 0 (and zf = 1) IFF success
         jnz     exec_end
         mov     ah, 0x4d
         int     0x21
         xor     ax, 0x0300 ; ax = 0 (and zf = 1) IFF terminated successfully as TSR
 exec_end:
-        popa
+        pop     bp
+        pop     di
+        pop     si
+        pop     dx
+        pop     cx
+        pop     bx
+        pop     ax
         pop     ds
         ret
         ; function 0x4b of int 0x21 may trash even ss:sp, so we
         ; will preserve them in the code segment
-        save_sp dw 0
-        save_ss dw 0
+        save_sp dw 0x9090
+        save_ss dw 0x9090
+
+cpu 386
 
 load_buf:
         or      eax, eax
@@ -694,6 +721,8 @@ exit:
         int     0x21
 ds_sel  dw      0x9090
 
+cpu 8086
+
 err_nodpmi32:
         mov     dx, msg_nodpmi32
         jmp     error
@@ -745,7 +774,13 @@ error:
 ; avoid selector/segment manipulations and have a common
 ; message printing routine for both real and protected modes.
 pmsg:
-        pushad
+        push    ax
+        push    bx
+        push    cx
+        push    dx
+        push    si
+        push    di
+        push    bp
         mov     bx, dx
 pmsg0:
         mov     dl, [bx]
@@ -756,7 +791,13 @@ pmsg0:
         inc     bx
         jmp     pmsg0
 pmsg1:
-        popad
+        pop     bp
+        pop     di
+        pop     si
+        pop     dx
+        pop     cx
+        pop     bx
+        pop     ax
         ret
 
 %if 0

@@ -12,8 +12,13 @@ bits 16
 
 section .text
 
+cpu 8086
+
     global __start
 __start:
+    call    check_386
+
+cpu 386
 
     ; perform code/data relocations
 
@@ -118,6 +123,55 @@ bss2:
     rol     ax, 4
     push    eax
     retf        ; __start__() will set up argc and argv for main() and call exit(main(argc, argv))
+
+cpu 8086
+
+check_386:
+    ; Below 80286? E.g. 80(1)88/80(1)86 or V-20/V-30?
+    push    sp
+    pop     ax
+    cmp     ax, sp
+    jne     .fail
+
+    ; Must be 80286+. 80386+ in virtual 8086 mode?
+    ; N.B. expecting cr4.umip (2017+ CPUs) to be 0
+    ; (naturally or through emulation).
+cpu 286
+    smsw    ax
+cpu 8086
+    and     al, 1 ; 80386+ may have cr0.pe = 1
+    jz      .diff286from386
+    ret
+
+.diff286from386:
+    ; 80286 or 80386+ in real address mode. Which one?
+    pushf
+    pushf
+    pop     cx
+    mov     ax, 0x3000
+    or      cx, ax ; will try to set FLAGS.IOPL = 3
+    push    cx
+    popf
+    pushf
+    pop     cx ; FLAGS.IOPL = 0 on 80286, FLAGS.IOPL = 3 on 80386+.
+    popf
+    and     cx, ax
+    cmp     cx, ax
+    jne     .fail
+    ret
+
+.fail:
+    call    fail_with_msg_sp
+    db      "A 80386+ CPU is required!",13,10,"$"
+
+fail_with_msg_sp:
+    pop     dx
+    push    cs
+    pop     ds
+    mov     ah, 9
+    int     0x21
+    mov     ax, 0x4c01
+    int     0x21
 
 section .text
 rt: dd      rt
