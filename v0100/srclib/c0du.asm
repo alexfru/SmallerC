@@ -17,6 +17,7 @@ cpu 8086
 
     global __start
 __start:
+    call    check_dos3
     call    check_386
     call    check_pmode
 
@@ -161,6 +162,29 @@ cpu 386
 
 cpu 8086
 
+check_dos3:
+    ; Expects ES=PSP.
+    mov     ax, 0x3000 ; al = 0 in case it's DOS prior to 2.0 and doesn't have this function
+    int     0x21
+    cmp     al, 3
+    jc      .not_dos3 ; fail if DOS prior to 3.0
+    ret
+.not_dos3:
+    call    .fail
+    db      "DOS 3+ required!",13,10,"$"
+.fail:
+    pop     dx
+    push    cs
+    pop     ds
+    mov     ah, 9
+    int     0x21
+    ; Jump to PSP:0, which has "int 0x20" that will properly terminate on DOS prior to 2.0
+    ; (properly is when CS=PSP).
+    push    es
+    xor     ax, ax
+    push    ax
+    retf
+
 check_386:
     ; Below 80286? E.g. 80(1)88/80(1)86 or V-20/V-30?
     push    sp
@@ -197,7 +221,7 @@ cpu 8086
 
 .fail:
     call    fail_with_msg_sp
-    db      "A 80386+ CPU is required!",13,10,"$"
+    db      "An 80386+ CPU is required!",13,10,"$"
 
 check_pmode:
     ; Check CR0.PE bit

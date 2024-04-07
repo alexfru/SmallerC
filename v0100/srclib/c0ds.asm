@@ -10,51 +10,77 @@ bits 16
 
 section .text
 
+cpu 8086
+
     global __start
 __start:
-    mov ax, ss
-    mov [cs:_ss], ax ; preserve SS as the data segment, which we may need to access from ISRs
-    mov ds, ax ; DS=ES=SS in small model .EXEs and in tiny model .COMs
-    mov es, ax
-    mov bx, cs
-    cmp ax, bx
-    jne exe
+    call    check_dos3
+
+    mov     ax, ss
+    mov     [cs:_ss], ax ; preserve SS as the data segment, which we may need to access from ISRs
+    mov     ds, ax ; DS=ES=SS in small model .EXEs and in tiny model .COMs
+    mov     es, ax
+
+    mov     bx, cs
+    cmp     ax, bx
+    jne     init_bss
+
     ; CS=SS means it's a .COM program.
     ; .COM programs get all available memory allocated to them.
     ; Shrink the PSP block to 64KB.
-    mov ah, 0x4a
-    mov bx, 4096
-    int 0x21
-    jnc exe
+    mov     ah, 0x4a
+    mov     bx, 4096
+    int     0x21
+    jnc     init_bss
     ; .COM programs may receive less than 64KB of memory just as well, bail out if it's the case
-    mov ah, 0x40
-    mov bx, 2 ; stderr
-    mov dx, _64kbmsg
-    mov cx, _64kbmsg_end - _64kbmsg
-    int 0x21
-    jmp terminate
+    mov     ah, 9
+    push    cs
+    pop     ds
+    mov     dx, msg_64kb
+    int     0x21
+    jmp     terminate
 
-exe:
+init_bss:
     ; Init .bss
-    mov di, __start__bss
-    mov cx, __stop__bss
-    sub cx, di
-    xor al, al
+    mov     di, __start__bss
+    mov     cx, __stop__bss
+    sub     cx, di
+    xor     al, al
     cld
-    rep stosb
+    rep     stosb
 
-    jmp ___start__ ; __start__() will set up argc and argv for main() and call exit(main(argc, argv))
+    jmp     ___start__ ; __start__() will set up argc and argv for main() and call exit(main(argc, argv))
+
+check_dos3:
+    ; Expects ES=PSP.
+    mov     ax, 0x3000 ; al = 0 in case it's DOS prior to 2.0 and doesn't have this function
+    int     0x21
+    cmp     al, 3
+    jc      .not_dos3 ; fail if DOS prior to 3.0
+    ret
+.not_dos3:
+    mov     ah, 9
+    push    cs
+    pop     ds
+    mov     dx, msg_dos3
+    int     0x21
+    ; Jump to PSP:0, which has "int 0x20" that will properly terminate on DOS prior to 2.0
+    ; (properly is when CS=PSP).
+    push    es
+    xor     ax, ax
+    push    ax
+    retf
 
     global ___getCS
 ___getCS:
-    mov ax, cs
+    mov     ax, cs
     ret
 
     global ___getSS
 ___getSS:
-    mov ax, [cs:_ss]
+    mov     ax, [cs:_ss]
     ret
-_ss dw 0
+_ss dw 0x9090
 
     extern ___DosSetVect
     extern ___Int00DE, ___Int04OF, ___Int06UD
@@ -88,13 +114,11 @@ _ss dw 0
     ; when dereferencing pointers.
     global ___ExcIsr
 ___ExcIsr:
-    mov ah, 0x40
-    mov bx, 2 ; stderr
-    push cs
-    pop ds
-    mov dx, _excmsg
-    mov cx, _excmsg_end - _excmsg
-    int 0x21
+    mov     ah, 9
+    push    cs
+    pop     ds
+    mov     dx, msg_exc
+    int     0x21
     ; fallthrough
 
     ; It looks like DOS will terminate the app on Ctrl+C even without a custom int 0x23 handler.
@@ -102,36 +126,48 @@ ___ExcIsr:
     global ___CtrlCIsr
 ___CtrlCIsr:
 
-    mov ax, [cs:_ss]
-    mov ds, ax
-    mov es, ax
+    mov     ax, [cs:_ss]
+    mov     ds, ax
+    mov     es, ax
 
-    push ___Int00DE
-    push 0
-    call ___DosSetVect
-;    push ___Int01DB
-;    push 1
-;    call ___DosSetVect
-;    push ___Int03BP
-;    push 3
-;    call ___DosSetVect
-    push ___Int04OF
-    push 4
-    call ___DosSetVect
-    push ___Int06UD
-    push 6
-    call ___DosSetVect
+    mov     ax, ___Int00DE
+    push    ax
+    xor     ax, ax
+    push    ax
+    call    ___DosSetVect
+;    mov     ax, ___Int01DB
+;    push    ax
+;    mov     ax, 1
+;    push    ax
+;    call    ___DosSetVect
+;    mov     ax, ___Int03BP
+;    push    ax
+;    mov     ax, 3
+;    push    ax
+;    call    ___DosSetVect
+    mov     ax, ___Int04OF
+    push    ax
+    mov     ax, 4
+    push    ax
+    call    ___DosSetVect
+    mov     ax, ___Int06UD
+    push    ax
+    mov     ax, 6
+    push    ax
+    call    ___DosSetVect
 
 terminate:
-    mov ax, 0x4c01
-    int 0x21
+    mov     ax, 0x4c01
+    int     0x21
 
-_excmsg db 13,10,"Unhandled exception!",13,10
-_excmsg_end:
+; N.B. these messages are in the code segment
+; (that is, separate from the data/stack segment, if it's an .EXE).
 
-_64kbmsg db "Not enough memory!",13,10
-_64kbmsg_end:
+msg_exc db 13,10,"Unhandled exception!",13,10,"$"
 
+msg_64kb db "Not enough memory!",13,10,"$"
+
+msg_dos3 db "DOS 3+ required!",13,10,"$"
 
 section .bss
     ; .bss must exist for __start__bss and __stop__bss to also exist

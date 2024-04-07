@@ -26,11 +26,16 @@ section .text
 
         global __start
 __start:
+        call    check_dos3
+        mov     bh, al ; DOS major version number
+        mov     bl, ah ; DOS minor version number
+
         mov     ax, ss
         mov     ds, ax
         mov     [ds_seg], ax
         mov     [psp_seg], es
         mov     [cs_seg], cs
+        mov     [dos_ver], bx
 
         ; reduce the data/stack segment, releasing some memory to DOS
         mov     sp, stack_top
@@ -335,6 +340,25 @@ cpu 386
         retf
 
 cpu 8086
+
+check_dos3:
+        ; Expects ES=PSP.
+        mov     ax, 0x3000 ; al = 0 in case it's DOS prior to 2.0 and doesn't have this function
+        int     0x21
+        cmp     al, 3
+        jc      .not_dos3 ; fail if DOS prior to 3.0
+        ret
+.not_dos3:
+        push    ss
+        pop     ds
+        mov     dx, msg_dos3
+        call    pmsg
+        ; Jump to PSP:0, which has "int 0x20" that will properly terminate on DOS prior to 2.0
+        ; (properly is when CS=PSP).
+        push    es
+        xor     ax, ax
+        push    ax
+        retf
 
 dpmi_detect:
         mov     ax, 0x1687
@@ -852,6 +876,7 @@ exec_args   db 0, 13 ; no host arguments, CR-terminated
 hex_digits  db "0123456789abcdef"
 %endif
 
+msg_dos3        db "DOS 3+ required!" ; continues below
 msg_crlf        db 13, 10, 0
 msg_nodpmi32    db "No 32-bit DPMI! Get CWSDPMI.EXE!", 0
 msg_noenv       db "No environment segment!", 0
@@ -869,6 +894,7 @@ section .bss ; Note, we aren't zeroing .bss!
 cs_seg      resw 1
 ds_seg      resw 1
 psp_seg     resw 1
+dos_ver     resw 1
 env_seg     resw 1
 path_ofs    resw 1
 
