@@ -154,12 +154,14 @@ cpu 386
         ; TBD??? additional stub info & a.out header validation?
 
         ; allocate memory for the DPMI host
+        call    link_umb
         mov     bx, [pm_entry_sz]
         or      bx, 1
         mov     ah, 0x48
         int     0x21
-        jc      err_nomem
         mov     [pm_entry_seg], ax
+        call    restore_umb ; N.B. preserves flags
+        jc      err_nomem
 
         ; enter 32-bit protected mode
         mov     es, [pm_entry_seg]
@@ -360,6 +362,44 @@ check_dos3:
         push    ax
         retf
 
+link_umb:
+        cmp     word [dos_ver], 0x500
+        jc      .done ; fail if DOS prior to 5.0
+
+        mov     ax, 0x5800
+        int     0x21
+        mov     [orig_alloc_strategy], al
+        mov     ax, 0x5802
+        int     0x21
+        mov     [orig_umb_linked], al
+
+        mov     ax, 0x5803
+        mov     bx, 0x0001 ; link UMB for allocations
+        int     0x21
+        mov     ax, 0x5801
+        mov     bx, 0x0080 ; first fit strategy: first try it in UMB, last in conventional mem
+                           ; N.B. 0x0081=best fit strategy doesn't seem to work as expected at least on DOSBox
+        int     0x21
+.done:
+        ret
+
+restore_umb:
+        pushf   ; preserve flags to simplify error checking
+        cmp     word [dos_ver], 0x500
+        jc      .done ; fail if DOS prior to 5.0
+
+        mov     ax, 0x5803
+        mov     bl, [orig_umb_linked]
+        xor     bh, bh
+        int     0x21
+        mov     ax, 0x5801
+        mov     bl, [orig_alloc_strategy]
+        xor     bh, bh
+        int     0x21
+.done:
+        popf
+        ret
+
 dpmi_detect:
         mov     ax, 0x1687
         int     0x2f
@@ -555,6 +595,7 @@ exec:
         push    si
         push    di
         push    bp
+        call    link_umb ; loading CWSDPMI while UMB is linked saves most conventional memory
         mov     word [exec_params_env_seg], 0
         mov     word [exec_params_params + 0], exec_args
         mov     word [exec_params_params + 2], ds
@@ -574,6 +615,7 @@ exec:
         mov     ss, [cs:save_ss]
         mov     sp, [cs:save_sp]
         sti
+        call    restore_umb ; N.B. preserves flags
         sbb     ax, ax ; ax = 0 (and zf = 1) IFF success
         jnz     exec_end
         mov     ah, 0x4d
@@ -891,20 +933,22 @@ align 16
 
 section .bss ; Note, we aren't zeroing .bss!
 
-cs_seg      resw 1
-ds_seg      resw 1
-psp_seg     resw 1
-dos_ver     resw 1
-env_seg     resw 1
-path_ofs    resw 1
+cs_seg              resw 1
+ds_seg              resw 1
+psp_seg             resw 1
+dos_ver             resw 1
+orig_alloc_strategy resb 1
+orig_umb_linked     resb 1
+env_seg             resw 1
+path_ofs            resw 1
 
-exit_sp     resw 1
+exit_sp             resw 1
 
-argv0       resb 81 ; shared with 32-bit code
+argv0               resb 81 ; shared with 32-bit code
 
-pm_entry    resd 1
-pm_entry_sz resw 1
-pm_entry_seg resw 1
+pm_entry            resd 1
+pm_entry_sz         resw 1
+pm_entry_seg        resw 1
 
 exec_params:
 exec_params_env_seg     resw 1
