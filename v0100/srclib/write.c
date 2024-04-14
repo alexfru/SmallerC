@@ -14,8 +14,7 @@
 #ifdef _DOS
 
 #ifdef __HUGE_OR_UNREAL__
-static
-int DosWrite(int handle, void* buf, unsigned size, unsigned* sizeOrError)
+int __DosWrite(int handle, void* buf, unsigned size, unsigned* sizeOrError)
 {
   asm("mov ah, 0x40\n"
       "mov bx, [bp + 8]\n"
@@ -44,8 +43,7 @@ int DosWrite(int handle, void* buf, unsigned size, unsigned* sizeOrError)
 #endif // __HUGE_OR_UNREAL__
 
 #ifdef __SMALLER_C_16__
-static
-int DosWrite(int handle, void* buf, unsigned size, unsigned* sizeOrError)
+int __DosWrite(int handle, void* buf, unsigned size, unsigned* sizeOrError)
 {
   asm("mov ah, 0x40\n"
       "mov bx, [bp + 4]\n"
@@ -64,8 +62,7 @@ int DosWrite(int handle, void* buf, unsigned size, unsigned* sizeOrError)
 #ifdef _DPMI
 #include <string.h>
 #include "idpmi.h"
-static
-int DosWrite(int handle, void* buf, unsigned size, unsigned* sizeOrError)
+int __DosWrite(int handle, void* buf, unsigned size, unsigned* sizeOrError)
 {
   __dpmi_int_regs regs;
   memcpy(__dpmi_iobuf, buf, size);
@@ -118,7 +115,7 @@ ssize_t __write(int fd, void* buf, size_t size)
 #endif
 #endif
     unsigned writtenOrError;
-    if (DosWrite(fd, p, sz, &writtenOrError))
+    if (__DosWrite(fd, p, sz, &writtenOrError))
     {
       p += writtenOrError;
       cnt += writtenOrError;

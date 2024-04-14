@@ -15,8 +15,8 @@
 #ifdef _DOS
 
 #ifdef __HUGE_OR_UNREAL__
-static
-int DosExtOpen(char* name, int mode, int attr, int action, unsigned* handleOrError)
+#ifdef USE_EXT_OPEN
+int __DosExtOpen(char* name, int mode, int attr, int action, unsigned* handleOrError)
 {
   asm("mov ah, 0x6c\n"
       "mov esi, [bp + 8]\n"
@@ -43,11 +43,39 @@ int DosExtOpen(char* name, int mode, int attr, int action, unsigned* handleOrErr
       "mov  [esi], ebx");
 #endif
 }
+#else
+static
+int DosCreateOrOpen(char* name, unsigned ax, unsigned cx, unsigned* handleOrError)
+{
+  asm("mov ax, [bp + 12]\n"
+      "mov cx, [bp + 16]\n"
+      "mov edx, [bp + 8]\n"
+      "ror edx, 4\n"
+      "mov ds, dx\n"
+      "shr edx, 28\n"
+      "int 0x21");
+  asm("movzx ebx, ax\n"
+      "cmc\n"
+      "sbb ax, ax\n"
+      "and eax, 1\n"
+      "mov esi, [bp + 20]");
+#ifdef __HUGE__
+  asm("ror esi, 4\n"
+      "mov ds, si\n"
+      "shr esi, 28\n"
+      "mov [si], ebx");
+#else
+  asm("push word 0\n"
+      "pop  ds\n"
+      "mov  [esi], ebx");
+#endif
+}
+#endif
 #endif // __HUGE_OR_UNREAL__
 
 #ifdef __SMALLER_C_16__
-static
-int DosExtOpen(char* name, int mode, int attr, int action, unsigned* handleOrError)
+#ifdef USE_EXT_OPEN
+int __DosExtOpen(char* name, int mode, int attr, int action, unsigned* handleOrError)
 {
   asm("mov ah, 0x6c\n"
       "mov si, [bp + 4]\n"
@@ -62,13 +90,29 @@ int DosExtOpen(char* name, int mode, int attr, int action, unsigned* handleOrErr
       "mov si, [bp + 12]\n"
       "mov [si], bx");
 }
+#else
+static
+int DosCreateOrOpen(char* name, unsigned ax, unsigned cx, unsigned* handleOrError)
+{
+  asm("mov ax, [bp + 6]\n"
+      "mov dx, [bp + 4]\n"
+      "mov cx, [bp + 8]\n"
+      "int 0x21");
+  asm("mov bx, ax\n"
+      "cmc\n"
+      "sbb ax, ax\n"
+      "and ax, 1\n"
+      "mov si, [bp + 10]\n"
+      "mov [si], bx");
+}
+#endif
 #endif // __SMALLER_C_16__
 
 #ifdef _DPMI
 #include <string.h>
 #include "idpmi.h"
-static
-int DosExtOpen(char* name, int mode, int attr, int action, unsigned* handleOrError)
+#ifdef USE_EXT_OPEN
+int __DosExtOpen(char* name, int mode, int attr, int action, unsigned* handleOrError)
 {
   __dpmi_int_regs regs;
   unsigned nlen = strlen(name) + 1;
@@ -93,7 +137,91 @@ int DosExtOpen(char* name, int mode, int attr, int action, unsigned* handleOrErr
   *handleOrError = regs.eax & 0xFFFF;
   return (regs.flags & 1) ^ 1; // carry
 }
+#else
+static
+int DosCreateOrOpen(char* name, unsigned ax, unsigned cx, unsigned* handleOrError)
+{
+  __dpmi_int_regs regs;
+  unsigned nlen = strlen(name) + 1;
+  if (nlen > __DPMI_IOFBUFSZ)
+  {
+    *handleOrError = -1;
+    return 0;
+  }
+  memcpy(__dpmi_iobuf, name, nlen);
+  memset(&regs, 0, sizeof regs);
+  regs.eax = ax;
+  regs.ecx = cx;
+  regs.edx = (unsigned)__dpmi_iobuf & 0xF;
+  regs.ds = (unsigned)__dpmi_iobuf >> 4;
+  if (__dpmi_int(0x21, &regs))
+  {
+    *handleOrError = -1;
+    return 0;
+  }
+  *handleOrError = regs.eax & 0xFFFF;
+  return (regs.flags & 1) ^ 1; // carry
+}
+#endif
 #endif // _DPMI
+
+#ifndef USE_EXT_OPEN
+int __DosWrite(int handle, void* buf, unsigned size, unsigned* sizeOrError);
+
+// Implementation of function 0x6c in terms of functions 0x3c, 0x3d, 0x5b.
+int __DosExtOpen(char* name, int mode, int attr, int action, unsigned* handleOrError)
+{
+  switch (action)
+  {
+  case 0x10: // O_CREAT && O_EXCL: fail if exists, else create and open
+    return DosCreateOrOpen(name, 0x5b00, attr, handleOrError);
+  case 0x12: // O_CREAT && O_TRUNC: if exists, truncate and open, else create and open
+    return DosCreateOrOpen(name, 0x3c00, attr, handleOrError);
+  case 0x11: // O_CREAT && !O_TRUNC: if exists, just open, else create and open
+    for (;;)
+    {
+      // First, try opening an existing file...
+      int res = DosCreateOrOpen(name, 0x3d00 | mode, attr, handleOrError);
+      if (res)
+        return 1;
+
+      if (*handleOrError != 2) // done if not "file not found" error
+        break;
+
+      // Last, try creating a new file...
+      res = DosCreateOrOpen(name, 0x5b00, attr, handleOrError);
+      if (res)
+        return 1;
+
+      if (*handleOrError != 80) // done if not "file already exists" error
+        break;
+
+      // If we're here, there's a race going on.
+      // Repeat the open & create sequence until success or failure...
+    }
+    return 0;
+  case 0x02: // !O_CREAT && O_TRUNC: if exists, truncate and open, else fail
+    if (DosCreateOrOpen(name, 0x3d00 | mode, attr, handleOrError))
+    {
+      unsigned sizeOrError;
+      // Truncate the file using a zero-sized write.
+      if (!__DosWrite(*handleOrError, /*buf*/NULL, /*size*/0, &sizeOrError))
+      {
+        __close(*handleOrError);
+        *handleOrError = sizeOrError;
+        return 0;
+      }
+      return 1;
+    }
+    return 0;
+  case 0x01: // !O_CREAT && !O_TRUNC: if exists, just open, else fail
+    return DosCreateOrOpen(name, 0x3d00 | mode, attr, handleOrError);
+  default:
+    *handleOrError = -1;
+    return 0;
+  }
+}
+#endif
 
 int __open(char* name, int oflag, ...)
 {
@@ -121,8 +249,7 @@ int __open(char* name, int oflag, ...)
   if (psmode && (*psmode & S_IWUSR) == 0)
     attr |= 1; // read-only attribute
 
-  // TBD??? use int 0x21 functions 0x3d, 0x3c, 0x5b for older versions of DOS???
-  if (DosExtOpen(name, omode, attr, action, &handle))
+  if (__DosExtOpen(name, omode, attr, action, &handle))
   {
     // Problem: DOS does not support the append mode directly
     // (e.g. writes only going to the end of the file and reads allowed anywhere in the file).

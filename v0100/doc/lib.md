@@ -35,7 +35,7 @@ MacOS. (Strictly speaking, kernel32.dll is used on Windows and not
 syscall-invoking instructions.)
 
 The DOS version of the library requires one of:
-*   MS-DOS 4.01 or better, i80386 CPU & i80387 FPU or better
+*   MS-DOS 3.0 or better, i80386 CPU & i80387 FPU or better
 *   Windows 95/98/Me/2000/XP or 32-bit Windows Vista/7
 *   DOSBox 0.74 or better
 
