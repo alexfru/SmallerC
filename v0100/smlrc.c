@@ -5720,10 +5720,13 @@ int ParseExpr(int tok, int* GotUnary, int* ExprTypeSynPtr, int* ConstExpr, int* 
       if (!j)
       {
         int idx = sp - 1;
+        int outer;
         *ConstVal = exprval(&idx, ExprTypeSynPtr, ConstExpr);
+        outer = idx;
         // remove the unneeded unary +'s that have served their cast-substitute purpose
-        // also remove dereferences of size 0 (dereferences of pointers to structures)
-        for (idx = sp - 1; idx >= 0; idx--)
+        // also remove dereferences of size 0 (dereferences of pointers to structures);
+        // do this only within the current subexpression
+        for (idx = sp - 1; idx > outer; idx--)
           if (stack[idx][0] == tokUnaryPlus ||
               (stack[idx][0] == tokUnaryStar && !stack[idx][1]))
             del(idx, 1);
