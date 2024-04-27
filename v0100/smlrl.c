@@ -411,11 +411,12 @@ typedef struct
   uint16 InitCs;
   uint16 ReloOff;
   uint16 OverlayNo;
-  uint16 FirstRelo[2];
+  uint16 Reserved[16];
+  uint32 NewFmtHdrOff;
 } tDosExeHeader;
 
 #ifndef __SMALLER_C__
-C_ASSERT(sizeof(tDosExeHeader) == 32);
+C_ASSERT(sizeof(tDosExeHeader) == 64);
 #endif
 
 typedef struct
@@ -1811,21 +1812,22 @@ void RelocateAndWriteSection(FILE* outStream, FILE* inStream, size_t size, tElfM
 
 tDosExeHeader DosExeHeader =
 {
-  { "MZ" }, // Signature
-  0,        // PartPage
-  0,        // PageCnt
-  0,        // ReloCnt
-  2,        // HdrSize
-  0,        // MinAlloc
-  0,        // MaxAlloc
-  0,        // InitSs
-  0xFFFC,   // InitSp
-  0,        // ChkSum
-  0,        // InitIp
-  0,        // InitCs
-  28,       // ReloOff
-  0,        // OverlayNo
-  { 0, 0 }  // FirstRelo
+  { "MZ" },                     // Signature
+  0,                            // PartPage
+  0,                            // PageCnt
+  0,                            // ReloCnt
+  sizeof(tDosExeHeader) / 16,   // HdrSize
+  0,                            // MinAlloc
+  0,                            // MaxAlloc
+  0,                            // InitSs
+  0xFFFC,                       // InitSp
+  0,                            // ChkSum
+  0,                            // InitIp
+  0,                            // InitCs
+  28,                           // ReloOff (offsetof(tDosExeHeader, Reserved))
+  0,                            // OverlayNo
+  { 0 },                        // Reserved
+  0                             // NewFmtHdrOff
 };
 
 uint8 DosMzExeStub[128] =
@@ -2651,6 +2653,13 @@ void RwDosExe(void)
   switch (OutputFormat)
   {
   case FormatDosExeSmall:
+    // The very first byte after the MZ header is the first instruction in the
+    // code segment. Its CS:IP (CS is relative to the actual load location)
+    // is going to be -sizeof(tDosExeHeader)/16 : sizeof(tDosExeHeader).
+    // (If you compute this CS*16+IP modulo 2**20, you'll get relative physical
+    // address 0)
+    // Such a setup helps a bit with debugging: IP of every instruction in the
+    // code segment is equal to instruction's offset within the .EXE.
     Origin = sizeof(tDosExeHeader);
     hdrsz = sizeof(tDosExeHeader);
     if (StackSize == 0xFFFFFFFF)
@@ -2664,6 +2673,7 @@ void RwDosExe(void)
     break;
   case FormatDosExeHuge:
   case FormatDosExeUnreal:
+    // See the above comment on CS:IP setup.
     Origin = sizeof(tDosExeHeader);
     hdrsz = sizeof(tDosExeHeader);
     if (StackSize == 0xFFFFFFFF)
@@ -2713,9 +2723,12 @@ void RwDosExe(void)
       DosExeHeader.PartPage = fsz % 512;
       DosExeHeader.PageCnt = (fsz + 511) / 512;
       DosExeHeader.InitIp = FindSymbolAddress(EntryPoint);
-      DosExeHeader.InitCs = 0xFFFE;
-      DosExeHeader.InitSs = (pSectDescrs[SectCnt].Stop + 15) / 16 - 2; // data/stack segment starts right after code segment's padding
-      DosExeHeader.MaxAlloc = DosExeHeader.MinAlloc = 4096 - dsz / 16; // maximum stack size = data segment size - data size
+      DosExeHeader.InitCs = 0xFFFF - sizeof(tDosExeHeader) / 16 + 1;
+      // data/stack segment starts right after code segment's padding:
+      DosExeHeader.InitSs = (pSectDescrs[SectCnt].Stop + 15) / 16 -
+                            sizeof(tDosExeHeader) / 16;
+      // maximum stack size = data segment size - data size:
+      DosExeHeader.MaxAlloc = DosExeHeader.MinAlloc = 4096 - dsz / 16;
       Fwrite(&DosExeHeader, sizeof DosExeHeader, fout);
     }
     break;
@@ -2743,10 +2756,13 @@ void RwDosExe(void)
       DosExeHeader.PartPage = fsz % 512;
       DosExeHeader.PageCnt = (fsz + 511) / 512;
       DosExeHeader.InitIp = ip & 0xF;
-      DosExeHeader.InitCs = (ip >> 4) - 2;
-      DosExeHeader.InitSs = (sz + 15) / 16 - 2; // stack segment starts right after data segment's padding
+      DosExeHeader.InitCs = (ip >> 4) - sizeof(tDosExeHeader) / 16;
+      // stack segment starts right after data segment's padding:
+      DosExeHeader.InitSs = (sz + 15) / 16 - sizeof(tDosExeHeader) / 16;
       DosExeHeader.InitSp = StackSize;
-      DosExeHeader.MaxAlloc = DosExeHeader.MinAlloc = (sz - fsz + 15) / 16 + (StackSize + 15) / 16 + 1; // maximum stack size = 64KB
+      // maximum stack size = 64KB:
+      DosExeHeader.MaxAlloc = DosExeHeader.MinAlloc =
+        (sz - fsz + 15) / 16 + (StackSize + 15) / 16 + 1;
       Fwrite(&DosExeHeader, sizeof DosExeHeader, fout);
     }
     break;
