@@ -2374,12 +2374,16 @@ void errorRedecl(char* s)
 }
 
 #ifdef MIPS
-#ifndef CAN_COMPILE_32BIT
-#error MIPS target requires a 32-bit compiler
-#endif
-#include "cgmips.c"
+  #ifndef CAN_COMPILE_32BIT
+    #error MIPS target requires a 32-bit compiler
+  #endif
+  #include "cgmips.c"
 #else
-#include "cgx86.c"
+  #ifdef ONLY8086
+    #include "cg8086.c"
+  #else
+    #include "cgx86.c"
+  #endif
 #endif // #ifdef MIPS
 
 // expr.c code
@@ -5928,8 +5932,8 @@ void error(char* format, ...)
 
   if (OutFile)
     fclose(OutFile);
-
-  printf("Error in \"%s\" (%d:%d)\n", FileNames[fidx], LineNo, LinePos);
+  // Make error output compatilble with Modern Editors (VSCode, Atom, etc)
+  printf("Error in \"%s\":%d:%d:\n", FileNames[fidx], LineNo, LinePos);
 
 #ifndef __SMALLER_C__
   vprintf(format, vl);
