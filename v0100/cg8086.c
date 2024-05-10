@@ -1549,10 +1549,9 @@ void GenExpr1(void)
     case tokNumUint:
       // Don't load operand into ax when ax is going to be pushed next, push it directly
       if (!(i + 1 < sp && stack[i + 1][0] == ','))
-//        GenPrintInstr2Operands(X86InstrMov, 0,
-//                               X86OpRegAWord, 0,
-//                               X86OpConst, v);
-        printf2("\tmov ax, %d\n", v);
+        GenPrintInstr2Operands(X86InstrMov, 0,
+                               X86OpRegAWord, 0,
+                               X86OpConst, v);
       break;
     case tokIdent:
       // Don't load operand into ax when ax is going to be pushed next, push it directly
@@ -1992,17 +1991,15 @@ void GenExpr1(void)
               int labelCCAfter = LabelCnt++;
               GenPrintInstr1Operand(X86InstrJcc, tok,
                                     X86OpNumLabel, labelCC);
-//              GenPrintInstr2Operands(X86InstrMov, 0,
-//                                    X86OpRegAByte, 0,
-//                                    X86OpConst, 0);
-              puts2("xor al, al");
+              GenPrintInstr2Operands(X86InstrMov, 0,
+                                    X86OpRegAByte, 0,
+                                    X86OpConst, 0);
               GenPrintInstr1Operand(X86InstrJmp, 0,
                                     X86OpNumLabel, labelCCAfter);
               GenNumLabel(labelCC);
-//              GenPrintInstr2Operands(X86InstrMov, 0,
-//                                    X86OpRegAByte, 0,
-//                                    X86OpConst, 1);
-              puts2("mov al, 1");
+              GenPrintInstr2Operands(X86InstrMov, 0,
+                                    X86OpRegAByte, 0,
+                                    X86OpConst, 1);
               GenNumLabel(labelCCAfter);
             
               GenPrintInstrNoOperand(X86InstrCbw);
@@ -2095,10 +2092,9 @@ void GenExpr1(void)
           GenPrintInstrNoOperand(X86InstrCwd);
           break;
         default:
-//          GenPrintInstr2Operands(X86InstrMov, 0,
-//                                 X86OpRegDWord, 0,
-//                                 X86OpConst, 0);
-            puts2("\txor dx, dx\n");
+          GenPrintInstr2Operands(X86InstrMov, 0,
+                                 X86OpRegDWord, 0,
+                                 X86OpConst, 0);
           break;
         }
 
@@ -2288,9 +2284,8 @@ void GenExpr1(void)
       }
       else
       {
-//          GenPrintInstr1Operand(X86InstrCall, 0,
-//                                X86OpRegAWord, 0);
-          puts2("\tcall ax\n");
+          GenPrintInstr1Operand(X86InstrCall, 0,
+                                X86OpRegAWord, 0);
       }
       GenGrowStack(-v);
       break;
@@ -2410,10 +2405,9 @@ void GenExpr0(void)
         GenPrintInstr1Operand(X86InstrPop, 0,
                               X86OpRegBWord, 0);
         if (tok == '-')
-//          GenPrintInstr2Operands(X86InstrXchg, 0,
-//                                 X86OpRegAWord, 0,
-//                                 X86OpRegBWord, 0);
-          puts2("\txchg ax, bx\n");
+          GenPrintInstr2Operands(X86InstrXchg, 0,
+                                 X86OpRegAWord, 0,
+                                 X86OpRegBWord, 0);
         if (tok != '*')
           GenPrintInstr2Operands(instr, 0,
                                  X86OpRegAWord, 0,
@@ -2428,12 +2422,11 @@ void GenExpr0(void)
     case tokUDiv:
     case '%':
     case tokUMod:
-//      GenPrintInstr1Operand(X86InstrPop, 0,
-//                            X86OpRegBWord, 0);
-//      GenPrintInstr2Operands(X86InstrXchg, 0,
-//                             X86OpRegAWord, 0,
-//                             X86OpRegBWord, 0);
-      puts2("\tpop bx\n\txchg ax, bx\n");
+      GenPrintInstr1Operand(X86InstrPop, 0,
+                            X86OpRegBWord, 0);
+      GenPrintInstr2Operands(X86InstrXchg, 0,
+                             X86OpRegAWord, 0,
+                             X86OpRegBWord, 0);
       if (tok == '/' || tok == '%')
       {
         
