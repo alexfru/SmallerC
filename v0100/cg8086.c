@@ -219,47 +219,45 @@ void GenRecordFxnSize(char* startLabelName, int endLabelNo)
   (void)endLabelNo;
 }
 
-#define X86InstrMov    0x00
-#define X86InstrMovSx  0x01
-#define X86InstrMovZx  0x02
-#define X86InstrXchg   0x03
-#define X86InstrLea    0x04
-#define X86InstrPush   0x05
-#define X86InstrPop    0x06
-#define X86InstrInc    0x07
-#define X86InstrDec    0x08
-#define X86InstrAdd    0x09
-#define X86InstrSub    0x0A
-#define X86InstrAnd    0x0B
-#define X86InstrXor    0x0C
-#define X86InstrOr     0x0D
-#define X86InstrCmp    0x0E
-#define X86InstrTest   0x0F
-#define X86InstrMul    0x10
-#define X86InstrImul   0x11
-#define X86InstrIdiv   0x12
-#define X86InstrDiv    0x13
-#define X86InstrShl    0x14
-#define X86InstrSar    0x15
-#define X86InstrShr    0x16
-#define X86InstrNeg    0x17
-#define X86InstrNot    0x18
-#define X86InstrCbw    0x19
-#define X86InstrCwd    0x1A
-#define X86InstrCdq    0x1B
-#define X86InstrSetCc  0x1C
-#define X86InstrJcc    0x1D
-#define X86InstrJNotCc 0x1E
-#define X86InstrLeave  0x1F
-#define X86InstrCall   0x20
-#define X86InstrRet    0x21
-#define X86InstrJmp    0x22
+#define I8086InstrMov    0x00
+#define I8086InstrXchg   0x03
+#define I8086InstrLea    0x04
+#define I8086InstrPush   0x05
+#define I8086InstrPop    0x06
+#define I8086InstrInc    0x07
+#define I8086InstrDec    0x08
+#define I8086InstrAdd    0x09
+#define I8086InstrSub    0x0A
+#define I8086InstrAnd    0x0B
+#define I8086InstrXor    0x0C
+#define I8086InstrOr     0x0D
+#define I8086InstrCmp    0x0E
+#define I8086InstrTest   0x0F
+#define I8086InstrMul    0x10
+#define I8086InstrImul   0x11
+#define I8086InstrIdiv   0x12
+#define I8086InstrDiv    0x13
+#define I8086InstrShl    0x14
+#define I8086InstrSar    0x15
+#define I8086InstrShr    0x16
+#define I8086InstrNeg    0x17
+#define I8086InstrNot    0x18
+#define I8086InstrCbw    0x19
+#define I8086InstrCwd    0x1A
+#define I8086InstrCdq    0x1B
+#define I8086InstrSetCc  0x1C
+#define I8086InstrJcc    0x1D
+#define I8086InstrJNotCc 0x1E
+#define I8086InstrLeave  0x1F
+#define I8086InstrCall   0x20
+#define I8086InstrRet    0x21
+#define I8086InstrJmp    0x22
 
 char* winstrs[] =
 {
   "mov",
-  "movsx",
-  "movzx",
+  0,
+  0,
   "xchg",
   "lea",
   "push",
@@ -301,15 +299,15 @@ void GenPrintInstr(int instr, int val)
 
   switch (instr)
   {
-  case X86InstrLeave:
+  case I8086InstrLeave:
     p = (OutputFormat != FormatSegHuge && OutputFormat != FormatSegUnreal) ? "leave" : "db\t0x66\n\tleave";
     break;
 
-  case X86InstrRet:
+  case I8086InstrRet:
     p = (OutputFormat != FormatSegHuge && OutputFormat != FormatSegUnreal) ? "ret" : "retf";
     break;
 
-  case X86InstrJcc:
+  case I8086InstrJcc:
     switch (val)
     {
     case '<':         p = "jl"; break;
@@ -324,7 +322,7 @@ void GenPrintInstr(int instr, int val)
     case tokNEQ:      p = "jne"; break;
     }
     break;
-  case X86InstrJNotCc:
+  case I8086InstrJNotCc:
     switch (val)
     {
     case '<':         p = "jge"; break;
@@ -340,7 +338,7 @@ void GenPrintInstr(int instr, int val)
     }
     break;
 
-  case X86InstrSetCc:
+  case I8086InstrSetCc:
     switch (val)
     {
     case '<':         p = "setl"; break;
@@ -363,10 +361,10 @@ void GenPrintInstr(int instr, int val)
 
   switch (instr)
   {
-  case X86InstrCbw:
-  case X86InstrCwd:
-  case X86InstrLeave:
-  case X86InstrRet:
+  case I8086InstrCbw:
+  case I8086InstrCwd:
+  case I8086InstrLeave:
+  case I8086InstrRet:
     printf2("\t%s", p);
     break;
   default:
@@ -375,38 +373,33 @@ void GenPrintInstr(int instr, int val)
   }
 }
 
-#define X86OpRegAByte                   0x00
-#define X86OpRegAByteHigh               0x01
-#define X86OpRegCByte                   0x02
-#define X86OpRegAWord                   0x03
-#define X86OpRegBWord                   0x04
-#define X86OpRegCWord                   0x05
-#define X86OpRegDWord                   0x06
-#define X86OpRegAHalfWord               0x07
-#define X86OpRegCHalfWord               0x08
-#define X86OpRegBpWord                  0x09
-#define X86OpRegSpWord                  0x0A
-#define X86OpRegAByteOrWord             0x0B
-#define X86OpRegCByteOrWord             0x0C
-#define X86OpConst                      0x0D
-#define X86OpLabel                      0x0E
-#define X86OpNumLabel                   0x0F
-#define X86OpIndLabel                   0x10
-#define X86OpIndLabelExplicitByte       0x11
-#define X86OpIndLabelExplicitWord       0x12
-#define X86OpIndLabelExplicitHalfWord   0x13
-#define X86OpIndLabelExplicitByteOrWord 0x14
-#define X86OpIndLocal                   0x15
-#define X86OpIndLocalExplicitByte       0x16
-#define X86OpIndLocalExplicitWord       0x17
-#define X86OpIndLocalExplicitHalfWord   0x18
-#define X86OpIndLocalExplicitByteOrWord 0x19
-#define X86OpIndRegB                    0x1A
-#define X86OpIndRegBExplicitByte        0x1B
-#define X86OpIndRegBExplicitWord        0x1C
-#define X86OpIndRegBExplicitHalfWord    0x1D
-#define X86OpIndRegBExplicitByteOrWord  0x1E
-#define X86OpRegCByteHigh               0x1F
+#define I8086OpRegAByte                   0x00
+#define I8086OpRegAByteHigh               0x01
+#define I8086OpRegCByte                   0x02
+#define I8086OpRegAWord                   0x03
+#define I8086OpRegBWord                   0x04
+#define I8086OpRegCWord                   0x05
+#define I8086OpRegDWord                   0x06
+#define I8086OpRegBpWord                  0x09
+#define I8086OpRegSpWord                  0x0A
+#define I8086OpRegAByteOrWord             0x0B
+#define I8086OpRegCByteOrWord             0x0C
+#define I8086OpConst                      0x0D
+#define I8086OpLabel                      0x0E
+#define I8086OpNumLabel                   0x0F
+#define I8086OpIndLabel                   0x10
+#define I8086OpIndLabelExplicitByte       0x11
+#define I8086OpIndLabelExplicitWord       0x12
+#define I8086OpIndLabelExplicitByteOrWord 0x14
+#define I8086OpIndLocal                   0x15
+#define I8086OpIndLocalExplicitByte       0x16
+#define I8086OpIndLocalExplicitWord       0x17
+#define I8086OpIndLocalExplicitByteOrWord 0x19
+#define I8086OpIndRegB                    0x1A
+#define I8086OpIndRegBExplicitByte        0x1B
+#define I8086OpIndRegBExplicitWord        0x1C
+#define I8086OpIndRegBExplicitByteOrWord  0x1E
+#define I8086OpRegCByteHigh               0x1F
 
 STATIC
 int GenSelectByteOrWord(int op, int opSz)
@@ -414,16 +407,16 @@ int GenSelectByteOrWord(int op, int opSz)
   int tmp = opSz == 2;
   switch (op)
   {
-  case X86OpRegAByteOrWord:
-    return tmp ? X86OpRegAWord: X86OpRegAByte;
-  case X86OpRegCByteOrWord:
-    return tmp ? X86OpRegCWord : X86OpRegCByte;
-  case X86OpIndLabelExplicitByteOrWord:
-    return tmp ? X86OpIndLabelExplicitWord : X86OpIndLabelExplicitByte;
-  case X86OpIndLocalExplicitByteOrWord:
-    return tmp ? X86OpIndLocalExplicitWord : X86OpIndLocalExplicitByte;
-  case X86OpIndRegBExplicitByteOrWord:
-    return tmp ? X86OpIndRegBExplicitWord: X86OpIndRegBExplicitByte;
+  case I8086OpRegAByteOrWord:
+    return tmp ? I8086OpRegAWord: I8086OpRegAByte;
+  case I8086OpRegCByteOrWord:
+    return tmp ? I8086OpRegCWord : I8086OpRegCByte;
+  case I8086OpIndLabelExplicitByteOrWord:
+    return tmp ? I8086OpIndLabelExplicitWord : I8086OpIndLabelExplicitByte;
+  case I8086OpIndLocalExplicitByteOrWord:
+    return tmp ? I8086OpIndLocalExplicitWord : I8086OpIndLocalExplicitByte;
+  case I8086OpIndRegBExplicitByteOrWord:
+    return tmp ? I8086OpIndRegBExplicitWord: I8086OpIndRegBExplicitByte;
   }
   return op;
 }
@@ -433,28 +426,28 @@ void GenPrintOperand(int op, int val)
 {
   switch (op)
   {
-  case X86OpRegAByte: printf2("al"); break;
-  case X86OpRegAByteHigh: printf2("ah"); break;
-  case X86OpRegCByte: printf2("cl"); break;
-  case X86OpRegCByteHigh: printf2("ch"); break;
-  case X86OpRegAWord: printf2("ax"); break;
-  case X86OpRegBWord: printf2("bx"); break;
-  case X86OpRegCWord: printf2("cx"); break;
-  case X86OpRegDWord: printf2("dx"); break;
-  case X86OpRegBpWord: printf2("bp"); break;
-  case X86OpRegSpWord: printf2("sp"); break;
-  case X86OpConst: printf2("%d", truncInt(val)); break;
-  case X86OpLabel: GenPrintLabel(IdentTable + val); break;
-  case X86OpNumLabel: GenPrintNumLabel(val); break;
-  case X86OpIndLabel: printf2("["); GenPrintLabel(IdentTable + val); printf2("]"); break;
-  case X86OpIndLabelExplicitByte: printf2("byte ["); GenPrintLabel(IdentTable + val); printf2("]"); break;
-  case X86OpIndLabelExplicitWord: printf2("word ["); GenPrintLabel(IdentTable + val); printf2("]"); break;
-  case X86OpIndLocal: printf2("[bp%+d]", truncInt(val)); break;
-  case X86OpIndLocalExplicitByte: printf2("byte [bp%+d]", truncInt(val)); break;
-  case X86OpIndLocalExplicitWord: printf2("word [bp%+d]", truncInt(val)); break;
-  case X86OpIndRegB: printf2("[bx]"); break;
-  case X86OpIndRegBExplicitByte: printf2("byte [bx]"); break;
-  case X86OpIndRegBExplicitWord: printf2("word [bx]"); break;
+  case I8086OpRegAByte: printf2("al"); break;
+  case I8086OpRegAByteHigh: printf2("ah"); break;
+  case I8086OpRegCByte: printf2("cl"); break;
+  case I8086OpRegCByteHigh: printf2("ch"); break;
+  case I8086OpRegAWord: printf2("ax"); break;
+  case I8086OpRegBWord: printf2("bx"); break;
+  case I8086OpRegCWord: printf2("cx"); break;
+  case I8086OpRegDWord: printf2("dx"); break;
+  case I8086OpRegBpWord: printf2("bp"); break;
+  case I8086OpRegSpWord: printf2("sp"); break;
+  case I8086OpConst: printf2("%d", truncInt(val)); break;
+  case I8086OpLabel: GenPrintLabel(IdentTable + val); break;
+  case I8086OpNumLabel: GenPrintNumLabel(val); break;
+  case I8086OpIndLabel: printf2("["); GenPrintLabel(IdentTable + val); printf2("]"); break;
+  case I8086OpIndLabelExplicitByte: printf2("byte ["); GenPrintLabel(IdentTable + val); printf2("]"); break;
+  case I8086OpIndLabelExplicitWord: printf2("word ["); GenPrintLabel(IdentTable + val); printf2("]"); break;
+  case I8086OpIndLocal: printf2("[bp%+d]", truncInt(val)); break;
+  case I8086OpIndLocalExplicitByte: printf2("byte [bp%+d]", truncInt(val)); break;
+  case I8086OpIndLocalExplicitWord: printf2("word [bp%+d]", truncInt(val)); break;
+  case I8086OpIndRegB: printf2("[bx]"); break;
+  case I8086OpIndRegBExplicitByte: printf2("byte [bx]"); break;
+  case I8086OpIndRegBExplicitWord: printf2("word [bx]"); break;
   }
 }
 
@@ -489,19 +482,19 @@ STATIC
 void GenPrintInstr2Operands(int instr, int instrval, int operand1, int operand1val, int operand2, int operand2val)
 {
   /*
-  if (operand2 == X86OpConst && truncUint(operand2val) == 0 &&
-      (instr == X86InstrAdd || instr == X86InstrSub))
+  if (operand2 == I8086OpConst && truncUint(operand2val) == 0 &&
+      (instr == I8086InstrAdd || instr == I8086InstrSub))
     return;
 
-  if (operand2 == X86OpConst &&
+  if (operand2 == I8086OpConst &&
       (operand2val == 1 || operand2val == -1) &&
-      (instr == X86InstrAdd || instr == X86InstrSub))
+      (instr == I8086InstrAdd || instr == I8086InstrSub))
   {
-    if ((operand2val == 1 && instr == X86InstrAdd) ||
-        (operand2val == -1 && instr == X86InstrSub))
-      GenPrintInstr(X86InstrInc, 0);
+    if ((operand2val == 1 && instr == I8086InstrAdd) ||
+        (operand2val == -1 && instr == I8086InstrSub))
+      GenPrintInstr(I8086InstrInc, 0);
     else
-      GenPrintInstr(X86InstrDec, 0);
+      GenPrintInstr(I8086InstrDec, 0);
       
     GenPrintOperand(operand1, operand1val);
     GenPrintNewLine();
@@ -535,29 +528,29 @@ STATIC
 void GenExtendRegAIfNeeded(int opSz)
 {
     if (opSz == -1)
-      GenPrintInstrNoOperand(X86InstrCbw);
+      GenPrintInstrNoOperand(I8086InstrCbw);
     else if (opSz == 1)
-      GenPrintInstr2Operands(X86InstrMov, 0,
-                             X86OpRegAByteHigh, 0,
-                             X86OpConst, 0);
+      GenPrintInstr2Operands(I8086InstrMov, 0,
+                             I8086OpRegAByteHigh, 0,
+                             I8086OpConst, 0);
    
 }
 
 STATIC
 void GenJumpUncond(int label)
 {
-  GenPrintInstr1Operand(X86InstrJmp, 0,
-                        X86OpNumLabel, label);
+  GenPrintInstr1Operand(I8086InstrJmp, 0,
+                        I8086OpNumLabel, label);
 }
 
 STATIC
 void GenJumpIfEqual(int val, int label)
 {
-  GenPrintInstr2Operands(X86InstrCmp, 0,
-                         X86OpRegAWord, 0,
-                         X86OpConst, val);
-  GenPrintInstr1Operand(X86InstrJcc, tokEQ,
-                        X86OpNumLabel, label);
+  GenPrintInstr2Operands(I8086InstrCmp, 0,
+                         I8086OpRegAWord, 0,
+                         I8086OpConst, val);
+  GenPrintInstr1Operand(I8086InstrJcc, tokEQ,
+                        I8086OpNumLabel, label);
 }
 
 
@@ -597,11 +590,11 @@ void GenUpdateFrameSize(void)
 STATIC
 void GenFxnProlog(void)
 {
-  GenPrintInstr1Operand(X86InstrPush, 0,
-                        X86OpRegBpWord, 0);
-    GenPrintInstr2Operands(X86InstrMov, 0,
-                           X86OpRegBpWord, 0,
-                           X86OpRegSpWord, 0);
+  GenPrintInstr1Operand(I8086InstrPush, 0,
+                        I8086OpRegBpWord, 0);
+    GenPrintInstr2Operands(I8086InstrMov, 0,
+                           I8086OpRegBpWord, 0,
+                           I8086OpRegSpWord, 0);
   fgetpos(OutFile, &GenPrologPos);
   GenWriteFrameSize();
 }
@@ -611,21 +604,21 @@ void GenGrowStack(int size)
 {
   if (!size)
     return;
-  GenPrintInstr2Operands(X86InstrSub, 0,
-                         X86OpRegSpWord, 0,
-                         X86OpConst, size);
+  GenPrintInstr2Operands(I8086InstrSub, 0,
+                         I8086OpRegSpWord, 0,
+                         I8086OpConst, size);
 }
 
 STATIC
 void GenFxnEpilog(void)
 {
   GenUpdateFrameSize();
-    GenPrintInstr2Operands(X86InstrMov,0,
-                          X86OpRegSpWord, 0,
-                          X86OpRegBpWord, 0);
-    GenPrintInstr1Operand(X86InstrPop,0,
-                          X86OpRegBpWord, 0);
-  GenPrintInstrNoOperand(X86InstrRet);
+    GenPrintInstr2Operands(I8086InstrMov,0,
+                          I8086OpRegSpWord, 0,
+                          I8086OpRegBpWord, 0);
+    GenPrintInstr1Operand(I8086InstrPop,0,
+                          I8086OpRegBpWord, 0);
+  GenPrintInstrNoOperand(I8086InstrRet);
 }
 
 STATIC
@@ -638,31 +631,31 @@ int GenMaxLocalsSize(void)
 STATIC
 void GenReadIdent(int opSz, int label)
 {
-  GenPrintInstr2Operands(X86InstrMov, 0,
-                         GenSelectByteOrWord(X86OpRegAByteOrWord, opSz), 0,
-                         X86OpIndLabel, label);
+  GenPrintInstr2Operands(I8086InstrMov, 0,
+                         GenSelectByteOrWord(I8086OpRegAByteOrWord, opSz), 0,
+                         I8086OpIndLabel, label);
   GenExtendRegAIfNeeded(opSz);
 }
 
 STATIC
 void GenReadLocal(int opSz, int ofs)
 {
-  GenPrintInstr2Operands(X86InstrMov, 0,
-                         GenSelectByteOrWord(X86OpRegAByteOrWord, opSz), 0,
-                         X86OpIndLocal, ofs);
+  GenPrintInstr2Operands(I8086InstrMov, 0,
+                         GenSelectByteOrWord(I8086OpRegAByteOrWord, opSz), 0,
+                         I8086OpIndLocal, ofs);
   GenExtendRegAIfNeeded(opSz);
 }
 
 STATIC
 void GenReadIndirect(int opSz)
 {
-  GenPrintInstr2Operands(X86InstrMov, 0,
-                         X86OpRegBWord, 0,
-                         X86OpRegAWord, 0);
+  GenPrintInstr2Operands(I8086InstrMov, 0,
+                         I8086OpRegBWord, 0,
+                         I8086OpRegAWord, 0);
   
-  GenPrintInstr2Operands(X86InstrMov, 0,
-                         GenSelectByteOrWord(X86OpRegAByteOrWord, opSz), 0,
-                         X86OpIndRegB, 0);
+  GenPrintInstr2Operands(I8086InstrMov, 0,
+                         GenSelectByteOrWord(I8086OpRegAByteOrWord, opSz), 0,
+                         I8086OpIndRegB, 0);
   GenExtendRegAIfNeeded(opSz);
 }
 
@@ -672,31 +665,31 @@ void GenReadCRegIdent(int opSz, int label)
   if (opSz == -1)
   {
 
-      GenPrintInstr1Operand(X86InstrPush, 0,
-                            X86OpRegAWord, 0);
-      GenPrintInstr2Operands(X86InstrMov, 0,
-                            X86OpRegAByte, 0,
-                            X86OpIndLabelExplicitByte, label);
-      GenPrintInstrNoOperand(X86InstrCbw);
-      GenPrintInstr2Operands(X86InstrMov, 0,
-                            X86OpRegCWord, 0,
-                            X86OpRegAWord, 0);
-      GenPrintInstr1Operand(X86InstrPop, 0,
-                            X86OpRegAWord, 0);
+      GenPrintInstr1Operand(I8086InstrPush, 0,
+                            I8086OpRegAWord, 0);
+      GenPrintInstr2Operands(I8086InstrMov, 0,
+                            I8086OpRegAByte, 0,
+                            I8086OpIndLabelExplicitByte, label);
+      GenPrintInstrNoOperand(I8086InstrCbw);
+      GenPrintInstr2Operands(I8086InstrMov, 0,
+                            I8086OpRegCWord, 0,
+                            I8086OpRegAWord, 0);
+      GenPrintInstr1Operand(I8086InstrPop, 0,
+                            I8086OpRegAWord, 0);
   }
   else if (opSz == 1)
   {
-      GenPrintInstr2Operands(X86InstrMov, 0,
-                            X86OpRegCByte, 0,
-                            X86OpIndLabelExplicitByte, label);
-      GenPrintInstr2Operands(X86InstrXor, 0,
-                            X86OpRegCByteHigh, 0,
-                            X86OpRegCByteHigh, 0);
+      GenPrintInstr2Operands(I8086InstrMov, 0,
+                            I8086OpRegCByte, 0,
+                            I8086OpIndLabelExplicitByte, label);
+      GenPrintInstr2Operands(I8086InstrXor, 0,
+                            I8086OpRegCByteHigh, 0,
+                            I8086OpRegCByteHigh, 0);
   }
   else
-    GenPrintInstr2Operands(X86InstrMov, 0,
-                           X86OpRegCWord, 0,
-                           X86OpIndLabel, label);
+    GenPrintInstr2Operands(I8086InstrMov, 0,
+                           I8086OpRegCWord, 0,
+                           I8086OpIndLabel, label);
 }
 
 STATIC
@@ -705,227 +698,227 @@ void GenReadCRegLocal(int opSz, int ofs)
   if (opSz == -1)
   {
 
-      GenPrintInstr1Operand(X86InstrPush, 0,
-                            X86OpRegAWord, 0);
-      GenPrintInstr2Operands(X86InstrMov, 0,
-                            X86OpRegAByte, 0,
-                            X86OpIndLocalExplicitByte, ofs);
-      GenPrintInstrNoOperand(X86InstrCbw);
-      GenPrintInstr2Operands(X86InstrMov, 0,
-                            X86OpRegCWord, 0,
-                            X86OpRegAWord, 0);
-      GenPrintInstr1Operand(X86InstrPop, 0,
-                            X86OpRegAWord, 0);
+      GenPrintInstr1Operand(I8086InstrPush, 0,
+                            I8086OpRegAWord, 0);
+      GenPrintInstr2Operands(I8086InstrMov, 0,
+                            I8086OpRegAByte, 0,
+                            I8086OpIndLocalExplicitByte, ofs);
+      GenPrintInstrNoOperand(I8086InstrCbw);
+      GenPrintInstr2Operands(I8086InstrMov, 0,
+                            I8086OpRegCWord, 0,
+                            I8086OpRegAWord, 0);
+      GenPrintInstr1Operand(I8086InstrPop, 0,
+                            I8086OpRegAWord, 0);
   }
   else if (opSz == 1)
   {
-      GenPrintInstr2Operands(X86InstrMov, 0,
-                            X86OpRegCByte, 0,
-                            X86OpIndLocalExplicitByte, ofs);
-      GenPrintInstr2Operands(X86InstrXor, 0,
-                            X86OpRegCByteHigh, 0,
-                            X86OpRegCByteHigh, 0);
+      GenPrintInstr2Operands(I8086InstrMov, 0,
+                            I8086OpRegCByte, 0,
+                            I8086OpIndLocalExplicitByte, ofs);
+      GenPrintInstr2Operands(I8086InstrXor, 0,
+                            I8086OpRegCByteHigh, 0,
+                            I8086OpRegCByteHigh, 0);
   }
   else
-    GenPrintInstr2Operands(X86InstrMov, 0,
-                           X86OpRegCWord, 0,
-                           X86OpIndLocal, ofs);
+    GenPrintInstr2Operands(I8086InstrMov, 0,
+                           I8086OpRegCWord, 0,
+                           I8086OpIndLocal, ofs);
 }
 
 STATIC
 void GenReadCRegIndirect(int opSz)
 {
-  GenPrintInstr2Operands(X86InstrMov, 0,
-                         X86OpRegBWord, 0,
-                         X86OpRegAWord, 0);
+  GenPrintInstr2Operands(I8086InstrMov, 0,
+                         I8086OpRegBWord, 0,
+                         I8086OpRegAWord, 0);
 
   if (opSz == -1)
   {
 
-      GenPrintInstr1Operand(X86InstrPush, 0,
-                            X86OpRegAWord, 0);
-      GenPrintInstr2Operands(X86InstrMov, 0,
-                            X86OpRegAByte, 0,
-                            X86OpIndRegBExplicitByte, 0);
-      GenPrintInstrNoOperand(X86InstrCbw);
-      GenPrintInstr2Operands(X86InstrMov, 0,
-                            X86OpRegCWord, 0,
-                            X86OpRegAWord, 0);
-      GenPrintInstr1Operand(X86InstrPop, 0,
-                            X86OpRegAWord, 0);
+      GenPrintInstr1Operand(I8086InstrPush, 0,
+                            I8086OpRegAWord, 0);
+      GenPrintInstr2Operands(I8086InstrMov, 0,
+                            I8086OpRegAByte, 0,
+                            I8086OpIndRegBExplicitByte, 0);
+      GenPrintInstrNoOperand(I8086InstrCbw);
+      GenPrintInstr2Operands(I8086InstrMov, 0,
+                            I8086OpRegCWord, 0,
+                            I8086OpRegAWord, 0);
+      GenPrintInstr1Operand(I8086InstrPop, 0,
+                            I8086OpRegAWord, 0);
   }
   else if (opSz == 1)
   {
-      GenPrintInstr2Operands(X86InstrMov, 0,
-                            X86OpRegCByte, 0,
-                            X86OpIndRegBExplicitByte, 0);
-      GenPrintInstr2Operands(X86InstrXor, 0,
-                            X86OpRegCByteHigh, 0,
-                            X86OpRegCByteHigh, 0);
+      GenPrintInstr2Operands(I8086InstrMov, 0,
+                            I8086OpRegCByte, 0,
+                            I8086OpIndRegBExplicitByte, 0);
+      GenPrintInstr2Operands(I8086InstrXor, 0,
+                            I8086OpRegCByteHigh, 0,
+                            I8086OpRegCByteHigh, 0);
   }
   else
-    GenPrintInstr2Operands(X86InstrMov, 0,
-                           X86OpRegCWord, 0,
-                           X86OpIndRegB, 0);
+    GenPrintInstr2Operands(I8086InstrMov, 0,
+                           I8086OpRegCWord, 0,
+                           I8086OpIndRegB, 0);
 }
 
 STATIC
 void GenIncDecIdent(int opSz, int label, int tok)
 {
-  int instr = X86InstrInc;
+  int instr = I8086InstrInc;
 
   if (tok != tokInc)
-    instr = X86InstrDec;
+    instr = I8086InstrDec;
 
   GenPrintInstr1Operand(instr, 0,
-                        GenSelectByteOrWord(X86OpIndLabelExplicitByteOrWord, opSz), label);
-  GenPrintInstr2Operands(X86InstrMov, 0,
-                         GenSelectByteOrWord(X86OpRegAByteOrWord, opSz), 0,
-                         X86OpIndLabel, label);
+                        GenSelectByteOrWord(I8086OpIndLabelExplicitByteOrWord, opSz), label);
+  GenPrintInstr2Operands(I8086InstrMov, 0,
+                         GenSelectByteOrWord(I8086OpRegAByteOrWord, opSz), 0,
+                         I8086OpIndLabel, label);
   GenExtendRegAIfNeeded(opSz);
 }
 
 STATIC
 void GenIncDecLocal(int opSz, int ofs, int tok)
 {
-  int instr = X86InstrInc;
+  int instr = I8086InstrInc;
 
   if (tok != tokInc)
-    instr = X86InstrDec;
+    instr = I8086InstrDec;
 
   GenPrintInstr1Operand(instr, 0,
-                        GenSelectByteOrWord(X86OpIndLocalExplicitByteOrWord, opSz), ofs);
-  GenPrintInstr2Operands(X86InstrMov, 0,
-                         GenSelectByteOrWord(X86OpRegAByteOrWord, opSz), 0,
-                         X86OpIndLocal, ofs);
+                        GenSelectByteOrWord(I8086OpIndLocalExplicitByteOrWord, opSz), ofs);
+  GenPrintInstr2Operands(I8086InstrMov, 0,
+                         GenSelectByteOrWord(I8086OpRegAByteOrWord, opSz), 0,
+                         I8086OpIndLocal, ofs);
   GenExtendRegAIfNeeded(opSz);
 }
 
 STATIC
 void GenIncDecIndirect(int opSz, int tok)
 {
-  int instr = X86InstrInc;
+  int instr = I8086InstrInc;
 
   if (tok != tokInc)
-    instr = X86InstrDec;
+    instr = I8086InstrDec;
 
-  GenPrintInstr2Operands(X86InstrMov, 0,
-                         X86OpRegBWord, 0,
-                         X86OpRegAWord, 0);
+  GenPrintInstr2Operands(I8086InstrMov, 0,
+                         I8086OpRegBWord, 0,
+                         I8086OpRegAWord, 0);
 
   GenPrintInstr1Operand(instr, 0,
-                        GenSelectByteOrWord(X86OpIndRegBExplicitByteOrWord, opSz), 0);
-  GenPrintInstr2Operands(X86InstrMov, 0,
-                         GenSelectByteOrWord(X86OpRegAByteOrWord, opSz), 0,
-                         X86OpIndRegB, 0);
+                        GenSelectByteOrWord(I8086OpIndRegBExplicitByteOrWord, opSz), 0);
+  GenPrintInstr2Operands(I8086InstrMov, 0,
+                         GenSelectByteOrWord(I8086OpRegAByteOrWord, opSz), 0,
+                         I8086OpIndRegB, 0);
   GenExtendRegAIfNeeded(opSz);
 }
 
 STATIC
 void GenPostIncDecIdent(int opSz, int label, int tok)
 {
-  int instr = X86InstrInc;
+  int instr = I8086InstrInc;
 
   if (tok != tokPostInc)
-    instr = X86InstrDec;
+    instr = I8086InstrDec;
 
-  GenPrintInstr2Operands(X86InstrMov, 0,
-                         GenSelectByteOrWord(X86OpRegAByteOrWord, opSz), 0,
-                         X86OpIndLabel, label);
+  GenPrintInstr2Operands(I8086InstrMov, 0,
+                         GenSelectByteOrWord(I8086OpRegAByteOrWord, opSz), 0,
+                         I8086OpIndLabel, label);
   GenExtendRegAIfNeeded(opSz);
   GenPrintInstr1Operand(instr, 0,
-                        GenSelectByteOrWord(X86OpIndLabelExplicitByteOrWord, opSz), label);
+                        GenSelectByteOrWord(I8086OpIndLabelExplicitByteOrWord, opSz), label);
 }
 
 STATIC
 void GenPostIncDecLocal(int opSz, int ofs, int tok)
 {
-  int instr = X86InstrInc;
+  int instr = I8086InstrInc;
 
   if (tok != tokPostInc)
-    instr = X86InstrDec;
+    instr = I8086InstrDec;
 
-  GenPrintInstr2Operands(X86InstrMov, 0,
-                         GenSelectByteOrWord(X86OpRegAByteOrWord, opSz), 0,
-                         X86OpIndLocal, ofs);
+  GenPrintInstr2Operands(I8086InstrMov, 0,
+                         GenSelectByteOrWord(I8086OpRegAByteOrWord, opSz), 0,
+                         I8086OpIndLocal, ofs);
   GenExtendRegAIfNeeded(opSz);
   GenPrintInstr1Operand(instr, 0,
-                        GenSelectByteOrWord(X86OpIndLocalExplicitByteOrWord, opSz), ofs);
+                        GenSelectByteOrWord(I8086OpIndLocalExplicitByteOrWord, opSz), ofs);
 }
 
 STATIC
 void GenPostIncDecIndirect(int opSz, int tok)
 {
-  int instr = X86InstrInc;
+  int instr = I8086InstrInc;
 
   if (tok != tokPostInc)
-    instr = X86InstrDec;
+    instr = I8086InstrDec;
 
-  GenPrintInstr2Operands(X86InstrMov, 0,
-                         X86OpRegBWord, 0,
-                         X86OpRegAWord, 0);
+  GenPrintInstr2Operands(I8086InstrMov, 0,
+                         I8086OpRegBWord, 0,
+                         I8086OpRegAWord, 0);
 
-  GenPrintInstr2Operands(X86InstrMov, 0,
-                         GenSelectByteOrWord(X86OpRegAByteOrWord, opSz), 0,
-                         X86OpIndRegB, 0);
+  GenPrintInstr2Operands(I8086InstrMov, 0,
+                         GenSelectByteOrWord(I8086OpRegAByteOrWord, opSz), 0,
+                         I8086OpIndRegB, 0);
   GenExtendRegAIfNeeded(opSz);
   GenPrintInstr1Operand(instr, 0,
-                        GenSelectByteOrWord(X86OpIndRegBExplicitByteOrWord, opSz), 0);
+                        GenSelectByteOrWord(I8086OpIndRegBExplicitByteOrWord, opSz), 0);
 }
 
 STATIC
 void GenPostAddSubIdent(int opSz, int val, int label, int tok)
 {
-  int instr = X86InstrAdd;
+  int instr = I8086InstrAdd;
 
   if (tok != tokPostAdd)
-    instr = X86InstrSub;
+    instr = I8086InstrSub;
 
-  GenPrintInstr2Operands(X86InstrMov, 0,
-                         GenSelectByteOrWord(X86OpRegAByteOrWord, opSz), 0,
-                         X86OpIndLabel, label);
+  GenPrintInstr2Operands(I8086InstrMov, 0,
+                         GenSelectByteOrWord(I8086OpRegAByteOrWord, opSz), 0,
+                         I8086OpIndLabel, label);
   GenExtendRegAIfNeeded(opSz);
   GenPrintInstr2Operands(instr, 0,
-                         GenSelectByteOrWord(X86OpIndLabelExplicitByteOrWord, opSz), label,
-                         X86OpConst, val);
+                         GenSelectByteOrWord(I8086OpIndLabelExplicitByteOrWord, opSz), label,
+                         I8086OpConst, val);
 }
 
 STATIC
 void GenPostAddSubLocal(int opSz, int val, int ofs, int tok)
 {
-  int instr = X86InstrAdd;
+  int instr = I8086InstrAdd;
 
   if (tok != tokPostAdd)
-    instr = X86InstrSub;
+    instr = I8086InstrSub;
 
-  GenPrintInstr2Operands(X86InstrMov, 0,
-                         GenSelectByteOrWord(X86OpRegAByteOrWord, opSz), 0,
-                         X86OpIndLocal, ofs);
+  GenPrintInstr2Operands(I8086InstrMov, 0,
+                         GenSelectByteOrWord(I8086OpRegAByteOrWord, opSz), 0,
+                         I8086OpIndLocal, ofs);
   GenExtendRegAIfNeeded(opSz);
   GenPrintInstr2Operands(instr, 0,
-                         GenSelectByteOrWord(X86OpIndLocalExplicitByteOrWord, opSz), ofs,
-                         X86OpConst, val);
+                         GenSelectByteOrWord(I8086OpIndLocalExplicitByteOrWord, opSz), ofs,
+                         I8086OpConst, val);
 }
 
 STATIC
 void GenPostAddSubIndirect(int opSz, int val, int tok)
 {
-  int instr = X86InstrAdd;
+  int instr = I8086InstrAdd;
 
   if (tok != tokPostAdd)
-    instr = X86InstrSub;
+    instr = I8086InstrSub;
 
-  GenPrintInstr2Operands(X86InstrMov, 0,
-                         X86OpRegBWord, 0,
-                         X86OpRegAWord, 0);
+  GenPrintInstr2Operands(I8086InstrMov, 0,
+                         I8086OpRegBWord, 0,
+                         I8086OpRegAWord, 0);
 
-  GenPrintInstr2Operands(X86InstrMov, 0,
-                         GenSelectByteOrWord(X86OpRegAByteOrWord, opSz), 0,
-                         X86OpIndRegB, 0);
+  GenPrintInstr2Operands(I8086InstrMov, 0,
+                         GenSelectByteOrWord(I8086OpRegAByteOrWord, opSz), 0,
+                         I8086OpIndRegB, 0);
   GenExtendRegAIfNeeded(opSz);
   GenPrintInstr2Operands(instr, 0,
-                         GenSelectByteOrWord(X86OpIndRegBExplicitByteOrWord, opSz), 0,
-                         X86OpConst, val);
+                         GenSelectByteOrWord(I8086OpIndRegBExplicitByteOrWord, opSz), 0,
+                         I8086OpConst, val);
 }
 
 #define tokOpNumInt      0x100
@@ -1368,20 +1361,20 @@ int GenGetBinaryOperatorInstr(int tok)
   case tokPostAdd:
   case tokAssignAdd:
   case '+':
-    return X86InstrAdd;
+    return I8086InstrAdd;
   case tokPostSub:
   case tokAssignSub:
   case '-':
-    return X86InstrSub;
+    return I8086InstrSub;
   case '&':
   case tokAssignAnd:
-    return X86InstrAnd;
+    return I8086InstrAnd;
   case '^':
   case tokAssignXor:
-    return X86InstrXor;
+    return I8086InstrXor;
   case '|':
   case tokAssignOr:
-    return X86InstrOr;
+    return I8086InstrOr;
   case '<':
   case '>':
   case tokLEQ:
@@ -1392,29 +1385,29 @@ int GenGetBinaryOperatorInstr(int tok)
   case tokUGreater:
   case tokULEQ:
   case tokUGEQ:
-    return X86InstrCmp;
+    return I8086InstrCmp;
   case '*':
   case tokAssignMul:
-    return X86InstrMul;
+    return I8086InstrMul;
   case '/':
   case '%':
   case tokAssignDiv:
   case tokAssignMod:
-    return X86InstrIdiv;
+    return I8086InstrIdiv;
   case tokUDiv:
   case tokUMod:
   case tokAssignUDiv:
   case tokAssignUMod:
-    return X86InstrDiv;
+    return I8086InstrDiv;
   case tokLShift:
   case tokAssignLSh:
-    return X86InstrShl;
+    return I8086InstrShl;
   case tokRShift:
   case tokAssignRSh:
-    return X86InstrSar;
+    return I8086InstrSar;
   case tokURShift:
   case tokAssignURSh:
-    return X86InstrShr;
+    return I8086InstrShr;
 
   default:
     //error("Error: Invalid operator\n");
@@ -1549,58 +1542,58 @@ void GenExpr1(void)
     case tokNumUint:
       // Don't load operand into ax when ax is going to be pushed next, push it directly
       if (!(i + 1 < sp && stack[i + 1][0] == ','))
-        GenPrintInstr2Operands(X86InstrMov, 0,
-                               X86OpRegAWord, 0,
-                               X86OpConst, v);
+        GenPrintInstr2Operands(I8086InstrMov, 0,
+                               I8086OpRegAWord, 0,
+                               I8086OpConst, v);
       break;
     case tokIdent:
       // Don't load operand into ax when ax is going to be pushed next, push it directly
       if (!(i + 1 < sp && (stack[i + 1][0] == ',' || stack[i + 1][0] == ')')))
-        GenPrintInstr2Operands(X86InstrMov, 0,
-                               X86OpRegAWord, 0,
-                               X86OpLabel, v);
+        GenPrintInstr2Operands(I8086InstrMov, 0,
+                               I8086OpRegAWord, 0,
+                               I8086OpLabel, v);
       break;
     case tokLocalOfs:
-      GenPrintInstr2Operands(X86InstrLea, 0,
-                             X86OpRegAWord, 0,
-                             X86OpIndLocal, v);
+      GenPrintInstr2Operands(I8086InstrLea, 0,
+                             I8086OpRegAWord, 0,
+                             I8086OpIndLocal, v);
       break;
 
     case '~':
-      GenPrintInstr1Operand(X86InstrNot, 0,
-                            X86OpRegAWord, 0);
+      GenPrintInstr1Operand(I8086InstrNot, 0,
+                            I8086OpRegAWord, 0);
       break;
     case tokUnaryMinus:
-      GenPrintInstr1Operand(X86InstrNeg, 0,
-                            X86OpRegAWord, 0);
+      GenPrintInstr1Operand(I8086InstrNeg, 0,
+                            I8086OpRegAWord, 0);
       break;
     case tok_Bool:
-      GenPrintInstr2Operands(X86InstrTest, 0,
-                             X86OpRegAWord, 0,
-                             X86OpRegAWord, 0);
+      GenPrintInstr2Operands(I8086InstrTest, 0,
+                             I8086OpRegAWord, 0,
+                             I8086OpRegAWord, 0);
         int labelCC = LabelCnt++;
         int labelCCAfter = LabelCnt++;
-        GenPrintInstr1Operand(X86InstrJcc, tokNEQ,
-                              X86OpNumLabel, labelCC);
-        GenPrintInstr2Operands(X86InstrMov, 0,
-                              X86OpRegAByte, 0,
-                              X86OpConst, 0);
-        GenPrintInstr1Operand(X86InstrJmp, 0,
-                              X86OpNumLabel, labelCCAfter);
+        GenPrintInstr1Operand(I8086InstrJcc, tokNEQ,
+                              I8086OpNumLabel, labelCC);
+        GenPrintInstr2Operands(I8086InstrMov, 0,
+                              I8086OpRegAByte, 0,
+                              I8086OpConst, 0);
+        GenPrintInstr1Operand(I8086InstrJmp, 0,
+                              I8086OpNumLabel, labelCCAfter);
         GenNumLabel(labelCC);
-        GenPrintInstr2Operands(X86InstrMov, 0,
-                              X86OpRegAByte, 0,
-                              X86OpConst, 1);
+        GenPrintInstr2Operands(I8086InstrMov, 0,
+                              I8086OpRegAByte, 0,
+                              I8086OpConst, 1);
         GenNumLabel(labelCCAfter);
 
       // fallthrough
     case tokSChar:
-        GenPrintInstrNoOperand(X86InstrCbw);
+        GenPrintInstrNoOperand(I8086InstrCbw);
       break;
     case tokUChar:
-      GenPrintInstr2Operands(X86InstrAnd, 0,
-                             X86OpRegAWord, 0,
-                             X86OpConst, 0xFF);
+      GenPrintInstr2Operands(I8086InstrAnd, 0,
+                             I8086OpRegAWord, 0,
+                             I8086OpConst, 0xFF);
       break;
 
     case tokShortCirc:
@@ -1619,8 +1612,8 @@ void GenExpr1(void)
 
     case tokPushAcc:
       // TBD??? handle similarly to ','???
-      GenPrintInstr1Operand(X86InstrPush, 0,
-                            X86OpRegAWord, 0);
+      GenPrintInstr1Operand(I8086InstrPush, 0,
+                            I8086OpRegAWord, 0);
       break;
 
     case ',':
@@ -1630,19 +1623,19 @@ void GenExpr1(void)
         switch (stack[i - 1][0])
         {
         case tokOpIdent:
-          GenPrintInstr1Operand(X86InstrPush, 0,
-                                X86OpIndLabelExplicitWord, stack[i - 1][1]);
+          GenPrintInstr1Operand(I8086InstrPush, 0,
+                                I8086OpIndLabelExplicitWord, stack[i - 1][1]);
           break;
         case tokOpLocalOfs:
-          GenPrintInstr1Operand(X86InstrPush, 0,
-                                X86OpIndLocalExplicitWord, stack[i - 1][1]);
+          GenPrintInstr1Operand(I8086InstrPush, 0,
+                                I8086OpIndLocalExplicitWord, stack[i - 1][1]);
           break;
         case tokOpAcc:
-          GenPrintInstr2Operands(X86InstrMov, 0,
-                                 X86OpRegBWord, 0,
-                                 X86OpRegAWord, 0);
-          GenPrintInstr1Operand(X86InstrPush, 0,
-                                X86OpIndRegBExplicitWord, 0);
+          GenPrintInstr2Operands(I8086InstrMov, 0,
+                                 I8086OpRegBWord, 0,
+                                 I8086OpRegAWord, 0);
+          GenPrintInstr1Operand(I8086InstrPush, 0,
+                                I8086OpIndRegBExplicitWord, 0);
           break;
         }
       }
@@ -1652,22 +1645,22 @@ void GenExpr1(void)
         {
         case tokNumInt:
         case tokNumUint:
-            GenPrintInstr2Operands(X86InstrMov, 0,
-                                  X86OpRegAWord, 0,
-                                  X86OpConst, stack[i - 1][1]);
-            GenPrintInstr1Operand(X86InstrPush, 0,
-                                  X86OpRegAWord, 0);
+            GenPrintInstr2Operands(I8086InstrMov, 0,
+                                  I8086OpRegAWord, 0,
+                                  I8086OpConst, stack[i - 1][1]);
+            GenPrintInstr1Operand(I8086InstrPush, 0,
+                                  I8086OpRegAWord, 0);
           break;
         case tokIdent:
-            GenPrintInstr2Operands(X86InstrMov, 0,
-                                  X86OpRegAWord, 0,
-                                  X86OpLabel, stack[i - 1][1]);
-            GenPrintInstr1Operand(X86InstrPush, 0,
-                                  X86OpRegAWord, 0);
+            GenPrintInstr2Operands(I8086InstrMov, 0,
+                                  I8086OpRegAWord, 0,
+                                  I8086OpLabel, stack[i - 1][1]);
+            GenPrintInstr1Operand(I8086InstrPush, 0,
+                                  I8086OpRegAWord, 0);
           break;
         default:
-          GenPrintInstr1Operand(X86InstrPush, 0,
-                                X86OpRegAWord, 0);
+          GenPrintInstr1Operand(I8086InstrPush, 0,
+                                I8086OpRegAWord, 0);
           break;
         }
       }
@@ -1787,9 +1780,9 @@ void GenExpr1(void)
       {
         if (stack[i + 2][0] == tokOpAcc)
         {
-          GenPrintInstr2Operands(X86InstrMov, 0,
-                                 X86OpRegCWord, 0,
-                                 X86OpRegAWord, 0);
+          GenPrintInstr2Operands(I8086InstrMov, 0,
+                                 I8086OpRegCWord, 0,
+                                 I8086OpRegAWord, 0);
         }
         else if (stack[i + 2][0] == tokOpIndAcc)
         {
@@ -1802,9 +1795,9 @@ void GenExpr1(void)
       if (tok == '=')
       {
         if (stack[i + 1][0] == tokOpIndAcc)
-          GenPrintInstr2Operands(X86InstrMov, 0,
-                                 X86OpRegBWord, 0,
-                                 X86OpRegAWord, 0);
+          GenPrintInstr2Operands(I8086InstrMov, 0,
+                                 I8086OpRegBWord, 0,
+                                 I8086OpRegAWord, 0);
         // "swap" left and right operands
         i++;
         v = v / 16 + v % 16 * 16;
@@ -1814,19 +1807,19 @@ void GenExpr1(void)
       {
       case tokOpNumInt:
       case tokOpNumUint:
-        GenPrintInstr2Operands(X86InstrMov, 0,
-                               X86OpRegAWord, 0,
-                               X86OpConst, stack[i + 1][1]);
+        GenPrintInstr2Operands(I8086InstrMov, 0,
+                               I8086OpRegAWord, 0,
+                               I8086OpConst, stack[i + 1][1]);
         break;
       case tokOpIdent:
-        GenPrintInstr2Operands(X86InstrMov, 0,
-                               X86OpRegAWord, 0,
-                               X86OpLabel, stack[i + 1][1]);
+        GenPrintInstr2Operands(I8086InstrMov, 0,
+                               I8086OpRegAWord, 0,
+                               I8086OpLabel, stack[i + 1][1]);
         break;
       case tokOpLocalOfs:
-        GenPrintInstr2Operands(X86InstrLea, 0,
-                               X86OpRegAWord, 0,
-                               X86OpIndLocal, stack[i + 1][1]);
+        GenPrintInstr2Operands(I8086InstrLea, 0,
+                               I8086OpRegAWord, 0,
+                               I8086OpIndLocal, stack[i + 1][1]);
         break;
       case tokOpAcc:
         break;
@@ -1840,15 +1833,15 @@ void GenExpr1(void)
         GenReadIndirect(v / 16 - 8);
         break;
       case tokOpStack:
-        GenPrintInstr1Operand(X86InstrPop, 0,
-                              X86OpRegAWord, 0);
+        GenPrintInstr1Operand(I8086InstrPop, 0,
+                              I8086OpRegAWord, 0);
         break;
       case tokOpIndStack:
-        GenPrintInstr1Operand(X86InstrPop, 0,
-                              X86OpRegBWord, 0);
-        GenPrintInstr2Operands(X86InstrMov, 0,
-                               GenSelectByteOrWord(X86OpRegAByteOrWord, v / 16 - 8), 0,
-                               X86OpIndRegB, 0);
+        GenPrintInstr1Operand(I8086InstrPop, 0,
+                              I8086OpRegBWord, 0);
+        GenPrintInstr2Operands(I8086InstrMov, 0,
+                               GenSelectByteOrWord(I8086OpRegAByteOrWord, v / 16 - 8), 0,
+                               I8086OpIndRegB, 0);
         GenExtendRegAIfNeeded(v / 16 - 8);
         break;
       }
@@ -1860,8 +1853,8 @@ void GenExpr1(void)
         v = v / 16 + v % 16 * 16;
 
         if (stack[i + 1][0] == tokOpIndStack)
-          GenPrintInstr1Operand(X86InstrPop, 0,
-                                X86OpRegBWord, 0);
+          GenPrintInstr1Operand(I8086InstrPop, 0,
+                                I8086OpRegBWord, 0);
       }
 
       // operator
@@ -1894,42 +1887,42 @@ void GenExpr1(void)
         case tokOpNumInt:
         case tokOpNumUint:
           GenPrintInstr2Operands(instr, 0,
-                                 X86OpRegAWord, 0,
-                                 X86OpConst, stack[i + 2][1]);
+                                 I8086OpRegAWord, 0,
+                                 I8086OpConst, stack[i + 2][1]);
           break;
         case tokOpIdent:
           GenPrintInstr2Operands(instr, 0,
-                                 X86OpRegAWord, 0,
-                                 X86OpLabel, stack[i + 2][1]);
+                                 I8086OpRegAWord, 0,
+                                 I8086OpLabel, stack[i + 2][1]);
           break;
         case tokOpLocalOfs:
-          GenPrintInstr2Operands(X86InstrLea, 0,
-                                 X86OpRegCWord, 0,
-                                 X86OpIndLocal, stack[i + 2][1]);
+          GenPrintInstr2Operands(I8086InstrLea, 0,
+                                 I8086OpRegCWord, 0,
+                                 I8086OpIndLocal, stack[i + 2][1]);
           GenPrintInstr2Operands(instr, 0,
-                                 X86OpRegAWord, 0,
-                                 X86OpRegCWord, 0);
+                                 I8086OpRegAWord, 0,
+                                 I8086OpRegCWord, 0);
           break;
         case tokOpAcc:
         case tokOpIndAcc:
           // right operand in cx already
           GenPrintInstr2Operands(instr, 0,
-                                 X86OpRegAWord, 0,
-                                 X86OpRegCWord, 0);
+                                 I8086OpRegAWord, 0,
+                                 I8086OpRegCWord, 0);
           break;
         case tokOpIndIdent:
           if (v % 16 - 8 != SizeOfWord)
           {
             GenReadCRegIdent(v % 16 - 8, stack[i + 2][1]);
             GenPrintInstr2Operands(instr, 0,
-                                   X86OpRegAWord, 0,
-                                   X86OpRegCWord, 0);
+                                   I8086OpRegAWord, 0,
+                                   I8086OpRegCWord, 0);
           }
           else
           {
             GenPrintInstr2Operands(instr, 0,
-                                   X86OpRegAWord, 0,
-                                   X86OpIndLabel, stack[i + 2][1]);
+                                   I8086OpRegAWord, 0,
+                                   I8086OpIndLabel, stack[i + 2][1]);
           }
           break;
         case tokOpIndLocalOfs:
@@ -1937,14 +1930,14 @@ void GenExpr1(void)
           {
             GenReadCRegLocal(v % 16 - 8, stack[i + 2][1]);
             GenPrintInstr2Operands(instr, 0,
-                                   X86OpRegAWord, 0,
-                                   X86OpRegCWord, 0);
+                                   I8086OpRegAWord, 0,
+                                   I8086OpRegCWord, 0);
           }
           else
           {
             GenPrintInstr2Operands(instr, 0,
-                                   X86OpRegAWord, 0,
-                                   X86OpIndLocal, stack[i + 2][1]);
+                                   I8086OpRegAWord, 0,
+                                   I8086OpIndLocal, stack[i + 2][1]);
           }
           break;
         }
@@ -1964,11 +1957,11 @@ void GenExpr1(void)
           case tokEQ:
           case tokNEQ:
             if (stack[i + 3][0] == tokIf)
-              GenPrintInstr1Operand(X86InstrJcc, tok,
-                                    X86OpNumLabel, stack[i + 3][1]);
+              GenPrintInstr1Operand(I8086InstrJcc, tok,
+                                    I8086OpNumLabel, stack[i + 3][1]);
             else
-              GenPrintInstr1Operand(X86InstrJNotCc, tok,
-                                    X86OpNumLabel, stack[i + 3][1]);
+              GenPrintInstr1Operand(I8086InstrJNotCc, tok,
+                                    I8086OpNumLabel, stack[i + 3][1]);
             break;
           }
         }
@@ -1989,20 +1982,20 @@ void GenExpr1(void)
             {
               int labelCC = LabelCnt++;
               int labelCCAfter = LabelCnt++;
-              GenPrintInstr1Operand(X86InstrJcc, tok,
-                                    X86OpNumLabel, labelCC);
-              GenPrintInstr2Operands(X86InstrMov, 0,
-                                    X86OpRegAByte, 0,
-                                    X86OpConst, 0);
-              GenPrintInstr1Operand(X86InstrJmp, 0,
-                                    X86OpNumLabel, labelCCAfter);
+              GenPrintInstr1Operand(I8086InstrJcc, tok,
+                                    I8086OpNumLabel, labelCC);
+              GenPrintInstr2Operands(I8086InstrMov, 0,
+                                    I8086OpRegAByte, 0,
+                                    I8086OpConst, 0);
+              GenPrintInstr1Operand(I8086InstrJmp, 0,
+                                    I8086OpNumLabel, labelCCAfter);
               GenNumLabel(labelCC);
-              GenPrintInstr2Operands(X86InstrMov, 0,
-                                    X86OpRegAByte, 0,
-                                    X86OpConst, 1);
+              GenPrintInstr2Operands(I8086InstrMov, 0,
+                                    I8086OpRegAByte, 0,
+                                    I8086OpConst, 1);
               GenNumLabel(labelCCAfter);
             
-              GenPrintInstrNoOperand(X86InstrCbw);
+              GenPrintInstrNoOperand(I8086InstrCbw);
             }
             break;
           }
@@ -2017,43 +2010,43 @@ void GenExpr1(void)
         {
         case tokOpNumInt:
         case tokOpNumUint:
-            GenPrintInstr2Operands(X86InstrMov, 0,
-                                  X86OpRegBWord, 0,
-                                  X86OpConst, stack[i + 2][1]);
-            GenPrintInstr1Operand(X86InstrImul, 0,
-                                  X86OpRegBWord, 0);
+            GenPrintInstr2Operands(I8086InstrMov, 0,
+                                  I8086OpRegBWord, 0,
+                                  I8086OpConst, stack[i + 2][1]);
+            GenPrintInstr1Operand(I8086InstrImul, 0,
+                                  I8086OpRegBWord, 0);
           break;
         case tokOpIdent:
-            GenPrintInstr2Operands(X86InstrMov, 0,
-                                  X86OpRegBWord, 0,
-                                  X86OpLabel, stack[i + 2][1]);
-            GenPrintInstr1Operand(X86InstrImul, 0,
-                                  X86OpRegBWord, 0);
+            GenPrintInstr2Operands(I8086InstrMov, 0,
+                                  I8086OpRegBWord, 0,
+                                  I8086OpLabel, stack[i + 2][1]);
+            GenPrintInstr1Operand(I8086InstrImul, 0,
+                                  I8086OpRegBWord, 0);
           break;
         case tokOpLocalOfs:
-          GenPrintInstr2Operands(X86InstrLea, 0,
-                                 X86OpRegCWord, 0,
-                                 X86OpIndLocal, stack[i + 2][1]);
+          GenPrintInstr2Operands(I8086InstrLea, 0,
+                                 I8086OpRegCWord, 0,
+                                 I8086OpIndLocal, stack[i + 2][1]);
           GenPrintInstr1Operand(instr, 0,
-                                X86OpRegCWord, 0);
+                                I8086OpRegCWord, 0);
           break;
         case tokOpAcc:
         case tokOpIndAcc:
           // right operand in cx already
           GenPrintInstr1Operand(instr, 0,
-                                X86OpRegCWord, 0);
+                                I8086OpRegCWord, 0);
           break;
         case tokOpIndIdent:
           if (v % 16 - 8 != SizeOfWord)
           {
             GenReadCRegIdent(v % 16 - 8, stack[i + 2][1]);
             GenPrintInstr1Operand(instr, 0,
-                                  X86OpRegCWord, 0);
+                                  I8086OpRegCWord, 0);
           }
           else
           {
             GenPrintInstr1Operand(instr, 0,
-                                  X86OpIndLabelExplicitWord, stack[i + 2][1]);
+                                  I8086OpIndLabelExplicitWord, stack[i + 2][1]);
           }
           break;
         case tokOpIndLocalOfs:
@@ -2061,12 +2054,12 @@ void GenExpr1(void)
           {
             GenReadCRegLocal(v % 16 - 8, stack[i + 2][1]);
             GenPrintInstr1Operand(instr, 0,
-                                  X86OpRegCWord, 0);
+                                  I8086OpRegCWord, 0);
           }
           else
           {
             GenPrintInstr1Operand(instr, 0,
-                                  X86OpIndLocalExplicitWord, stack[i + 2][1]);
+                                  I8086OpIndLocalExplicitWord, stack[i + 2][1]);
           }
           break;
         }
@@ -2089,12 +2082,12 @@ void GenExpr1(void)
         case tokAssignDiv:
         case tokAssignMod:
           
-          GenPrintInstrNoOperand(X86InstrCwd);
+          GenPrintInstrNoOperand(I8086InstrCwd);
           break;
         default:
-          GenPrintInstr2Operands(X86InstrMov, 0,
-                                 X86OpRegDWord, 0,
-                                 X86OpConst, 0);
+          GenPrintInstr2Operands(I8086InstrMov, 0,
+                                 I8086OpRegDWord, 0,
+                                 I8086OpConst, 0);
           break;
         }
 
@@ -2102,43 +2095,43 @@ void GenExpr1(void)
         {
         case tokOpNumInt:
         case tokOpNumUint:
-          GenPrintInstr2Operands(X86InstrMov, 0,
-                                 X86OpRegCWord, 0,
-                                 X86OpConst, stack[i + 2][1]);
+          GenPrintInstr2Operands(I8086InstrMov, 0,
+                                 I8086OpRegCWord, 0,
+                                 I8086OpConst, stack[i + 2][1]);
           GenPrintInstr1Operand(instr, 0,
-                                X86OpRegCWord, 0);
+                                I8086OpRegCWord, 0);
           break;
         case tokOpIdent:
-          GenPrintInstr2Operands(X86InstrMov, 0,
-                                 X86OpRegCWord, 0,
-                                 X86OpLabel, stack[i + 2][1]);
+          GenPrintInstr2Operands(I8086InstrMov, 0,
+                                 I8086OpRegCWord, 0,
+                                 I8086OpLabel, stack[i + 2][1]);
           GenPrintInstr1Operand(instr, 0,
-                                X86OpRegCWord, 0);
+                                I8086OpRegCWord, 0);
           break;
         case tokOpLocalOfs:
-          GenPrintInstr2Operands(X86InstrLea, 0,
-                                 X86OpRegCWord, 0,
-                                 X86OpIndLocal, stack[i + 2][1]);
+          GenPrintInstr2Operands(I8086InstrLea, 0,
+                                 I8086OpRegCWord, 0,
+                                 I8086OpIndLocal, stack[i + 2][1]);
           GenPrintInstr1Operand(instr, 0,
-                                X86OpRegCWord, 0);
+                                I8086OpRegCWord, 0);
           break;
         case tokOpAcc:
         case tokOpIndAcc:
           // right operand in cx already
           GenPrintInstr1Operand(instr, 0,
-                                X86OpRegCWord, 0);
+                                I8086OpRegCWord, 0);
           break;
         case tokOpIndIdent:
           if (v % 16 - 8 != SizeOfWord)
           {
             GenReadCRegIdent(v % 16 - 8, stack[i + 2][1]);
             GenPrintInstr1Operand(instr, 0,
-                                  X86OpRegCWord, 0);
+                                  I8086OpRegCWord, 0);
           }
           else
           {
             GenPrintInstr1Operand(instr, 0,
-                                  X86OpIndLabelExplicitWord, stack[i + 2][1]);
+                                  I8086OpIndLabelExplicitWord, stack[i + 2][1]);
           }
           break;
         case tokOpIndLocalOfs:
@@ -2146,20 +2139,20 @@ void GenExpr1(void)
           {
             GenReadCRegLocal(v % 16 - 8, stack[i + 2][1]);
             GenPrintInstr1Operand(instr, 0,
-                                  X86OpRegCWord, 0);
+                                  I8086OpRegCWord, 0);
           }
           else
           {
             GenPrintInstr1Operand(instr, 0,
-                                  X86OpIndLocalExplicitWord, stack[i + 2][1]);
+                                  I8086OpIndLocalExplicitWord, stack[i + 2][1]);
           }
         }
 
         if (tok == '%' || tok == tokAssignMod ||
             tok == tokUMod || tok == tokAssignUMod)
-          GenPrintInstr2Operands(X86InstrMov, 0,
-                                 X86OpRegAWord, 0,
-                                 X86OpRegDWord, 0);
+          GenPrintInstr2Operands(I8086InstrMov, 0,
+                                 I8086OpRegAWord, 0,
+                                 I8086OpRegDWord, 0);
         break;
 
       case tokLShift:
@@ -2174,51 +2167,51 @@ void GenExpr1(void)
         {
         case tokOpNumInt:
         case tokOpNumUint:
-            GenPrintInstr2Operands(X86InstrMov, 0,
-                                  X86OpRegCByte, 0,
-                                  X86OpConst, stack[i + 2][1]);
+            GenPrintInstr2Operands(I8086InstrMov, 0,
+                                  I8086OpRegCByte, 0,
+                                  I8086OpConst, stack[i + 2][1]);
             GenPrintInstr2Operands(instr, 0,
-                                  X86OpRegAWord, 0,
-                                  X86OpRegCByte, 0);
+                                  I8086OpRegAWord, 0,
+                                  I8086OpRegCByte, 0);
           break;
         case tokOpIdent:
-            GenPrintInstr2Operands(X86InstrMov, 0,
-                                  X86OpRegCByte, 0,
-                                  X86OpLabel, stack[i + 2][1]);
+            GenPrintInstr2Operands(I8086InstrMov, 0,
+                                  I8086OpRegCByte, 0,
+                                  I8086OpLabel, stack[i + 2][1]);
             GenPrintInstr2Operands(instr, 0,
-                                  X86OpRegAWord, 0,
-                                  X86OpRegCByte, 0);
+                                  I8086OpRegAWord, 0,
+                                  I8086OpRegCByte, 0);
           break;
         case tokOpLocalOfs:
-          GenPrintInstr2Operands(X86InstrLea, 0,
-                                 X86OpRegCWord, 0,
-                                 X86OpIndLocal, stack[i + 2][1]);
+          GenPrintInstr2Operands(I8086InstrLea, 0,
+                                 I8086OpRegCWord, 0,
+                                 I8086OpIndLocal, stack[i + 2][1]);
           GenPrintInstr2Operands(instr, 0,
-                                 X86OpRegAWord, 0,
-                                 X86OpRegCByte, 0);
+                                 I8086OpRegAWord, 0,
+                                 I8086OpRegCByte, 0);
           break;
         case tokOpAcc:
         case tokOpIndAcc:
           // right operand in cx already
           GenPrintInstr2Operands(instr, 0,
-                                 X86OpRegAWord, 0,
-                                 X86OpRegCByte, 0);
+                                 I8086OpRegAWord, 0,
+                                 I8086OpRegCByte, 0);
           break;
         case tokOpIndIdent:
-          GenPrintInstr2Operands(X86InstrMov, 0,
-                                 X86OpRegCByte, 0,
-                                 X86OpIndLabel, stack[i + 2][1]);
+          GenPrintInstr2Operands(I8086InstrMov, 0,
+                                 I8086OpRegCByte, 0,
+                                 I8086OpIndLabel, stack[i + 2][1]);
           GenPrintInstr2Operands(instr, 0,
-                                 X86OpRegAWord, 0,
-                                 X86OpRegCByte, 0);
+                                 I8086OpRegAWord, 0,
+                                 I8086OpRegCByte, 0);
           break;
         case tokOpIndLocalOfs:
-          GenPrintInstr2Operands(X86InstrMov, 0,
-                                 X86OpRegCByte, 0,
-                                 X86OpIndLocal, stack[i + 2][1]);
+          GenPrintInstr2Operands(I8086InstrMov, 0,
+                                 I8086OpRegCByte, 0,
+                                 I8086OpIndLocal, stack[i + 2][1]);
           GenPrintInstr2Operands(instr, 0,
-                                 X86OpRegAWord, 0,
-                                 X86OpRegCByte, 0);
+                                 I8086OpRegAWord, 0,
+                                 I8086OpRegCByte, 0);
           break;
         }
         break;
@@ -2252,20 +2245,20 @@ void GenExpr1(void)
         switch (stack[i + 1][0])
         {
         case tokOpIndIdent:
-          GenPrintInstr2Operands(X86InstrMov, 0,
-                                 X86OpIndLabel, stack[i + 1][1],
-                                 GenSelectByteOrWord(X86OpRegAByteOrWord, v / 16 - 8), 0);
+          GenPrintInstr2Operands(I8086InstrMov, 0,
+                                 I8086OpIndLabel, stack[i + 1][1],
+                                 GenSelectByteOrWord(I8086OpRegAByteOrWord, v / 16 - 8), 0);
           break;
         case tokOpIndLocalOfs:
-          GenPrintInstr2Operands(X86InstrMov, 0,
-                                 X86OpIndLocal, stack[i + 1][1],
-                                 GenSelectByteOrWord(X86OpRegAByteOrWord, v / 16 - 8), 0);
+          GenPrintInstr2Operands(I8086InstrMov, 0,
+                                 I8086OpIndLocal, stack[i + 1][1],
+                                 GenSelectByteOrWord(I8086OpRegAByteOrWord, v / 16 - 8), 0);
           break;
         case tokOpIndAcc:
         case tokOpIndStack:
-          GenPrintInstr2Operands(X86InstrMov, 0,
-                                 X86OpIndRegB, 0,
-                                 GenSelectByteOrWord(X86OpRegAByteOrWord, v / 16 - 8), 0);
+          GenPrintInstr2Operands(I8086InstrMov, 0,
+                                 I8086OpIndRegB, 0,
+                                 GenSelectByteOrWord(I8086OpRegAByteOrWord, v / 16 - 8), 0);
           break;
         }
         // the result of the expression is of type of the
@@ -2279,13 +2272,13 @@ void GenExpr1(void)
       // DONE: "call ident"
       if (stack[i - 1][0] == tokIdent)
       {
-          GenPrintInstr1Operand(X86InstrCall, 0,
-                                X86OpLabel, stack[i - 1][1]);
+          GenPrintInstr1Operand(I8086InstrCall, 0,
+                                I8086OpLabel, stack[i - 1][1]);
       }
       else
       {
-          GenPrintInstr1Operand(X86InstrCall, 0,
-                                X86OpRegAWord, 0);
+          GenPrintInstr1Operand(I8086InstrCall, 0,
+                                I8086OpRegAWord, 0);
       }
       GenGrowStack(-v);
       break;
@@ -2345,37 +2338,37 @@ void GenExpr0(void)
     case tokNumInt:
     case tokNumUint:
       if (gotUnary)
-        GenPrintInstr1Operand(X86InstrPush, 0,
-                              X86OpRegAWord, 0);
-      GenPrintInstr2Operands(X86InstrMov, 0,
-                             X86OpRegAWord, 0,
-                             X86OpConst, v);
+        GenPrintInstr1Operand(I8086InstrPush, 0,
+                              I8086OpRegAWord, 0);
+      GenPrintInstr2Operands(I8086InstrMov, 0,
+                             I8086OpRegAWord, 0,
+                             I8086OpConst, v);
       gotUnary = 1;
       break;
 
     case tokIdent:
       if (gotUnary)
-        GenPrintInstr1Operand(X86InstrPush, 0,
-                              X86OpRegAWord, 0);
-      GenPrintInstr2Operands(X86InstrMov, 0,
-                             X86OpRegAWord, 0,
-                             X86OpLabel, v);
+        GenPrintInstr1Operand(I8086InstrPush, 0,
+                              I8086OpRegAWord, 0);
+      GenPrintInstr2Operands(I8086InstrMov, 0,
+                             I8086OpRegAWord, 0,
+                             I8086OpLabel, v);
       gotUnary = 1;
       break;
 
     case tokLocalOfs:
       if (gotUnary)
-        GenPrintInstr1Operand(X86InstrPush, 0,
-                              X86OpRegAWord, 0);
-      GenPrintInstr2Operands(X86InstrLea, 0,
-                             X86OpRegAWord, 0,
-                             X86OpIndLocal, v);
+        GenPrintInstr1Operand(I8086InstrPush, 0,
+                              I8086OpRegAWord, 0);
+      GenPrintInstr2Operands(I8086InstrLea, 0,
+                             I8086OpRegAWord, 0,
+                             I8086OpIndLocal, v);
       gotUnary = 1;
       break;
 
     case ')':
-        GenPrintInstr1Operand(X86InstrCall, 0,
-                              X86OpRegAWord, 0);
+        GenPrintInstr1Operand(I8086InstrCall, 0,
+                              I8086OpRegAWord, 0);
       GenGrowStack(-v);
       break;
 
@@ -2386,12 +2379,12 @@ void GenExpr0(void)
     case tokUnaryPlus:
       break;
     case '~':
-      GenPrintInstr1Operand(X86InstrNot, 0,
-                            X86OpRegAWord, 0);
+      GenPrintInstr1Operand(I8086InstrNot, 0,
+                            I8086OpRegAWord, 0);
       break;
     case tokUnaryMinus:
-      GenPrintInstr1Operand(X86InstrNeg, 0,
-                            X86OpRegAWord, 0);
+      GenPrintInstr1Operand(I8086InstrNeg, 0,
+                            I8086OpRegAWord, 0);
       break;
 
     case '+':
@@ -2402,19 +2395,19 @@ void GenExpr0(void)
     case '|':
       {
         int instr = GenGetBinaryOperatorInstr(tok);
-        GenPrintInstr1Operand(X86InstrPop, 0,
-                              X86OpRegBWord, 0);
+        GenPrintInstr1Operand(I8086InstrPop, 0,
+                              I8086OpRegBWord, 0);
         if (tok == '-')
-          GenPrintInstr2Operands(X86InstrXchg, 0,
-                                 X86OpRegAWord, 0,
-                                 X86OpRegBWord, 0);
+          GenPrintInstr2Operands(I8086InstrXchg, 0,
+                                 I8086OpRegAWord, 0,
+                                 I8086OpRegBWord, 0);
         if (tok != '*')
           GenPrintInstr2Operands(instr, 0,
-                                 X86OpRegAWord, 0,
-                                 X86OpRegBWord, 0);
+                                 I8086OpRegAWord, 0,
+                                 I8086OpRegBWord, 0);
         else
           GenPrintInstr1Operand(instr, 0,
-                                X86OpRegBWord, 0);
+                                I8086OpRegBWord, 0);
       }
       break;
 
@@ -2422,30 +2415,30 @@ void GenExpr0(void)
     case tokUDiv:
     case '%':
     case tokUMod:
-      GenPrintInstr1Operand(X86InstrPop, 0,
-                            X86OpRegBWord, 0);
-      GenPrintInstr2Operands(X86InstrXchg, 0,
-                             X86OpRegAWord, 0,
-                             X86OpRegBWord, 0);
+      GenPrintInstr1Operand(I8086InstrPop, 0,
+                            I8086OpRegBWord, 0);
+      GenPrintInstr2Operands(I8086InstrXchg, 0,
+                             I8086OpRegAWord, 0,
+                             I8086OpRegBWord, 0);
       if (tok == '/' || tok == '%')
       {
         
-        GenPrintInstrNoOperand(X86InstrCwd);
-        GenPrintInstr1Operand(X86InstrIdiv, 0,
-                              X86OpRegBWord, 0);
+        GenPrintInstrNoOperand(I8086InstrCwd);
+        GenPrintInstr1Operand(I8086InstrIdiv, 0,
+                              I8086OpRegBWord, 0);
       }
       else
       {
-        GenPrintInstr2Operands(X86InstrMov, 0,
-                               X86OpRegDWord, 0,
-                               X86OpConst, 0);
-        GenPrintInstr1Operand(X86InstrDiv, 0,
-                              X86OpRegBWord, 0);
+        GenPrintInstr2Operands(I8086InstrMov, 0,
+                               I8086OpRegDWord, 0,
+                               I8086OpConst, 0);
+        GenPrintInstr1Operand(I8086InstrDiv, 0,
+                              I8086OpRegBWord, 0);
       }
       if (tok == '%' || tok == tokUMod)
-        GenPrintInstr2Operands(X86InstrMov, 0,
-                               X86OpRegAWord, 0,
-                               X86OpRegDWord, 0);
+        GenPrintInstr2Operands(I8086InstrMov, 0,
+                               I8086OpRegAWord, 0,
+                               I8086OpRegDWord, 0);
       break;
 
     case tokLShift:
@@ -2453,14 +2446,14 @@ void GenExpr0(void)
     case tokURShift:
       {
         int instr = GenGetBinaryOperatorInstr(tok);
-        GenPrintInstr1Operand(X86InstrPop, 0,
-                              X86OpRegCWord, 0);
-        GenPrintInstr2Operands(X86InstrXchg, 0,
-                               X86OpRegAWord, 0,
-                               X86OpRegCWord, 0);
+        GenPrintInstr1Operand(I8086InstrPop, 0,
+                              I8086OpRegCWord, 0);
+        GenPrintInstr2Operands(I8086InstrXchg, 0,
+                               I8086OpRegAWord, 0,
+                               I8086OpRegCWord, 0);
         GenPrintInstr2Operands(instr, 0,
-                               X86OpRegAWord, 0,
-                               X86OpRegCByte, 0);
+                               I8086OpRegAWord, 0,
+                               I8086OpRegCByte, 0);
       }
       break;
 
@@ -2481,17 +2474,17 @@ void GenExpr0(void)
     case tokPostSub:
       {
         int instr = GenGetBinaryOperatorInstr(tok);
-        GenPrintInstr1Operand(X86InstrPop, 0,
-                              X86OpRegBWord, 0);
-        GenPrintInstr2Operands(X86InstrMov, 0,
-                               X86OpRegCWord, 0,
-                               X86OpRegAWord, 0);
-        GenPrintInstr2Operands(X86InstrMov, 0,
-                               GenSelectByteOrWord(X86OpRegAByteOrWord, v), 0,
-                               X86OpIndRegB, 0);
+        GenPrintInstr1Operand(I8086InstrPop, 0,
+                              I8086OpRegBWord, 0);
+        GenPrintInstr2Operands(I8086InstrMov, 0,
+                               I8086OpRegCWord, 0,
+                               I8086OpRegAWord, 0);
+        GenPrintInstr2Operands(I8086InstrMov, 0,
+                               GenSelectByteOrWord(I8086OpRegAByteOrWord, v), 0,
+                               I8086OpIndRegB, 0);
         GenPrintInstr2Operands(instr, 0,
-                               X86OpIndRegB, 0,
-                               GenSelectByteOrWord(X86OpRegCByteOrWord, v), 0);
+                               I8086OpIndRegB, 0,
+                               GenSelectByteOrWord(I8086OpRegCByteOrWord, v), 0);
         GenExtendRegAIfNeeded(v);
       }
       break;
@@ -2504,24 +2497,24 @@ void GenExpr0(void)
     case tokAssignOr:
       {
         int instr = GenGetBinaryOperatorInstr(tok);
-        GenPrintInstr1Operand(X86InstrPop, 0,
-                              X86OpRegBWord, 0);
+        GenPrintInstr1Operand(I8086InstrPop, 0,
+                              I8086OpRegBWord, 0);
         if (tok != tokAssignMul)
         {
           GenPrintInstr2Operands(instr, 0,
-                                 X86OpIndRegB, 0,
-                                 GenSelectByteOrWord(X86OpRegAByteOrWord, v), 0);
-          GenPrintInstr2Operands(X86InstrMov, 0,
-                                 GenSelectByteOrWord(X86OpRegAByteOrWord, v), 0,
-                                 X86OpIndRegB, 0);
+                                 I8086OpIndRegB, 0,
+                                 GenSelectByteOrWord(I8086OpRegAByteOrWord, v), 0);
+          GenPrintInstr2Operands(I8086InstrMov, 0,
+                                 GenSelectByteOrWord(I8086OpRegAByteOrWord, v), 0,
+                                 I8086OpIndRegB, 0);
         }
         else
         {
           GenPrintInstr1Operand(instr, 0,
-                                GenSelectByteOrWord(X86OpIndRegBExplicitByteOrWord, v), 0);
-          GenPrintInstr2Operands(X86InstrMov, 0,
-                                 X86OpIndRegB, 0,
-                                 GenSelectByteOrWord(X86OpRegAByteOrWord, v), 0);
+                                GenSelectByteOrWord(I8086OpIndRegBExplicitByteOrWord, v), 0);
+          GenPrintInstr2Operands(I8086InstrMov, 0,
+                                 I8086OpIndRegB, 0,
+                                 GenSelectByteOrWord(I8086OpRegAByteOrWord, v), 0);
         }
         GenExtendRegAIfNeeded(v);
       }
@@ -2531,37 +2524,37 @@ void GenExpr0(void)
     case tokAssignUDiv:
     case tokAssignMod:
     case tokAssignUMod:
-      GenPrintInstr1Operand(X86InstrPop, 0,
-                            X86OpRegBWord, 0);
-      GenPrintInstr2Operands(X86InstrMov, 0,
-                             X86OpRegCWord, 0,
-                             X86OpRegAWord, 0);
-      GenPrintInstr2Operands(X86InstrMov, 0,
-                             GenSelectByteOrWord(X86OpRegAByteOrWord, v), 0,
-                             X86OpIndRegB, 0);
+      GenPrintInstr1Operand(I8086InstrPop, 0,
+                            I8086OpRegBWord, 0);
+      GenPrintInstr2Operands(I8086InstrMov, 0,
+                             I8086OpRegCWord, 0,
+                             I8086OpRegAWord, 0);
+      GenPrintInstr2Operands(I8086InstrMov, 0,
+                             GenSelectByteOrWord(I8086OpRegAByteOrWord, v), 0,
+                             I8086OpIndRegB, 0);
       GenExtendRegAIfNeeded(v);
       if (tok == tokAssignDiv || tok == tokAssignMod)
       {
         
-        GenPrintInstrNoOperand(X86InstrCwd);
-        GenPrintInstr1Operand(X86InstrIdiv, 0,
-                              X86OpRegCWord, 0);
+        GenPrintInstrNoOperand(I8086InstrCwd);
+        GenPrintInstr1Operand(I8086InstrIdiv, 0,
+                              I8086OpRegCWord, 0);
       }
       else
       {
-        GenPrintInstr2Operands(X86InstrMov, 0,
-                               X86OpRegDWord, 0,
-                               X86OpConst, 0);
-        GenPrintInstr1Operand(X86InstrDiv, 0,
-                              X86OpRegCWord, 0);
+        GenPrintInstr2Operands(I8086InstrMov, 0,
+                               I8086OpRegDWord, 0,
+                               I8086OpConst, 0);
+        GenPrintInstr1Operand(I8086InstrDiv, 0,
+                              I8086OpRegCWord, 0);
       }
       if (tok == tokAssignMod || tok == tokAssignUMod)
-        GenPrintInstr2Operands(X86InstrMov, 0,
-                               X86OpRegAWord, 0,
-                               X86OpRegDWord, 0);
-      GenPrintInstr2Operands(X86InstrMov, 0,
-                             X86OpIndRegB, 0,
-                             GenSelectByteOrWord(X86OpRegAByteOrWord, v), 0);
+        GenPrintInstr2Operands(I8086InstrMov, 0,
+                               I8086OpRegAWord, 0,
+                               I8086OpRegDWord, 0);
+      GenPrintInstr2Operands(I8086InstrMov, 0,
+                             I8086OpIndRegB, 0,
+                             GenSelectByteOrWord(I8086OpRegAByteOrWord, v), 0);
       GenExtendRegAIfNeeded(v);
       break;
 
@@ -2570,31 +2563,31 @@ void GenExpr0(void)
     case tokAssignURSh:
       {
         int instr = GenGetBinaryOperatorInstr(tok);
-        GenPrintInstr1Operand(X86InstrPop, 0,
-                              X86OpRegBWord, 0);
-        GenPrintInstr2Operands(X86InstrMov, 0,
-                               X86OpRegCWord, 0,
-                               X86OpRegAWord, 0);
-        GenPrintInstr2Operands(X86InstrMov, 0,
-                               GenSelectByteOrWord(X86OpRegAByteOrWord, v), 0,
-                               X86OpIndRegB, 0);
+        GenPrintInstr1Operand(I8086InstrPop, 0,
+                              I8086OpRegBWord, 0);
+        GenPrintInstr2Operands(I8086InstrMov, 0,
+                               I8086OpRegCWord, 0,
+                               I8086OpRegAWord, 0);
+        GenPrintInstr2Operands(I8086InstrMov, 0,
+                               GenSelectByteOrWord(I8086OpRegAByteOrWord, v), 0,
+                               I8086OpIndRegB, 0);
         GenExtendRegAIfNeeded(v);
         GenPrintInstr2Operands(instr, 0,
-                               X86OpRegAWord, 0,
-                               X86OpRegCByte, 0);
-        GenPrintInstr2Operands(X86InstrMov, 0,
-                               X86OpIndRegB, 0,
-                               GenSelectByteOrWord(X86OpRegAByteOrWord, v), 0);
+                               I8086OpRegAWord, 0,
+                               I8086OpRegCByte, 0);
+        GenPrintInstr2Operands(I8086InstrMov, 0,
+                               I8086OpIndRegB, 0,
+                               GenSelectByteOrWord(I8086OpRegAByteOrWord, v), 0);
         GenExtendRegAIfNeeded(v);
       }
       break;
 
     case '=':
-      GenPrintInstr1Operand(X86InstrPop, 0,
-                            X86OpRegBWord, 0);
-      GenPrintInstr2Operands(X86InstrMov, 0,
-                             X86OpIndRegB, 0,
-                             GenSelectByteOrWord(X86OpRegAByteOrWord, v), 0);
+      GenPrintInstr1Operand(I8086InstrPop, 0,
+                            I8086OpRegBWord, 0);
+      GenPrintInstr2Operands(I8086InstrMov, 0,
+                             I8086OpIndRegB, 0,
+                             GenSelectByteOrWord(I8086OpRegAByteOrWord, v), 0);
       GenExtendRegAIfNeeded(v);
       break;
 
@@ -2608,32 +2601,32 @@ void GenExpr0(void)
     case tokUGEQ:
     case tokEQ:
     case tokNEQ:
-      GenPrintInstr1Operand(X86InstrPop, 0,
-                            X86OpRegBWord, 0);
-      GenPrintInstr2Operands(X86InstrCmp, 0,
-                             X86OpRegBWord, 0,
-                             X86OpRegAWord, 0);
-      GenPrintInstr1Operand(X86InstrSetCc, tok,
-                            X86OpRegAByte, 0);
+      GenPrintInstr1Operand(I8086InstrPop, 0,
+                            I8086OpRegBWord, 0);
+      GenPrintInstr2Operands(I8086InstrCmp, 0,
+                             I8086OpRegBWord, 0,
+                             I8086OpRegAWord, 0);
+      GenPrintInstr1Operand(I8086InstrSetCc, tok,
+                            I8086OpRegAByte, 0);
       
-      GenPrintInstrNoOperand(X86InstrCbw);
+      GenPrintInstrNoOperand(I8086InstrCbw);
       break;
 
     case tok_Bool:
-      GenPrintInstr2Operands(X86InstrTest, 0,
-                             X86OpRegAWord, 0,
-                             X86OpRegAWord, 0);
-      GenPrintInstr1Operand(X86InstrSetCc, tokNEQ,
-                            X86OpRegAByte, 0);
+      GenPrintInstr2Operands(I8086InstrTest, 0,
+                             I8086OpRegAWord, 0,
+                             I8086OpRegAWord, 0);
+      GenPrintInstr1Operand(I8086InstrSetCc, tokNEQ,
+                            I8086OpRegAByte, 0);
       // fallthrough
     case tokSChar:
       
-      GenPrintInstrNoOperand(X86InstrCbw);
+      GenPrintInstrNoOperand(I8086InstrCbw);
       break;
     case tokUChar:
-      GenPrintInstr2Operands(X86InstrAnd, 0,
-                             X86OpRegAWord, 0,
-                             X86OpConst, 0xFF);
+      GenPrintInstr2Operands(I8086InstrAnd, 0,
+                             I8086OpRegAWord, 0,
+                             I8086OpConst, 0xFF);
       break;
 
     case tokShortCirc:

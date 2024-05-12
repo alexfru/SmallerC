@@ -1787,6 +1787,9 @@ int main(int argc, char* argv[])
     InputFileCnt++;
   }
 
+  if(Use8086InstrOnly && !(OutputFormat == FormatDos8086ComTiny || OutputFormat == FormatDos8086ExeSmall))
+    error("Invalid output format for 8086 option.");
+
   if (!InputFileCnt)
     error("No inputs\n");
 
