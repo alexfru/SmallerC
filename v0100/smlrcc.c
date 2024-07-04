@@ -152,34 +152,40 @@ typedef struct
 
 char* OutName;
 
-#define FormatDosComTiny   1
-#define FormatDosExeSmall  2
-#define FormatDosExeHuge   3
-#define FormatDosExeUnreal 4
-#define FormatAoutDpmi     5
-#define FormatFlat16       6
-#define FormatFlat32       7
-#define FormatWinPe32      8
-#define FormatElf32        9
-#define FormatMach32       10
+#define FormatDosComTiny        1
+#define FormatDosExeSmall       2
+#define FormatDosExeHuge        3
+#define FormatDosExeUnreal      4
+#define FormatAoutDpmi          5
+#define FormatFlat16            6
+#define FormatFlat32            7
+#define FormatWinPe32           8
+#define FormatElf32             9
+#define FormatMach32            10
+#define FormatDos8086ComTiny    11
+#define FormatDos8086ExeSmall   12
 int OutputFormat = 0;
 
 const char* LibName[] =
 {
   NULL,
-  "lcds.a", // FormatDosComTiny
-  "lcds.a", // FormatDosExeSmall
-  "lcdh.a", // FormatDosExeHuge
-  "lcdu.a", // FormatDosExeUnreal
-  "lcdp.a", // FormatAoutDpmi
-  NULL,     // FormatFlat16
-  NULL,     // FormatFlat32
-  "lcw.a",  // FormatWinPe32
-  "lcl.a",  // FormatElf32
-  "lcm.a",  // FormatMach32
+  "lcds.a",   // FormatDosComTiny
+  "lcds.a",   // FormatDosExeSmall
+  "lcdh.a",   // FormatDosExeHuge
+  "lcdu.a",   // FormatDosExeUnreal
+  "lcdp.a",   // FormatAoutDpmi
+  NULL,       // FormatFlat16
+  NULL,       // FormatFlat32
+  "lcw.a",    // FormatWinPe32
+  "lcl.a",    // FormatElf32
+  "lcm.a",    // FormatMach32
+  "lcds86.a", // FormatDos8086ComTiny
+  "lcds86.a", // FormatDos8086ExeSmall
 };
 
 int verbose = 0;
+
+int Use8086InstrOnly = 0;
 
 int PreprocessWithGcc = 0;
 int UseExternalPreprocessor = 0; // 1 if use gcc/ucpp, 0 if use primitive pp in smlrc
@@ -1361,6 +1367,13 @@ int main(int argc, char* argv[])
   int UnsignedChar = 0; // default in smlrc
   int UnsignedWideChar = -1;
   int ShortWideChar = -1;
+  for (i = 1; i < argc; i++)
+  {
+    if (!strcmp(argv[i], "-8086"))
+    {
+      Use8086InstrOnly = 1;
+    }
+  }
 
 #ifdef __SMALLER_C__
 #ifdef DETERMINE_VA_LIST
@@ -1372,7 +1385,7 @@ int main(int argc, char* argv[])
 
   // Set the compiler and linker names early as their options will pile up
 #ifdef UNIX_LIKE
-  AddOption(&CompilerOptions, &CompilerOptionsLen, "smlrc");
+  AddOption(&CompilerOptions, &CompilerOptionsLen, Use8086InstrOnly ? "smlrc86" : "smlrc");
   AddOption(&LinkerOptions, &LinkerOptionsLen, "smlrl");
 #else
   // Use explicit extensions (".exe") to let system() know that
@@ -1381,7 +1394,7 @@ int main(int argc, char* argv[])
   // if possible.
   // This helps recover the program exit status under DOS and thus
   // stop compilation as soon as one compilation stage fails.
-  AddOption(&CompilerOptions, &CompilerOptionsLen, "smlrc.exe");
+  AddOption(&CompilerOptions, &CompilerOptionsLen, Use8086InstrOnly ? "smlrc86.exe" : "smlrc.exe");
   AddOption(&LinkerOptions, &LinkerOptionsLen, "smlrl.exe");
 #endif
 
@@ -1538,9 +1551,14 @@ int main(int argc, char* argv[])
       argv[i] = NULL;
       continue;
     }
+    else if (!strcmp(argv[i], "-8086"))
+    {
+      argv[i] = NULL;
+      continue;
+    }
     else if (!strcmp(argv[i], "-tiny"))
     {
-      OutputFormat = FormatDosComTiny;
+      OutputFormat = Use8086InstrOnly ? FormatDos8086ComTiny : FormatDosComTiny;
       AddOption(&CompilerOptions, &CompilerOptionsLen, "-seg16");
       AddOption(&LinkerOptions, &LinkerOptionsLen, argv[i]);
       argv[i] = NULL;
@@ -1548,7 +1566,7 @@ int main(int argc, char* argv[])
     }
     else if (!strcmp(argv[i], "-dost"))
     {
-      OutputFormat = FormatDosComTiny;
+      OutputFormat = Use8086InstrOnly ? FormatDos8086ComTiny : FormatDosComTiny;
       AddOption(&CompilerOptions, &CompilerOptionsLen, "-seg16");
       DefineMacro("_DOS");
       AddOption(&LinkerOptions, &LinkerOptionsLen, "-tiny");
@@ -1558,7 +1576,7 @@ int main(int argc, char* argv[])
     }
     else if (!strcmp(argv[i], "-small"))
     {
-      OutputFormat = FormatDosExeSmall;
+      OutputFormat = Use8086InstrOnly ? FormatDos8086ExeSmall : FormatDosExeSmall;
       AddOption(&CompilerOptions, &CompilerOptionsLen, "-seg16");
       AddOption(&LinkerOptions, &LinkerOptionsLen, argv[i]);
       argv[i] = NULL;
@@ -1566,7 +1584,7 @@ int main(int argc, char* argv[])
     }
     else if (!strcmp(argv[i], "-doss"))
     {
-      OutputFormat = FormatDosExeSmall;
+      OutputFormat = Use8086InstrOnly ? FormatDos8086ExeSmall : FormatDosExeSmall;
       AddOption(&CompilerOptions, &CompilerOptionsLen, "-seg16");
       DefineMacro("_DOS");
       AddOption(&LinkerOptions, &LinkerOptionsLen, "-small");
@@ -1769,6 +1787,9 @@ int main(int argc, char* argv[])
     InputFileCnt++;
   }
 
+  if(Use8086InstrOnly && !(OutputFormat == FormatDos8086ComTiny || OutputFormat == FormatDos8086ExeSmall))
+    error("Invalid output format for 8086 option.");
+
   if (!InputFileCnt)
     error("No inputs\n");
 
@@ -1919,6 +1940,14 @@ int main(int argc, char* argv[])
       break;
     case FormatDosExeSmall:
       DefineMacro("__SMALLER_C_16__");
+      break;
+    case FormatDos8086ComTiny:
+      DefineMacro("__SMALLER_C_16__");
+      DefineMacro("__SMALLER_C_8086__");
+      break;
+    case FormatDos8086ExeSmall:
+      DefineMacro("__SMALLER_C_16__");
+      DefineMacro("__SMALLER_C_8086__");
       break;
     case FormatDosExeHuge:
       DefineMacro("__SMALLER_C_32__");

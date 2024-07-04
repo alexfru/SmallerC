@@ -16,8 +16,8 @@ else
 	CPPFLAGS += -DHOST_LINUX
 endif
 
-bins = smlrc smlrl smlrcc smlrpp n2f
-libs = lcdh.a lcdu.a lcds.a lcw.a lcl.a lcdp.a lcm.a
+bins = smlrc smlrc86 smlrl smlrcc smlrpp n2f
+libs = lcdh.a lcdu.a lcds.a lcds86.a lcw.a lcl.a lcdp.a lcm.a
 stub = dpstub.exe
 
 all: $(libs) $(stub)
@@ -45,6 +45,9 @@ clean:
 
 $(stub):
 	./smlrcc -small $(srcdir)/srclib/dpstub.asm -o $@
+
+smlrc86: 
+	$(CC) $(CFLAGS) -DONLY8086 -o $@ v0100/smlrc.c
 
 smlrpp:
 	$(CC) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) -o $@ -DSTAND_ALONE -DUCPP_CONFIG \
