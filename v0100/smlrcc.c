@@ -1367,6 +1367,13 @@ int main(int argc, char* argv[])
   int UnsignedChar = 0; // default in smlrc
   int UnsignedWideChar = -1;
   int ShortWideChar = -1;
+  for (i = 1; i < argc; i++)
+  {
+    if (!strcmp(argv[i], "-8086"))
+    {
+      Use8086InstrOnly = 1;
+    }
+  }
 
 #ifdef __SMALLER_C__
 #ifdef DETERMINE_VA_LIST
@@ -1434,13 +1441,6 @@ int main(int argc, char* argv[])
 #else
     AddOptions(&PrepOptions, &PrepOptionsLen, "smlrpp.exe -U __STDC_VERSION__ -zI");
 #endif
-  }
-  for (i = 1; i < argc; i++)
-  {
-    if (!strcmp(argv[i], "-8086"))
-    {
-      Use8086InstrOnly = 1;
-    }
   }
 
   for (i = 1; i < argc; i++)
