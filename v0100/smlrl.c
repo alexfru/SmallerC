@@ -2727,8 +2727,29 @@ void RwDosExe(void)
       // data/stack segment starts right after code segment's padding:
       DosExeHeader.InitSs = (pSectDescrs[SectCnt].Stop + 15) / 16 -
                             sizeof(tDosExeHeader) / 16;
-      // maximum stack size = data segment size - data size:
-      DosExeHeader.MaxAlloc = DosExeHeader.MinAlloc = 4096 - dsz / 16;
+      // if MaxHeap or MinHeap is defined, calculate new data segment size
+      // permit data segment < 64KiB
+      if(MaxHeap != 0xFFFFFFFF || MinHeap != 0xFFFFFFFF)
+      {
+        uint32 hsz = pSectDescrs[SectCnt + 2].Start - pSectDescrs[SectCnt + hasData].Stop;
+        if(MinHeap != 0xFFFFFFFF && hsz < MinHeap)
+          errStackTooBig();
+        if(MaxHeap != 0xFFFFFFFF && hsz > MaxHeap)
+        {
+          pSectDescrs[SectCnt + 2].Start = (pSectDescrs[SectCnt + hasData].Stop + MaxHeap) & 0xfffc;
+          if(pSectDescrs[SectCnt + 2].Start > (0xfffc - StackSize))
+            errStackTooBig();
+          pSectDescrs[SectCnt + 2].Stop = (pSectDescrs[SectCnt + 2].Start + StackSize - 1) & 0xfffc;
+          DosExeHeader.InitSp = pSectDescrs[SectCnt + 2].Stop;
+        }
+        // maximum stack size = data segment size - data size + heap size + stack size:
+        DosExeHeader.MaxAlloc = DosExeHeader.MinAlloc = (DosExeHeader.InitSp + 15) / 16 - dsz / 16;
+      }
+      else
+      {
+        // maximum stack size = data segment size - data size:
+        DosExeHeader.MaxAlloc = DosExeHeader.MinAlloc = 4096 - dsz / 16;
+      }
       Fwrite(&DosExeHeader, sizeof DosExeHeader, fout);
     }
     break;
