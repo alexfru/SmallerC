@@ -64,6 +64,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string.h>
 #include <ctype.h>
 #include <stdio.h>
+#include <assert.h>
 
 #if UINT_MAX >= 0xFFFFFFFF
 #define CAN_COMPILE_32BIT
@@ -1153,7 +1154,7 @@ void IncludeFile(int quot)
       }
       for (i = 0; i < pl; )
       {
-        int plen = strlen(paths + i);
+        size_t plen = strlen(paths + i);
         if (plen + 1 + nlen < MAX_FILE_NAME_LEN)
         {
           strcpy(FileNames[FileCnt], paths + i);
@@ -3930,6 +3931,7 @@ int exprval(int* idx, int* ExprTypeSynPtr, int* ConstExpr)
         *ExprTypeSynPtr = -*ExprTypeSynPtr;
       else
         ++*ExprTypeSynPtr;
+      assert(*ExprTypeSynPtr >= 0);  // avoids gcc warning
       nonVoidTypeCheck(*ExprTypeSynPtr);
       if (SyntaxStack0[*ExprTypeSynPtr] == tokStructPtr && !GetDeclSize(*ExprTypeSynPtr, 0))
         // incomplete structure/union type
